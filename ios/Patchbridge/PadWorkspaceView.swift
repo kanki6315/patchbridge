@@ -292,6 +292,7 @@ struct PadConnectionDetails: View {
                         row("Mac", model.demo ? "Demo · no QC" : (model.coordinator.macName ?? "Connected"))
                         row("Link", model.demo ? "None" : "Bluetooth", ok: !model.demo)
                         if !model.demo { row("Status", model.coordinator.status) }
+                        if !model.demo && model.coordinator.trusted { row("Trusted", "Until the Mac app quits") }
                     }
                     section("Available right now") {
                         row("Edit parameters", model.editor.supports("set_parameter") ? "Supported ones" : "Not yet", ok: model.editor.supports("set_parameter"))
@@ -299,6 +300,7 @@ struct PadConnectionDetails: View {
                         row("Scenes, bypass, Save As", "Not yet")
                     }
                     if model.demo { Text("Edits and saves affect this demo only.").font(.footnote).foregroundStyle(theme.muted) }
+                    if !model.demo { ConnectionStatusSettings(model: model, theme: theme).padding(.horizontal, 4) }
                     section("App") {
                         NavigationLink {
                             AppearanceSettings(theme: theme).padding(20)
