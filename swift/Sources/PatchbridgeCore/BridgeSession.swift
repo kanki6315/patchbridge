@@ -15,6 +15,11 @@ public final class BridgeSession {
     /// Called only for forwarded mutations, on the serialized transport queue.
     var onMutation: (([String: Any], [String: Any]?) -> Void)?
     private var authorized = false
+    /// Trust outlives a phone connection but not this session object: stopping or quitting the bridge ends it.
+    private var trust: (token: String, phoneName: String)?
+    private var trustedConnection = false
+    public var trustedPhoneName: String? { trust?.phoneName }
+    public var isTrustedConnection: Bool { trustedConnection && trust != nil }
     private var helperSession: String?
     private var requestIDs = Set<String>()
     private let helper: HelperClient
@@ -26,10 +31,17 @@ public final class BridgeSession {
         self.allowsRecovery = allowsRecovery; self.now = now
         self.macName = DeviceIdentity.name(macName, fallback: "Mac")
     }
-    public func approve() { authorized = true; helper.diagnostics.record(.bridgeApproved) }
+    public func approve(trusting: Bool = false) {
+        authorized = true; helper.diagnostics.record(.bridgeApproved)
+        if trusting {
+            trust = (UUID().uuidString + UUID().uuidString, phoneName); trustedConnection = true
+        }
+    }
+    /// The connected phone keeps its current approval; its next connection needs a code.
+    public func revokeTrust() { trust = nil; trustedConnection = false }
     public func revoke() {
         helper.diagnostics.record(.bridgeRevoked)
-        authorized = false; token = UUID().uuidString
+        authorized = false; trustedConnection = false; token = UUID().uuidString
         if let id = helperSession { _ = try? helper.request(["operation": "disconnect", "session_id": id]) }
         helperSession = nil
         requestIDs.removeAll(); recovering = false; retryDelay = 1; retryAt = 0; phoneName = "iPhone"
@@ -50,8 +62,14 @@ public final class BridgeSession {
               let version = message["version"] as? NSNumber, String(cString: version.objCType) != "c", version.doubleValue == 1,
               let id = message["id"] as? String, !id.isEmpty, id.count <= 128 else { throw BridgeFailure.protocolError }
         if operation == "hello" {
-            if !authorized { phoneName = DeviceIdentity.name(message["device_name"] as? String, fallback: "iPhone") }
-            return ["version": 1, "id": message["id"] ?? NSNull(), "connection_id": token, "authorization_required": true,
+            if !authorized {
+                phoneName = DeviceIdentity.name(message["device_name"] as? String, fallback: "iPhone")
+                if let trust, let offered = message["trust_token"] as? String, offered == trust.token {
+                    authorized = true; trustedConnection = true; self.trust?.phoneName = phoneName
+                    helper.diagnostics.record(.bridgeApproved)
+                }
+            }
+            return ["version": 1, "id": message["id"] ?? NSNull(), "connection_id": token, "authorization_required": !isTrustedConnection,
                     "mac_name": macName, "approval_code": approvalCode, "max_message_bytes": 1_048_576]
         }
         guard authorized else { helper.diagnostics.record(.requestRejected, operation: operation, code: "unauthorized"); throw BridgeFailure.unauthorized }
@@ -85,6 +103,7 @@ public final class BridgeSession {
         if operation == "recover" { recovering = false; retryDelay = 1 }
         response["id"] = message["id"] ?? NSNull()
         response["connection_id"] = token
+        if operation == "connect", isTrustedConnection, let trust { response["trust_token"] = trust.token }
         helperSession = response["session_id"] as? String
         return response
     }

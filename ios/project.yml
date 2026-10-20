@@ -18,9 +18,16 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UIBackgroundModes: [bluetooth-central]
+        NSSupportsLiveActivities: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.arjunakankipati.patchbridge
+            CFBundleURLSchemes: [patchbridge]
+    dependencies:
+      - target: PatchbridgeWidgets
     sources:
       - path: Patchbridge
         excludes: [".impeccable/**"]
+      - Shared
       - path: ../tests/fixtures/qc-editor.json
         buildPhase: resources
       - ../swift/Sources/PatchbridgeCore/BLECentral.swift
@@ -45,6 +52,27 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: '0.1'
+  PatchbridgeWidgets:
+    type: app-extension
+    platform: iOS
+    info:
+      path: PatchbridgeWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Patchbridge
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    sources:
+      - PatchbridgeWidgets
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.arjunakankipati.patchbridge.widgets
+        TARGETED_DEVICE_FAMILY: '1,2'
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: '0.1'
+        SKIP_INSTALL: YES
   PatchbridgeUITests:
     type: bundle.ui-testing
     platform: iOS

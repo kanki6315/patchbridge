@@ -17,6 +17,7 @@ struct BridgeWindow: View {
     var compact = false
     var menuActions: [(String, () -> Void)] = []
     @AppStorage("bridge.appearance") private var appearance = "Match Mac"
+    @AppStorage("bridge.trustPhone") private var trustPhone = true
     @Environment(\.colorScheme) private var scheme
     private var colors: BridgePalette { BridgePalette(dark: appearance == "Stage" || (appearance == "Match Mac" && scheme == .dark)) }
     private var phone: Bool { [.awaitingApproval, .approving, .connected, .recovering].contains(model.phase) }
@@ -40,8 +41,26 @@ struct BridgeWindow: View {
                 Text(model.presentation.approvalCode).font(.system(size: 38, weight: .semibold)).tracking(5).monospacedDigit()
                     .frame(maxWidth: .infinity).padding(.vertical, 20).background(colors.surface, in: RoundedRectangle(cornerRadius: 18))
                     .accessibilityLabel("Approval code \(model.presentation.approvalCode)")
-                Text("Approve only if the phone shows the same code. Approval ends when the phone disconnects or the bridge restarts.")
+                Text("Approve only if the phone shows the same code.")
                     .font(.callout).foregroundStyle(colors.muted)
+                if model.phase == .awaitingApproval {
+                    Toggle("Trust this \(model.presentation.phoneName) until Patchbridge quits", isOn: $trustPhone).toggleStyle(.checkbox)
+                    Text(trustPhone ? "Reconnect on the phone skips the code. Quit Patchbridge or revoke trust to end it." : "Approval ends when the phone disconnects or the bridge restarts.")
+                        .font(.caption).foregroundStyle(colors.muted)
+                }
+            }
+            if let trusted = model.presentation.trustedPhone, model.phase != .awaitingApproval {
+                HStack(spacing: 12) {
+                    Image(systemName: "iphone").font(.system(size: 18)).frame(width: 36, height: 36)
+                        .background(colors.surface, in: RoundedRectangle(cornerRadius: 12)).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(trusted).fontWeight(.semibold)
+                        Text(model.phase == .connected || model.phase == .recovering ? "Trusted · connected" : "Trusted · not connected").font(.caption).foregroundStyle(colors.muted)
+                    }
+                    Spacer()
+                    Button("Revoke Trust", role: .destructive) { model.revokeTrust() }.disabled(model.busy)
+                        .accessibilityLabel("Revoke Trust for \(trusted)")
+                }.font(.system(size: 14)).padding(12).background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
             }
             if let preset = model.presentation.preset {
                 VStack(spacing: 0) {
@@ -174,7 +193,7 @@ struct BridgeWindow: View {
             if model.phase == .awaitingApproval || model.phase == .approving {
                 Button(model.phase == .approving ? "Disconnect" : "Deny") { model.disconnectPhone() }
                 Spacer()
-                Button(model.phase == .approving ? "Approved" : "Approve") { model.approve() }.buttonStyle(.borderedProminent).disabled(model.phase == .approving)
+                Button(model.phase == .approving ? "Approved" : "Approve") { model.approve(trust: trustPhone) }.buttonStyle(.borderedProminent).disabled(model.phase == .approving)
             } else if model.phase == .connected || model.phase == .recovering {
                 Spacer()
                 Button("Disconnect iPhone", role: .destructive) { model.disconnectPhone() }

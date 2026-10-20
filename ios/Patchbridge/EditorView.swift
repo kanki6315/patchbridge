@@ -84,6 +84,10 @@ struct EditorView: View {
                 guard !didConfigurePreview else { return }
                 didConfigurePreview = true
                 if ProcessInfo.processInfo.arguments.contains("--stage") { appearance = "Stage"; matchSystem = false }
+                let arguments = ProcessInfo.processInfo.arguments
+                if let flag = arguments.firstIndex(of: "--activity"), arguments.indices.contains(flag + 1) {
+                    model.liveActivity.preview(arguments[flag + 1], daylight: arguments.contains("--daylight"))
+                }
                 if ProcessInfo.processInfo.arguments.contains("--demo") {
                     model.loadDemo()
                     if ProcessInfo.processInfo.arguments.contains("--editor") && !pad { selectedBlock = "0:1" }
@@ -311,7 +315,7 @@ struct EditorView: View {
                     Button("Cancel") { model.disconnect() }.frame(minHeight: 44)
                 } else if let error = model.error {
                     Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(theme.caution)
-                    PrimaryButton(title: "Reconnect", theme: theme) { model.start() }
+                    PrimaryButton(title: "Reconnect", theme: theme) { model.reconnect() }
                 } else {
                     TextField("Phone name (optional)", text: $phoneName).textFieldStyle(.roundedBorder)
                     Text("Shown on your Mac. Leave blank to use iPhone.").font(.footnote).foregroundStyle(theme.muted)
@@ -368,12 +372,44 @@ struct EditorView: View {
                 Label("Read preset and parameter values", systemImage: "checkmark")
                 if model.editor.supports("set_parameter") { Label("Edit supported parameters", systemImage: "checkmark") }
                 if model.editor.supports("save") { Label("Save the current preset", systemImage: "checkmark") }
+                if !model.demo && model.coordinator.trusted {
+                    LabeledContent("Trusted", value: "Until the Mac app quits").foregroundStyle(theme.ink)
+                }
+                if !model.demo { ConnectionStatusSettings(model: model, theme: theme) }
                 Button { self.sheet = .appearance } label: { Label("Appearance", systemImage: "circle.lefthalf.filled").frame(minHeight: 44) }
                 if !model.demo { Button("Refresh from Mac") { model.coordinator.refresh() }.disabled(model.busy) }
                 Button(model.demo ? "Leave demo" : "Disconnect", role: .destructive) { model.disconnect(); self.sheet = nil }.foregroundStyle(theme.danger).frame(minHeight: 44)
             }
         case .appearance:
             AppearanceSettings(theme: theme)
+        }
+    }
+}
+
+/// Lock Screen settings for the session. The Live Activity is iPhone-only; alerts work everywhere.
+struct ConnectionStatusSettings: View {
+    @ObservedObject var model: PhoneModel
+    let theme: PhoneTheme
+    @AppStorage(ConnectionActivityController.showKey) private var showStatus = false
+    @AppStorage(ConnectionActivityController.alertKey) private var alertOnDrop = false
+    @State private var alertsDenied = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Lock Screen").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
+            if ConnectionActivityController.supported {
+                Toggle("Show connection status", isOn: $showStatus).frame(minHeight: 44)
+                if showStatus && !ConnectionActivityController.systemEnabled {
+                    Text("Live Activities are off for Patchbridge in Settings.").font(.footnote).foregroundStyle(theme.caution)
+                }
+            }
+            Toggle("Alert if the connection drops", isOn: $alertOnDrop).frame(minHeight: 44)
+            Text(alertsDenied ? "Notifications are off for Patchbridge in Settings." : "Only for drops you didn’t start. The status doesn’t keep Bluetooth connected.")
+                .font(.footnote).foregroundStyle(alertsDenied ? theme.caution : theme.muted)
+        }
+        .onChange(of: showStatus) { _, _ in model.connectionStatusPreferenceChanged() }
+        .onChange(of: alertOnDrop) { _, on in
+            guard on else { alertsDenied = false; return }
+            ConnectionActivityController.requestAlertPermission { granted in alertsDenied = !granted }
         }
     }
 }

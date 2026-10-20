@@ -7,9 +7,16 @@ public final class EditorCoordinator {
     public let editor = GenericEditor()
     public private(set) var nearbyMacs = [String: String]()
     public private(set) var macName: String?
+    /// The last Mac chosen, kept after a disconnect so Reconnect can find it again.
+    public private(set) var macID: String?
+    /// Mac-issued trust tokens by Mac ID. A matching token lets that Mac skip the approval code.
+    public var trustTokens = [String: String]()
+    /// The Mac accepted this phone's trust token, or issued one on approval.
+    public private(set) var trusted = false
+    private var preferredMac: String?
     public func chooseMac(_ id: String) {
         guard phase == .connecting, let name = nearbyMacs[id] else { return }
-        macName = name; discoveryDeadline = now() + 30
+        macName = name; macID = id; preferredMac = nil; discoveryDeadline = now() + 30
         (transport as? DiscoverableEditorTransport)?.selectPeripheral(id); nearbyMacs.removeAll(); onChange?()
     }
     private let diagnostics: Diagnostics
@@ -41,7 +48,7 @@ public final class EditorCoordinator {
     private var requestedModels = Set<String>()
     private var nextPoll = TimeInterval.infinity
     private var discoveryDeadline = TimeInterval.infinity
-    private struct Request { let id: String; let operation: String; let deadline: TimeInterval }
+    private struct Request { let id: String; let operation: String; let deadline: TimeInterval; var trustOffered = false }
     private var request: Request?
 
     public init(pollInterval: TimeInterval = 2, timeout: TimeInterval = 60,
@@ -59,8 +66,12 @@ public final class EditorCoordinator {
         guard phase == .disconnected || phase == .failed else { return }
         phoneName = DeviceIdentity.name(name, fallback: "iPhone")
     }
-    public func start() {
+    /// With `reconnecting`, the last Mac is chosen as soon as it is found.
+    public func start(reconnecting: Bool = false) {
+        let lastMac = macID, lastName = macName
         disconnect()
+        if reconnecting, let lastMac { preferredMac = lastMac; macID = lastMac; macName = lastName }
+        else { macID = nil; macName = nil }
         diagnostics.record(.editorStarted)
         error = nil; outcome = nil; discoveryDeadline = now() + 30; phase = .connecting; status = "Connecting"
         let epoch = generation
@@ -68,7 +79,8 @@ public final class EditorCoordinator {
         self.transport = transport
         (transport as? DiscoverableEditorTransport)?.onDiscovered = { [weak self] id, name in
             guard let self, self.generation == epoch, self.phase == .connecting else { return }
-            self.nearbyMacs[id] = name; self.onChange?()
+            self.nearbyMacs[id] = name
+            if id == self.preferredMac { self.chooseMac(id) } else { self.onChange?() }
         }
         transport.onReady = { [weak self] in
             guard let self, self.generation == epoch, self.phase == .connecting else { return }
@@ -96,7 +108,7 @@ public final class EditorCoordinator {
         generation = UUID(); timer?.invalidate(); timer = nil
         let old = transport; transport = nil
         old?.onReady = nil; old?.onDisconnected = nil; old?.onStatus = nil; old?.onResponse = nil
-        nearbyMacs.removeAll(); macName = nil; approvalCode = nil
+        nearbyMacs.removeAll(); approvalCode = nil; trusted = false; preferredMac = nil
         request = nil; staged = nil; connection = nil; session = nil; revision = 0
         operations.removeAll(); nextPoll = .infinity; discoveryDeadline = .infinity; editor.disconnect()
         phase = .disconnected; status = "Disconnected"; old?.disconnect(); onChange?()
@@ -144,11 +156,14 @@ public final class EditorCoordinator {
     private func send(_ operation: String, command: [String: Any]? = nil) {
         guard request == nil, let transport else { return }
         var message = command ?? ["version": 1, "id": UUID().uuidString, "operation": operation]
-        if operation == "hello" { message["device_name"] = phoneName }
+        if operation == "hello" {
+            message["device_name"] = phoneName
+            if let macID, let token = trustTokens[macID] { message["trust_token"] = token }
+        }
         if let connection { message["connection_id"] = connection }
         if let session { message["session_id"] = session }
         if operation == "catalog" { message["payload"] = ["model_ids": requestedModels.sorted()] }
-        request = Request(id: message["id"] as! String, operation: operation, deadline: now() + timeout)
+        request = Request(id: message["id"] as! String, operation: operation, deadline: now() + timeout, trustOffered: message["trust_token"] != nil)
         do { try transport.send(message) }
         catch { fail("Could not send request; reconnect to reload state. No edit will be retried.") }
         onChange?()
@@ -169,11 +184,18 @@ public final class EditorCoordinator {
         do {
             guard integer(response["version"]) == 1 else { throw EditorFailure.invalidState }
             if pending.operation == "hello" {
+                let offeredTrust = pending.trustOffered
                 guard let token = response["connection_id"] as? String, !token.isEmpty,
-                      response["authorization_required"] as? Bool == true else { throw EditorFailure.invalidState }
+                      let required = response["authorization_required"] as? Bool, required || offeredTrust else { throw EditorFailure.invalidState }
                 macName = DeviceIdentity.name(response["mac_name"] as? String, fallback: "Mac")
+                connection = token
+                if !required {
+                    trusted = true; phase = .loading; status = "Trusted · connecting"; send("connect"); return
+                }
+                // The Mac no longer trusts this phone (it quit or trust was revoked).
+                if offeredTrust, let macID { trustTokens[macID] = nil }
                 approvalCode = DeviceIdentity.approvalCode(token)
-                connection = token; phase = .awaitingApproval; status = "Approve on Mac, then authorize"
+                phase = .awaitingApproval; status = "Approve on Mac, then authorize"
                 onChange?(); return
             }
             guard response["connection_id"] as? String == connection else { throw EditorFailure.staleContext }
@@ -206,6 +228,10 @@ public final class EditorCoordinator {
                   let newRevision = integer(response["revision"]),
                   ["connect", "recover"].contains(pending.operation) || (newSession == session && newRevision >= revision),
                   let result = response["result"] as? [String: Any] else { throw EditorFailure.staleContext }
+            if pending.operation == "connect", let macID {
+                trustTokens[macID] = response["trust_token"] as? String
+                trusted = trustTokens[macID] != nil
+            }
             if ["connect", "recover"].contains(pending.operation) {
                 phase = .loading; session = newSession; revision = newRevision
                 staged = try decode(PresetSnapshot.self, result["state"])
