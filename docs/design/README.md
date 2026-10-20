@@ -184,7 +184,7 @@ These designs assume changes that aren't built yet:
 - **Bridge state for the Mac UI:** the window and popover need the current preset, scene, unsaved flag and a short log of recent edit outcomes from the coordinator.
 - **Cortex Control and firmware checks:** the bridge needs to detect an unavailable USB connection, and to refuse writes on untested CorOS versions.
 - **Notifications:** approval requests and a lost QC are posted as macOS notifications, which needs notification permission.
-- **Fold posture:** the Duo layouts switch on hinge posture (flat, half-folded, closed). The half-folded layout needs the app to know that the device is half open, not just its size class. Without that signal, it falls back to the unfolded layout. The hinge position (across the inner screen's long side) is inferred from the screen sizes and should be checked against the hardware.
+- **Fold posture:** the Duo layouts switch on hinge posture (flat, half-folded, closed). The half-folded layout needs the app to know that the device is half open, not just its size class. Without that signal, it falls back to the unfolded layout; the app implements the half-folded view and keeps it behind that signal (Debug builds can force it with `--half-folded`). The hinge position (across the inner screen's long side) is inferred from the screen sizes and should be checked against the hardware.
 
 ## Mac implementation contract (2026-10-20)
 

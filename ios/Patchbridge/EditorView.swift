@@ -26,8 +26,12 @@ struct EditorView: View {
         NavigationStack {
         GeometryReader { geometry in
             let landscape = geometry.size.width > geometry.size.height && !dynamicTypeSize.isAccessibilitySize
+            let duo = duoScreen(geometry)
             Group {
-                if model.ready, model.snapshot != nil, pad {
+                if model.ready, model.snapshot != nil, let duo {
+                    DuoWorkspaceView(model: model, theme: theme, screen: duo, size: geometry.size, insets: geometry.safeAreaInsets,
+                                     showConnection: { sheet = .connection }, openEditor: { selectedBlock = $0 })
+                } else if model.ready, model.snapshot != nil, pad {
                     PadWorkspaceView(model: model, theme: theme)
                 } else if model.ready, let snapshot = model.snapshot {
                     VStack(spacing: 0) {
@@ -45,7 +49,7 @@ struct EditorView: View {
                         }
                         if !landscape { saveBar(snapshot) }
                     }
-                } else if pad && model.coordinator.phase == .loading {
+                } else if pad && duo == nil && model.coordinator.phase == .loading {
                     PadLoadingView(theme: theme) { model.disconnect() }
                 } else { connection }
             }
@@ -65,6 +69,8 @@ struct EditorView: View {
             } message: { Text(model.demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
             .onChange(of: model.ready) { _, ready in if !ready { selectedBlock = nil } }
             .onChange(of: pad) { _, pad in if pad { selectedBlock = nil } }
+            // Folding or unfolding pops a pushed editor; the Duo deck or block menu keeps the block open.
+            .onChange(of: duo == .inner) { _, _ in selectedBlock = nil }
             .onAppear {
                 #if DEBUG
                 guard !didConfigurePreview else { return }
@@ -96,6 +102,13 @@ struct EditorView: View {
             }
         }
         }
+    }
+    /// The iPhone Duo screen this window is on, if any. Accessibility text sizes keep the iPhone layout.
+    private func duoScreen(_ geometry: GeometryProxy) -> DuoScreen? {
+        guard !dynamicTypeSize.isAccessibilitySize else { return nil }
+        let insets = geometry.safeAreaInsets
+        return DuoScreen(window: CGSize(width: geometry.size.width + insets.leading + insets.trailing,
+                                        height: geometry.size.height + insets.top + insets.bottom))
     }
     private func requestSave() { saveContext = model.snapshot; confirmSave = true }
     private func confirmCurrentSave() {

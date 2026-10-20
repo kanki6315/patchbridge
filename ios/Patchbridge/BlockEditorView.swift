@@ -4,6 +4,9 @@ struct BlockEditorView: View {
     @ObservedObject var model: PhoneModel
     let block: PresetSnapshot.Block
     let theme: PhoneTheme
+    /// `deck` is the iPhone Duo's control deck: dial left, tiles or number pad right, no header.
+    enum Layout { case standard, deck }
+    var layout: Layout = .standard
     @State private var parameter = ""
     @State private var draft: Double?
     @State private var fine = false
@@ -28,6 +31,8 @@ struct BlockEditorView: View {
     private var arcColor: Color { category.arc(daylight: theme.daylight) }
     /// Regular width (iPad) shows the number pad as a popover and types into the dial itself.
     private var regular: Bool { sizeClass == .regular }
+    /// The deck shows the number pad beside the dial instead of in a sheet or popover.
+    private var inlinePad: Bool { layout == .deck }
     private var subtitle: String {
         let kind = model.editor.catalog?.models[block.model_id]?.category ?? "Block"
         let slot = regular && block.position.count == 2 ? " · Row \(block.position[0] + 1), slot \(block.position[1] + 1)" : ""
@@ -35,42 +40,63 @@ struct BlockEditorView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 12) {
-                    Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.4).foregroundStyle(category.darkInk ? Color.black : .white).frame(width: 44, height: 44).background(category.color, in: RoundedRectangle(cornerRadius: 12))
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(model.name(block)).font(.title.bold())
-                        Text(subtitle).font(.subheadline).foregroundStyle(theme.muted)
-                    }
-                }
-                Text(control?.name.capitalized ?? "Parameter").font(.title2.bold()).frame(maxWidth: .infinity)
-                if let options = control?.options, !options.isEmpty {
-                    VStack(spacing: 12) {
-                        ForEach(options, id: \.value) { option in
-                            Button { model.edit(block.id, parameter, .number(option.value)) } label: {
-                                HStack { Text(option.label); Spacer(); if raw == .number(option.value) { Image(systemName: "checkmark") } }
-                                    .font(.headline).padding(24).background(raw == .number(option.value) ? category.color.opacity(0.22) : theme.raised, in: RoundedRectangle(cornerRadius: 18))
-                            }.disabled(readOnly || model.busy)
-                        }
-                    }.padding(.vertical, 16)
-                } else { gauge }
-                if readOnly {
-                    Label(readOnlyText, systemImage: "lock").font(.footnote).foregroundStyle(theme.muted).frame(maxWidth: .infinity)
-                } else if pending != nil {
-                    Text("Sending…").font(.footnote).foregroundStyle(theme.signal).frame(maxWidth: .infinity)
-                }
-                tiles
-            }.padding(16)
-        }
+        content
         .background {
             category.color.opacity(theme.daylight ? 0.025 : 0.035)
             RadialGradient(colors: [category.color.opacity(theme.daylight ? 0.06 : 0.13), .clear], center: UnitPoint(x: 0.5, y: 0.35), startRadius: 30, endRadius: 260)
         }
         .onAppear { selectInitial() }
-        .onChange(of: block.id) { _, _ in selectInitial() }
+        .onChange(of: block.id) { _, _ in selectInitial(); typing = false }
         .onChange(of: model.snapshot) { _, _ in draft = nil; fine = false }
-        .sheet(isPresented: Binding(get: { typing && !regular }, set: { typing = $0 })) { numberPad.presentationDetents([.height(dynamicTypeSize.isAccessibilitySize ? 550 : 355)]).presentationDragIndicator(.visible) }
+        .sheet(isPresented: Binding(get: { typing && !regular && !inlinePad }, set: { typing = $0 })) { numberPad.presentationDetents([.height(dynamicTypeSize.isAccessibilitySize ? 550 : 355)]).presentationDragIndicator(.visible) }
+    }
+    @ViewBuilder private var content: some View {
+        if layout == .deck {
+            ScrollView {
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(spacing: 8) { parameterControl }.frame(maxWidth: .infinity)
+                    Group {
+                        if typing {
+                            numberPad.background(theme.surface, in: RoundedRectangle(cornerRadius: 28))
+                                .overlay(RoundedRectangle(cornerRadius: 28).stroke(theme.line))
+                        } else { tiles }
+                    }.frame(maxWidth: .infinity)
+                }.padding(.vertical, 8)
+            }
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 12) {
+                        Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.4).foregroundStyle(category.darkInk ? Color.black : .white).frame(width: 44, height: 44).background(category.color, in: RoundedRectangle(cornerRadius: 12))
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(model.name(block)).font(.title.bold())
+                            Text(subtitle).font(.subheadline).foregroundStyle(theme.muted)
+                        }
+                    }
+                    parameterControl
+                    tiles
+                }.padding(16)
+            }
+        }
+    }
+    /// The selected parameter's name, dial or options, and its status line.
+    @ViewBuilder private var parameterControl: some View {
+        Text(control?.name.capitalized ?? "Parameter").font(.title2.bold()).frame(maxWidth: .infinity)
+        if let options = control?.options, !options.isEmpty {
+            VStack(spacing: 12) {
+                ForEach(options, id: \.value) { option in
+                    Button { model.edit(block.id, parameter, .number(option.value)) } label: {
+                        HStack { Text(option.label); Spacer(); if raw == .number(option.value) { Image(systemName: "checkmark") } }
+                            .font(.headline).padding(24).background(raw == .number(option.value) ? category.color.opacity(0.22) : theme.raised, in: RoundedRectangle(cornerRadius: 18))
+                    }.disabled(readOnly || model.busy)
+                }
+            }.padding(.vertical, 16)
+        } else { gauge }
+        if readOnly {
+            Label(readOnlyText, systemImage: "lock").font(.footnote).foregroundStyle(theme.muted).frame(maxWidth: .infinity)
+        } else if pending != nil {
+            Text("Sending…").font(.footnote).foregroundStyle(theme.signal).frame(maxWidth: .infinity)
+        }
     }
     private func selectInitial() {
         parameter = model.parameters(block).first(where: { model.editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }) ?? model.parameters(block).first ?? ""
@@ -124,7 +150,7 @@ struct BlockEditorView: View {
                             }
                         }
                     }.buttonStyle(.plain).disabled(readOnly || model.busy || display == nil)
-                        .popover(isPresented: Binding(get: { typing && regular }, set: { typing = $0 }), arrowEdge: .top) {
+                        .popover(isPresented: Binding(get: { typing && regular && !inlinePad }, set: { typing = $0 }), arrowEdge: .top) {
                             numberPad.frame(width: 340).presentationBackground(theme.surface.opacity(0.95))
                         }
                         .accessibilityLabel("\(control?.name ?? "Value"), \(model.valueText(block.id, parameter)). Enter exact value")
@@ -208,34 +234,53 @@ struct BlockEditorView: View {
             }
         }
     }
-    private var typingInDial: Bool { typing && regular }
-    private var enteredValue: Double? {
+    private var typingInDial: Bool { typing && (regular || inlinePad) }
+    private var enteredValue: Double? { NumberPad.value(entry, control) }
+    private var numberPad: some View {
+        NumberPad(theme: theme, control: control, entry: $entry, showsEntry: !regular && !inlinePad, busy: model.busy,
+                  cancel: { typing = false }, set: { commitContextual($0); typing = false })
+            .background(regular || inlinePad ? Color.clear : theme.surface)
+    }
+}
+
+/// The signed number pad: the iOS decimal pad has no minus key. Nothing is sent until Set.
+struct NumberPad: View {
+    let theme: PhoneTheme
+    let control: ParameterControl?
+    @Binding var entry: String
+    /// Shows the typed value above the keys when the value itself isn't visible.
+    var showsEntry = true
+    var busy = false
+    let cancel: () -> Void
+    let set: (Double) -> Void
+    static func value(_ entry: String, _ control: ParameterControl?) -> Double? {
         guard let n = Double(entry), n.isFinite, control?.wireValue(display: n) != nil else { return nil }; return n
     }
-    private var numberPad: some View {
+    private var enteredValue: Double? { NumberPad.value(entry, control) }
+    var body: some View {
         VStack(spacing: 12) {
             HStack {
-                Button("Cancel") { typing = false }
+                Button("Cancel", action: cancel)
                 Spacer()
                 Text("\(control?.minimum.map { String(format: "%g", $0) } ?? "") to \(control?.maximum.map { String(format: "%g", $0) } ?? "") \(control?.unit ?? "")").font(.footnote).foregroundStyle(enteredValue == nil ? theme.caution : theme.muted)
             }
-            if !regular {
+            if showsEntry {
                 Text(entry.isEmpty ? "0" : entry).font(.largeTitle.bold()).monospacedDigit().frame(maxWidth: .infinity).padding(8)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(enteredValue == nil ? theme.caution : theme.signal, lineWidth: 2)).accessibilityLabel("Entered value \(entry)")
             }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 8) {
                 ForEach(["1", "2", "3", "⌫", "4", "5", "6", "±", "7", "8", "9", ".", "0", "Clear", "Set"], id: \.self) { key in
                     Button { press(key) } label: { Text(key).font(.title3.weight(.semibold)).frame(maxWidth: .infinity).frame(minHeight: 44).background(key == "Set" ? theme.signal : theme.raised, in: RoundedRectangle(cornerRadius: 10)).foregroundStyle(key == "Set" ? theme.signalInk : theme.ink) }
-                        .disabled(key == "Set" && (enteredValue == nil || model.busy))
+                        .disabled(key == "Set" && (enteredValue == nil || busy))
                         .opacity(key == "Set" && enteredValue == nil ? 0.4 : 1)
                         .accessibilityLabel(key == "⌫" ? "Delete" : key == "±" ? "Change sign" : key)
                 }
             }
-        }.padding(20).background(regular ? Color.clear : theme.surface).foregroundStyle(theme.ink).tint(theme.signal)
+        }.padding(20).foregroundStyle(theme.ink).tint(theme.signal)
     }
     private func press(_ key: String) {
         switch key {
-        case "Set": if let value = enteredValue { commitContextual(value); typing = false }
+        case "Set": if let value = enteredValue { set(value) }
         case "Clear": entry = ""
         case "⌫": if !entry.isEmpty { entry.removeLast() }
         case "±": if entry.hasPrefix("-") { entry.removeFirst() } else { entry = "-" + entry }

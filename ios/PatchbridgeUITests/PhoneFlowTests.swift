@@ -6,12 +6,20 @@ final class PhoneFlowTests: XCTestCase {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
     }
+    /// The iPhone Duo screen the app is on, from the window size: no other iPhone is wider than 440 pt.
+    private func duoScreen(_ app: XCUIApplication) -> String? {
+        let size = app.windows.firstMatch.frame.size
+        let short = min(size.width, size.height)
+        guard UIDevice.current.userInterfaceIdiom == .phone, short >= 450 else { return nil }
+        return short >= 600 ? "inner" : "outer"
+    }
     func testDemoEditingSavingAndAppearance() throws {
         guard UIDevice.current.userInterfaceIdiom == .phone else { throw XCTSkip("iPhone navigation only; see testPadWorkspace") }
         let app = XCUIApplication()
         app.launchArguments = ["--demo", "--stage"]
         app.launch()
         XCTAssertTrue(app.staticTexts["Tremonti w Mic"].waitForExistence(timeout: 10))
+        if duoScreen(app) != nil { throw XCTSkip("iPhone Duo layouts; see testDuoWorkspace") }
         capture("Stage overview")
         app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Opto Comp")).firstMatch.tap()
         XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))
@@ -96,5 +104,46 @@ final class PhoneFlowTests: XCTestCase {
         capture("iPad option parameter")
         XCUIDevice.shared.orientation = .portrait
         capture("iPad portrait")
+    }
+    func testDuoWorkspace() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--demo", "--stage"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Tremonti w Mic"].waitForExistence(timeout: 10))
+        guard let screen = duoScreen(app) else { throw XCTSkip("iPhone Duo layouts only") }
+        let optoComp = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Opto Comp")).firstMatch
+        if screen == "inner" {
+            // The deck under the hinge lists the row, then edits in place without navigating.
+            XCTAssertTrue(app.staticTexts["Row 1"].exists)
+            capture("Duo unfolded row")
+            optoComp.tap()
+            XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))
+            capture("Duo unfolded editing")
+            app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Enter exact value")).firstMatch.tap()
+            XCTAssertTrue(app.buttons["Set"].waitForExistence(timeout: 5))
+            app.buttons["Clear"].tap(); app.buttons["3"].tap(); app.buttons["0"].tap(); app.buttons["Change sign"].tap()
+            capture("Duo typing beside the dial")
+            app.buttons["Set"].tap()
+            XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "-30.0")).firstMatch.waitForExistence(timeout: 5))
+            app.buttons["Save"].tap()
+            app.buttons["Save demo preset"].tap()
+            XCTAssertTrue(app.staticTexts["Saved in demo only"].waitForExistence(timeout: 5))
+            app.buttons["Row 1"].tap()
+            XCTAssertTrue(app.staticTexts["Row 1"].waitForExistence(timeout: 5))
+        } else {
+            capture("Duo folded portrait")
+            optoComp.tap()
+            XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["Open editor"].exists)
+            capture("Duo block menu sheet")
+            XCUIDevice.shared.orientation = .landscapeLeft
+            // The menu stays open as a side panel beside the grid.
+            XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))
+            capture("Duo block menu panel")
+            app.buttons["Open editor"].tap()
+            XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Enter exact value")).firstMatch.waitForExistence(timeout: 5))
+            capture("Duo folded editor")
+            XCUIDevice.shared.orientation = .portrait
+        }
     }
 }

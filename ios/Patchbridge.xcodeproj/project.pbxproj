@@ -10,6 +10,7 @@
 		0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */; };
 		1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */; };
 		184795C273F446AC30468366 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */; };
+		A1D0D0E1F2C3B4A5968778D1 /* DuoWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E1E1F203D4C5B6A7988902 /* DuoWorkspaceView.swift */; };
 		31876869DBD5740176721AEB /* PadWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */; };
 		444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EB72B83CCED483250AEC0C /* Theme.swift */; };
 		47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */; };
@@ -46,6 +47,7 @@
 		42253D1C8C450F010DE25BCD /* GenericEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericEditor.swift; sourceTree = "<group>"; };
 		4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExchange.swift; sourceTree = "<group>"; };
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
+		B2E1E1F203D4C5B6A7988902 /* DuoWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoWorkspaceView.swift; sourceTree = "<group>"; };
 		67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PadWorkspaceView.swift; sourceTree = "<group>"; };
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -84,6 +86,7 @@
 			children = (
 				025A144248FD7B2C1307731E /* AppIcon.icon */,
 				D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */,
+				B2E1E1F203D4C5B6A7988902 /* DuoWorkspaceView.swift */,
 				3E68459E6EE63B03631133E9 /* EditorView.swift */,
 				67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */,
 				17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */,
@@ -241,6 +244,7 @@
 				1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */,
 				5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */,
 				B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */,
+				A1D0D0E1F2C3B4A5968778D1 /* DuoWorkspaceView.swift in Sources */,
 				5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */,
 				AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */,
 				B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */,

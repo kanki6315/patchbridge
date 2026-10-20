@@ -1,9 +1,9 @@
 # Patchbridge iPhone and iPad app
 
 Native SwiftUI implementation of the regular-iPhone PoC boards in
-`docs/design/screens` and the iPad boards in `docs/design/ipad`. The app
-supports iPhone portrait and landscape and iPad in all orientations; Duo
-layouts are outside this build.
+`docs/design/screens`, the iPhone Duo boards (`duo-*`) beside them and the iPad
+boards in `docs/design/ipad`. The app supports iPhone portrait and landscape,
+the Duo's inner and outer screens, and iPad in all orientations.
 
 ## Run
 
@@ -62,6 +62,24 @@ details (with Appearance inside) are popovers. Notices sit in the top bar.
 Portrait puts the row list beside the panel. Split View, Slide Over, windowed
 apps at compact width and accessibility text sizes use the iPhone layout.
 
+On the iPhone Duo (`DuoWorkspaceView.swift`), the layout follows the screen.
+The Duo is recognised by its window size (inner 626 × 890 pt, outer
+466 × 678 pt); no other iPhone is wider than 440 pt, so regular iPhones never
+reach this code. The inner screen held upright splits at the hinge: the
+header, scenes and named grid above, and below it a control deck holding the
+row list with Save, or the open block's dial beside its tiles, or the number
+pad beside the dial while typing. Nothing interactive sits within 14 pt of the
+fold. The outer screen leads with the grid: in landscape a one-line header
+holds status, name, scenes and Save, and tapping a block opens the block menu
+(first four controls with − value + and Open editor) as a side panel; in
+portrait the grid uses codes, scenes are a 4 × 2 set and the menu rises from
+the bottom without dimming. The row, selected block and open editor carry
+across folding and rotating. iOS doesn't report hinge posture to apps, so the
+half-folded view (scenes fold into the header strip, the grid grows, the
+crease shadow fades in) isn't triggered yet and the inner screen stays flat;
+Debug builds accept `--half-folded` to inspect it. The inner screen on its
+side and accessibility text sizes keep the existing layouts.
+
 Native navigation preserves swipe-back. Layout uses scrollable content and
 Dynamic Type; numeric values use tabular figures. Buttons and the dial expose
 VoiceOver labels and adjustment actions.
@@ -79,11 +97,13 @@ PYTHONPATH=src python3 -m pytest -q
 save confirmation, appearance, Mac-link UI, read-only blocks and landscape on
 an iPhone Simulator. On an iPad Simulator it runs `testPadWorkspace` instead of
 the iPhone navigation test, covering the panel, popovers and both orientations.
+On a Duo-sized screen it runs `testDuoWorkspace` instead, covering the deck on
+the inner screen or the block menu in both orientations on the outer screen.
 iPadOS windowed mode can open the app at compact width; use full-screen apps to
 see the iPad layout. Its result bundle retains screenshots. Run it through
 Xcode's Test action or `xcodebuild test` with an available iPhone destination.
-Debug builds accept `--demo`, `--editor`, `--stage` and `--daylight` launch
-arguments for reproducible visual inspection; these do not enable live writes.
+Debug builds accept `--demo`, `--editor`, `--stage`, `--daylight` and
+`--half-folded` launch arguments for reproducible visual inspection; these do not enable live writes.
 
 This implementation has been built and exercised in the iPhone Simulator.
 Live Bluetooth pairing, hardware editing and fine-gesture feel still require
