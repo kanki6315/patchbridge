@@ -2,7 +2,8 @@ import Foundation
 import CoreBluetooth
 import OSLog
 
-/// Foreground iPhone/macOS development transport. All callbacks occur on main queue.
+/// iPhone/macOS transport. The iOS host declares bluetooth-central background mode.
+/// All callbacks occur on main queue.
 /// Only one command may be outstanding; the caller coalesces slider movement until completion.
 public protocol EditorTransport: AnyObject {
     var onReady: (() -> Void)? { get set }

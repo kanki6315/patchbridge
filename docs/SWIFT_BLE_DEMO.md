@@ -74,7 +74,9 @@ helper on timeout or invalid protocol. Helper stderr goes to the terminal.
 ## Current limits
 
 The SwiftUI test app has verified initial BLE connection and state transfer on
-a physical iPhone. No background support, comprehensive BLE hardware validation, multi-phone support,
+a physical iPhone. The iOS app preserves connections across app switches using
+Bluetooth background mode; this still needs physical-device validation. No
+comprehensive BLE hardware validation, multi-phone support,
 slider coalescing, transfer priority scheduler, or asynchronous device-event
 forwarding yet. Use explicit snapshot requests for state refresh. A helper crash
 requires restarting the demo. The simulator supports more operations than the

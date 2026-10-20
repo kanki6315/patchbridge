@@ -83,7 +83,10 @@ if let control = coordinator.editor.control(blockID: blockID, parameterID: param
     try coordinator.edit(blockID: blockID, parameterID: parameterID, value: value)
 }
 try coordinator.save() // separate explicit action
-// On backgrounding or leaving the session:
+// On backgrounding, preserve the session and pause polling; resume on return:
+coordinator.setBackgrounded(true)
+coordinator.setBackgrounded(false)
+// When explicitly leaving the session:
 coordinator.disconnect()
 ```
 

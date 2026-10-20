@@ -18,7 +18,8 @@ final class PhoneModel: ObservableObject {
     }
     func start() { coordinator.setPhoneName(UserDefaults.standard.string(forKey: "patchbridge.phoneName") ?? ""); demo = false; notice = nil; coordinator.start() }
     func disconnect() { coordinator.disconnect(); demoEditor.disconnect(); demo = false; notice = nil; version += 1 }
-    func background() { if !demo { disconnect() } }
+    func background() { coordinator.setBackgrounded(true) }
+    func foreground() { coordinator.setBackgrounded(false) }
     func loadDemo() {
         struct Fixture: Decodable { let catalog: EditorCatalog; let snapshot: PresetSnapshot }
         do {

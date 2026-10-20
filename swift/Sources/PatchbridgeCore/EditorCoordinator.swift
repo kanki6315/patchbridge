@@ -28,6 +28,7 @@ public final class EditorCoordinator {
     private let automaticPolling: Bool
     private var transport: EditorTransport?
     private var timer: Timer?
+    private var isInBackground = false
     private var generation = UUID()
     private var connection: String?
     private var session: String?
@@ -105,10 +106,21 @@ public final class EditorCoordinator {
         phase = .loading; error = nil; send("connect")
     }
     public func refresh() { guard phase == .ready, !busy else { return }; send("snapshot") }
+    /// Keep the authorized transport alive while iOS handles Bluetooth events, but
+    /// stop idle polling. Outstanding requests retain their normal timeout policy.
+    public func setBackgrounded(_ backgrounded: Bool) {
+        guard isInBackground != backgrounded else { return }
+        isInBackground = backgrounded
+        if !backgrounded {
+            nextPoll = now()
+            tick()
+        }
+    }
     /// Also usable with a deterministic clock in offline hosts. No overlapping polls or catch-up bursts.
     public func tick() {
         if phase == .connecting, nearbyMacs.isEmpty, now() >= discoveryDeadline { fail("No Mac replied. Open Patchbridge on your Mac and try again."); return }
         if let request, now() >= request.deadline { fail("Request timed out; its outcome is unknown. Reconnect before editing."); return }
+        guard !isInBackground else { return }
         if phase == .ready, !busy, now() >= nextPoll { refresh() }
         if phase == .recovering, !busy, now() >= nextPoll { send("recover") }
     }

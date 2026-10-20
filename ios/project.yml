@@ -12,6 +12,12 @@ targets:
   Patchbridge:
     type: application
     platform: iOS
+    info:
+      path: Patchbridge/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UIBackgroundModes: [bluetooth-central]
     sources:
       - path: Patchbridge
         excludes: [".impeccable/**"]
