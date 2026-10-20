@@ -460,6 +460,256 @@
     "html": "html/concepts/D-iPad.html"
   },
   {
+    "key": "mac/m-firstrun.dc.html",
+    "slug": "m-firstrun",
+    "page": "Mac bridge",
+    "title": "Bluetooth permission",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-firstrun.png",
+    "html": "html/mac/m-firstrun.html"
+  },
+  {
+    "key": "mac/m-noqc.dc.html",
+    "slug": "m-noqc",
+    "page": "Mac bridge",
+    "title": "Waiting for the QC",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-noqc.png",
+    "html": "html/mac/m-noqc.html"
+  },
+  {
+    "key": "mac/m-cortex.dc.html",
+    "slug": "m-cortex",
+    "page": "Mac bridge",
+    "title": "Cortex Control has the QC",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-cortex.png",
+    "html": "html/mac/m-cortex.html"
+  },
+  {
+    "key": "mac/m-btoff.dc.html",
+    "slug": "m-btoff",
+    "page": "Mac bridge",
+    "title": "Bluetooth off",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-btoff.png",
+    "html": "html/mac/m-btoff.html"
+  },
+  {
+    "key": "mac/m-ready.dc.html",
+    "slug": "m-ready",
+    "page": "Mac bridge",
+    "title": "Ready for an iPhone",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-ready.png",
+    "html": "html/mac/m-ready.html"
+  },
+  {
+    "key": "mac/m-request.dc.html",
+    "slug": "m-request",
+    "page": "Mac bridge",
+    "title": "Approve an iPhone",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-request.png",
+    "html": "html/mac/m-request.html"
+  },
+  {
+    "key": "mac/m-connected.dc.html",
+    "slug": "m-connected",
+    "page": "Mac bridge",
+    "title": "Connected · recent edits",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-connected.png",
+    "html": "html/mac/m-connected.html"
+  },
+  {
+    "key": "mac/m-unplugged.dc.html",
+    "slug": "m-unplugged",
+    "page": "Mac bridge",
+    "title": "QC unplugged mid-session",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-unplugged.png",
+    "html": "html/mac/m-unplugged.html"
+  },
+  {
+    "key": "mac/m-helper.dc.html",
+    "slug": "m-helper",
+    "page": "Mac bridge",
+    "title": "Bridge stopped",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-helper.png",
+    "html": "html/mac/m-helper.html"
+  },
+  {
+    "key": "mac/m-firmware.dc.html",
+    "slug": "m-firmware",
+    "page": "Mac bridge",
+    "title": "Untested CorOS",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-firmware.png",
+    "html": "html/mac/m-firmware.html"
+  },
+  {
+    "key": "mac/m-closing.dc.html",
+    "slug": "m-closing",
+    "page": "Mac bridge",
+    "title": "Closing the window",
+    "w": 480,
+    "h": 700,
+    "png": "mac/m-closing.png",
+    "html": "html/mac/m-closing.html"
+  },
+  {
+    "key": "mac/mb-icons.dc.html",
+    "slug": "mb-icons",
+    "page": "Mac bridge",
+    "title": "Menu bar icon states",
+    "w": 760,
+    "h": 220,
+    "png": "mac/mb-icons.png",
+    "html": "html/mac/mb-icons.html"
+  },
+  {
+    "key": "mac/mb-notify-request.dc.html",
+    "slug": "mb-notify-request",
+    "page": "Mac bridge",
+    "title": "Notification · approval",
+    "w": 380,
+    "h": 122,
+    "png": "mac/mb-notify-request.png",
+    "html": "html/mac/mb-notify-request.html"
+  },
+  {
+    "key": "mac/mb-notify-lost.dc.html",
+    "slug": "mb-notify-lost",
+    "page": "Mac bridge",
+    "title": "Notification · QC lost",
+    "w": 380,
+    "h": 78,
+    "png": "mac/mb-notify-lost.png",
+    "html": "html/mac/mb-notify-lost.html"
+  },
+  {
+    "key": "mac/mb-ready.dc.html",
+    "slug": "mb-ready",
+    "page": "Mac bridge",
+    "title": "Menu bar · ready",
+    "w": 340,
+    "h": 322,
+    "png": "mac/mb-ready.png",
+    "html": "html/mac/mb-ready.html"
+  },
+  {
+    "key": "mac/mb-connected.dc.html",
+    "slug": "mb-connected",
+    "page": "Mac bridge",
+    "title": "Menu bar · connected",
+    "w": 340,
+    "h": 322,
+    "png": "mac/mb-connected.png",
+    "html": "html/mac/mb-connected.html"
+  },
+  {
+    "key": "mac/mb-request.dc.html",
+    "slug": "mb-request",
+    "page": "Mac bridge",
+    "title": "Menu bar · approve",
+    "w": 340,
+    "h": 516,
+    "png": "mac/mb-request.png",
+    "html": "html/mac/mb-request.html"
+  },
+  {
+    "key": "mac/mb-lost.dc.html",
+    "slug": "mb-lost",
+    "page": "Mac bridge",
+    "title": "Menu bar · QC lost",
+    "w": 340,
+    "h": 441,
+    "png": "mac/mb-lost.png",
+    "html": "html/mac/mb-lost.html"
+  },
+  {
+    "key": "mac/mb-stopped.dc.html",
+    "slug": "mb-stopped",
+    "page": "Mac bridge",
+    "title": "Menu bar · bridge stopped",
+    "w": 340,
+    "h": 460,
+    "png": "mac/mb-stopped.png",
+    "html": "html/mac/mb-stopped.html"
+  },
+  {
+    "key": "mac/m-settings.dc.html",
+    "slug": "m-settings",
+    "page": "Mac bridge",
+    "title": "Settings",
+    "w": 560,
+    "h": 660,
+    "png": "mac/m-settings.png",
+    "html": "html/mac/m-settings.html"
+  },
+  {
+    "key": "mac/d-ready.dc.html",
+    "slug": "d-ready",
+    "page": "Mac bridge",
+    "title": "Daylight · ready",
+    "w": 480,
+    "h": 700,
+    "png": "mac/d-ready.png",
+    "html": "html/mac/d-ready.html"
+  },
+  {
+    "key": "mac/d-request.dc.html",
+    "slug": "d-request",
+    "page": "Mac bridge",
+    "title": "Daylight · approve",
+    "w": 480,
+    "h": 700,
+    "png": "mac/d-request.png",
+    "html": "html/mac/d-request.html"
+  },
+  {
+    "key": "mac/d-connected.dc.html",
+    "slug": "d-connected",
+    "page": "Mac bridge",
+    "title": "Daylight · connected",
+    "w": 480,
+    "h": 700,
+    "png": "mac/d-connected.png",
+    "html": "html/mac/d-connected.html"
+  },
+  {
+    "key": "mac/d-mb-connected.dc.html",
+    "slug": "d-mb-connected",
+    "page": "Mac bridge",
+    "title": "Daylight · menu bar",
+    "w": 340,
+    "h": 322,
+    "png": "mac/d-mb-connected.png",
+    "html": "html/mac/d-mb-connected.html"
+  },
+  {
+    "key": "mac/d-mb-request.dc.html",
+    "slug": "d-mb-request",
+    "page": "Mac bridge",
+    "title": "Daylight · menu bar approve",
+    "w": 340,
+    "h": 516,
+    "png": "mac/d-mb-request.png",
+    "html": "html/mac/d-mb-request.html"
+  },
+  {
     "key": "ipad/c-welcome.dc.html",
     "slug": "c-welcome",
     "page": "iPad PoC",
