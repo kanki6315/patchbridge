@@ -10,6 +10,8 @@ struct MacBridgePresentation {
     var scene: String?
     var dirty = false
     var recovering = false
+    /// A phone trusted to reconnect without a code until the bridge stops or quits.
+    var trustedPhone: String?
     var recentEdits: [RecentBridgeEdit] = []
 }
 protocol OfflineBridgeBackend: AnyObject {
@@ -20,7 +22,9 @@ protocol OfflineBridgeBackend: AnyObject {
     func start() throws
     func requestPhone() throws
     func approve() throws
+    func approve(trust: Bool) throws
     func revoke()
+    func revokeTrust()
     func refresh() throws
     func stop()
     func interruptHelper()
@@ -36,6 +40,8 @@ extension OfflineBridgeBackend {
     func interruptDevice() throws { throw BridgeFailure.protocolError }
     func editSimulation(value: Double, stale: Bool) throws { throw BridgeFailure.protocolError }
     func clearRecentEdits() {}
+    func approve(trust: Bool) throws { try approve() }
+    func revokeTrust() {}
 }
 
 /// Only constructs a bundled simulator. No radio or USB transport is available here.
@@ -74,9 +80,10 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
         presentation.phoneName = bridge?.phoneName ?? "iPhone"
         presentation.approvalCode = bridge?.approvalCode ?? ""
     }
-    func approve() throws {
+    func approve() throws { try approve(trust: false) }
+    func approve(trust: Bool) throws {
         guard let bridge else { throw BridgeFailure.disconnected }
-        bridge.approve()
+        bridge.approve(trusting: trust); presentation.trustedPhone = bridge.trustedPhoneName
         let reply = try send("connect")
         guard reply["status"] as? String == "confirmed", let session = reply["session_id"] as? String else { throw BridgeFailure.protocolError }
         self.session = session
@@ -96,7 +103,9 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
     func clearRecentEdits() { presentation.recentEdits.removeAll() }
     func revoke() { bridge?.revoke(); session = nil; snapshot = nil; catalog = nil
         let history = presentation.recentEdits
-        presentation = MacBridgePresentation(); presentation.recentEdits = history }
+        presentation = MacBridgePresentation(); presentation.recentEdits = history
+        presentation.trustedPhone = bridge?.trustedPhoneName }
+    func revokeTrust() { bridge?.revokeTrust(); presentation.trustedPhone = nil }
     func interruptDevice() throws {
         guard let bridge else { throw BridgeFailure.disconnected }
         try bridge.simulateDeviceRemoval(); session = nil; presentation.recovering = true
@@ -209,10 +218,15 @@ final class MacBridgeModel: ObservableObject {
         perform({ try $0.requestPhone() }, success: .awaitingApproval,
                 message: "Allow this simulated phone to read the simulation? Approval lasts for this connection only.")
     }
-    func approve() {
+    func approve(trust: Bool = false) {
         guard phase == .awaitingApproval && !busy else { return }
         phase = .approving; detail = "Approving this connection and requesting a snapshot."
-        perform({ try $0.approve() }, success: .connected, message: "Approval granted. A snapshot was confirmed by the bundled helper.")
+        perform({ try $0.approve(trust: trust) }, success: .connected, message: "Approval granted. A snapshot was confirmed by the bundled helper.")
+    }
+    /// Ends trust without disconnecting; the phone's next connection shows a code.
+    func revokeTrust() {
+        guard presentation.trustedPhone != nil && !busy else { return }
+        perform({ $0.revokeTrust() }, success: phase, message: phase == .connected ? "Trust revoked. This connection continues; the next one needs approval." : "Trust revoked. The next connection needs approval.")
     }
     func disconnectPhone() {
         guard (phase == .awaitingApproval || phase == .approving || phase == .connected || phase == .recovering) && !busy else { return }

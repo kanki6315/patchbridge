@@ -418,7 +418,7 @@ extension CoordinatorTests {
         let t = OfflineTransport(); t.handler = { try bridge.handle($0) }
         let c = EditorCoordinator(automaticPolling: false, phoneName: "Jamie’s iPhone", now: { self.clock }, makeTransport: { t })
         c.start()
-        XCTAssertEqual(c.macName, "Studio Mac"); XCTAssertEqual(bridge.phoneName, "Jamie’s iPhone")
+        XCTAssertEqual(c.macName, bridge.macName); XCTAssertEqual(bridge.phoneName, "Jamie’s iPhone")
         XCTAssertEqual(c.approvalCode, bridge.approvalCode)
         bridge.approve(); c.authorize(); XCTAssertEqual(c.phase, .ready)
         let token = bridge.token
@@ -468,5 +468,45 @@ extension CoordinatorTests {
         XCTAssertEqual(DeviceIdentity.name("Jamie\u{202E}\n", fallback: "iPhone"), "Jamie")
         XCTAssertEqual(DeviceIdentity.name(String(repeating: "x", count: 500), fallback: "Mac").count, 64)
         XCTAssertEqual(DeviceIdentity.approvalCode("abcdef12-3456"), "ABC·DEF")
+    }
+    func testTrustedReconnectSkipsApprovalUntilRevoked() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
+        defer { helper.stop() }
+        let bridge = BridgeSession(helper: helper)
+        let t = OfflineTransport(); t.autoReady = false; t.handler = { try bridge.handle($0) }
+        let c = coordinator(t)
+        c.start(); t.onDiscovered?("mac", "Studio Mac"); c.chooseMac("mac")
+        XCTAssertEqual(c.phase, .awaitingApproval); XCTAssertNil(t.messages.last?["trust_token"])
+        bridge.approve(trusting: true); c.authorize()
+        XCTAssertEqual(c.phase, .ready); XCTAssertTrue(c.trusted); XCTAssertNotNil(c.trustTokens["mac"])
+        XCTAssertNotNil(bridge.trustedPhoneName)
+
+        // The phone left; Reconnect finds the same Mac and skips the code.
+        bridge.revoke(); c.start(reconnecting: true)
+        XCTAssertEqual(c.macName, bridge.macName)
+        t.onDiscovered?("mac", "Studio Mac")
+        XCTAssertEqual(c.phase, .ready); XCTAssertTrue(c.trusted); XCTAssertNil(c.approvalCode)
+
+        // A fresh start forgets the last Mac but keeps its token for when it is chosen again.
+        bridge.revoke(); c.start(); t.onDiscovered?("mac", "Studio Mac")
+        XCTAssertEqual(c.phase, .connecting)
+        c.chooseMac("mac"); XCTAssertEqual(c.phase, .ready)
+
+        // Revoking trust keeps the Mac's current connection rules but the next hello needs approval.
+        bridge.revokeTrust(); bridge.revoke(); c.start(reconnecting: true); t.onDiscovered?("mac", "Studio Mac")
+        XCTAssertEqual(c.phase, .awaitingApproval); XCTAssertFalse(c.trusted); XCTAssertNil(c.trustTokens["mac"])
+        bridge.approve(); c.authorize()
+        XCTAssertEqual(c.phase, .ready); XCTAssertFalse(c.trusted); XCTAssertNil(c.trustTokens["mac"])
+    }
+    func testForgedTrustTokenStillRequiresApproval() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
+        defer { helper.stop() }
+        let bridge = BridgeSession(helper: helper)
+        bridge.approve(trusting: true); bridge.revoke()
+        let hello = try bridge.handle(["version": 1, "id": "h", "operation": "hello", "trust_token": "guess"])
+        XCTAssertEqual(hello["authorization_required"] as? Bool, true)
+        XCTAssertThrowsError(try bridge.handle(["version": 1, "id": "c", "operation": "connect", "connection_id": bridge.token]))
     }
 }

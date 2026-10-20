@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */; };
+		029A4F9E5A319FB2B53A06CD /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
+		07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D296E6B8332175985BB77130 /* TrustStore.swift */; };
+		0BD868FE5FC0C45B458D122F /* PatchbridgeWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */; };
 		184795C273F446AC30468366 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */; };
 		31876869DBD5740176721AEB /* PadWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */; };
@@ -18,13 +21,16 @@
 		5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */; };
 		65F0DF151692770297348421 /* Chunks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F75207A678F28257EA105F3 /* Chunks.swift */; };
 		8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */; };
+		935F95CD7F754CD972C43AAC /* ConnectionActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F9F5091A58713B6AB66672 /* ConnectionActivityWidget.swift */; };
 		A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */; };
 		A4988E90372F49BAA73D7245 /* DuoWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */; };
 		AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E68459E6EE63B03631133E9 /* EditorView.swift */; };
+		ADBCD09A0A9B55D2F6F247C4 /* ConnectionActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031C04AFD778DDE0C3BF77D2 /* ConnectionActivityController.swift */; };
 		B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 025A144248FD7B2C1307731E /* AppIcon.icon */; };
 		B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42253D1C8C450F010DE25BCD /* GenericEditor.swift */; };
 		B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E125DD1594C135E050EF4E8 /* BLECentral.swift */; };
 		B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59B2D058255097DC58ED315 /* EditorCoordinator.swift */; };
+		CCB8F3B7D3AB5BBCEAFF5B6E /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
 		CFDBC47AD10CC294B4320C98 /* qc-editor.json in Resources */ = {isa = PBXBuildFile; fileRef = D1060EC516FC395E41ABB898 /* qc-editor.json */; };
 /* End PBXBuildFile section */
 
@@ -36,15 +42,39 @@
 			remoteGlobalIDString = C9D7F003699778C10868C83F;
 			remoteInfo = Patchbridge;
 		};
+		BEC910EAA0596E2F7A7B4E88 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EDD58D6361D28AE773072F40 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 64E3D7A3654019E3B8EDA918;
+			remoteInfo = PatchbridgeWidgets;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F042B04331BA2B7B9EC0809E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0BD868FE5FC0C45B458D122F /* PatchbridgeWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		025A144248FD7B2C1307731E /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		031C04AFD778DDE0C3BF77D2 /* ConnectionActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionActivityController.swift; sourceTree = "<group>"; };
 		17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchbridgeApp.swift; sourceTree = "<group>"; };
+		1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionActivity.swift; sourceTree = "<group>"; };
 		2544FE9FA36EA4F67327F5B0 /* PhoneFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneFlowTests.swift; sourceTree = "<group>"; };
 		3E125DD1594C135E050EF4E8 /* BLECentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLECentral.swift; sourceTree = "<group>"; };
 		3E68459E6EE63B03631133E9 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		42253D1C8C450F010DE25BCD /* GenericEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericEditor.swift; sourceTree = "<group>"; };
+		45F9F5091A58713B6AB66672 /* ConnectionActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionActivityWidget.swift; sourceTree = "<group>"; };
 		4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExchange.swift; sourceTree = "<group>"; };
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
 		67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PadWorkspaceView.swift; sourceTree = "<group>"; };
@@ -52,11 +82,14 @@
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA318B3E68E63CA3046061E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PatchbridgeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		D1060EC516FC395E41ABB898 /* qc-editor.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "qc-editor.json"; sourceTree = "<group>"; };
 		D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneModel.swift; sourceTree = "<group>"; };
+		D296E6B8332175985BB77130 /* TrustStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustStore.swift; sourceTree = "<group>"; };
 		D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
 		D6BA326B4AFA35FBB2DD6298 /* PatchbridgeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PatchbridgeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D90451EF4EDE8F7C98C2FDA8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorModel.swift; sourceTree = "<group>"; };
 		EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoWorkspaceView.swift; sourceTree = "<group>"; };
 		EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Patchbridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -64,11 +97,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		0702C7A0406E80599BA863E1 /* PatchbridgeWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				45F9F5091A58713B6AB66672 /* ConnectionActivityWidget.swift */,
+				D90451EF4EDE8F7C98C2FDA8 /* Info.plist */,
+			);
+			path = PatchbridgeWidgets;
+			sourceTree = "<group>";
+		};
 		15AA50A8907B9C40FB7801A2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */,
 				D6BA326B4AFA35FBB2DD6298 /* PatchbridgeUITests.xctest */,
+				B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,6 +130,7 @@
 			children = (
 				025A144248FD7B2C1307731E /* AppIcon.icon */,
 				D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */,
+				031C04AFD778DDE0C3BF77D2 /* ConnectionActivityController.swift */,
 				EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */,
 				3E68459E6EE63B03631133E9 /* EditorView.swift */,
 				AA318B3E68E63CA3046061E9 /* Info.plist */,
@@ -95,6 +139,7 @@
 				D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */,
 				9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */,
 				81EB72B83CCED483250AEC0C /* Theme.swift */,
+				D296E6B8332175985BB77130 /* TrustStore.swift */,
 			);
 			path = Patchbridge;
 			sourceTree = "<group>";
@@ -106,6 +151,8 @@
 				519E584C2E77AE9092522B22 /* Patchbridge */,
 				D8A3E97632801B8CA74207B1 /* PatchbridgeCore */,
 				67A61EF166DAFAD9688B634C /* PatchbridgeUITests */,
+				0702C7A0406E80599BA863E1 /* PatchbridgeWidgets */,
+				F3A80CE8890C3C6DBC1A3FBB /* Shared */,
 				15AA50A8907B9C40FB7801A2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -134,9 +181,34 @@
 			path = ../swift/Sources/PatchbridgeCore;
 			sourceTree = "<group>";
 		};
+		F3A80CE8890C3C6DBC1A3FBB /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		64E3D7A3654019E3B8EDA918 /* PatchbridgeWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A7B0C377969889489FC9496 /* Build configuration list for PBXNativeTarget "PatchbridgeWidgets" */;
+			buildPhases = (
+				251FA79E7A024A573C5EB7F9 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PatchbridgeWidgets;
+			packageProductDependencies = (
+			);
+			productName = PatchbridgeWidgets;
+			productReference = B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		95ADE0FFBE74754A2F2DEA62 /* PatchbridgeUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 171B1716F27349FFBEEF451A /* Build configuration list for PBXNativeTarget "PatchbridgeUITests" */;
@@ -161,10 +233,12 @@
 			buildPhases = (
 				5C1E38DB46950966E903BCDC /* Sources */,
 				BDE22C222DD16F1212B5F8CB /* Resources */,
+				F042B04331BA2B7B9EC0809E /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A380C2DE85A56CC7208619D8 /* PBXTargetDependency */,
 			);
 			name = Patchbridge;
 			packageProductDependencies = (
@@ -182,6 +256,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					64E3D7A3654019E3B8EDA918 = {
+						DevelopmentTeam = TDBAHN96B3;
+						ProvisioningStyle = Automatic;
+					};
 					95ADE0FFBE74754A2F2DEA62 = {
 						DevelopmentTeam = TDBAHN96B3;
 						ProvisioningStyle = Automatic;
@@ -208,6 +286,7 @@
 			projectRoot = "";
 			targets = (
 				C9D7F003699778C10868C83F /* Patchbridge */,
+				64E3D7A3654019E3B8EDA918 /* PatchbridgeWidgets */,
 				95ADE0FFBE74754A2F2DEA62 /* PatchbridgeUITests */,
 			);
 		};
@@ -235,6 +314,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		251FA79E7A024A573C5EB7F9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CCB8F3B7D3AB5BBCEAFF5B6E /* ConnectionActivity.swift in Sources */,
+				935F95CD7F754CD972C43AAC /* ConnectionActivityWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5C1E38DB46950966E903BCDC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -243,6 +331,8 @@
 				184795C273F446AC30468366 /* BlockEditorView.swift in Sources */,
 				65F0DF151692770297348421 /* Chunks.swift in Sources */,
 				0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */,
+				029A4F9E5A319FB2B53A06CD /* ConnectionActivity.swift in Sources */,
+				ADBCD09A0A9B55D2F6F247C4 /* ConnectionActivityController.swift in Sources */,
 				1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */,
 				5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */,
 				A4988E90372F49BAA73D7245 /* DuoWorkspaceView.swift in Sources */,
@@ -254,6 +344,7 @@
 				8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */,
 				47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */,
 				444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */,
+				07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -264,6 +355,11 @@
 			isa = PBXTargetDependency;
 			target = C9D7F003699778C10868C83F /* Patchbridge */;
 			targetProxy = 2C2457A7ACC0CB12399CEC24 /* PBXContainerItemProxy */;
+		};
+		A380C2DE85A56CC7208619D8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 64E3D7A3654019E3B8EDA918 /* PatchbridgeWidgets */;
+			targetProxy = BEC910EAA0596E2F7A7B4E88 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -323,6 +419,24 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		5E713EF27C81F6BD89FB97ED /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = PatchbridgeWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arjunakankipati.patchbridge.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -460,6 +574,24 @@
 			};
 			name = Debug;
 		};
+		C67A26F4766C3F3818D69288 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = PatchbridgeWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arjunakankipati.patchbridge.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		E66CE17A04DB5AC66E37C615 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -485,6 +617,15 @@
 			buildConfigurations = (
 				E66CE17A04DB5AC66E37C615 /* Debug */,
 				8EABDFC8BC53C9FE73942AC8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7A7B0C377969889489FC9496 /* Build configuration list for PBXNativeTarget "PatchbridgeWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C67A26F4766C3F3818D69288 /* Debug */,
+				5E713EF27C81F6BD89FB97ED /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

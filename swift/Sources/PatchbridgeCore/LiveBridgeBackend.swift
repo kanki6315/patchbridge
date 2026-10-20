@@ -39,11 +39,14 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         update(.running, "Starting Bluetooth. USB opens after you approve a phone and it requests a connection.")
         peripheral.start(name: bridge.macName)
     }
-    private func update(_ phase: MacBridgeModel.Phase, _ detail: String) { state = (phase, detail); onChange?() }
+    private func update(_ phase: MacBridgeModel.Phase, _ detail: String) {
+        presentation.trustedPhone = bridge?.trustedPhoneName; state = (phase, detail); onChange?()
+    }
     func requestPhone() throws { throw BridgeFailure.protocolError }
-    func approve() throws {
+    func approve() throws { try approve(trust: false) }
+    func approve(trust: Bool) throws {
         guard let bridge, state?.0 == .awaitingApproval else { throw BridgeFailure.disconnected }
-        approved = true; bridge.approve()
+        approved = true; bridge.approve(trusting: trust)
         update(.approving, "Approved. Tap ‘I’ve approved it’ on your iPhone to read the QC.")
     }
     private func resetPresentation() {
@@ -54,7 +57,15 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     private func phoneLeft() {
         guard bridge != nil else { return }
         bridge?.revoke(); resetPresentation()
-        update(.running, "Phone disconnected. Open Patchbridge on your iPhone to connect with fresh approval.")
+        if let trusted = bridge?.trustedPhoneName {
+            update(.running, "\(trusted) disconnected. It can reconnect without a code until Patchbridge quits.")
+        } else {
+            update(.running, "Phone disconnected. Open Patchbridge on your iPhone to connect with fresh approval.")
+        }
+    }
+    func revokeTrust() {
+        bridge?.revokeTrust()
+        if let state { update(state.0, state.1) }
     }
     func revoke() { phoneLeft(); peripheral.resetConnection() }
     func refresh() throws {} // The phone polls; the Mac must not create a competing USB session.
@@ -70,7 +81,10 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         do {
             let reply = try bridge.handle(request)
             let operation = request["operation"] as? String
-            if operation == "hello" && !approved {
+            if operation == "hello" && !approved && bridge.isTrustedConnection {
+                approved = true; presentation.phoneName = bridge.phoneName
+                update(.approving, "\(presentation.phoneName) is trusted until Patchbridge quits. Reconnecting without a code.")
+            } else if operation == "hello" && !approved {
                 presentation.phoneName = bridge.phoneName; presentation.approvalCode = bridge.approvalCode
                 update(.awaitingApproval, "Compare the code on \(presentation.phoneName). Allow this phone to read and edit supported QC parameters?")
             } else if bridge.recovering {

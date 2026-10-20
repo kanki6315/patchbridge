@@ -364,7 +364,7 @@ State changes take 150–250ms with an ease-out-quint curve. The dashed-to-solid
 
 The Mac surface is an Operate view: a 480-point window and a compact menu-bar popover,
 with the same Stage/Daylight palette, native system typography and SF Symbols. Controls
-stay available below scrollable status content. Live mode is labelled USB + Bluetooth;
+stay available below scrollable status content. The header shows the Patch Cable mark and Patchbridge wordmark;
 simulation mode always identifies itself as Simulation. Connection indicators reflect
 confirmed state. Both apps use the shared Patch Cable icon.
 

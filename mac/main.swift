@@ -12,6 +12,61 @@ private struct BridgePalette {
     var signal: Color { dark ? Color(red: 0.82, green: 0.882, blue: 0.29) : Color(red: 0.36, green: 0.392, blue: 0) }
 }
 
+/// The Patch Cable "pb" mark from docs/design/brand/patch-cable.svg, drawn in the current foreground style.
+private struct PatchCableMark: View {
+    private static let cable = "M5 182V123C5 90 24 74 57 74H108C133 74 147 88 147 113V132C147 139 152 139 159 141L168 144Q174 146 174 138V70H203V77H249C278 77 294 92 294 119V139C294 167 278 183 250 183H204C186 183 174 177 161 165L155 160Q149 155 142 158C134 175 120 183 100 183H54C35 183 35 155 54 155H100C112 155 119 148 119 137V116C119 108 114 104 105 104H57C42 104 35 111 35 124V182ZM203 105V149Q203 155 210 155H249C259 155 265 149 265 139V120C265 110 260 105 249 105Z"
+    private static let jacks = "M10 211H29V227H10Z M13 231H26L30 237Q30 241 25 245Q20 249 15 245L9 240Q7 236 13 231Z M179 21H198V41H179Z M181 1H194L199 7Q200 11 196 14V17H180V14Q175 11 178 7Z"
+
+    var body: some View {
+        Canvas { context, size in
+            let scale = min(size.width / 300, size.height / 250)
+            context.translateBy(x: (size.width - 300 * scale) / 2, y: (size.height - 250 * scale) / 2)
+            context.scaleBy(x: scale, y: scale)
+            context.fill(Self.path(Self.cable), with: .foreground, style: FillStyle(eoFill: true))
+            var parts = Self.path(Self.jacks)
+            parts.addRoundedRect(in: CGRect(x: 1, y: 181, width: 37, height: 26), cornerSize: CGSize(width: 3, height: 3))
+            parts.addRoundedRect(in: CGRect(x: 169, y: 45, width: 38, height: 27), cornerSize: CGSize(width: 3, height: 3))
+            context.fill(parts, with: .foreground)
+        }
+    }
+
+    /// Parses the absolute M/L/H/V/C/Q/Z commands the mark uses.
+    private static func path(_ data: String) -> Path {
+        var tokens: [String] = []
+        var current = ""
+        for ch in data {
+            if ch.isLetter {
+                if !current.isEmpty { tokens.append(current); current = "" }
+                tokens.append(String(ch))
+            } else if ch == " " || ch == "," {
+                if !current.isEmpty { tokens.append(current); current = "" }
+            } else { current.append(ch) }
+        }
+        if !current.isEmpty { tokens.append(current) }
+        var path = Path()
+        var i = 0
+        var point = CGPoint.zero
+        func next() -> CGFloat { defer { i += 1 }; return CGFloat(Double(tokens[i]) ?? 0) }
+        while i < tokens.count {
+            let command = tokens[i]; i += 1
+            switch command {
+            case "M": point = CGPoint(x: next(), y: next()); path.move(to: point)
+            case "L": point = CGPoint(x: next(), y: next()); path.addLine(to: point)
+            case "H": point.x = next(); path.addLine(to: point)
+            case "V": point.y = next(); path.addLine(to: point)
+            case "C":
+                let c1 = CGPoint(x: next(), y: next()), c2 = CGPoint(x: next(), y: next())
+                point = CGPoint(x: next(), y: next()); path.addCurve(to: point, control1: c1, control2: c2)
+            case "Q":
+                let c = CGPoint(x: next(), y: next())
+                point = CGPoint(x: next(), y: next()); path.addQuadCurve(to: point, control: c)
+            default: path.closeSubpath()
+            }
+        }
+        return path
+    }
+}
+
 struct BridgeWindow: View {
     @ObservedObject var model: MacBridgeModel
     let exportReport: () -> Void
@@ -21,6 +76,7 @@ struct BridgeWindow: View {
     @AppStorage("bridge.setupComplete") private var setupComplete = false
     @State private var setupStep = SetupStep.welcome
     @StateObject private var bluetooth = BluetoothAccess()
+    @AppStorage("bridge.trustPhone") private var trustPhone = true
     @Environment(\.colorScheme) private var scheme
     private var colors: BridgePalette { BridgePalette(dark: appearance == "Stage" || (appearance == "Match Mac" && scheme == .dark)) }
     private var settingUp: Bool { !compact && !setupComplete }
@@ -30,10 +86,13 @@ struct BridgeWindow: View {
         VStack(alignment: .leading, spacing: 18) {
             ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-            HStack {
-                Text(compact ? "Patchbridge" : "Mac bridge").font(.headline)
+            HStack(spacing: 8) {
+                PatchCableMark().foregroundStyle(colors.signal).frame(width: 26, height: 22).accessibilityHidden(true)
+                Text("Patchbridge").font(.headline)
                 Spacer()
-                Label(model.isSimulation ? "Simulation" : "USB + Bluetooth", systemImage: model.isSimulation ? "testtube.2" : "cable.connector").font(.caption).foregroundStyle(colors.muted)
+                if model.isSimulation {
+                    Label("Simulation", systemImage: "testtube.2").font(.caption).foregroundStyle(colors.muted)
+                }
             }
             if !compact { diagram }
             if settingUp { setup } else {
@@ -46,8 +105,26 @@ struct BridgeWindow: View {
                 Text(model.presentation.approvalCode).font(.system(size: 38, weight: .semibold)).tracking(5).monospacedDigit()
                     .frame(maxWidth: .infinity).padding(.vertical, 20).background(colors.surface, in: RoundedRectangle(cornerRadius: 18))
                     .accessibilityLabel("Approval code \(model.presentation.approvalCode)")
-                Text("Approve only if the phone shows the same code. Approval ends when the phone disconnects or the bridge restarts.")
+                Text("Approve only if the phone shows the same code.")
                     .font(.callout).foregroundStyle(colors.muted)
+                if model.phase == .awaitingApproval {
+                    Toggle("Trust this \(model.presentation.phoneName) until Patchbridge quits", isOn: $trustPhone).toggleStyle(.checkbox)
+                    Text(trustPhone ? "Reconnect on the phone skips the code. Quit Patchbridge or revoke trust to end it." : "Approval ends when the phone disconnects or the bridge restarts.")
+                        .font(.caption).foregroundStyle(colors.muted)
+                }
+            }
+            if let trusted = model.presentation.trustedPhone, model.phase != .awaitingApproval {
+                HStack(spacing: 12) {
+                    Image(systemName: "iphone").font(.system(size: 18)).frame(width: 36, height: 36)
+                        .background(colors.surface, in: RoundedRectangle(cornerRadius: 12)).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(trusted).fontWeight(.semibold)
+                        Text(model.phase == .connected || model.phase == .recovering ? "Trusted · connected" : "Trusted · not connected").font(.caption).foregroundStyle(colors.muted)
+                    }
+                    Spacer()
+                    Button("Revoke Trust", role: .destructive) { model.revokeTrust() }.disabled(model.busy)
+                        .accessibilityLabel("Revoke Trust for \(trusted)")
+                }.font(.system(size: 14)).padding(12).background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
             }
             if let preset = model.presentation.preset {
                 VStack(spacing: 0) {
@@ -245,7 +322,7 @@ struct BridgeWindow: View {
             if model.phase == .awaitingApproval || model.phase == .approving {
                 Button(model.phase == .approving ? "Disconnect" : "Deny") { model.disconnectPhone() }
                 Spacer()
-                Button(model.phase == .approving ? "Approved" : "Approve") { model.approve() }.buttonStyle(.borderedProminent).disabled(model.phase == .approving)
+                Button(model.phase == .approving ? "Approved" : "Approve") { model.approve(trust: trustPhone) }.buttonStyle(.borderedProminent).disabled(model.phase == .approving)
             } else if model.phase == .connected || model.phase == .recovering {
                 Spacer()
                 Button("Disconnect iPhone", role: .destructive) { model.disconnectPhone() }

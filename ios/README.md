@@ -47,6 +47,28 @@ edits and saves are local to that session and never reach Bluetooth or USB.
 Leaving the demo discards them. The demo badge and save wording distinguish it
 from a live connection.
 
+## Live Activity and trust
+
+Connection details › Lock Screen has **Show connection status** (iPhone only, off by
+default) and **Alert if the connection drops** (off by default; asks for notification
+permission when turned on). The activity (`PatchbridgeWidgets`, boards in
+`docs/design/live`) starts when a session reaches the preset and mirrors it on the Lock
+Screen and in the Dynamic Island: connected, QC/USB lost, connection lost, reconnecting,
+approval needed, and a final Disconnected state after an intentional Disconnect, which
+stays 15 minutes to show whether edits were left unsaved. Each state has at most one
+button. Disconnect and Reconnect run in the app's process through Live Activity intents;
+Open Patchbridge opens the app. The activity doesn't keep Bluetooth alive. Drops the user
+didn't start alert through the activity, or as a notification when the activity is off.
+
+On the Mac, approving with **Trust this iPhone until Patchbridge quits** (on by default)
+issues a random trust token with the connect reply. The phone keeps it in the Keychain per
+Mac and offers it in `hello`; a match skips the code, so Reconnect is one tap. Stopping the
+bridge, quitting, or **Revoke Trust** in the Mac window ends it, and the next Reconnect
+shows Approval needed. Revoking keeps the current connection.
+
+Debug builds take `--activity connected|qcLost|lost|reconnecting|approval|ended` (plus
+`--daylight`) to show a sample activity without a Mac.
+
 ## Bluetooth disconnects before approval
 
 Bluetooth pairing and Patchbridge approval are separate. Patchbridge requires
