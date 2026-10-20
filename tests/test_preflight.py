@@ -52,7 +52,7 @@ class PreflightTests(unittest.TestCase):
                 path.write_text('original')
                 inputs[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
             manifest.write_text(json.dumps({'build_inputs': inputs, 'bundled_usb': {
-                'qc_mcp_commit': 'f634ecd3dcf426090b90bc4cc176e4b500494b9e', 'protobuf': '7.36.2', 'hardware_enabled': False}}))
+                'qc_mcp_commit': 'f634ecd3dcf426090b90bc4cc176e4b500494b9e', 'protobuf': '7.36.2', 'hardware_enabled': True}}))
             with patch.object(preflight, 'ROOT', root), patch.object(preflight, 'APP', app):
                 preflight.freshness()
                 (root / paths[0]).write_text('changed')

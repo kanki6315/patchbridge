@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EditorView: View {
     @ObservedObject var model: PhoneModel
+    @AppStorage("patchbridge.phoneName") private var phoneName = ""
     @AppStorage("appearance") private var appearance = "Stage"
     @AppStorage("matchSystem") private var matchSystem = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -284,6 +285,10 @@ struct EditorView: View {
                     if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
                     if let code = model.coordinator.approvalCode { Text(code.prefix(3) + " · " + code.suffix(3)).font(.largeTitle.bold().monospacedDigit()).frame(maxWidth: .infinity).padding(24).phoneGlass(theme) }
                     PrimaryButton(title: "I’ve approved it", theme: theme) { model.coordinator.authorize() }.disabled(model.busy)
+                } else if model.coordinator.phase == .recovering {
+                    ProgressView("QC disconnected · waiting for USB recovery").tint(theme.signal)
+                    Text("Editing is paused. Reconnect the QC cable; uncertain edits will not be retried.").foregroundStyle(theme.muted)
+                    Button("Disconnect") { model.disconnect() }
                 } else if model.coordinator.phase == .connecting || model.coordinator.phase == .loading {
                     ForEach(model.coordinator.nearbyMacs.keys.sorted(), id: \.self) { id in
                         Button { model.coordinator.chooseMac(id) } label: {
@@ -296,6 +301,8 @@ struct EditorView: View {
                     Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(theme.caution)
                     PrimaryButton(title: "Reconnect", theme: theme) { model.start() }
                 } else {
+                    TextField("Phone name (optional)", text: $phoneName).textFieldStyle(.roundedBorder)
+                    Text("Shown on your Mac. Leave blank to use iPhone.").font(.footnote).foregroundStyle(theme.muted)
                     Label("Open Patchbridge on your Mac.", systemImage: "1.circle.fill")
                     Label("Plug in the QC. Close Cortex Control.", systemImage: "2.circle.fill")
                 }
@@ -316,6 +323,7 @@ struct EditorView: View {
         case .awaitingApproval: return "Approve on your Mac"
         case .connecting: return model.coordinator.nearbyMacs.isEmpty ? "Finding your Mac" : "Choose your Mac"
         case .loading: return "Reading the QC"
+        case .recovering: return "Waiting for your QC"
         case .failed: return model.error?.hasPrefix("Bluetooth") == true ? "Check Bluetooth" : "Connection ended"
         default: return "Patchbridge"
         }

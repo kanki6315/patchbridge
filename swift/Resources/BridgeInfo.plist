@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>dev.patchbridge.demo</string>
+<key>CFBundleIdentifier</key><string>com.arjunakankipati.patchbridge.demo</string>
 <key>CFBundleName</key><string>Patchbridge Demo</string>
 <key>NSBluetoothAlwaysUsageDescription</key><string>Connect an iPhone to the simulated Patchbridge editor.</string>
 </dict></plist>

@@ -1,16 +1,16 @@
-# Offline Mac helper package
+# Mac bridge package
 
-`dist/Patchbridge Offline.app` is a local, standalone simulation host. Open it in
-Finder to open the stopped bridge shell. Choose Start bridge, Simulate phone
-connection, and Approve connection to read a snapshot from the bundled simulator.
-Closing the window stops the helper. No terminal,
-Homebrew, separately installed Python, Bluetooth advertising, or USB access is
-needed at runtime. The existing installed phone app and BLE demo are unchanged.
+`dist/Patchbridge.app` is a standalone native Mac bridge with bundle ID
+`com.arjunakankipati.patchbridge`. It uses the same Patch Cable Icon Composer asset
+as the iPhone app. It starts stopped. **Start bridge** starts Bluetooth advertising
+and the bundled USB helper; USB opens only after a phone is explicitly approved and
+requests a connection. The iPhone must compare the code, then tap **I’ve approved it**.
+Close Cortex Control and connect a QC running verified CorOS 4.1.1.
 
-The compact native shell uses `HelperClient(bundle: .main)` on its worker queue
-and the serialized `BridgeSession` approval path. Phone requests are simulated
-locally; real phone discovery and radio connections are not enabled.
-See [Mac bridge shell](MAC_BRIDGE_SHELL.md) for controls and verification.
+**Use simulation**, available while stopped, selects the offline walkthrough instead.
+That mode never starts a radio or opens USB. Self-tests and report-export CLI checks
+also remain simulated. No Homebrew or separately installed Python is needed at runtime.
+See [Mac bridge shell](MAC_BRIDGE_SHELL.md) for controls and limitations.
 
 ## Build and check without downloads
 
@@ -32,7 +32,7 @@ universal extension is thinned to arm64 and given a relocatable library ID befor
 signing. Its original wheel bytes are verified before modification. Native audit
 accepts only system libraries and the explicitly identified bundled library IDs.
 
-The builder replaces only the fixed generated `dist/Patchbridge Offline.app`.
+The builder replaces only the fixed generated `dist/Patchbridge.app`.
 It compiles a native Swift/AppKit host and C helper launcher, copies the local
 CPython library, pure-Python standard library, and the native extension closure needed by simulation and the direct USB adapter.
 It includes pinned qc-mcp transport/protocol/macOS HID modules and their binary
@@ -42,7 +42,7 @@ package manager, network, interpreter discovery, or downloads occur.
 
 The current runtime is CPython 3.14.6, arm64, built for **macOS 26.0+**. The builder
 reads that deployment floor from the actual runtime rather than claiming older
-macOS support. It is about 20 MB on disk. The manifest inside
+macOS support. The manifest inside
 `Contents/Resources/build-manifest.json` records runtime/version/platform and
 SHA-256 hashes of packaged files before the final app signature.
 
@@ -54,14 +54,14 @@ SHA-256 hashes of packaged files before the final app signature.
 - CPython uses isolated configuration and explicit bundle-only import paths.
   It ignores PYTHONHOME, PYTHONPATH, user site packages, and the working directory.
   Bytecode writes are disabled so launch cannot modify the signed bundle.
-- Normal startup always runs `patchbridge.helper --adapter simulated`. Additional offline launcher options are `--verify-usb-fixtures <fixture-root>`
-  (fixed verification) and `--captured-read-only <qc-editor.json>` (read-only
-  process host for coordinator/recovery tests). `--adapter usb` and arbitrary Python arguments are
-  rejected. USB code/dependencies are present, but live USB startup is disabled.
+- The launcher accepts `--usb` for the live adapter. No arguments selects simulation.
+  Offline options remain `--verify-usb-fixtures <fixture-root>` and
+  `--captured-read-only <qc-editor.json>`. Arbitrary Python arguments are rejected.
+  Constructing the USB adapter does not enumerate or open a device; a connect request does.
 - The Swift bundle initializer never falls back to a system interpreter. Its
   environment is limited to system PATH and a UTF-8 locale. Explicit Python/source
   paths remain available only in the development initializer.
-- The host owns the process on a worker queue. Closing it closes helper stdin;
+- The host owns the process on a worker queue. Stopping or quitting closes helper stdin;
   existing bounded terminate/kill cleanup handles a helper that fails to exit.
   Startup/protocol failures are shown in the host window. No automatic mutation
   retries or background launch agents are installed.
@@ -74,7 +74,8 @@ stops the process. The independent check copies the app to a directory containin
 spaces, verifies its signature, and repeats the test with an empty PATH, temporary
 HOME, invalid PYTHONHOME, and hostile PYTHONPATH/current-directory modules.
 It also checks stdin EOF exit, absence of bytecode writes, explicit failure
-when the bundled helper or schema is missing, and rejection of live USB arguments.
+when the bundled helper or schema is missing, and rejection of arbitrary launcher arguments. It also checks the bundle ID, compiled
+icon and Bluetooth purpose string, and idle USB-helper EOF shutdown without a connect request.
 The relocated bundle runs nine additional checks with separately copied captured
 inputs: actual protobuf decoding, snapshot/catalog agreement (16 blocks/11 models),
 real Grid message serialization and edit readback, File CREATE save serialization,
@@ -88,7 +89,7 @@ The private captured preset/catalog files are supplied as test inputs, never
 included in the app. Re-run just the bundle checker with:
 
 ```sh
-"dist/Patchbridge Offline.app/Contents/MacOS/patchbridge-helper" --verify-usb-fixtures "$PWD"
+"dist/Patchbridge.app/Contents/MacOS/patchbridge-helper" --verify-usb-fixtures "$PWD"
 ```
 
 Expected failure scenarios emit diagnostic tracebacks on stderr; the final JSON
@@ -103,15 +104,54 @@ local use on this Mac, not a Gatekeeper-ready release. For distribution, use a
 controlled runtime build with the desired minimum macOS version/architectures,
 complete live validation of the bundled USB adapter with the user present, add production
 signing/hardened-runtime configuration and notarization, and test on a clean Mac.
-Do not enable USB simply by changing the simulator flag: these tests validate the
-packaged dependency/protocol path against recorded evidence, not real IOKit device
-access or hardware behavior. Live USB activation remains separate authorized work.
+These checks validate the packaged dependency/protocol path against recorded evidence.
+The live host is wired, but physical iPhone-to-Mac-to-QC operation and cable recovery
+still require end-to-end hardware validation. The new bundle's UI automation was blocked
+by organization policy for its bundle ID; no policy workaround was used.
 Optional stdlib OpenSSL, LZMA, and Zstd extensions are omitted; the QC catalog path
 uses gzip/zlib, which is included and tested.
 
 See [read-only mode and recovery](READ_ONLY_QC.md) for the packaged Swift integration
-test and the explicit source USB read-only policy. Live USB remains disabled in
-the app launcher.
+test and the explicit source USB read-only policy. The live app uses the writable USB
+adapter; only supported, confirmed operations are exposed by the phone.
 
 The host also offers **Export Troubleshooting Report…** (Command-E). See
 [diagnostics](DIAGNOSTICS.md) for excluded data, retention, and offline export checks.
+
+## Mac App Store / TestFlight release
+
+Use `./release_macos` from the repository root. It accepts exactly the same flags as
+`./release_ios` (the renamed iPhone release script):
+
+```sh
+./release_macos                           # test, archive, verify, upload, local tag
+./release_macos --no-upload               # signed local installer; no upload or tag
+./release_macos --skip-tests --build 42    # use previously completed tests
+./release_macos --allow-dirty --no-upload  # local working changes; never tag
+```
+
+Upload is the default; there is no `--upload` option. Team, version and bundle ID come
+from `ios/project.yml`, with the existing `DEVELOPMENT_TEAM` environment override.
+Build numbering and validation match iOS. Output is retained under
+`build/release-macos/<version>-<build>/`; an existing output directory is never replaced.
+A successful clean upload creates `macos/v<version>-<build>` locally, without pushing.
+Dirty releases require `--allow-dirty` and never create a tag.
+
+The Mac pipeline first builds the isolated runtime using the local dependencies above,
+then generates `mac/PatchbridgeMac.xcodeproj` from `mac/project.yml` and archives a native
+Release app with dSYMs. Its helper inherits the host sandbox; the host requests USB,
+Bluetooth and user-selected file access. Nested runtime binaries are signed with the
+archive identity. The exported installer is signature-checked and expanded; bundle ID,
+version/build, host/helper entitlements, provisioning-profile presence, and distribution
+signatures for all bundled binaries are checked before that exact package is uploaded.
+`--skip-tests` skips regression tests, not package construction or distribution verification.
+
+Use the same `.release.env` API key as iOS, with local Apple Distribution and Mac Installer
+Distribution certificates/private keys. The shared `asc_profile.py --platform mac` manages
+Mac App Store profiles. Without an API key, Xcode handles automatic signing; upload needs
+`MAC_ASC_USERNAME` and `MAC_ASC_PASSWORD_KEYCHAIN`, referencing an app-specific password
+already in Keychain. `--no-upload` does not require upload credentials. Add the macOS
+platform to the app’s App Store Connect record before uploading.
+
+Validation here uses stubbed signing/upload tools and a real unsigned archive. It does
+not create profiles, sign with production credentials, upload, or prove App Store acceptance.

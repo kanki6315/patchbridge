@@ -12,7 +12,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-APP = ROOT / 'dist/Patchbridge Offline.app'
+APP = ROOT / 'dist/Patchbridge.app'
 
 
 class CheckFailure(ValueError):
@@ -54,7 +54,7 @@ def freshness():
     manifest = json.loads((APP / 'Contents/Resources/build-manifest.json').read_text())
     if manifest['bundled_usb']['qc_mcp_commit'] != 'f634ecd3dcf426090b90bc4cc176e4b500494b9e':
         raise CheckFailure('dependency_pin_mismatch')
-    if manifest['bundled_usb']['protobuf'] != '7.36.2' or manifest['bundled_usb']['hardware_enabled'] is not False:
+    if manifest['bundled_usb']['protobuf'] != '7.36.2' or manifest['bundled_usb']['hardware_enabled'] is not True:
         raise CheckFailure('runtime_policy_mismatch')
     inputs = manifest.get('build_inputs', {})
     required = {'tools/package_mac.py', 'mac/helper_launcher.c', 'mac/main.swift',
@@ -76,8 +76,8 @@ def make_report(checks):
                            'Read-only comparison against the connected QC display',
                            'Physical unplug/reconnect and Bluetooth recovery',
                            'Parameter display calibration and hardware writes',
-                           'Designed screen integration and distribution signing'],
-            'next_step': 'Schedule a user-present read-only hardware session; live USB remains disabled in the app.'
+                           'Native UI, physical BLE and distribution signing'],
+            'next_step': 'Validate the installed live bridge with a user-present hardware session; offline checks do not prove physical compatibility.'
                          if passed else 'Resolve failed checks and rebuild before hardware testing.'}
 
 

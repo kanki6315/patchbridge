@@ -6,7 +6,7 @@
 """Make sure an App Store provisioning profile exists for the local Apple
 Distribution certificate, install it, and print its name.
 
-Used by release.sh. Why this exists: when xcodebuild authenticates with an App
+Used by release_ios and release_macos (with --platform mac). Why this exists: when xcodebuild authenticates with an App
 Store Connect API key, its automatic signing only considers *cloud-managed*
 distribution certificates, which need an Admin key. With a classic Apple
 Distribution certificate in the keychain (Xcode → Settings → Accounts → Manage
@@ -122,6 +122,7 @@ def local_distribution_identities() -> dict:
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--platform", choices=["ios", "mac"], default="ios")
     ap.add_argument("--key-id", required=True)
     ap.add_argument("--issuer-id", required=True)
     ap.add_argument("--key-path", required=True)
@@ -129,6 +130,7 @@ def main():
     ap.add_argument("--bundle-id", required=True)
     ap.add_argument("--name", required=True, help="profile name to reuse or create")
     a = ap.parse_args()
+    profile_type, platform, extension = ("MAC_APP_STORE", "MAC_OS", ".provisionprofile") if a.platform == "mac" else ("IOS_APP_STORE", "IOS", ".mobileprovision")
 
     local = local_distribution_identities()
     if not local:
@@ -155,13 +157,13 @@ def main():
     bundles = [b for b in bundles if b["attributes"]["identifier"] == a.bundle_id]
     if not bundles:
         bundle = api.call("POST", "/bundleIds", {"data": {"type": "bundleIds", "attributes": {
-            "identifier": a.bundle_id, "name": a.bundle_id.replace(".", " "), "platform": "IOS"}}})["data"]
+            "identifier": a.bundle_id, "name": a.bundle_id.replace(".", " "), "platform": platform}}})["data"]
         log(f"registered bundle ID {a.bundle_id}")
     else:
         bundle = bundles[0]
 
     # 3. An active App Store profile for that bundle ID containing that certificate.
-    profiles = api.get_all("/profiles?filter[profileType]=IOS_APP_STORE&include=bundleId,certificates&limit=200")
+    profiles = api.get_all(f"/profiles?filter[profileType]={profile_type}&include=bundleId,certificates&limit=200")
     usable = None
     for p in profiles:
         rel = p.get("relationships", {})
@@ -176,7 +178,7 @@ def main():
                 api.call("DELETE", f"/profiles/{p['id']}")
                 log(f"deleted stale profile {p['id']}")
         usable = api.call("POST", "/profiles", {"data": {"type": "profiles",
-            "attributes": {"name": a.name, "profileType": "IOS_APP_STORE"},
+            "attributes": {"name": a.name, "profileType": profile_type},
             "relationships": {
                 "bundleId": {"data": {"type": "bundleIds", "id": bundle["id"]}},
                 "certificates": {"data": [{"type": "certificates", "id": cert["id"]}]}}}})["data"]
@@ -186,16 +188,16 @@ def main():
 
     # 4. Install it where Xcode and xcodebuild look.
     content = base64.b64decode(usable["attributes"]["profileContent"])
-    with tempfile.NamedTemporaryFile(suffix=".mobileprovision", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as tmp:
         tmp.write(content)
     plist = subprocess.run(["security", "cms", "-D", "-i", tmp.name], capture_output=True, check=True).stdout
     os.unlink(tmp.name)
     uuid = re.search(rb"<key>UUID</key>\s*<string>([^<]+)</string>", plist).group(1).decode()
     for d in PROFILE_DIRS:
         os.makedirs(d, exist_ok=True)
-        with open(os.path.join(d, f"{uuid}.mobileprovision"), "wb") as f:
+        with open(os.path.join(d, f"{uuid}{extension}"), "wb") as f:
             f.write(content)
-    log(f"installed {uuid}.mobileprovision")
+    log(f"installed {uuid}{extension}")
     print(usable["attributes"]["name"])
 
 

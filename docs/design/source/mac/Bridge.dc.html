@@ -69,7 +69,7 @@
               <span style="{{ch.style}}">{{ch.c}}</span>
             </sc-for>
           </div>
-          <p style="margin: 10px 0 0; text-align: center; font-size: 13px; color: {{t.muted}};">Approval lasts until the iPhone disconnects.</p>
+          <p style="margin: 10px 0 0; text-align: center; font-size: 13px; color: {{t.muted}};">Approval ends on phone disconnect or bridge restart.</p>
         </sc-if>
 
         <sc-if value="{{s.hasStatus}}" hint-placeholder-val="{{false}}">
@@ -313,7 +313,7 @@
     <sc-if value="{{nt.actions}}" hint-placeholder-val="{{false}}">
       <div style="padding: 0 14px 12px 64px; display: flex; gap: 8px;">
         <button type="button" style="{{mbGlass}}">Deny</button>
-        <button type="button" style="{{mbPrimary}}">Approve</button>
+        <button type="button" style="{{mbPrimary}}">Review request</button>
       </div>
     </sc-if>
   </sc-if>
@@ -399,14 +399,14 @@ class Component extends DCLogic {
     const PRESET_ROW = { k: 'Preset', v: 'Crunch Lead · My Presets 16' };
     const S = {
       firstrun: { nodes: ['wait', 'on', 'ok'], links: [['none', 'Bluetooth · not allowed'], ['live', 'USB']], phone: 'iPhone',
-        h: 'Patchbridge needs Bluetooth', sub: 'Your iPhone reaches the QC through this Mac. macOS will ask once.',
-        rows: [QC_ROW], left: [], right: [btn('Allow Bluetooth', 'primary')] },
+        h: 'Patchbridge needs Bluetooth', sub: 'Your iPhone reaches the QC through this Mac. Continue to request Bluetooth access.',
+        rows: [QC_ROW], left: [], right: [btn('Continue', 'primary')] },
       noqc: { nodes: ['wait', 'on', 'wait'], links: [['seek', 'Bluetooth'], ['none', 'USB']], phone: 'iPhone',
         h: 'Plug in your Quad Cortex', sub: 'Connect it to this Mac with USB and switch it on.', status: 'Looking for the QC…',
         rows: [{ k: 'Visible as', v: MAC }], left: [exportBtn], right: [] },
-      cortex: { nodes: ['wait', 'on', 'warn'], links: [['none', 'Bluetooth'], ['down', 'USB · in use']], phone: 'iPhone',
-        h: 'Cortex Control is using the QC', sub: 'Only one app can talk to the QC at a time. Unsaved work in Cortex Control stays there.',
-        rows: [{ k: 'Quad Cortex', v: 'CorOS 4.1.1 · USB', tail: 'In use', tailKind: 'caution' }], left: [exportBtn], right: [btn('Quit Cortex Control', 'primary')] },
+      cortex: { nodes: ['wait', 'on', 'warn'], links: [['none', 'Bluetooth'], ['down', 'USB · retry']], phone: 'iPhone',
+        h: 'Couldn’t open the QC connection', sub: 'If Cortex Control is open, save your work and quit it, then retry.',
+        rows: [{ k: 'Quad Cortex', v: 'Connection unavailable', tail: 'Retry', tailKind: 'caution' }], left: [exportBtn], right: [btn('Retry connection', 'primary')] },
       ready: { nodes: ['wait', 'on', 'ok'], links: [['seek', 'Bluetooth'], ['live', 'USB']], phone: 'iPhone',
         h: 'Ready for your iPhone', sub: 'Open Patchbridge on your iPhone and choose ' + MAC + '.',
         rows: [QC_ROW, PRESET_ROW, { k: 'Visible as', v: MAC }], left: [exportBtn], right: [] },
@@ -414,7 +414,7 @@ class Component extends DCLogic {
         h: PHONE + ' wants to edit the QC', sub: 'Approve only if the iPhone shows the same code.', code: true,
         left: [], right: [btn('Deny', 'glass'), btn('Approve', 'primary')] },
       connected: { nodes: ['ok', 'on', 'ok'], links: [['live', 'Bluetooth'], ['live', 'USB']], phone: PHONE,
-        h: 'Connected', sub: PHONE + ' is editing Crunch Lead.',
+        h: 'Connected', sub: PHONE + ' is connected to Crunch Lead.',
         rows: [QC_ROW, { ...PRESET_ROW, tail: 'Unsaved', tailKind: 'signal' }, { k: 'Scene', v: 'F · RHYTHM', dot: '#ff7000' }, { k: 'iPhone', v: 'Approved 21:04' }],
         edits: true, left: [exportBtn], right: [btn('Disconnect iPhone', 'danger')] },
       unplugged: { nodes: ['ok', 'on', 'warn'], links: [['live', 'Bluetooth'], ['down', 'USB · lost']], phone: PHONE,
@@ -427,7 +427,7 @@ class Component extends DCLogic {
         h: 'The bridge stopped', sub: PHONE + ' was disconnected. Restarting reloads the QC, and the iPhone will need approval again.',
         rows: [{ k: 'Last edit', v: 'Gain · Amp', tail: 'Outcome unknown', tailKind: 'caution' }], left: [exportBtn], right: [btn('Restart bridge', 'primary')] },
       firmware: { nodes: ['wait', 'on', 'warn'], links: [['none', 'Bluetooth'], ['live', 'USB']], phone: 'iPhone',
-        h: 'This CorOS version isn’t tested yet', sub: 'Patchbridge won’t write to the QC until it supports this version.',
+        h: 'This CorOS version isn’t supported', sub: 'The QC session wasn’t opened. No preset edits will be sent.',
         rows: [{ k: 'Quad Cortex', v: 'CorOS 4.2.0', tail: 'Not tested', tailKind: 'caution' }, { k: 'Tested with', v: 'CorOS 4.1.1' }], left: [exportBtn], right: [] }
     };
 
@@ -452,7 +452,7 @@ class Component extends DCLogic {
     }));
     const edits = [
       { name: 'Gain', block: 'Amp', value: '6.4' },
-      { name: 'Decay', block: 'Reverb', value: '2.4 s', warn: true, note: 'Not applied · scene changed' },
+      { name: 'Decay', block: 'Reverb', value: '2.4 s', warn: true, note: 'Not applied · device state changed' },
       { name: 'Mix', block: 'Delay', value: '32.0 %' }
     ].map((e, i) => ({ ...e, ok: !e.warn, warn: !!e.warn, note: e.note || '',
       valueStyle: { fontSize: '14px', fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: e.warn ? t.muted : t.ink, textDecoration: e.warn ? 'line-through' : 'none' },
@@ -486,13 +486,13 @@ class Component extends DCLogic {
       qcTitle: m0.qcTitle, qcSub: m0.qcSub, unsaved: !!m0.unsaved, qcTile: tile(!!m0.qcWait),
       phoneTitle: m0.phoneTitle, phoneSub: m0.phoneSub, phoneDisconnect: !!m0.phoneDisconnect, phoneTile: tile(!!m0.phoneWait) };
     const NT = {
-      'notify-request': { title: PHONE + ' wants to edit the QC', body: 'Code 4F7·K2Q', actions: true },
+      'notify-request': { title: PHONE + ' wants to edit the QC', body: 'Compare codes in Patchbridge.', actions: true },
       'notify-lost': { title: 'The QC was disconnected', body: 'Editing is paused until it’s back.', actions: false }
     };
     const nt = NT[screen] || NT['notify-request'];
     const glyphs = [
       { label: 'Ready', desc: 'Running, no iPhone connected. Outline grid.', outline: true },
-      { label: 'Connected', desc: 'An iPhone is editing. Filled grid.', filled: true },
+      { label: 'Connected', desc: 'An iPhone is connected. Filled grid.', filled: true },
       { label: 'Approval needed', desc: 'An iPhone is asking. Filled grid with a dot.', filled: true, dot: true },
       { label: 'Needs attention', desc: 'QC lost or the bridge stopped. Outline grid with a triangle.', outline: true, warn: true }
     ].map((g) => ({ ...g, filled: !!g.filled, outline: !!g.outline, dot: !!g.dot, warn: !!g.warn }));

@@ -8,7 +8,8 @@
 int main(int argc, char **argv) {
     int verify_usb = argc == 3 && strcmp(argv[1], "--verify-usb-fixtures") == 0;
     int captured = argc == 3 && strcmp(argv[1], "--captured-read-only") == 0;
-    if (argc != 1 && !verify_usb && !captured) { fputs("Only offline fixture verification or captured read-only mode is supported. Live USB is disabled.\n", stderr); return 64; }
+    int usb = argc == 2 && strcmp(argv[1], "--usb") == 0;
+    if (argc != 1 && !verify_usb && !captured && !usb) { fputs("Expected --usb, --captured-read-only <fixture>, --verify-usb-fixtures <root>, or no arguments for simulation.\n", stderr); return 64; }
     char executable[PATH_MAX], resolved[PATH_MAX], path[PATH_MAX];
     uint32_t size = sizeof(executable);
     if (_NSGetExecutablePath(executable, &size) || !realpath(executable, resolved)) return 70;
@@ -34,7 +35,7 @@ int main(int argc, char **argv) {
         PyMem_RawFree(wide);
         if (PyStatus_Exception(status)) goto fail;
     }
-    char *python_argv[] = {"patchbridge-helper", "--adapter", "simulated"};
+    char *python_argv[] = {"patchbridge-helper", "--adapter", usb ? "usb" : "simulated"};
     char *check_argv[] = {"patchbridge-helper", verify_usb ? argv[2] : ""};
     char *captured_argv[] = {"patchbridge-helper", "--adapter", "captured-read-only", "--fixture", captured ? argv[2] : ""};
     config.parse_argv = 0;

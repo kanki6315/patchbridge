@@ -251,7 +251,7 @@ extension CoordinatorTests {
         try write(original)
         func launch() throws -> HelperClient {
             if bundled {
-                let app = try XCTUnwrap(Bundle(url: root.appendingPathComponent("dist/Patchbridge Offline.app")))
+                let app = try XCTUnwrap(Bundle(url: root.appendingPathComponent("dist/Patchbridge.app")))
                 return try HelperClient(bundle: app, capturedFixture: fixtureURL)
             }
             return try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path, capturedFixture: fixtureURL)
@@ -313,5 +313,67 @@ extension CoordinatorTests {
             throw XCTSkip("Run with PATCHBRIDGE_TEST_BUNDLE=1 after packaging to exercise the bundled runtime")
         }
         try exerciseCapturedRecovery(bundled: true)
+    }
+}
+
+extension CoordinatorTests {
+    func testDeviceRecoveryKeepsPhoneApprovalButNeverReplaysAnEdit() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
+        defer { helper.stop() }
+        let bridge = BridgeSession(helper: helper, allowsRecovery: true, macName: "Studio Mac", now: { self.clock })
+        let t = OfflineTransport(); t.handler = { try bridge.handle($0) }
+        let c = EditorCoordinator(automaticPolling: false, phoneName: "Jamie’s iPhone", now: { self.clock }, makeTransport: { t })
+        c.start()
+        XCTAssertEqual(c.macName, "Studio Mac"); XCTAssertEqual(bridge.phoneName, "Jamie’s iPhone")
+        XCTAssertEqual(c.approvalCode, bridge.approvalCode)
+        bridge.approve(); c.authorize(); XCTAssertEqual(c.phase, .ready)
+        let token = bridge.token
+        try bridge.simulateDeviceRemoval()
+        try c.edit(blockID: "amp-1", parameterID: "gain", value: .number(8))
+        XCTAssertEqual(c.phase, .recovering); XCTAssertNil(c.editor.snapshot); XCTAssertNil(c.editor.pending)
+        XCTAssertTrue(c.error?.contains("unknown") == true)
+        XCTAssertThrowsError(try c.save())
+        clock = 1; c.tick(); XCTAssertEqual(c.phase, .recovering)
+        clock = 2; c.tick(); XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(bridge.token, token); XCTAssertEqual(c.editor.value(blockID: "amp-1", parameterID: "gain"), .number(5))
+        XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "set_parameter" }.count, 1)
+        XCTAssertTrue(c.error?.contains("unknown") == true) // Reload is not proof of the write's outcome.
+        let original = try XCTUnwrap(t.messages.first { $0["operation"] as? String == "set_parameter" })
+        XCTAssertThrowsError(try bridge.handle(original)) // Duplicate request cannot be replayed after recovery.
+        bridge.revoke()
+        XCTAssertThrowsError(try bridge.handle(["version": 1, "id": "late", "operation": "recover", "connection_id": token]))
+    }
+
+    func testCapturedDeviceRecoveryRetriesWithBackoffAndReloadsChangedState() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+        defer { try? FileManager.default.removeItem(at: file) }
+        var document = try fixture()
+        func write() throws { try JSONSerialization.data(withJSONObject: document).write(to: file, options: .atomic) }
+        try write()
+        let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path, capturedFixture: file)
+        defer { helper.stop() }
+        let bridge = BridgeSession(helper: helper, allowsRecovery: true, now: { self.clock })
+        let t = OfflineTransport(); t.handler = { try bridge.handle($0) }
+        let c = coordinator(t); c.start(); bridge.approve(); c.authorize()
+        document["offline_fault"] = "disconnect"; try write()
+        c.refresh(); XCTAssertEqual(c.phase, .recovering)
+        clock = 1; c.tick(); XCTAssertEqual(c.phase, .recovering)
+        let count = t.messages.count
+        clock = 2; c.tick(); XCTAssertEqual(t.messages.count, count)
+        document.removeValue(forKey: "offline_fault")
+        var state = document["snapshot"] as! [String: Any]; state["scene"] = "A"; document["snapshot"] = state; try write()
+        clock = 3; c.tick(); XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.editor.snapshot?.scene, "A")
+        XCTAssertThrowsError(try c.save()) // Read-only capabilities survive recovery.
+        helper.stop(); c.refresh(); XCTAssertEqual(c.phase, .failed) // A dead helper is not USB recovery.
+    }
+
+    func testDisplayIdentityFallbackAndSanitization() {
+        XCTAssertEqual(DeviceIdentity.name(" \n", fallback: "iPhone"), "iPhone")
+        XCTAssertEqual(DeviceIdentity.name("Jamie\u{202E}\n", fallback: "iPhone"), "Jamie")
+        XCTAssertEqual(DeviceIdentity.name(String(repeating: "x", count: 500), fallback: "Mac").count, 64)
+        XCTAssertEqual(DeviceIdentity.approvalCode("abcdef12-3456"), "ABC·DEF")
     }
 }

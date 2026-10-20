@@ -1,109 +1,302 @@
 import AppKit
 import SwiftUI
+import ServiceManagement
+
+private struct BridgePalette {
+    let dark: Bool
+    var ground: Color { Color(red: dark ? 0.051 : 0.969, green: dark ? 0.055 : 0.969, blue: dark ? 0.039 : 0.961) }
+    var surface: Color { dark ? Color(red: 0.086, green: 0.086, blue: 0.071) : .white }
+    var ink: Color { dark ? Color(red: 0.949, green: 0.949, blue: 0.933) : Color(red: 0.086, green: 0.086, blue: 0.067) }
+    var muted: Color { dark ? Color(red: 0.694, green: 0.698, blue: 0.671) : Color(red: 0.333, green: 0.337, blue: 0.314) }
+    var signal: Color { dark ? Color(red: 0.82, green: 0.882, blue: 0.29) : Color(red: 0.36, green: 0.392, blue: 0) }
+}
 
 struct BridgeWindow: View {
     @ObservedObject var model: MacBridgeModel
     let exportReport: () -> Void
-    private var active: Bool { model.phase != .stopped && model.phase != .failed }
+    var compact = false
+    @AppStorage("bridge.appearance") private var appearance = "Match Mac"
+    @Environment(\.colorScheme) private var scheme
+    private var colors: BridgePalette { BridgePalette(dark: appearance == "Stage" || (appearance == "Match Mac" && scheme == .dark)) }
+    private var phone: Bool { [.awaitingApproval, .approving, .connected, .recovering].contains(model.phase) }
+    private var active: Bool { ![.stopped, .failed, .stopping].contains(model.phase) }
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Patchbridge").font(.system(size: 26, weight: .semibold))
-                    Text("Mac bridge").foregroundStyle(.secondary)
-                }
+        VStack(alignment: .leading, spacing: 18) {
+            ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+            HStack {
+                Text(compact ? "Patchbridge" : "Mac bridge").font(.headline)
                 Spacer()
-                Label("Simulation", systemImage: "testtube.2").font(.callout).foregroundStyle(.secondary)
+                Label(model.isSimulation ? "Simulation" : "USB + Bluetooth", systemImage: model.isSimulation ? "testtube.2" : "cable.connector").font(.caption).foregroundStyle(colors.muted)
             }
-            Text("Try the connection and approval flow locally. Bluetooth and USB are off.")
-                .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Divider()
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: model.phase == .failed ? "exclamationmark.triangle" : model.phase == .connected ? "checkmark.circle" : "network")
-                    .font(.title2).foregroundStyle(model.phase == .failed ? Color.orange : Color.accentColor)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(model.title).font(.headline)
-                    Text(model.detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
-                if model.busy { ProgressView().controlSize(.small).accessibilityLabel("Working") }
+            if !compact { diagram }
+            VStack(alignment: .leading, spacing: 8) {
+                Text(model.title).font(.system(size: compact ? 21 : 27, weight: .bold)).fixedSize(horizontal: false, vertical: true)
+                Text(model.detail).font(.system(size: 14)).foregroundStyle(colors.muted).fixedSize(horizontal: false, vertical: true)
             }
-            HStack(spacing: 10) {
-                if !active {
-                    Button(model.phase == .failed ? "Restart bridge" : "Start bridge") { model.start() }
-                        .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
-                } else {
-                    Button("Stop bridge") { model.stop() }.disabled(model.phase == .stopping)
-                }
-                Spacer()
-                if model.phase == .running {
-                    Button("Simulate phone connection") { model.requestPhone() }.disabled(model.busy)
-                }
+            if model.busy { ProgressView("Working…").controlSize(.small) }
+            if model.phase == .awaitingApproval || model.phase == .approving {
+                Text(model.presentation.approvalCode).font(.system(size: 38, weight: .semibold)).tracking(5).monospacedDigit()
+                    .frame(maxWidth: .infinity).padding(.vertical, 20).background(colors.surface, in: RoundedRectangle(cornerRadius: 18))
+                    .accessibilityLabel("Approval code \(model.presentation.approvalCode)")
+                Text("Approve only if the phone shows the same code. Approval ends when the phone disconnects or the bridge restarts.")
+                    .font(.callout).foregroundStyle(colors.muted)
             }
-            if model.phase == .awaitingApproval || model.phase == .approving || model.phase == .connected {
-                Divider()
-                HStack {
-                    Label("Simulated iPhone", systemImage: "iphone")
-                    Spacer()
-                    Text(model.phase == .connected ? "Approved" : "Awaiting approval")
-                        .foregroundStyle(.secondary)
-                }
-                HStack {
-                    if model.phase == .connected {
-                        Button("Disconnect phone") { model.disconnectPhone() }
-                        Spacer()
-                        Button("Check connection") { model.refresh() }
-                    } else {
-                        Button("Deny") { model.disconnectPhone() }
-                        Spacer()
-                        Button("Approve connection") { model.approve() }.buttonStyle(.borderedProminent)
-                    }
-                }.disabled(model.busy)
+            if let preset = model.presentation.preset {
+                VStack(spacing: 0) {
+                    fact(model.phase == .recovering ? "Last preset" : "Preset", preset)
+                    Divider()
+                    fact("Scene", model.presentation.scene ?? "Unavailable")
+                    Divider()
+                    fact("State", model.phase == .recovering ? "Last known · reload required" : model.presentation.dirty ? "Unsaved" : "No unsaved changes")
+                }.background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
             }
-            Spacer(minLength: 0)
+            if model.phase == .connected || model.phase == .recovering || !model.presentation.recentEdits.isEmpty {
+                recentEdits
+            }
+            if !compact && model.phase == .stopped {
+                Toggle("Use simulation", isOn: Binding(get: { model.isSimulation }, set: model.setSimulation)).toggleStyle(.switch)
+            }
+            if !compact {
+                Text(model.isSimulation ? "Bluetooth and USB are off. This mode uses the bundled simulator." : "CorOS 4.1.1 · Supported parameters only. Keep Cortex Control closed while connected.")
+                    .font(.callout).foregroundStyle(colors.muted)
+            }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            }
+            actions
             Divider()
             HStack {
                 Button("Export report…", action: exportReport)
-                    .help("Export recent diagnostic events without preset contents or identifiers")
                 Spacer()
-                if model.phase == .connected {
-                    Button("Simulate helper failure") { model.simulateFailure() }.disabled(model.busy)
+                if active {
+                    Menu {
+                        Button("Stop bridge") { model.stop() }
+                        if model.phase == .connected && model.isSimulation {
+                            Button("Simulate gain edit") { model.simulateEdit() }
+                            Button("Simulate rejected edit") { model.simulateEdit(rejected: true) }
+                            Button("Check connection") { model.refresh() }
+                            Button("Simulate USB interruption") { model.simulateUSBRemoval() }
+                            Button("Simulate helper failure") { model.simulateFailure() }
+                        }
+                    } label: { Image(systemName: "ellipsis.circle").accessibilityLabel("Bridge actions") }
+                    .menuStyle(.borderlessButton).fixedSize().disabled(model.busy)
+                }
+            }.font(.callout)
+        }
+        .padding(compact ? 20 : 28)
+        .foregroundStyle(colors.ink).tint(colors.signal)
+        .frame(minWidth: compact ? 320 : 480, maxWidth: .infinity, minHeight: compact ? 480 : 630, maxHeight: compact ? nil : .infinity, alignment: .topLeading)
+        .background(colors.ground)
+        .preferredColorScheme(appearance == "Match Mac" ? nil : appearance == "Stage" ? .dark : .light)
+    }
+    private var recentEdits: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Recent edits").font(.headline)
+                Spacer()
+                if !model.presentation.recentEdits.isEmpty {
+                    Button("Clear") { model.clearRecentEdits() }.font(.caption).disabled(model.busy)
                 }
             }
-            Text("Reports exclude preset contents, names, values, and device identifiers.")
-                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if model.presentation.recentEdits.isEmpty {
+                Text("No edits in this session yet.").foregroundStyle(colors.muted).font(.callout)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(model.presentation.recentEdits.prefix(compact ? 3 : 12))) { edit in
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: edit.outcome == .confirmed ? "checkmark" : "exclamationmark.triangle")
+                                .foregroundStyle(edit.outcome == .confirmed ? colors.muted : colors.dark ? Color(red: 1, green: 0.77, blue: 0.41) : Color(red: 0.62, green: 0.32, blue: 0))
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(alignment: .firstTextBaseline) {
+                                    Text(edit.title).fontWeight(.medium)
+                                    Spacer(minLength: 8)
+                                    if let value = edit.value { Text(value).monospacedDigit() }
+                                }
+                                Text(edit.outcome == .rejected ? "Not applied · \(edit.detail)" : edit.outcome == .unknown ? "Outcome unknown · \(edit.detail)" : edit.detail).foregroundStyle(colors.muted)
+                                if !compact {
+                                    HStack {
+                                        Text(edit.context)
+                                        Spacer()
+                                        Text(edit.date, style: .time).monospacedDigit()
+                                    }.font(.caption).foregroundStyle(colors.muted)
+                                }
+                            }
+                        }.font(.system(size: 13)).padding(12)
+                        Divider()
+                    }
+                }.background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
+                if compact && model.presentation.recentEdits.count > 3 {
+                    Text("Open Patchbridge for more edits.").font(.caption).foregroundStyle(colors.muted)
+                }
+            }
         }
-        .padding(28)
-        .frame(minWidth: 500, maxWidth: .infinity, minHeight: 440, maxHeight: .infinity, alignment: .topLeading)
+    }
+    private func fact(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label).foregroundStyle(colors.muted).frame(width: 86, alignment: .leading)
+            Text(value).frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
+        }.font(.system(size: 14)).padding(14)
+    }
+    private var diagram: some View {
+        HStack(alignment: .top, spacing: 10) {
+            node("iphone", phone ? model.presentation.phoneName : "iPhone", live: model.phase == .connected)
+            link(model.isSimulation ? "Simulated" : "Bluetooth", live: model.phase == .connected)
+            node("laptopcomputer", model.presentation.macName, live: active)
+            link(model.phase == .recovering ? "Paused" : model.isSimulation ? "Simulated" : "USB", live: model.phase == .connected)
+            node("square.grid.3x3.fill", model.isSimulation ? "QC simulator" : "Quad Cortex", live: model.phase == .connected)
+        }.padding(.vertical, 10).accessibilityElement(children: .combine)
+    }
+    private func node(_ symbol: String, _ name: String, live: Bool) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: symbol).font(.system(size: 25)).frame(width: 62, height: 62)
+                .background(colors.surface, in: Circle()).overlay(Circle().stroke(live ? colors.signal : colors.muted.opacity(0.4), lineWidth: 1))
+                .accessibilityHidden(true)
+            Text(name).font(.system(size: 12, weight: .semibold)).multilineTextAlignment(.center).lineLimit(3).fixedSize(horizontal: false, vertical: true).help(name)
+        }.frame(maxWidth: .infinity)
+    }
+    private func link(_ label: String, live: Bool) -> some View {
+        VStack(spacing: 8) {
+            Text(label).font(.system(size: 10)).foregroundStyle(colors.muted)
+            Path { path in path.move(to: .zero); path.addLine(to: CGPoint(x: 52, y: 0)) }.stroke(live ? colors.muted : colors.signal, style: StrokeStyle(lineWidth: 2, dash: live ? [] : [5, 4])).frame(height: 2)
+        }.frame(width: 52).padding(.top, 18)
+    }
+    @ViewBuilder private var actions: some View {
+        HStack {
+            if model.phase == .awaitingApproval || model.phase == .approving {
+                Button(model.phase == .approving ? "Disconnect" : "Deny") { model.disconnectPhone() }
+                Spacer()
+                Button(model.phase == .approving ? "Approved" : "Approve") { model.approve() }.buttonStyle(.borderedProminent).disabled(model.phase == .approving)
+            } else if model.phase == .connected || model.phase == .recovering {
+                Spacer()
+                Button("Disconnect iPhone", role: .destructive) { model.disconnectPhone() }
+            } else if model.phase == .running && model.isSimulation {
+                Spacer()
+                Button("Simulate phone connection") { model.requestPhone() }.buttonStyle(.borderedProminent)
+            } else if model.phase == .stopped || model.phase == .failed {
+                Spacer()
+                Button(model.phase == .failed ? "Restart bridge" : "Start bridge") { model.start() }.buttonStyle(.borderedProminent)
+            }
+        }.controlSize(.large).disabled(model.busy)
+    }
+}
+
+struct BridgeSettings: View {
+    @ObservedObject var desktop: MacDesktopServices
+    @AppStorage("bridge.appearance") private var appearance = "Match Mac"
+    @AppStorage("bridge.keepRunning") private var keepRunning = true
+    @Environment(\.colorScheme) private var scheme
+    private var colors: BridgePalette { BridgePalette(dark: appearance == "Stage" || (appearance == "Match Mac" && scheme == .dark)) }
+    var body: some View {
+        Form {
+            Section("General") {
+            Toggle("Open at login", isOn: Binding(get: { desktop.loginState == .enabled || desktop.loginState == .needsApproval }, set: desktop.setLoginEnabled))
+            Text(desktop.loginDescription).foregroundStyle(.secondary)
+            if let error = desktop.loginError { Text(error).foregroundStyle(.red) }
+            if desktop.loginState == .needsApproval || desktop.loginError != nil || desktop.loginState == .unavailable {
+                Button("Open Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
+            }
+            Toggle("Show in Dock", isOn: Binding(get: { desktop.showInDock }, set: desktop.setShowInDock))
+            Text("The menu bar always provides Open, Settings and Quit.").foregroundStyle(.secondary)
+            Toggle("Keep running when the window closes", isOn: $keepRunning)
+            Text("Patchbridge stays in the menu bar. Quit ends the session.").foregroundStyle(.secondary)
+            Picker("Appearance", selection: $appearance) {
+                ForEach(["Match Mac", "Stage", "Daylight"], id: \.self) { Text($0) }
+            }.pickerStyle(.segmented)
+            }
+            Section("Notifications") {
+                Toggle("Approval requests and connection problems", isOn: Binding(get: { desktop.notificationsEnabled }, set: desktop.setNotificationsEnabled))
+                if desktop.requestingPermission { ProgressView("Waiting for macOS permission…").controlSize(.small) }
+                if desktop.permission == .denied {
+                    Text("Notifications are blocked by macOS. The window and menu bar still show every state.").foregroundStyle(.secondary)
+                    Button("Open System Settings") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/System Settings.app")) }
+                } else {
+                    Text(desktop.notificationsEnabled ? "Alerts open the current state. They never approve a phone." : "Off. No notification permission is requested until you enable alerts.").foregroundStyle(.secondary)
+                }
+                if let error = desktop.notificationError { Text(error).foregroundStyle(.red) }
+            }
+            Section("About") {
+            LabeledContent("Mac name", value: DeviceIdentity.macName)
+            Text("Reports exclude preset names, values and device identifiers. Nothing is sent automatically.").foregroundStyle(.secondary)
+            }
+        }.formStyle(.grouped).tint(colors.signal).frame(width: 500, height: 620)
+            .preferredColorScheme(appearance == "Match Mac" ? nil : appearance == "Stage" ? .dark : .light)
+            .onAppear { desktop.refresh() }
     }
 }
 
 final class Host: NSObject, NSApplicationDelegate {
     private let model = MacBridgeModel()
+    private var desktop: MacDesktopServices!
     private var window: NSWindow?
+    private var settings: NSWindow?
+    private var statusItem: NSStatusItem?
+    private let popover = NSPopover()
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 540),
+        desktop = MacDesktopServices(login: SystemLoginItem(), notifications: SystemBridgeNotifications())
+        desktop.onOpen = { [weak self] in self?.showWindow() }
+        desktop.onDockChange = { visible in
+            NSApp.setActivationPolicy(visible ? .regular : .accessory)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        UserDefaults.standard.register(defaults: ["bridge.keepRunning": true])
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 700),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         let menu = NSMenu()
         let appItem = NSMenuItem(); menu.addItem(appItem)
         let appMenu = NSMenu(); appItem.submenu = appMenu
-        let export = NSMenuItem(title: "Export Troubleshooting Report…", action: #selector(exportReport), keyEquivalent: "e")
-        export.target = self; appMenu.addItem(export)
+        for (title, action, key) in [("Open Patchbridge", #selector(showWindow), "0"), ("Settings…", #selector(showSettings), ","), ("Export Troubleshooting Report…", #selector(exportReport), "e")] {
+            let item = NSMenuItem(title: title, action: action, keyEquivalent: key); item.target = self; appMenu.addItem(item)
+        }
         appMenu.addItem(NSMenuItem(title: "Quit Patchbridge", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         NSApp.mainMenu = menu
         window.title = "Patchbridge"
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(rootView: BridgeWindow(model: model, exportReport: { [weak self] in self?.exportReport() }))
-        window.contentMinSize = NSSize(width: 500, height: 520)
+        window.contentMinSize = NSSize(width: 480, height: 700)
         self.window = window
-        window.center(); window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+        let status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        status.button?.target = self; status.button?.action = #selector(togglePopover); statusItem = status
+        popover.behavior = .transient
+        popover.contentViewController = NSHostingController(rootView: VStack(spacing: 0) {
+            BridgeWindow(model: model, exportReport: { [weak self] in self?.exportReport() }, compact: true)
+            HStack {
+                Button("Open Patchbridge") { [weak self] in self?.showWindow() }
+                Button("Settings…") { [weak self] in self?.showSettings() }
+                Button("Quit") { NSApp.terminate(nil) }
+            }.padding(14)
+        }.frame(width: 360))
+        model.onChange = { [weak self] in guard let self else { return }; self.updateStatus(); self.desktop.stateChanged(self.model) }; updateStatus()
+        NSApp.setActivationPolicy(desktop.showInDock ? .regular : .accessory)
+        window.center(); showWindow()
+    }
+    private func updateStatus() {
+        let symbol = model.phase == .connected ? "square.grid.3x3.fill" : [.failed, .recovering].contains(model.phase) ? "exclamationmark.triangle" : model.phase == .awaitingApproval ? "person.crop.circle.badge.questionmark" : "square.grid.3x3"
+        statusItem?.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Patchbridge: \(model.title)")
+        statusItem?.button?.toolTip = model.title
+    }
+    @objc private func togglePopover() {
+        guard let button = statusItem?.button else { return }
+        if popover.isShown { popover.performClose(nil) }
+        else { popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY) }
+    }
+    @objc private func showWindow() { popover.performClose(nil); window?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true) }
+    @objc private func showSettings() {
+        popover.performClose(nil)
+        desktop.refresh()
+        if settings == nil {
+            let panel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 280), styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            panel.title = "Settings"; panel.isReleasedWhenClosed = false
+            panel.contentView = NSHostingView(rootView: BridgeSettings(desktop: desktop)); settings = panel; panel.center()
+        }
+        settings?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
     @objc private func exportReport() {
+        showWindow()
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "Patchbridge-Troubleshooting.json"
         panel.title = "Export Troubleshooting Report"
-        panel.message = "Includes recent lifecycle events and error codes. Preset contents, names, values, device identifiers, and file paths are excluded."
+        panel.message = "Preset contents, names, values and device identifiers are excluded."
         guard let window else { return }
         panel.beginSheetModal(for: window) { response in
             guard response == .OK, let destination = panel.url else { return }
@@ -114,10 +307,11 @@ final class Host: NSObject, NSApplicationDelegate {
             }
         }
     }
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
-    func applicationWillTerminate(_ notification: Notification) { model.shutdown() }
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showWindow(); return true }
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { !UserDefaults.standard.bool(forKey: "bridge.keepRunning") }
+    func applicationDidBecomeActive(_ notification: Notification) { desktop?.refresh() }
+    func applicationWillTerminate(_ notification: Notification) { desktop?.clearNotification(); model.shutdown() }
 }
-
 func verify(_ helper: HelperClient) throws {
     let connected = try helper.request(["operation": "connect"])
     guard connected["status"] as? String == "confirmed",
