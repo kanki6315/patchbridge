@@ -301,6 +301,12 @@ const active = 'F';
     .scene b { display: none; }
     .scene span:empty::before { content: attr(data-id); }
   }
+  /* Full page width: flatter blocks, like the iPad grid in landscape. */
+  @container (min-width: 900px) {
+    .cell { aspect-ratio: 1 / 0.62; }
+    .rig { padding-bottom: 0; }
+    .inspector { bottom: -1.75rem; }
+  }
   @container (max-width: 420px) {
     .panel { padding: 6px; gap: 4px; }
     .row { gap: 4px; padding: 3px; }
