@@ -10,7 +10,6 @@
 		0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */; };
 		1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */; };
 		184795C273F446AC30468366 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */; };
-		A1D0D0E1F2C3B4A5968778D1 /* DuoWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E1E1F203D4C5B6A7988902 /* DuoWorkspaceView.swift */; };
 		31876869DBD5740176721AEB /* PadWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */; };
 		444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EB72B83CCED483250AEC0C /* Theme.swift */; };
 		47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */; };
@@ -20,6 +19,7 @@
 		65F0DF151692770297348421 /* Chunks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F75207A678F28257EA105F3 /* Chunks.swift */; };
 		8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */; };
 		A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */; };
+		A4988E90372F49BAA73D7245 /* DuoWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */; };
 		AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E68459E6EE63B03631133E9 /* EditorView.swift */; };
 		B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 025A144248FD7B2C1307731E /* AppIcon.icon */; };
 		B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42253D1C8C450F010DE25BCD /* GenericEditor.swift */; };
@@ -47,7 +47,6 @@
 		42253D1C8C450F010DE25BCD /* GenericEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericEditor.swift; sourceTree = "<group>"; };
 		4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExchange.swift; sourceTree = "<group>"; };
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
-		B2E1E1F203D4C5B6A7988902 /* DuoWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoWorkspaceView.swift; sourceTree = "<group>"; };
 		67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PadWorkspaceView.swift; sourceTree = "<group>"; };
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -58,6 +57,7 @@
 		D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
 		D6BA326B4AFA35FBB2DD6298 /* PatchbridgeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PatchbridgeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorModel.swift; sourceTree = "<group>"; };
+		EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoWorkspaceView.swift; sourceTree = "<group>"; };
 		EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Patchbridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F59B2D058255097DC58ED315 /* EditorCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -86,7 +86,7 @@
 			children = (
 				025A144248FD7B2C1307731E /* AppIcon.icon */,
 				D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */,
-				B2E1E1F203D4C5B6A7988902 /* DuoWorkspaceView.swift */,
+				EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */,
 				3E68459E6EE63B03631133E9 /* EditorView.swift */,
 				67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */,
 				17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */,
@@ -243,8 +243,8 @@
 				0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */,
 				1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */,
 				5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */,
+				A4988E90372F49BAA73D7245 /* DuoWorkspaceView.swift in Sources */,
 				B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */,
-				A1D0D0E1F2C3B4A5968778D1 /* DuoWorkspaceView.swift in Sources */,
 				5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */,
 				AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */,
 				B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */,
