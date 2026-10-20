@@ -1,7 +1,11 @@
 import XCTest
 @testable import PatchbridgeCore
 
-private final class OfflineTransport: EditorTransport {
+private final class OfflineTransport: DiscoverableEditorTransport {
+    var onDiscovered: ((String, String) -> Void)?
+    var autoReady = true
+    var selectedPeripheral: String?
+    func selectPeripheral(_ id: String) { selectedPeripheral = id; onReady?() }
     var onReady: (() -> Void)?
     var onDisconnected: (() -> Void)?
     var onStatus: ((String) -> Void)?
@@ -10,7 +14,7 @@ private final class OfflineTransport: EditorTransport {
     var handler: (([String: Any]) throws -> [String: Any])?
     var held: [String: Any]?
     var hold = false
-    func reconnect() { onReady?() }
+    func reconnect() { if autoReady { onReady?() } }
     func disconnect() {}
     func send(_ message: [String: Any]) throws {
         messages.append(message)
@@ -44,6 +48,39 @@ final class CoordinatorTests: XCTestCase {
         if catalog { reply(t, result: f["catalog"] as! [String: Any]) }
         XCTAssertEqual(c.phase, .ready)
     }
+    func testBluetoothFailureRetainsActionableReason() {
+        let t = OfflineTransport(); t.autoReady = false
+        let c = coordinator(t); c.start()
+        t.onStatus?("Bluetooth is off. Turn it on in Settings, then reconnect.")
+        t.onDisconnected?()
+        XCTAssertEqual(c.phase, .failed)
+        XCTAssertTrue(c.error?.hasPrefix("Bluetooth is off") == true)
+    }
+    func testDiscoveryRequiresSelectionAndExpiresWhenNothingIsFound() {
+        let t = OfflineTransport(); t.autoReady = false
+        let c = coordinator(t)
+        c.start(); XCTAssertTrue(t.messages.isEmpty)
+        t.onDiscovered?("one", "Studio Mac"); t.onDiscovered?("two", "Laptop")
+        XCTAssertEqual(c.nearbyMacs.count, 2)
+        c.chooseMac("two")
+        XCTAssertEqual(t.selectedPeripheral, "two")
+        XCTAssertEqual(c.macName, "Laptop")
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "hello")
+        c.disconnect(); c.start()
+        clock = 31; c.tick()
+        XCTAssertEqual(c.phase, .failed)
+        XCTAssertTrue(c.error?.contains("No Mac replied") == true)
+        c.disconnect(); XCTAssertNil(c.error); XCTAssertNil(c.outcome)
+    }
+    func testSaveOutcomeDoesNotLeakIntoNextSession() throws {
+        let t = OfflineTransport(); let c = coordinator(t); let f = try fixture()
+        connect(c, t, fixture: f)
+        try c.save()
+        var state = f["snapshot"] as! [String: Any]; state["dirty"] = false
+        reply(t, result: ["state": state], revision: 1)
+        XCTAssertEqual(c.outcome, "Saved on the QC")
+        c.disconnect(); XCTAssertNil(c.outcome)
+    }
     func testCapturedLoadAndBoundedPolling() throws {
         let t = OfflineTransport(); let c = coordinator(t); let f = try fixture()
         connect(c, t, fixture: f)
@@ -57,6 +94,7 @@ final class CoordinatorTests: XCTestCase {
         var state = f["snapshot"] as! [String: Any]; state["scene"] = "A"
         reply(t, result: ["state": state], revision: 1)
         XCTAssertEqual(c.editor.snapshot?.scene, "A")
+        XCTAssertEqual(c.outcome, "Changed on the QC")
         clock = 3; c.tick(); XCTAssertEqual(t.messages.count, count + 1)
         clock = 4; c.tick(); XCTAssertEqual(t.messages.count, count + 2)
         c.disconnect(); clock = 100; c.tick(); XCTAssertEqual(t.messages.count, count + 2)
@@ -252,6 +290,7 @@ extension CoordinatorTests {
         clock += 2; c.tick()
         XCTAssertEqual(c.editor.snapshot?.preset_id, "captured:another")
         XCTAssertEqual(c.editor.snapshot?.scene, "A")
+        XCTAssertEqual(c.outcome, "Changed on the QC")
         for fault in ["disconnect", "crash", "slow"] {
             var broken = original; broken["offline_fault"] = fault; try write(broken)
             let staleResponse = t.onResponse

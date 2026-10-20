@@ -149,7 +149,7 @@ components:
     padding: "8px"
 ---
 
-<!-- SEED: drawn from concept direction D and the "iPhone PoC" page of the "Patchbridge concept directions" canvas (2026-10-20), not from shipped code. Rendered boards and their source are in docs/design/. Re-run /impeccable document once the SwiftUI screens exist to capture the real tokens and components. Unprefixed color tokens are the Stage theme; daylight-* tokens are the Daylight theme. -->
+<!-- SEED: drawn from concept direction D and the "iPhone PoC" page of the "Patchbridge concept directions" canvas (2026-10-20), not from shipped code. Rendered boards and their source are in docs/design/ (iPhone in screens/, iPad in ipad/). Re-run /impeccable document once the SwiftUI screens exist to capture the real tokens and components. Unprefixed color tokens are the Stage theme; daylight-* tokens are the Daylight theme. -->
 
 # Design System: Patchbridge
 
@@ -286,7 +286,7 @@ Controls feel tactile, confident and native. They are big enough to hit with a g
 
 ### Cards / Containers
 - **Grid panel:** Board Surface, 20px corners, a 1px edge at 6% white, 8px inner padding. It holds the 4×8 chain grid. The selected row sits in a white-9% band, outlined in Signal on portrait.
-- **Block cells:** solid category fill with the category code in Label type. Cells are 38px tall with 9px corners in portrait (a map, used through its row), 54×56 with 12px corners in landscape, and 78×86 with 16px corners plus the block name at regular width. Empty slots have a 1px Hairline outline. Bypassed blocks have a dashed category-colored outline, a struck-through code and "Bypassed". The selected block gets a 2.5px Signal outline offset by 2–3px.
+- **Block cells:** solid category fill with the category code in Label type. Cells are 38px tall with 9px corners in portrait (a map, used through its row), 54×56 with 12px corners in landscape, and about 80×70 with 15px corners at regular width, where the code sits top-left and up to two lines of the block name sit bottom-left. Empty slots have a 1px Hairline outline. Bypassed blocks have a dashed category-colored outline, a struck-through code and "Bypassed". The selected block gets a 2.5px Signal outline offset by 2–3px.
 - **Row list:** 60px rows, each with a 42px category swatch, the block name in Title, a one-line summary of real values in Caption, and a chevron. Blocks with no editable parameter add a lock and "Read-only" to the summary, but still open so the player can see their values. A 2px Hairline line joins the swatches to show signal flow. A bypass switch replaces the chevron only once the bridge supports bypass writes; until then a bypassed block is shown by its cell treatment alone.
 
 ### Inputs / Fields
@@ -307,7 +307,8 @@ Controls feel tactile, confident and native. They are big enough to hit with a g
 - **Connection details sheet:** bridge, firmware and connection facts; what works right now (supported operations, from capabilities); App → Appearance; Disconnect in Danger.
 - **Appearance:** two theme cards with live miniature previews (Stage, Daylight), a "Match iPhone appearance" switch, the active theme's block-color legend, and a note that scene colors always come from the QC.
 - **Phone landscape:** a single top bar holds the status button, name and unsaved state, the scene strip and Save. The full grid with row numbers sits beside an inspector panel with "Edit block".
-- **Regular width:** a top bar holds the name, the bridge status and Save. Two columns follow: scenes, grid and row list on the left, and the persistent glass editor panel (about 400px) on the right.
+- **Regular width (iPad):** a top bar holds the preset name with "My Presets · 16" and the unsaved state, then the bridge status pill and "Save to My Presets 16". In landscape, scenes, grid and row list sit on the left and the persistent glass editor panel (400pt, 28px corners, Panel float) runs full height on the right. In portrait, scenes and grid run full width and the row list sits beside the panel. Tapping a block in the grid or list retargets the panel; nothing is pushed. The scene strip has room for each scene's QC name under its dot and letter. The row list is two columns in landscape, with no chevrons because rows don't navigate. In landscape the dial and tiles grow one step (dial ×1.12, 68px tiles) to fill the taller panel.
+- **Popovers at regular width:** the number pad, Save confirmation and Connection details become popovers anchored to the value, Save and the status pill, with an arrow and no scrim. Appearance pushes inside the Connection popover. Popovers use a 95%-opaque glass so keys and text never read over content beneath. Toasts sit in the top bar's free space between the name and the status pill. The connect flow is a centred 460pt column, and loading draws a skeleton of the split layout. Compact-width multitasking (Split View, Slide Over) uses the phone layout.
 
 ### Parameter Gauge (signature)
 This is the heart of the editor, modelled on Apple Home's controls. It is a 270° arc 240px across with a 16px stroke on a white-13% track, filled in the category's arc color up to the QC's confirmed value. A pending change extends past that as a dashed segment up to the requested value, with a 3px tick marking where the QC currently sits. The thumb is a 26px white circle. The hero number sits in the middle, with its unit beside it and the status line below. The arc follows the QC's knob travel (the normalized value), not display units, so a non-linear control sits where the hardware knob would.

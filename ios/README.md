@@ -1,29 +1,142 @@
-# Patchbridge iPhone test app
+# Patchbridge iPhone app
 
-Native SwiftUI app for testing the Mac BLE simulation. The app never connects to
-USB or selects the real QC adapter. Supports discovery, explicit Mac approval,
-confirmed gain editing, precise numeric entry, scenes A/B, snapshot refresh and
-explicit simulated saving. It disconnects on backgrounding.
+Native SwiftUI implementation of the regular-iPhone PoC boards in
+`docs/design/screens`. The app supports iPhone portrait and landscape; Duo and
+iPad layouts are outside this build.
 
-Open `Patchbridge.xcodeproj`, choose your signing team and iPhone, then Run.
-The checked-in project was generated with `xcodegen generate --spec ios/project.yml`.
-The development team in that spec is the project owner's existing Xcode team;
-other developers should replace it. Device requires iOS 17 or later.
+## Run
 
-Start the Mac bridge using the instructions in `../docs/SWIFT_BLE_DEMO.md`.
-Tap Find my Mac, accept the system pairing prompts if present, then approve the
-printed connection token in the Mac terminal. Finally tap I've approved on Mac.
-The terminal's `status` command prints the current connection/token. Every new
-connection needs new approval. All simulation data is clearly labeled.
+Open `Patchbridge.xcodeproj`, select a signing team and iPhone, then Run. The
+project targets iOS 17 and later. iOS 26+ uses native Liquid Glass; older systems
+use system materials, and Reduce Transparency uses solid surfaces.
 
-Installation and launch were verified over the existing Xcode Wi-Fi pairing.
-On the physical iPhone, BLE discovery, system pairing, explicit bridge approval,
-and initial simulated snapshot transfer were verified: Simulation 1, scene A,
-gain 5.00, Confirmed by Mac. A device screenshot was visually inspected.
-The user subsequently confirmed a gain edit and simulated save working over BLE.
-Recovery/backgrounding tests remain. Later offline changes are built and tested
-but have not yet been installed on the phone.
+Regenerate the project after changing its specification:
 
-Pairing and app authorization are separate. If pairing interrupts the initial
-connection, reconnect and use the new token from the Mac terminal. Do not reuse
-an older connection token.
+```sh
+xcodegen generate --spec ios/project.yml
+```
+
+The development team in `project.yml` is the owner's existing Xcode team;
+other developers should replace it.
+
+## Connect or try the demo
+
+Start the Mac BLE bridge as described in `docs/SWIFT_BLE_DEMO.md` from the repo
+root. Choose Find my Mac, select the discovered bridge, approve the connection
+on the Mac, then tap I've approved it. The phone and bridge terminal display the
+same six-character code; the terminal approval command still takes the full
+connection token. New connections require fresh approval. The app disconnects
+its live session when backgrounded and does not replay writes.
+
+The Get Patchbridge for Mac button, Share action and Copy action use
+`https://patchbridge.arjunakankipati.com/appstorelink` without displaying the full
+address as UI text.
+
+Try the demo preset loads the bundled captured `qc-editor.json` fixture. Demo
+edits and saves are local to that session and never reach Bluetooth or USB.
+Leaving the demo discards them. The demo badge and save wording distinguish it
+from a live connection.
+
+## Editing
+
+- The portrait overview shows scene indicators, the four-by-eight grid map,
+  and a selectable row's blocks. Landscape offers the full grid and an inspector.
+- Open a block for its metadata-backed controls. The dial uses normalized knob
+  travel, with 0.1 display-unit steps and hold-and-slide-out 0.05 fine steps.
+  Dragging sends only on release; tapping the number opens a signed numeric pad.
+- Confirmed values remain authoritative. Pending edits are dashed; rejected,
+  adjusted, externally changed and saved state are reported. A changed snapshot
+  invalidates an in-progress gesture, typed entry or save confirmation.
+- Unknown scales and unsupported parameters remain read-only. Scene and bypass
+  state are indicators; scene switching, bypass writes, preset browsing and Save
+  As are not exposed in this PoC. Save is shown only when advertised by the bridge.
+- Connection details includes Stage/Daylight appearance and Match iPhone
+  appearance. Scene colors remain the QC's reported ARGB values.
+
+Native navigation preserves swipe-back. Layout uses scrollable content and
+Dynamic Type; numeric values use tabular figures. Buttons and the dial expose
+VoiceOver labels and adjustment actions.
+
+## Verification
+
+Run the core and bridge tests from the repo root:
+
+```sh
+swift test --package-path swift
+PYTHONPATH=src python3 -m pytest -q
+```
+
+`PatchbridgeUITests` exercises demo navigation, exact-value validation, editing,
+save confirmation, appearance, Mac-link UI, read-only blocks and landscape on
+an iPhone Simulator. Its result bundle retains screenshots. Run it through
+Xcode's Test action or `xcodebuild test` with an available iPhone destination.
+Debug builds accept `--demo`, `--editor`, `--stage` and `--daylight` launch
+arguments for reproducible visual inspection; these do not enable live writes.
+
+This implementation has been built and exercised in the iPhone Simulator.
+Live Bluetooth pairing, hardware editing and fine-gesture feel still require
+validation on a physical iPhone with the Mac bridge and QC.
+
+## Privacy manifest
+
+`Patchbridge/PrivacyInfo.xcprivacy` is bundled with the app. It declares no
+tracking or collected data, app-local preferences (`CA92.1`) and elapsed-time
+measurement (`35F9.1`). Bluetooth access uses the system permission prompt;
+no additional app capabilities are required for the current foreground client.
+
+## Release to TestFlight
+
+A production app icon is still required before uploading to TestFlight. The
+initial upload attempt was rejected for missing icons and orientation metadata;
+the project now explicitly targets iPhone and supplies supported orientations.
+
+
+The repository-root `release.sh` adapts the Harbor/Cuekeeper/Telemetee release
+workflow for the iPhone app. Create the app in App Store Connect with bundle ID
+`com.arjunakankipati.patchbridge`, sign into Xcode with your developer account,
+and have XcodeGen and Python 3 installed. The team and marketing version come
+from `ios/project.yml`.
+
+```sh
+./release.sh                              # tests, archive, upload, local Git tag
+./release.sh --no-upload                  # tests, archive, export IPA only
+./release.sh --skip-tests --build 42       # use a known build number
+./release.sh --no-upload --allow-dirty     # package uncommitted work; never tag
+```
+
+By default the script runs the Swift core tests, offline Python tests and iPhone
+UI tests before signing. Set `TEST_DESTINATION` to an installed simulator if the
+default iPhone 17 Pro is unavailable. `--skip-tests` is for a revision whose tests
+have already passed. No CloudKit, widget or Mac packaging steps are included.
+
+Copy `.release.env.example` to `.release.env` for optional overrides; it is
+Git-ignored. The default uses your Apple ID in Xcode. The optional `ASC_KEY_ID`,
+`ASC_ISSUER_ID`, and `ASC_KEY_PATH` variables enable API-key authentication using
+the copied `asc_profile.py` helper and a local Apple Distribution certificate
+with its private key. The helper can register the bundle ID and create/refresh
+its App Store provisioning profile. It does not create the App Store Connect
+app listing. Credentials are not copied from the example projects.
+
+Outputs and logs go to `build/release/<version>-<build>/`. Automatic build numbers
+use days since January 1, 2026 plus UTC hour and minute, within the 4/2/2 digit
+format. Choose a different `--build` for another attempt in the same minute or
+when the output directory already exists. Export options keep that build number
+rather than letting Xcode change it.
+
+A successful upload from a clean, unchanged checkout creates a local tag such
+as `ios/v0.1-293.18.30`; the script does not push it. `--no-upload` avoids uploading
+the app but still requires signing and may access Apple's provisioning service.
+Release workflow tests stub build/signing tools so they never upload anything.
+
+
+## App icon
+
+The app icon is `Patchbridge/AppIcon.icon`, an editable Icon Composer document.
+It uses the selected original “03 Patch Cable” design, rebuilt as SVG with both
+segmented jack ends, chartreuse foreground, and a dark olive background. Open the
+`.icon` document in Icon Composer to edit its appearance. The imported vector is
+in `AppIcon.icon/Assets/patch-cable.svg`; its standalone design source and exported
+default, dark, and tinted previews are in `../docs/design/brand/`. Keep the two
+SVG copies in sync when changing the mark. `project.yml` sets `AppIcon` as the
+primary icon and includes the document through the `Patchbridge` source folder.
+Xcode compiles the layered icon and generates fallback PNGs for older iOS versions.

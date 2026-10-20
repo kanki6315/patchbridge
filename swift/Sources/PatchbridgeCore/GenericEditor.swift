@@ -72,6 +72,7 @@ public struct EditorCatalog: Codable {
     public struct Model: Codable {
         public struct Parameter: Codable { public let control: ParameterControl? }
         public let name: String
+        public var category: String? = nil
         public let parameters: [String: Parameter]
     }
     public let id: String
@@ -94,6 +95,8 @@ public struct PresetSnapshot: Codable, Equatable {
     public let scene: String
     public let dirty: Bool
     public let blocks: [Block]
+    public var scene_labels: [String]? = nil
+    public var scene_colors: [UInt32]? = nil
     var validStructure: Bool {
         let scenes = Set(["A", "B", "C", "D", "E", "F", "G", "H"])
         return !preset_id.isEmpty && scenes.contains(scene) && blocks.count <= 32 &&
@@ -127,6 +130,7 @@ public final class GenericEditor {
     private var revision = 0
     private var operations = Set<String>()
     public init() {}
+    public func supports(_ operation: String) -> Bool { operations.contains(operation) }
     public func disconnect() {
         snapshot = nil; catalog = nil; pending = nil; session = nil; connection = nil
         revision = 0; operations.removeAll()

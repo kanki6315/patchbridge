@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // Renders design-canvas boards (.dc.html) to standalone HTML and PNG.
-// Usage: node tools/render_design_boards.mjs <canvas project dir> <output dir>
+// Usage: node tools/render_design_boards.mjs <canvas project dir> <output dir> [page id]
 // The project dir holds canvas.json; boards on every page except "components" are rendered.
+// With a page id (poc, ipad, concepts), only that page is rendered and its manifest entries replaced.
 // Requires Google Chrome for PNGs; HTML snapshots need nothing.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-const [srcDir, outDir] = process.argv.slice(2);
+const [srcDir, outDir, onlyPage] = process.argv.slice(2);
 if (!srcDir || !outDir) { console.error('usage: render_design_boards.mjs <project dir> <out dir>'); process.exit(2); }
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
@@ -118,11 +119,11 @@ const manifest = [];
 for (const key of canvas.order) {
   const entry = canvas.boards[key];
   const page = entry.page || firstPage;
-  if (page === 'components') continue;
+  if (page === 'components' || (onlyPage && page !== onlyPage)) continue;
   const b = loadBoard(path.join(srcDir, key));
   const { w, h } = entry;
-  const slug = key.replace(/^(poc|mac)\//, '').replace(/\.dc\.html$/, '').replace(/[^\w-]+/g, '-');
-  const sub = page === 'concepts' ? 'concepts' : page === 'mac' ? 'mac' : 'screens';
+  const slug = key.replace(/^(poc|ipad|mac)\//, '').replace(/\.dc\.html$/, '').replace(/[^\w-]+/g, '-');
+  const sub = page === 'concepts' ? 'concepts' : page === 'ipad' ? 'ipad' : page === 'mac' ? 'mac' : 'screens';
   // Mac windows and popovers have rounded corners, so they render on a transparent page.
   const bg = sub === 'mac' ? 'transparent' : '#000';
   fs.mkdirSync(path.join(outDir, 'html', sub), { recursive: true });
@@ -142,4 +143,7 @@ for (const key of canvas.order) {
   manifest.push({ key, slug, page: pageName[page] || page, title: entry.title, w, h, png: path.relative(outDir, pngPath), html: path.relative(outDir, htmlPath) });
   console.log('rendered', sub + '/' + slug);
 }
-fs.writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+const manifestPath = path.join(outDir, 'manifest.json');
+const kept = onlyPage && fs.existsSync(manifestPath)
+  ? JSON.parse(fs.readFileSync(manifestPath, 'utf8')).filter((m) => m.page !== (pageName[onlyPage] || onlyPage)) : [];
+fs.writeFileSync(manifestPath, JSON.stringify([...kept, ...manifest], null, 2) + '\n');

@@ -5,12 +5,19 @@ import Foundation
 public final class EditorCoordinator {
     public enum Phase: Equatable { case disconnected, connecting, awaitingApproval, loading, recovering, ready, failed }
     public let editor = GenericEditor()
+    public private(set) var nearbyMacs = [String: String]()
+    public private(set) var macName: String?
+    public func chooseMac(_ id: String) {
+        guard phase == .connecting, let name = nearbyMacs[id] else { return }
+        macName = name; discoveryDeadline = now() + 30
+        (transport as? DiscoverableEditorTransport)?.selectPeripheral(id); nearbyMacs.removeAll(); onChange?()
+    }
     private let diagnostics: Diagnostics
     public private(set) var phase: Phase = .disconnected
-    public private(set) var macName = "Mac"
     public private(set) var approvalCode: String?
-    private let phoneName: String
+    private var phoneName: String
     public private(set) var error: String?
+    public private(set) var outcome: String?
     public private(set) var status = "Disconnected"
     public var onChange: (() -> Void)?
     public var busy: Bool { request != nil }
@@ -32,13 +39,14 @@ public final class EditorCoordinator {
     private var cachedModels = Set<String>()
     private var requestedModels = Set<String>()
     private var nextPoll = TimeInterval.infinity
+    private var discoveryDeadline = TimeInterval.infinity
     private struct Request { let id: String; let operation: String; let deadline: TimeInterval }
     private var request: Request?
 
     public init(pollInterval: TimeInterval = 2, timeout: TimeInterval = 15,
                 automaticPolling: Bool = true, phoneName: String = DeviceIdentity.phoneName, diagnostics: Diagnostics = .shared,
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
-                makeTransport: @escaping () -> EditorTransport = { BLECentral() }) {
+                makeTransport: @escaping () -> EditorTransport = { BLECentral(automaticallyConnect: false) }) {
         self.phoneName = DeviceIdentity.name(phoneName, fallback: "iPhone")
         self.diagnostics = diagnostics
         self.pollInterval = max(0.5, pollInterval.isFinite ? pollInterval : 2)
@@ -46,20 +54,28 @@ public final class EditorCoordinator {
         self.automaticPolling = automaticPolling; self.now = now; self.makeTransport = makeTransport
     }
     deinit { timer?.invalidate() }
+    public func setPhoneName(_ name: String) {
+        guard phase == .disconnected || phase == .failed else { return }
+        phoneName = DeviceIdentity.name(name, fallback: "iPhone")
+    }
     public func start() {
         disconnect()
         diagnostics.record(.editorStarted)
-        error = nil; phase = .connecting; status = "Connecting"
+        error = nil; outcome = nil; discoveryDeadline = now() + 30; phase = .connecting; status = "Connecting"
         let epoch = generation
         let transport = makeTransport()
         self.transport = transport
+        (transport as? DiscoverableEditorTransport)?.onDiscovered = { [weak self] id, name in
+            guard let self, self.generation == epoch, self.phase == .connecting else { return }
+            self.nearbyMacs[id] = name; self.onChange?()
+        }
         transport.onReady = { [weak self] in
             guard let self, self.generation == epoch, self.phase == .connecting else { return }
             self.send("hello")
         }
         transport.onDisconnected = { [weak self] in
             guard let self, self.generation == epoch else { return }
-            self.fail("Connection ended. Reconnect to reload confirmed state.")
+            self.fail(self.status.hasPrefix("Bluetooth") ? self.status : "Connection ended. Reconnect to reload confirmed state.")
         }
         transport.onStatus = { [weak self] status in
             guard let self, self.generation == epoch else { return }
@@ -74,12 +90,14 @@ public final class EditorCoordinator {
         transport.reconnect(); onChange?()
     }
     public func disconnect() {
+        error = nil; outcome = nil
         diagnostics.record(.editorDisconnected)
         generation = UUID(); timer?.invalidate(); timer = nil
         let old = transport; transport = nil
         old?.onReady = nil; old?.onDisconnected = nil; old?.onStatus = nil; old?.onResponse = nil
-        request = nil; staged = nil; macName = "Mac"; approvalCode = nil; connection = nil; session = nil; revision = 0
-        operations.removeAll(); nextPoll = .infinity; editor.disconnect()
+        nearbyMacs.removeAll(); macName = nil; approvalCode = nil
+        request = nil; staged = nil; connection = nil; session = nil; revision = 0
+        operations.removeAll(); nextPoll = .infinity; discoveryDeadline = .infinity; editor.disconnect()
         phase = .disconnected; status = "Disconnected"; old?.disconnect(); onChange?()
     }
     public func authorize() {
@@ -89,6 +107,7 @@ public final class EditorCoordinator {
     public func refresh() { guard phase == .ready, !busy else { return }; send("snapshot") }
     /// Also usable with a deterministic clock in offline hosts. No overlapping polls or catch-up bursts.
     public func tick() {
+        if phase == .connecting, nearbyMacs.isEmpty, now() >= discoveryDeadline { fail("No Mac replied. Open Patchbridge on your Mac and try again."); return }
         if let request, now() >= request.deadline { fail("Request timed out; its outcome is unknown. Reconnect before editing."); return }
         if phase == .ready, !busy, now() >= nextPoll { refresh() }
         if phase == .recovering, !busy, now() >= nextPoll { send("recover") }
@@ -96,12 +115,14 @@ public final class EditorCoordinator {
     public func edit(blockID: String, parameterID: String, value: ParameterValue) throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
         guard !busy else { throw EditorFailure.busy }
+        outcome = nil
         let pending = try editor.propose(blockID: blockID, parameterID: parameterID, value: value)
         send(pending.operation, command: pending.command)
     }
     public func save() throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
         guard !busy else { throw EditorFailure.busy }
+        outcome = nil
         let pending = try editor.proposeSave(); send(pending.operation, command: pending.command)
     }
     private func fail(_ message: String) {
@@ -190,6 +211,7 @@ public final class EditorCoordinator {
                 cachedCatalog = catalog; cachedModels = requestedModels; try installStaged()
             case "snapshot":
                 let state = try decode(PresetSnapshot.self, result["state"])
+                if let previous = editor.snapshot, previous != state { outcome = "Changed on the QC" }
                 guard newRevision > revision || state == editor.snapshot else { throw EditorFailure.staleContext }
                 if state.catalog_id != editor.catalog?.id || !Set(state.blocks.map(\.model_id)).isSubset(of: cachedModels) {
                     staged = state; revision = newRevision; phase = .loading
@@ -200,7 +222,12 @@ public final class EditorCoordinator {
                 }
             case "set_parameter", "save":
                 let state = try decode(PresetSnapshot.self, result["state"])
+                let proposed = editor.pending
                 try editor.confirm(id: pending.id, snapshot: state, session: newSession, connection: connection!, revision: newRevision)
+                if pending.operation == "save" { outcome = "Saved on the QC" }
+                else if let block = proposed?.blockID, let parameter = proposed?.parameterID {
+                    outcome = editor.value(blockID: block, parameterID: parameter) == proposed?.proposedValue ? "Confirmed" : "Adjusted by the QC"
+                }
                 revision = newRevision; error = nil; ready()
             default: throw EditorFailure.invalidState
             }
