@@ -1,12 +1,16 @@
 ---
 // Layout for Markdown pages (support, privacy). Set `title` and `description`
-// in each page's frontmatter; `updated` is optional.
+// in each page's frontmatter; `updated` is optional. `contact: true` puts the
+// support email card in the side column.
 import Base from './Base.astro';
+import { site } from '../site';
 
 interface Props {
-  frontmatter: { title: string; description?: string; lede?: string; updated?: string };
+  frontmatter: { title: string; description?: string; lede?: string; updated?: string; contact?: boolean };
+  headings?: { depth: number; slug: string; text: string }[];
 }
-const { title, description, lede, updated } = Astro.props.frontmatter;
+const { title, description, lede, updated, contact } = Astro.props.frontmatter;
+const sections = (Astro.props.headings ?? []).filter((h) => h.depth === 2);
 const updatedLabel = updated
   ? new Date(`${updated}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
   : null;
@@ -18,6 +22,22 @@ const updatedLabel = updated
       {lede && <p class="lede">{lede}</p>}
       {updatedLabel && <p class="updated">Last updated <time datetime={updated}>{updatedLabel}</time></p>}
     </header>
+    <aside class="side">
+      {contact && (
+        <div class="contact">
+          <p><strong>Email us</strong><br /><span class="addr">{site.email}</span></p>
+          <a class="btn btn-primary" href={`mailto:${site.email}?subject=${encodeURIComponent(`${site.name} support`)}`}>Email support</a>
+        </div>
+      )}
+      {sections.length > 1 && (
+        <nav class="toc" aria-label="On this page">
+          <p class="toc-label">On this page</p>
+          <ul>
+            {sections.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}
+          </ul>
+        </nav>
+      )}
+    </aside>
     <div class="prose">
       <slot />
     </div>
@@ -25,16 +45,31 @@ const updatedLabel = updated
 </Base>
 
 <style>
+  /* One column on phones; on wide screens the reading column sits beside a
+     sticky side column so the page fills the frame instead of leaving the
+     right half empty. */
   .prose-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'head' 'side' 'body';
+    column-gap: clamp(3rem, 6vw, 6rem);
     padding-block: clamp(3rem, 2rem + 5vw, 6rem) var(--section);
   }
+  @media (min-width: 60rem) {
+    .prose-page {
+      grid-template-columns: minmax(0, 44rem) minmax(16rem, 22rem);
+      grid-template-areas: 'head head' 'body side';
+      justify-content: space-between;
+    }
+  }
   .head {
+    grid-area: head;
     display: grid;
     gap: 1rem;
-    max-width: 44rem;
     padding-bottom: clamp(2rem, 4vw, 3rem);
     border-bottom: 1px solid var(--hairline);
   }
+  .head > * { max-width: 44rem; }
   h1 {
     font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem);
     letter-spacing: -0.035em;
@@ -46,12 +81,74 @@ const updatedLabel = updated
   }
   .updated { color: var(--ink-muted); font-size: var(--text-caption); }
 
+  .side {
+    grid-area: side;
+    display: grid;
+    align-content: start;
+    gap: 2rem;
+    padding-top: clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .side:empty { display: none; }
+  @media (min-width: 60rem) {
+    .side {
+      position: sticky;
+      top: calc(64px + 2rem);
+      align-self: start;
+    }
+  }
+
+  .contact {
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+  .contact .addr { color: var(--ink-muted); overflow-wrap: anywhere; }
+  .contact .btn { justify-self: start; }
+  @media (min-width: 60rem) {
+    .contact .btn { justify-self: stretch; }
+  }
+
+  .toc { display: none; }
+  @media (min-width: 60rem) {
+    .toc { display: block; }
+  }
+  .toc-label {
+    margin-bottom: 0.75rem;
+    color: var(--ink-muted);
+    font-size: var(--text-label);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .toc ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-left: 1px solid var(--hairline);
+  }
+  .toc a {
+    display: block;
+    padding: 0.4rem 0 0.4rem 1rem;
+    margin-left: -1px;
+    border-left: 1px solid transparent;
+    color: var(--ink-muted);
+    font-size: var(--text-caption);
+    text-decoration: none;
+    transition: color 150ms var(--ease-out), border-color 150ms var(--ease-out);
+  }
+  .toc a:hover { color: var(--ink); border-left-color: var(--signal); }
+
   .prose {
-    max-width: 44rem;
+    grid-area: body;
+    min-width: 0;
     padding-top: clamp(1rem, 2vw, 1.5rem);
     line-height: 1.7;
   }
   .prose :global(h2) {
+    scroll-margin-top: calc(64px + 1.5rem);
     margin: 2.75rem 0 0.75rem;
     font-size: 1.5rem;
     letter-spacing: -0.02em;
@@ -113,19 +210,4 @@ const updatedLabel = updated
   .prose :global(details > :not(summary)) { color: var(--ink-muted); }
   .prose :global(details > p:last-child) { margin-bottom: 1.25rem; }
 
-  /* The contact block at the top of support */
-  .prose :global(.contact) {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-    margin: 1rem 0 2.5rem;
-    padding: 1.5rem;
-    border-radius: var(--r-panel);
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
-  }
-  .prose :global(.contact p) { margin: 0; }
-  .prose :global(.contact .btn) { color: var(--signal-ink); text-decoration: none; }
 </style>

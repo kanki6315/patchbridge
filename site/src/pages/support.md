@@ -3,14 +3,10 @@ layout: ../layouts/Prose.astro
 title: Support
 description: Get help with Patchbridge for iPhone, iPad and the Mac bridge.
 lede: Stuck, or found a bug? Write to us and we'll get back to you.
+contact: true
 ---
 
 <!-- Placeholder support text: replace with your own. -->
-
-<div class="contact">
-  <p><strong>Email</strong><br />patchbridge@arjunakankipati.com</p>
-  <a class="btn btn-primary" href="mailto:patchbridge@arjunakankipati.com?subject=Patchbridge%20support">Email support</a>
-</div>
 
 Tell us which iPhone or iPad you're using, your macOS version, your Quad Cortex firmware version, and what happened. If the Mac bridge shows an error, use **Export report…** in its window and attach the file. Reports leave out your preset contents.
 
