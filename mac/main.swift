@@ -125,26 +125,20 @@ struct BridgeWindow: View {
                 Text(model.presentation.approvalCode).font(.system(size: 38, weight: .semibold)).tracking(5).monospacedDigit()
                     .frame(maxWidth: .infinity).padding(.vertical, 20).background(colors.surface, in: RoundedRectangle(cornerRadius: 18))
                     .accessibilityLabel("Approval code \(model.presentation.approvalCode)")
-                Text("Approve only if the phone shows the same code.")
+                Text("Approve only if \(model.presentation.phoneName) shows the same code.")
                     .font(.callout).foregroundStyle(colors.muted)
+                if model.presentation.waiting > 0 {
+                    Label(model.presentation.waiting == 1 ? "1 more device waiting" : "\(model.presentation.waiting) more devices waiting", systemImage: "clock")
+                        .font(.callout).foregroundStyle(colors.muted)
+                }
                 if model.phase == .awaitingApproval {
                     Toggle("Trust this \(model.presentation.phoneName) until Patchbridge quits", isOn: $trustPhone).toggleStyle(.checkbox)
                     Text(trustPhone ? "Reconnect on the phone skips the code. Quit Patchbridge or revoke trust to end it." : "Approval ends when the phone disconnects or the bridge restarts.")
                         .font(.caption).foregroundStyle(colors.muted)
                 }
             }
-            if let trusted = model.presentation.trustedPhone, model.phase != .awaitingApproval {
-                HStack(spacing: 12) {
-                    Image(systemName: "iphone").font(.system(size: 18)).frame(width: 36, height: 36)
-                        .background(colors.surface, in: RoundedRectangle(cornerRadius: 12)).accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(trusted).fontWeight(.semibold)
-                        Text(model.phase == .connected || model.phase == .recovering ? "Trusted · connected" : "Trusted · not connected").font(.caption).foregroundStyle(colors.muted)
-                    }
-                    Spacer()
-                    Button("Revoke Trust", role: .destructive) { model.revokeTrust() }.disabled(model.busy)
-                        .accessibilityLabel("Revoke Trust for \(trusted)")
-                }.font(.system(size: 14)).padding(12).background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
+            if active && (!model.presentation.connected.isEmpty || !model.presentation.trusted.isEmpty) {
+                deviceList
             }
             if let preset = model.presentation.preset {
                 VStack(spacing: 0) {
@@ -179,6 +173,11 @@ struct BridgeWindow: View {
                     if model.phase == .connected && model.isSimulation {
                         Menu {
                             Button("Simulate gain edit") { model.simulateEdit() }
+                            if model.presentation.connected.count < 2 {
+                                Button("Simulate another device") { model.requestSecondDevice() }
+                            } else {
+                                Button("Simulate edit from other device") { model.simulateOtherDeviceEdit() }
+                            }
                             Button("Simulate rejected edit") { model.simulateEdit(rejected: true) }
                             Button("Check connection") { model.refresh() }
                             Button("Simulate USB interruption") { model.simulateUSBRemoval() }
@@ -235,7 +234,7 @@ struct BridgeWindow: View {
                                 Text(edit.outcome == .rejected ? "Not applied · \(edit.detail)" : edit.outcome == .unknown ? "Outcome unknown · \(edit.detail)" : edit.detail).foregroundStyle(colors.muted)
                                 if !compact {
                                     HStack {
-                                        Text(edit.context)
+                                        Text(edit.device.map { "\($0) · \(edit.context)" } ?? edit.context)
                                         Spacer()
                                         Text(edit.date, style: .time).monospacedDigit()
                                     }.font(.caption).foregroundStyle(colors.muted)
@@ -251,6 +250,43 @@ struct BridgeWindow: View {
             }
         }
     }
+    /// Connected devices, then devices trusted to reconnect that aren't connected now.
+    private var deviceList: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Devices").font(.headline)
+            VStack(spacing: 0) {
+                let trusted = model.presentation.trusted
+                ForEach(model.presentation.connected) { device in
+                    let entry = trusted.first { $0.id == device.trustID }
+                    deviceRow(device.name, status: (device.state == .connected ? "Connected" : "Verifying") + (device.trusted ? " · Trusted" : "")) {
+                        if let entry {
+                            Button("Revoke Trust") { model.revokeTrust(entry) }.accessibilityLabel("Revoke Trust for \(device.name)")
+                        }
+                        Button("Disconnect", role: .destructive) { model.disconnect(device) }.accessibilityLabel("Disconnect \(device.name)")
+                    }
+                    Divider()
+                }
+                ForEach(trusted.filter { !$0.connected }) { entry in
+                    deviceRow(entry.name, status: "Trusted · not connected") {
+                        Button("Revoke Trust", role: .destructive) { model.revokeTrust(entry) }.accessibilityLabel("Revoke Trust for \(entry.name)")
+                    }
+                    Divider()
+                }
+            }.background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        }
+    }
+    private func deviceRow<Actions: View>(_ name: String, status: String, @ViewBuilder actions: () -> Actions) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: name.localizedCaseInsensitiveContains("iPad") ? "ipad" : "iphone").font(.system(size: 18)).frame(width: 36, height: 36)
+                .background(colors.ground, in: RoundedRectangle(cornerRadius: 12)).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).fontWeight(.semibold).lineLimit(1)
+                Text(status).font(.caption).foregroundStyle(colors.muted)
+            }
+            Spacer(minLength: 8)
+            HStack(spacing: 6) { actions() }.controlSize(compact ? .small : .regular).disabled(model.busy)
+        }.font(.system(size: 14)).padding(12)
+    }
     private func fact(_ label: String, _ value: String) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(label).foregroundStyle(colors.muted).frame(width: 86, alignment: .leading)
@@ -259,7 +295,8 @@ struct BridgeWindow: View {
     }
     private var diagram: some View {
         HStack(alignment: .top, spacing: 10) {
-            node("iphone", phone ? model.presentation.phoneName : "iPhone", live: model.phase == .connected)
+            let devices = model.presentation.connected.count
+            node(devices > 1 ? "ipad.and.iphone" : "iphone", devices > 1 ? "\(devices) devices" : phone ? model.presentation.phoneName : "iPhone", live: model.phase == .connected)
             link(model.isSimulation ? "Simulated" : "Bluetooth", live: model.phase == .connected)
             node("laptopcomputer", model.presentation.macName, live: active)
             link(model.phase == .recovering ? "Paused" : model.isSimulation ? "Simulated" : "USB", live: model.phase == .connected)
@@ -343,9 +380,6 @@ struct BridgeWindow: View {
                 Button(model.phase == .approving ? "Disconnect" : "Deny") { model.disconnectPhone() }
                 Spacer()
                 Button(model.phase == .approving ? "Approved" : "Approve") { model.approve(trust: trustPhone) }.buttonStyle(.borderedProminent).disabled(model.phase == .approving)
-            } else if model.phase == .connected || model.phase == .recovering {
-                Spacer()
-                Button("Disconnect iPhone", role: .destructive) { model.disconnectPhone() }
             } else if model.phase == .running && model.isSimulation {
                 Spacer()
                 Button("Simulate phone connection") { model.requestPhone() }.buttonStyle(.borderedProminent)

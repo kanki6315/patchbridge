@@ -5,19 +5,23 @@ import Foundation
 /// device's connection but never the bridge: Stop, Quit or helper failure clears it.
 public final class TrustRegistry {
     public static let limit = 8
-    private var entries: [(token: String, name: String)] = []
+    /// `id` names an entry in the UI; the token never leaves the bridge and its devices.
+    private var entries: [(id: UUID, token: String, name: String)] = []
     public var names: [String] { entries.map(\.name) }
+    public var list: [(id: UUID, name: String)] { entries.map { ($0.id, $0.name) } }
     func add(name: String) -> String {
         let token = UUID().uuidString + UUID().uuidString
-        entries.append((token, name))
+        entries.append((UUID(), token, name))
         if entries.count > Self.limit { entries.removeFirst() }
         return token
     }
     func name(for token: String) -> String? { entries.first { $0.token == token }?.name }
+    func id(for token: String) -> UUID? { entries.first { $0.token == token }?.id }
     func rename(_ token: String, to name: String) {
         if let index = entries.firstIndex(where: { $0.token == token }) { entries[index].name = name }
     }
     func remove(_ token: String) { entries.removeAll { $0.token == token } }
+    func remove(id: UUID) { entries.removeAll { $0.id == id } }
     func removeAll() { entries.removeAll() }
 }
 
@@ -61,6 +65,11 @@ public final class SharedUSBSession {
         return device
     }
     func register(_ device: DeviceSession) { admitted.append(Admitted(device: device)) }
+    /// Ends trust for one entry. A connected device keeps this connection; its next one needs a code.
+    public func revokeTrust(id: UUID) {
+        devices.filter { $0.trustEntryID == id }.forEach { $0.revokeTrust() }
+        trust.remove(id: id)
+    }
     /// Ends the device's connection and frees its slot. Its trust entry, if any, remains.
     public func remove(_ device: DeviceSession) {
         device.revoke(); admitted.removeAll { $0.device == nil || $0.device === device }

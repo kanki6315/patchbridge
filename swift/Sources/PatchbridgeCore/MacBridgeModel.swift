@@ -2,17 +2,43 @@
 import Foundation
 import Combine
 
+/// One device admitted by the bridge, as the shell shows it.
+struct BridgeDevice: Identifiable, Equatable {
+    enum State: Equatable { case awaitingApproval, approving, connected }
+    let id: UUID
+    /// The device's connection token, so an action applies to this connection and no later one.
+    let connection: String
+    var name: String
+    var state: State
+    /// The device's entry in the trust list, if it is trusted.
+    var trustID: UUID?
+    var trusted: Bool { trustID != nil }
+}
+/// A device trusted to reconnect without a code until the bridge stops or quits.
+struct TrustedDevice: Identifiable, Equatable {
+    let id: UUID
+    let name: String
+    var connected = false
+}
 struct MacBridgePresentation {
     var macName = DeviceIdentity.macName
+    /// The device the approval card, or a single-device title, refers to.
     var phoneName = "iPhone"
     var approvalCode = ""
+    /// The connection on the approval card. Approve and Deny act on exactly this one.
+    var pendingID: UUID?
+    var pendingConnection: String?
+    /// Devices queued behind the approval card.
+    var waiting = 0
+    var devices: [BridgeDevice] = []
+    var trusted: [TrustedDevice] = []
     var preset: String?
     var scene: String?
     var dirty = false
     var recovering = false
-    /// A phone trusted to reconnect without a code until the bridge stops or quits.
-    var trustedPhone: String?
     var recentEdits: [RecentBridgeEdit] = []
+    /// Devices past approval, in the order they connected.
+    var connected: [BridgeDevice] { devices.filter { $0.state != .awaitingApproval } }
 }
 protocol OfflineBridgeBackend: AnyObject {
     var presentation: MacBridgePresentation { get }
@@ -21,10 +47,16 @@ protocol OfflineBridgeBackend: AnyObject {
     var onChange: (() -> Void)? { get set }
     func start() throws
     func requestPhone() throws
-    func approve() throws
-    func approve(trust: Bool) throws
-    func revoke()
-    func revokeTrust()
+    /// Approves exactly the connection the card showed. If it has left or changed, nothing
+    /// is approved, and no other device is affected.
+    func approve(device: UUID, connection: String, trust: Bool) throws
+    /// Denies exactly the connection the card showed; a stale request does nothing.
+    func deny(device: UUID, connection: String)
+    /// Ends exactly that connection; a stale request does nothing.
+    func disconnect(device: UUID, connection: String)
+    func revokeTrust(id: UUID)
+    func requestSecondDevice() throws
+    func editFromOtherDevice() throws
     func refresh() throws
     func stop()
     func interruptHelper()
@@ -40,91 +72,158 @@ extension OfflineBridgeBackend {
     func interruptDevice() throws { throw BridgeFailure.protocolError }
     func editSimulation(value: Double, stale: Bool) throws { throw BridgeFailure.protocolError }
     func clearRecentEdits() {}
-    func approve(trust: Bool) throws { try approve() }
-    func revokeTrust() {}
+    func approve(device: UUID, connection: String, trust: Bool) throws { throw BridgeFailure.protocolError }
+    func deny(device: UUID, connection: String) {}
+    func disconnect(device: UUID, connection: String) {}
+    func revokeTrust(id: UUID) {}
+    func requestSecondDevice() throws { throw BridgeFailure.protocolError }
+    func editFromOtherDevice() throws { throw BridgeFailure.protocolError }
 }
 
 /// Only constructs a bundled simulator. No radio or USB transport is available here.
+/// A simulated iPhone, and optionally a simulated iPad, share one helper session.
 final class BundledOfflineBackend: OfflineBridgeBackend {
+    private final class Simulated {
+        let id = UUID()
+        let session: DeviceSession
+        let name: String
+        var state = BridgeDevice.State.awaitingApproval
+        var helperSession: String?
+        var revision = 0
+        init(session: DeviceSession, name: String) { self.session = session; self.name = name }
+    }
     private let makeHelper: () throws -> HelperClient
     private var helper: HelperClient?
-    private var bridge: DeviceSession?
-    private var session: String?
+    private var shared: SharedUSBSession?
+    private var devices: [Simulated] = []
     private var snapshot: [String: Any]?
     private var catalog: [String: Any]?
-    private var revision = 0
     private(set) var presentation = MacBridgePresentation()
     init(makeHelper: @escaping () throws -> HelperClient = { try HelperClient(bundle: .main) }) {
         self.makeHelper = makeHelper
     }
     func start() throws {
         stop(); let helper = try makeHelper(); self.helper = helper
-        let bridge = DeviceSession(helper: helper, allowsRecovery: true)
-        bridge.shared.onMutation = { [weak self] _, request, response in
+        let shared = SharedUSBSession(helper: helper, allowsRecovery: true)
+        shared.onMutation = { [weak self] device, request, response in
             guard let self else { return }
-            self.presentation.recentEdits.insert(RecentBridgeEdit(request: request, response: response, snapshot: self.snapshot, catalog: self.catalog), at: 0)
+            self.presentation.recentEdits.insert(RecentBridgeEdit(request: request, response: response, snapshot: self.snapshot, catalog: self.catalog, device: device), at: 0)
             self.presentation.recentEdits = Array(self.presentation.recentEdits.prefix(12))
         }
-        self.bridge = bridge
+        self.shared = shared
     }
-    private func send(_ operation: String) throws -> [String: Any] {
-        guard let bridge else { throw BridgeFailure.disconnected }
-        var message: [String: Any] = ["version": 1, "id": UUID().uuidString, "operation": operation, "connection_id": bridge.token]
-        if operation == "hello" { message["device_name"] = DeviceIdentity.phoneName }
-        if let session { message["session_id"] = session }
-        return try bridge.handle(message)
+    private var connected: [Simulated] { devices.filter { $0.state == .connected } }
+    private func send(_ device: Simulated, _ operation: String, fields: [String: Any] = [:]) throws -> [String: Any] {
+        var message: [String: Any] = ["version": 1, "id": UUID().uuidString, "operation": operation, "connection_id": device.session.token]
+        if operation == "hello" { message["device_name"] = device.name }
+        if let session = device.helperSession { message["session_id"] = session }
+        message.merge(fields) { $1 }
+        return try device.session.handle(message)
     }
-    func requestPhone() throws {
-        let reply = try send("hello")
+    private func publish() {
+        presentation.devices = devices.map { BridgeDevice(id: $0.id, connection: $0.session.token, name: $0.session.phoneName, state: $0.state, trustID: $0.session.trustEntryID) }
+        let active = devices.filter { $0.state != .awaitingApproval }
+        presentation.trusted = (shared?.trust.list ?? []).map { entry in
+            TrustedDevice(id: entry.id, name: entry.name, connected: active.contains { $0.session.trustEntryID == entry.id })
+        }
+        let waiting = devices.filter { $0.state == .awaitingApproval }
+        presentation.waiting = max(0, waiting.count - 1)
+        presentation.pendingID = waiting.first?.id; presentation.pendingConnection = waiting.first?.session.token
+        let shown = waiting.first ?? active.first
+        presentation.phoneName = shown?.session.phoneName ?? "iPhone"
+        presentation.approvalCode = shown?.session.approvalCode ?? ""
+    }
+    private func admit(_ name: String) throws {
+        guard let shared, let session = shared.admit() else { throw BridgeFailure.disconnected }
+        let device = Simulated(session: session, name: name); devices.append(device)
+        let reply = try send(device, "hello")
         guard reply["authorization_required"] as? Bool == true else { throw BridgeFailure.protocolError }
-        presentation.phoneName = bridge?.phoneName ?? "iPhone"
-        presentation.approvalCode = bridge?.approvalCode ?? ""
+        publish()
     }
-    func approve() throws { try approve(trust: false) }
-    func approve(trust: Bool) throws {
-        guard let bridge else { throw BridgeFailure.disconnected }
-        bridge.approve(trusting: trust); presentation.trustedPhone = bridge.trustedPhoneName
-        let reply = try send("connect")
+    func requestPhone() throws { try admit(DeviceIdentity.phoneName) }
+    func requestSecondDevice() throws { try admit("Simulated iPad") }
+    private func device(_ id: UUID, _ connection: String, in state: BridgeDevice.State? = nil) -> Simulated? {
+        devices.first { $0.id == id && $0.session.token == connection && (state == nil || $0.state == state) }
+    }
+    func approve(device id: UUID, connection: String, trust: Bool) throws {
+        guard let device = device(id, connection, in: .awaitingApproval) else { publish(); return } // The card changed meanwhile.
+        device.session.approve(trusting: trust)
+        let reply = try send(device, "connect")
         guard reply["status"] as? String == "confirmed", let session = reply["session_id"] as? String else { throw BridgeFailure.protocolError }
-        self.session = session
-        try refresh()
-        let catalogReply = try send("catalog")
-        catalog = catalogReply["result"] as? [String: Any]
+        device.helperSession = session; device.state = .connected
+        try refresh(device)
+        if catalog == nil { catalog = try send(device, "catalog")["result"] as? [String: Any] }
+        publish()
+    }
+    private func edit(from device: Simulated, value: Double, revision: Int) throws {
+        guard let snapshot else { throw BridgeFailure.disconnected }
+        _ = try send(device, "set_parameter", fields: ["revision": revision, "preset_id": snapshot["preset_id"] ?? "", "scene": snapshot["scene"] ?? "",
+                                                         "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": value]])
     }
     func editSimulation(value: Double, stale: Bool) throws {
-        guard let bridge, let session, let snapshot else { throw BridgeFailure.disconnected }
-        let request: [String: Any] = ["version": 1, "id": UUID().uuidString, "operation": "set_parameter",
-            "connection_id": bridge.token, "session_id": session, "revision": stale ? -1 : revision,
-            "preset_id": snapshot["preset_id"] ?? "", "scene": snapshot["scene"] ?? "",
-            "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": value]]
-        _ = try bridge.handle(request)
-        try refresh()
+        guard let device = connected.first else { throw BridgeFailure.disconnected }
+        try edit(from: device, value: value, revision: stale ? -1 : device.revision)
+        try refresh(device)
+    }
+    /// The second device edits, leaving the first device's revision behind: its next edit is
+    /// rejected as stale until it reloads, exactly as on real devices.
+    func editFromOtherDevice() throws {
+        guard connected.count > 1 else { throw BridgeFailure.disconnected }
+        let other = connected[1]
+        try refresh(other)
+        try edit(from: other, value: 3.5, revision: other.revision)
+        try refresh(other)
     }
     func clearRecentEdits() { presentation.recentEdits.removeAll() }
-    func revoke() { bridge?.revoke(); session = nil; snapshot = nil; catalog = nil
-        let history = presentation.recentEdits
-        presentation = MacBridgePresentation(); presentation.recentEdits = history
-        presentation.trustedPhone = bridge?.trustedPhoneName }
-    func revokeTrust() { bridge?.revokeTrust(); presentation.trustedPhone = nil }
+    func deny(device id: UUID, connection: String) {
+        guard device(id, connection, in: .awaitingApproval) != nil else { publish(); return }
+        end(id)
+    }
+    func disconnect(device id: UUID, connection: String) {
+        guard device(id, connection) != nil else { publish(); return }
+        end(id)
+    }
+    private func end(_ id: UUID) {
+        guard let index = devices.firstIndex(where: { $0.id == id }) else { return }
+        shared?.remove(devices.remove(at: index).session)
+        if connected.isEmpty {
+            snapshot = nil; catalog = nil
+            let history = presentation.recentEdits
+            presentation = MacBridgePresentation(); presentation.recentEdits = history
+        }
+        publish()
+    }
+    func revokeTrust(id: UUID) { shared?.revokeTrust(id: id); publish() }
     func interruptDevice() throws {
-        guard let bridge else { throw BridgeFailure.disconnected }
-        try bridge.simulateDeviceRemoval(); session = nil; presentation.recovering = true
+        guard let device = connected.first else { throw BridgeFailure.disconnected }
+        try device.session.simulateDeviceRemoval(); device.helperSession = nil; presentation.recovering = true
     }
     func refresh() throws {
-        let reply = try send(bridge?.recovering == true ? "recover" : "snapshot")
-        if (reply["error"] as? [String: Any])?["code"] as? String == "device_unavailable" {
-            presentation.recovering = true; session = nil; return
-        }
+        for device in connected { try refresh(device) }
+        publish()
+    }
+    private func refresh(_ device: Simulated) throws {
+        var reply = try send(device, shared?.recovering == true ? "recover" : "snapshot")
+        func unavailable() -> Bool { (reply["error"] as? [String: Any])?["code"] as? String == "device_unavailable" }
+        // Another device already recovered: this one adopts the new session.
+        if unavailable() && shared?.recovering == false { reply = try send(device, "recover") }
+        if unavailable() { presentation.recovering = true; device.helperSession = nil; return }
         guard reply["status"] as? String == "confirmed", let session = reply["session_id"] as? String,
               let result = reply["result"] as? [String: Any], let state = result["state"] as? [String: Any],
               let dirty = state["dirty"] as? Bool else { throw BridgeFailure.protocolError }
-        self.session = session; snapshot = state; revision = reply["revision"] as? Int ?? 0
+        device.helperSession = session; device.revision = reply["revision"] as? Int ?? 0; snapshot = state
         presentation.preset = state["name"] as? String
         presentation.scene = state["scene"] as? String
         presentation.dirty = dirty
         presentation.recovering = false
     }
-    func stop() { revoke(); helper?.stop(); bridge = nil; helper = nil }
+    func stop() {
+        devices.forEach { shared?.remove($0.session) }; devices.removeAll()
+        snapshot = nil; catalog = nil
+        let history = presentation.recentEdits
+        presentation = MacBridgePresentation(); presentation.recentEdits = history
+        helper?.stop(); shared = nil; helper = nil
+    }
     func interruptHelper() { helper?.stop() }
 }
 
@@ -161,7 +260,13 @@ final class MacBridgeModel: ObservableObject {
         case .running: return isSimulation ? "Ready for a simulated phone" : "Waiting for your iPhone"
         case .awaitingApproval: return "Approval requested"
         case .approving: return "Verifying connection…"
-        case .connected: return isSimulation ? "Simulated iPhone connected" : "\(presentation.phoneName) connected"
+        case .connected:
+            let names = presentation.connected.map(\.name)
+            switch names.count {
+            case 0, 1: return isSimulation ? "Simulated iPhone connected" : "\(names.first ?? presentation.phoneName) connected"
+            case 2: return "\(names[0]) and \(names[1]) connected"
+            default: return "\(names.count) devices connected"
+            }
         case .recovering: return "QC connection interrupted"
         case .stopping: return "Stopping bridge…"
         case .failed: return "Bridge needs attention"
@@ -218,21 +323,45 @@ final class MacBridgeModel: ObservableObject {
         perform({ try $0.requestPhone() }, success: .awaitingApproval,
                 message: "Allow this simulated phone to read the simulation? Approval lasts for this connection only.")
     }
+    /// Approves the device whose code is on screen, captured now: if it leaves before the
+    /// worker runs, nothing is approved, rather than whichever device is waiting next.
     func approve(trust: Bool = false) {
-        guard phase == .awaitingApproval && !busy else { return }
+        guard phase == .awaitingApproval && !busy, let id = presentation.pendingID, let connection = presentation.pendingConnection else { return }
         phase = .approving; detail = "Approving this connection and requesting a snapshot."
-        perform({ try $0.approve(trust: trust) }, success: .connected, message: "Approval granted. A snapshot was confirmed by the bundled helper.")
+        perform({ try $0.approve(device: id, connection: connection, trust: trust) }, success: .connected, message: "Approval granted. A snapshot was confirmed by the bundled helper.")
     }
-    /// Ends trust without disconnecting; the phone's next connection shows a code.
-    func revokeTrust() {
-        guard presentation.trustedPhone != nil && !busy else { return }
-        perform({ $0.revokeTrust() }, success: phase, message: phase == .connected ? "Trust revoked. This connection continues; the next one needs approval." : "Trust revoked. The next connection needs approval.")
+    /// Ends trust without disconnecting; the device's next connection shows a code.
+    func revokeTrust(_ entry: TrustedDevice) {
+        guard presentation.trusted.contains(entry) && !busy else { return }
+        perform({ $0.revokeTrust(id: entry.id) }, success: phase, message: entry.connected ? "Trust revoked for \(entry.name). This connection continues; the next one needs approval." : "Trust revoked for \(entry.name). Its next connection needs approval.")
     }
+    func disconnect(_ device: BridgeDevice) {
+        guard presentation.devices.contains(where: { $0.id == device.id }) && !busy else { return }
+        let others = presentation.connected.contains { $0.id != device.id && $0.state == .connected }
+        perform({ $0.disconnect(device: device.id, connection: device.connection) }, success: others ? .connected : .running, message: "\(device.name) disconnected. A new connection will need approval.")
+    }
+    func requestSecondDevice() {
+        guard phase == .connected && isSimulation && !busy else { return }
+        perform({ try $0.requestSecondDevice() }, success: .awaitingApproval,
+                message: "Allow this simulated iPad to read the simulation? Approval lasts for this connection only.")
+    }
+    func simulateOtherDeviceEdit() {
+        guard phase == .connected && isSimulation && !busy else { return }
+        perform({ try $0.editFromOtherDevice() }, success: .connected,
+                message: "The simulated iPad changed the gain. The next edit from the other device is rejected until it reloads.")
+    }
+    /// Denies the device on the approval card, or disconnects the device being verified,
+    /// captured now so a stale tap never reaches a different connection.
     func disconnectPhone() {
         guard (phase == .awaitingApproval || phase == .approving || phase == .connected || phase == .recovering) && !busy else { return }
-        let denied = phase == .awaitingApproval
-        perform({ $0.revoke() }, success: .running,
-                message: denied ? "Request denied. Simulate another phone when you’re ready." : "Phone disconnected. A new connection will need approval.")
+        if phase == .awaitingApproval {
+            guard let id = presentation.pendingID, let connection = presentation.pendingConnection else { return }
+            // Denying a second device leaves the first one connected.
+            perform({ $0.deny(device: id, connection: connection) }, success: presentation.connected.contains { $0.state == .connected } ? .connected : .running,
+                    message: "Request denied. Simulate another phone when you’re ready.")
+        } else if let device = presentation.connected.first {
+            disconnect(device)
+        }
     }
     func refresh() {
         guard (phase == .connected || phase == .recovering) && !busy else { return }

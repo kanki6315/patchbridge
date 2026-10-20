@@ -11,8 +11,11 @@ struct RecentBridgeEdit: Identifiable {
     let value: String?
     let outcome: Outcome
     let detail: String
+    /// The device that sent the edit, when the bridge knows it.
+    let device: String?
 
-    init(request: [String: Any], response: [String: Any]?, snapshot: [String: Any]?, catalog: [String: Any]?) {
+    init(request: [String: Any], response: [String: Any]?, snapshot: [String: Any]?, catalog: [String: Any]?, device: String? = nil) {
+        self.device = device
         let operation = request["operation"] as? String ?? ""
         let payload = request["payload"] as? [String: Any] ?? [:]
         let blockID = payload["block_id"] as? String

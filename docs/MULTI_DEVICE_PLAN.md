@@ -205,35 +205,44 @@ Structure as built:
 - Locally generated replies echo the request's `connection_id`, so the editor
   matches them to its connection.
 
-## Phase 3: Mac backend and UI
+## Phase 3: Mac backend and UI (done)
 
 `LiveBridgeBackend`:
 
-- Raise `deviceLimit` from the interim 1 to 4, and drop the shell's one-trusted-phone
-  rule in favour of the per-device trust list.
-- Track connected devices as a list (name, approval state, trusted, last activity).
-  Routing by device identifier already exists (`devices`, `current`, `revoked`).
-- Approval queue: one approval card at a time; a second device's `hello` waits
-  (its app stays on "Approve on Mac") until the first card is answered.
-- `phoneLeft(deviceID)` and `revoke(deviceID)` affect only that device. The
-  connected/idle phase follows "at least one approved device".
-- Shared `snapshot` and `catalog` caches for the status view stay bridge-wide.
+- `deviceLimit` is 4. The one-trusted-phone rule is gone; trust is per device.
+- Each admitted device has a state (waiting for approval, approving, connected), kept
+  in admission order. The bridge's phase is derived from all of them: a waiting
+  approval comes first, then USB recovery, then any connected device, then any device
+  still verifying, otherwise running. An event's own wording (for example a trusted
+  reconnect) is shown only while its phase is still the bridge's phase.
+- Approval queue: one approval card at a time, earliest first. Other devices see their
+  own code and wait on "Approve on Mac" until their card is answered.
+- Disconnect and denial affect only that device. QC state (preset, scene, unsaved)
+  stays bridge-wide and clears when no approved device remains.
 
 `MacBridgePresentation` and `mac/main.swift`:
 
-- Replace `phoneName`/`approvalCode`/`trustedPhone` with a `devices` array, a
-  `pendingApproval` (name and code), and a `trusted` list from `TrustRegistry`.
-- Status line: "iPhone and iPad connected", "2 devices connected", and similar.
-- A device list with per-device **Disconnect**, and **Revoke Trust** for each
-  trusted device whether or not it is connected.
-- `RecentBridgeEdit` gains the device name; the recent-edits row shows it.
-- Update copy that says "your iPhone" where it now means any device. Copy in
-  `docs/MAC_BRIDGE_SHELL.md` changes to match.
+- `phoneName`/`approvalCode` now describe the device on the approval card (or the first
+  connected device), plus `waiting` (devices behind the card), `devices` (with each
+  one's trust entry) and `trusted` (from `TrustRegistry`, with whether it's connected).
+  `trustedPhone` is gone.
+- Titles: "iPhone connected", "iPhone and iPad connected", "3 devices connected".
+- A Devices list: connected devices with **Disconnect** and, when trusted, **Revoke
+  Trust**; then trusted devices that aren't connected, with **Revoke Trust**. The
+  bottom "Disconnect iPhone" button is replaced by the per-device rows.
+- The approval card names the device ("Approve only if iPad shows the same code") and
+  shows "1 more device waiting".
+- The diagram's device node reads "2 devices" when more than one is connected.
+- `RecentBridgeEdit` carries the device name; window rows show it before the context.
+- `tools/package_mac.py` lists the new source files (`DeviceSession`,
+  `SharedUSBSession`, `CentralRouter`).
 
-Offline simulation (`BundledOfflineBackend`): **Simulate phone connection** becomes
-able to add a second simulated device, plus **Simulate edit from other device**
-(produces a `stale_context` for the first one) and **Simulate slow USB request**
-(exercises `busy`).
+Offline simulation (`BundledOfflineBackend`): the simulated iPhone and an optional
+simulated iPad share one helper session. **Simulate another device** sends the iPad
+through the approval card; **Simulate edit from other device** makes the iPhone's next
+edit fail with `stale_context` until it reloads. USB recovery brings both back.
+**Simulate slow USB request** was dropped: `busy` is produced by `CentralRouter`,
+which the simulation doesn't use, and the router's tests cover it directly.
 
 ## Phase 4: iOS app
 

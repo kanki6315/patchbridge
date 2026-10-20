@@ -373,8 +373,13 @@ and Keep running default on; notifications and launch at login default off. OS p
 registration and error states are displayed explicitly, never as a successful toggle
 without confirmation from the OS. Hidden Dock mode retains the menu-bar escape route.
 
+Up to four devices can be connected. Connected devices, and devices trusted to reconnect,
+appear in a Devices list on surface rows with Disconnect and Revoke Trust. The approval
+card shows one device at a time, names it, and counts devices waiting behind it; the
+diagram's device node reads "2 devices" when more than one is connected.
+
 Recent edits are confirmed command history, not a list of current parameter values.
-Each row carries preset/scene context, time, an outcome word and an icon. Explicit
+Each row carries the sending device, preset/scene context, time, an outcome word and an icon. Explicit
 rejections say Not applied; a failed/absent readback says Outcome unknown. Missing
 metadata never receives invented names or units. Empty history is plain text. Twelve
 entries are retained in memory; the popover shows three and the window provides Clear.

@@ -18,6 +18,8 @@ public final class DeviceSession {
     private var trustedConnection = false
     public var trustedPhoneName: String? { trustToken.flatMap(shared.trust.name(for:)) }
     public var isTrustedConnection: Bool { trustedConnection && trustedPhoneName != nil }
+    /// This device's trust entry, connected or not, for the shell's trust list.
+    public var trustEntryID: UUID? { trustToken.flatMap(shared.trust.id(for:)) }
     private var requestIDs = Set<String>()
     private var helper: HelperClient { shared.helper }
     init(shared: SharedUSBSession) { self.shared = shared }
