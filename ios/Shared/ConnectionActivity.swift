@@ -30,7 +30,7 @@ enum ConnectionActivityActions {
 
 struct DisconnectSessionIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Disconnect"
-    static let description = IntentDescription("Ends the Patchbridge session with your Mac.")
+    static let description = IntentDescription("Ends the current Patchbridge session.")
     static let isDiscoverable = false
     init() {}
     @MainActor func perform() async throws -> some IntentResult {
@@ -41,7 +41,7 @@ struct DisconnectSessionIntent: LiveActivityIntent {
 
 struct ReconnectSessionIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Reconnect"
-    static let description = IntentDescription("Reconnects Patchbridge to the last Mac.")
+    static let description = IntentDescription("Reconnects Patchbridge to the last connected computer.")
     static let isDiscoverable = false
     init() {}
     @MainActor func perform() async throws -> some IntentResult {
