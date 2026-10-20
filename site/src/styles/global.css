@@ -37,6 +37,9 @@
   /* Type */
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+  /* Page headings only. Wide and heavy like the model name on a gear
+     faceplate; the app mocks keep SF so they read as the real app. */
+  --font-head: 'Archivo Variable', 'Arial Black', system-ui, sans-serif;
   --text-display: clamp(2.75rem, 1.4rem + 5vw, 5.5rem);
   --text-h2: clamp(2rem, 1.3rem + 2.6vw, 3.4rem);
   --text-h3: 1.25rem;
@@ -90,10 +93,11 @@ body {
 }
 
 h1, h2, h3 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.025em;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-stretch: 112%;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
   text-wrap: balance;
   margin: 0;
 }

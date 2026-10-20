@@ -78,9 +78,13 @@ const fmt = (v: number) => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(1);
     let confirmed = start;
     let shown = start;
 
-    const set = (state: State, label: string) => {
+    // `step` lights the matching row of the section's edit log (0 = none).
+    const set = (state: State, label: string, step: number) => {
       root.dataset.state = state;
-      if (section) section.dataset.state = state;
+      if (section) {
+        section.dataset.state = state;
+        section.dataset.step = String(step);
+      }
       text.textContent = label;
     };
 
@@ -129,21 +133,21 @@ const fmt = (v: number) => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(1);
       replay.hidden = true;
       confirmed = start;
       draw(start);
-      set('confirmed', 'Threshold · on the QC');
+      set('confirmed', 'Threshold · on the QC', 0);
       await wait(700);
 
-      set('pending', 'Sending…');
+      set('pending', 'Sending…', 1);
       await sweep(-30.0, 900);
       await wait(1300);
       confirmed = -30.0;
       draw(-30.0);
-      set('confirmed', 'Confirmed by the QC');
+      set('confirmed', 'Confirmed by the QC', 2);
       await wait(1800);
 
-      set('pending', 'Sending…');
+      set('pending', 'Sending…', 3);
       await sweep(-24.5, 800);
       await wait(1200);
-      set('rejected', 'Not applied · scene changed');
+      set('rejected', 'Not applied · scene changed', 4);
       await sweep(-30.0, 500);
       await wait(400);
 
