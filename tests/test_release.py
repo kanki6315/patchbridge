@@ -17,6 +17,8 @@ class ReleaseTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         shutil.copy(ROOT / 'release.sh', self.root)
+        (self.root / 'tools').mkdir()
+        shutil.copy(ROOT / 'tools/test_destination.py', self.root / 'tools')
         (self.root / 'ios').mkdir()
         shutil.copy(ROOT / 'ios/project.yml', self.root / 'ios/project.yml')
         self.bin = self.root / 'bin'
@@ -34,14 +36,34 @@ if name == 'git':
     elif args[:2] == ['rev-parse', '--verify']: sys.exit(1)
 if name == 'xcodebuild' and args and args[0] == os.environ.get('FAIL_STAGE'): sys.exit(37)
 if name == 'swift' and os.environ.get('FAIL_STAGE') == 'swift': sys.exit(37)
+if name == 'xcrun': print(os.environ['SIMULATORS'])
+if name == 'xcodebuild' and args[0] == '-showdestinations':
+    print(os.environ['DESTINATIONS'])
 '''
-        for name in ['git', 'xcodegen', 'xcodebuild', 'swift']:
+        for name in ['git', 'xcodegen', 'xcodebuild', 'swift', 'xcrun']:
             path = self.bin / name
             path.write_text(stub)
             path.chmod(0o755)
         (self.root / 'tests').mkdir()
+        (self.root / 'tests/test_placeholder.py').write_text(
+            'import unittest\n'
+            'class Placeholder(unittest.TestCase):\n'
+            '    def test_placeholder(self): pass\n'
+        )
         self.env = {k: v for k, v in os.environ.items() if not k.startswith(('ASC_', 'RELEASE_', 'DEVELOPMENT_TEAM', 'TEST_DESTINATION'))}
         self.env.update(PATH=str(self.bin) + os.pathsep + os.environ['PATH'], DEVELOPER_DIR=str(self.root), EVENTS=str(self.events))
+        self.phone_id = '61DF595A-B275-4365-A863-DBBBAB8D5169'
+        self.env['SIMULATORS'] = json.dumps({
+            'devicetypes': [{'identifier': 'phone', 'productFamily': 'iPhone'}],
+            'devices': {'iOS-27': [{
+                'udid': self.phone_id, 'name': 'Patchbridge iPhone Review',
+                'isAvailable': True, 'deviceTypeIdentifier': 'phone',
+            }]},
+        })
+        self.env['DESTINATIONS'] = (
+            f'{{ platform:iOS Simulator, arch:arm64, id:{self.phone_id}, '
+            'OS:27.0, name:Patchbridge iPhone Review }'
+        )
 
     def run_release(self, *args):
         return subprocess.run(['bash', str(self.root / 'release.sh'), '--build', '42', *args], env=self.env, text=True, capture_output=True)
@@ -108,3 +130,26 @@ if name == 'swift' and os.environ.get('FAIL_STAGE') == 'swift': sys.exit(37)
         result = self.run_release('--build', '202610201234')
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(any(c[0] == 'xcodebuild' for c in self.calls()))
+
+    def test_renamed_simulator_selected_by_id(self):
+        result = self.run_release('--no-upload')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        call = next(c for c in self.calls() if c[:2] == ['xcodebuild', 'test'])
+        self.assertEqual(call[call.index('-destination') + 1],
+                         f'platform=iOS Simulator,id={self.phone_id}')
+
+    def test_destination_override_skips_discovery(self):
+        self.env['TEST_DESTINATION'] = 'platform=iOS Simulator,id=explicit-device'
+        result = self.run_release('--no-upload')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(c[0] == 'xcrun' for c in self.calls()))
+        call = next(c for c in self.calls() if c[:2] == ['xcodebuild', 'test'])
+        self.assertIn(self.env['TEST_DESTINATION'], call)
+
+    def test_missing_compatible_phone_stops_before_tests_and_archive(self):
+        self.env['DESTINATIONS'] = ''
+        result = self.run_release()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('No available iPhone simulator', result.stderr)
+        self.assertFalse(any(c[0] == 'swift' or c[:2] == ['xcodebuild', 'archive']
+                             for c in self.calls()))
