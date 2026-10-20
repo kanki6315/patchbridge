@@ -130,12 +130,30 @@ final class PhoneFlowTests: XCTestCase {
             XCTAssertTrue(app.staticTexts["Saved in demo only"].waitForExistence(timeout: 5))
             app.buttons["Row 1"].tap()
             XCTAssertTrue(app.staticTexts["Row 1"].waitForExistence(timeout: 5))
+            // A non-default row and editor survive the sideways fallback layout.
+            app.buttons["Dual Chorus"].firstMatch.tap()
+            XCTAssertTrue(app.buttons["Row 3"].waitForExistence(timeout: 5))
+            XCUIDevice.shared.orientation = .landscapeLeft
+            capture("Duo sideways fallback")
+            XCUIDevice.shared.orientation = .portrait
+            XCTAssertTrue(app.buttons["Row 3"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["Increase MIX"].exists)
+            capture("Duo editor after rotation")
         } else {
             capture("Duo folded portrait")
             optoComp.tap()
             XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["Open editor"].exists)
             capture("Duo block menu sheet")
+            app.buttons["Increase THRESHOLD"].tap()
+            app.buttons["Close"].tap()
+            app.buttons["Save demo preset"].tap()
+            app.sheets.buttons["Save demo preset"].tap()
+            XCTAssertTrue(app.staticTexts["Saved in demo only"].waitForExistence(timeout: 5))
+            optoComp.tap()
+            XCTAssertTrue(app.staticTexts["Saved in demo only"].isHittable,
+                          "Edit outcomes must remain visible above the portrait menu")
+            capture("Duo portrait menu notice")
             XCUIDevice.shared.orientation = .landscapeLeft
             // The menu stays open as a side panel beside the grid.
             XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))

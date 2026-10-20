@@ -27,13 +27,13 @@ struct DuoWorkspaceView: View {
     /// The safe-area frame's size and the window's safe-area insets, to place the hinge.
     let size: CGSize
     let insets: EdgeInsets
+    @Binding var row: Int
+    @Binding var selected: String?
+    /// Owned by EditorView so navigation survives the sideways inner-screen fallback.
+    @Binding var editing: Bool
     let showConnection: () -> Void
     let openEditor: (String) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var row = 0
-    @State private var selected: String?
-    /// Inner screen: the deck shows the selected block's editor. Outer screen: its block menu is open.
-    @State private var editing = false
     /// iOS doesn't report hinge posture to the app yet, so the inner screen stays flat. Set this
     /// from the posture signal once there is one.
     @State private var halfFolded = DuoWorkspaceView.launchHalfFolded
@@ -69,6 +69,9 @@ struct DuoWorkspaceView: View {
                 case .outerLandscape: outerLandscape(snapshot)
                 case .outerPortrait: outerPortrait(snapshot)
                 }
+            }
+            .onAppear {
+                if !snapshot.blocks.contains(where: { $0.id == selected }) { editing = false }
             }
             .onChange(of: snapshot) { _, value in
                 if editing, !value.blocks.contains(where: { $0.id == selected }) { editing = false }
@@ -270,7 +273,7 @@ struct DuoWorkspaceView: View {
     }
     private func saveBar(_ snapshot: PresetSnapshot) -> some View {
         VStack(spacing: 8) {
-            notice
+            if !editing { notice }
             if model.editor.supports("save") {
                 PrimaryButton(title: saveTitle(snapshot), theme: theme) { requestSave() }
                     .disabled(model.busy || !snapshot.dirty).opacity(model.busy || !snapshot.dirty ? 0.45 : 1)
@@ -307,6 +310,8 @@ struct DuoWorkspaceView: View {
             .contentShape(Rectangle())
             .gesture(DragGesture().onEnded { if sheet && $0.translation.height > 60 { closeEditor() } })
             .padding(.bottom, 6)
+            // The portrait menu covers the save bar, so report edit outcomes here.
+            if sheet { notice.padding(.bottom, 8) }
             ScrollView {
                 VStack(spacing: 0) {
                     if controls.isEmpty { Label("Read-only", systemImage: "lock").foregroundStyle(theme.muted).frame(maxWidth: .infinity, minHeight: 60) }
