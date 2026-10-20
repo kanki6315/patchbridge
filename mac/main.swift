@@ -15,6 +15,7 @@ struct BridgeWindow: View {
     @ObservedObject var model: MacBridgeModel
     let exportReport: () -> Void
     var compact = false
+    var menuActions: [(String, () -> Void)] = []
     @AppStorage("bridge.appearance") private var appearance = "Match Mac"
     @Environment(\.colorScheme) private var scheme
     private var colors: BridgePalette { BridgePalette(dark: appearance == "Stage" || (appearance == "Match Mac" && scheme == .dark)) }
@@ -82,10 +83,17 @@ struct BridgeWindow: View {
                     .menuStyle(.borderlessButton).fixedSize().disabled(model.busy)
                 }
             }.font(.callout)
+            if !menuActions.isEmpty {
+                HStack {
+                    ForEach(menuActions.indices, id: \.self) { index in
+                        Button(menuActions[index].0, action: menuActions[index].1)
+                    }
+                }.frame(maxWidth: .infinity)
+            }
         }
         .padding(compact ? 20 : 28)
         .foregroundStyle(colors.ink).tint(colors.signal)
-        .frame(minWidth: compact ? 320 : 480, maxWidth: .infinity, minHeight: compact ? 480 : 630, maxHeight: compact ? nil : .infinity, alignment: .topLeading)
+        .frame(minWidth: compact ? 320 : 480, maxWidth: .infinity, minHeight: compact ? 560 : 630, maxHeight: compact ? 560 : .infinity, alignment: .topLeading)
         .background(colors.ground)
         .preferredColorScheme(appearance == "Match Mac" ? nil : appearance == "Stage" ? .dark : .light)
     }
@@ -258,14 +266,13 @@ final class Host: NSObject, NSApplicationDelegate {
         let status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         status.button?.target = self; status.button?.action = #selector(togglePopover); statusItem = status
         popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: VStack(spacing: 0) {
-            BridgeWindow(model: model, exportReport: { [weak self] in self?.exportReport() }, compact: true)
-            HStack {
-                Button("Open Patchbridge") { [weak self] in self?.showWindow() }
-                Button("Settings…") { [weak self] in self?.showSettings() }
-                Button("Quit") { NSApp.terminate(nil) }
-            }.padding(14)
-        }.frame(width: 360))
+        popover.contentSize = NSSize(width: 360, height: 560)
+        popover.contentViewController = NSHostingController(rootView: BridgeWindow(
+            model: model, exportReport: { [weak self] in self?.exportReport() }, compact: true,
+            menuActions: [("Open Patchbridge", { [weak self] in self?.showWindow() }),
+                          ("Settings…", { [weak self] in self?.showSettings() }),
+                          ("Quit", { NSApp.terminate(nil) })]
+        ).frame(width: 360, height: 560))
         model.onChange = { [weak self] in guard let self else { return }; self.updateStatus(); self.desktop.stateChanged(self.model) }; updateStatus()
         NSApp.setActivationPolicy(desktop.showInDock ? .regular : .accessory)
         window.center(); showWindow()
