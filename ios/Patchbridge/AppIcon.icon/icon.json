@@ -1,0 +1,29 @@
+{
+  "fill": {
+    "solid": "extended-srgb:0.05098,0.05490,0.03922,1.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "patch-cable.svg",
+          "name": "patch-cable"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": false,
+        "value": 0.3
+      },
+      "name": "Patch Cable"
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "iOS"
+    ]
+  }
+}

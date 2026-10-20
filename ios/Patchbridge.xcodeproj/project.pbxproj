@@ -18,6 +18,7 @@
 		8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */; };
 		A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */; };
 		AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E68459E6EE63B03631133E9 /* EditorView.swift */; };
+		B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 025A144248FD7B2C1307731E /* AppIcon.icon */; };
 		B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42253D1C8C450F010DE25BCD /* GenericEditor.swift */; };
 		B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E125DD1594C135E050EF4E8 /* BLECentral.swift */; };
 		B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59B2D058255097DC58ED315 /* EditorCoordinator.swift */; };
@@ -35,6 +36,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		025A144248FD7B2C1307731E /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchbridgeApp.swift; sourceTree = "<group>"; };
 		2544FE9FA36EA4F67327F5B0 /* PhoneFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneFlowTests.swift; sourceTree = "<group>"; };
 		3E125DD1594C135E050EF4E8 /* BLECentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLECentral.swift; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 		519E584C2E77AE9092522B22 /* Patchbridge */ = {
 			isa = PBXGroup;
 			children = (
+				025A144248FD7B2C1307731E /* AppIcon.icon */,
 				D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */,
 				3E68459E6EE63B03631133E9 /* EditorView.swift */,
 				17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */,
@@ -204,6 +207,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */,
 				A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */,
 				CFDBC47AD10CC294B4320C98 /* qc-editor.json in Resources */,
 			);
