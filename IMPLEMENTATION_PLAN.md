@@ -2,66 +2,56 @@
 
 ## Implementation status
 
-Started with the transport-independent Python helper and simulated adapter:
-versioned process messages, serialized writes, confirmed-state responses,
-session/preset/scene/revision guards, metadata validation, and explicit save/reload.
-Run instructions are in [README.md](README.md).
+The PoC is a native iPhone editor connected over Bluetooth Low Energy to a single macOS bridge app, which connects to the Quad Cortex over USB. It targets CorOS 4.1.1, initially with Cortex Control closed.
 
-M1 has partial hardware evidence and a pinned qc-mcp adapter. Reads, representative
-parameter writes, physical-edit polling, and File CREATE persistence passed.
-RecallPreset SAVE caused two observed error/restarts and is unsupported.
-See [USB results](docs/USB_RESULTS_2026-10-20.md) for remaining validation gaps.
-M2 is in progress: Swift process communication, chunk framing, authorization,
-and simulated edits have automated coverage. Core Bluetooth peripheral and
-central transports and an installable SwiftUI iPhone test host are implemented.
-Wireless installation, BLE pairing, explicit authorization, and initial snapshot
-transfer passed on the physical iPhone. The user confirmed a gain edit and
-simulated save. Recovery radio tests remain. Offline protocol, editor-state,
-and USB snapshot regression coverage is expanded; see
-[the next hardware session](docs/NEXT_HARDWARE_SESSION.md). See [demo instructions](docs/SWIFT_BLE_DEMO.md).
-Simulation is development scaffolding, not hardware compatibility evidence.
+All components are implemented and wired for live use. The M3 feasibility gate,
+a real edit from the phone confirmed and saved on the QC, has not yet run on
+hardware. Simulation is development scaffolding, not hardware compatibility evidence.
 
-The PoC will be a native iPhone editor connected over Bluetooth Low Energy to a single macOS bridge app, which connects to the Quad Cortex over USB. It will target CorOS 4.1.1, initially with Cortex Control closed.
+| Milestone | Status |
+|---|---|
+| M1 | Mostly done. Pinned qc-mcp adapter; reads, representative writes, physical-edit polling, and File CREATE persistence passed on the QC. RecallPreset SAVE caused two restarts and is unsupported. |
+| M2 | Done. Pairing, explicit authorization, snapshot transfer, and a simulated gain edit and save passed on the physical iPhone. |
+| M3 | Software ready, hardware pending. The Mac bridge serves the live USB adapter over BLE to the designed iPhone app. |
+| M4 | Built. Preset overview and metadata-driven editor; not yet compared against the QC. |
+| M5 | Offline only. Recovery, authorization, and diagnostics are tested offline; radio/USB recovery and latency are unmeasured. |
+| M6 | Partial. Bundled-runtime Mac app and TestFlight/Mac App Store release scripts exist; no notarized build or clean-Mac test. |
 
-A local offline Mac host now bundles and manages an isolated Python simulation
-runtime. It launches without Python installed or a terminal and passes relocated
-bundle checks. The current artifact is arm64/macOS 26+, ad-hoc signed, and does not
-start Bluetooth or USB. Pinned USB adapter/protobuf dependencies are also bundled and pass captured-fixture
-checks through an in-memory HID transport. Production distribution and live
-validation of the packaged USB path remain;
-see [Mac packaging](docs/MAC_PACKAGING.md). The final bridge will not require a local
-HTTP server or shared Wi-Fi network.
+**Python helper.** Versioned process messages, serialized writes, confirmed-state
+responses, session/preset/scene/revision guards, and explicit save. Adapters:
+simulated, captured read-only, and direct USB. The USB adapter accepts only
+verified 4.1.1 and exposes `set_parameter` and File CREATE `save`; Save As,
+bypass, scene and preset selection are not exposed. See
+[USB results](docs/USB_RESULTS_2026-10-20.md) and [README.md](README.md).
 
-Metadata normalization and a view-independent Swift generic editor model now
-cover captured QC blocks, parameters, explicit conversions, unsupported metadata,
-confirmed/pending state, saves, and refresh invalidation. The simulation UI remains
-unchanged. A transport-injectable coordinator now loads capabilities and relevant
-metadata, caches by catalog/model identity, polls while idle, and reconciles edits
-and reconnects without replay. Captured fixtures and the chunked Python simulator
-exercise the complete data path offline; unsigned iOS compilation passes.
-See [the data-layer contract](docs/METADATA_AND_EDITOR_MODEL.md).
+**Mac bridge.** A native app bundles an isolated arm64 CPython runtime (macOS 26+)
+with the pinned USB/protobuf dependencies. It opens stopped with live USB/Bluetooth
+selected: Start bridge advertises over BLE, and USB opens only after an approved
+phone requests a connection. USB loss keeps approval only while the same phone and
+helper stay alive; Bluetooth loss, denial, Stop, Quit, or helper death clears it.
+**Use simulation** runs the bundled simulator with BLE and USB off. The shell shows
+status, approval, recent confirmed edits, recovery, and diagnostics export. See
+[Mac bridge shell](docs/MAC_BRIDGE_SHELL.md) and [Mac packaging](docs/MAC_PACKAGING.md).
+The bridge does not require a local HTTP server or shared Wi-Fi network.
 
-Read-only QC policy is enforced at the helper/adapter boundary and independently
-by the Swift bridge for captured sessions. Offline recovery covers captured preset
-changes, removal, helper crash, and slow replies through the packaged runtime.
-The app launcher still disables live USB; see [read-only mode](docs/READ_ONLY_QC.md).
+**iPhone app.** The designed SwiftUI app (iPhone, iPad workspace, and Duo layouts)
+drives the transport-injectable `EditorCoordinator` over BLE. It loads capabilities
+and relevant catalog metadata, caches by catalog/model identity, polls every 2 s
+while idle, and reconciles edits and reconnects without replay. Only parameters with
+a declared conversion that are not scene- or expression-assigned are editable;
+everything else is shown read-only. A demo mode loads the captured fixture without
+a bridge. See [the data-layer contract](docs/METADATA_AND_EDITOR_MODEL.md).
 
-Structured diagnostics now cover helper/bridge/coordinator lifecycle and failures.
-The Mac offline host exports private JSON reports without preset data, raw messages,
-paths, or identifiers. Privacy, retention, failure-export, and relocation tests pass;
-see [diagnostics](docs/DIAGNOSTICS.md).
+**Safety and verification.** Read-only policy is enforced at the helper/adapter
+boundary and by the Swift bridge for captured sessions. Structured diagnostics
+export private JSON reports without preset data or identifiers. The offline preflight
+checks package provenance, relocated runtime, schemas, read-only policy, report
+privacy, and recovery. See [read-only mode](docs/READ_ONLY_QC.md),
+[diagnostics](docs/DIAGNOSTICS.md), and [preflight](docs/PREFLIGHT.md).
 
-An offline preflight now checks package provenance/signatures, relocated runtime,
-schemas, read-only policy, report privacy, and recovery. Captured-fixture edge cases
-cover malformed grids, unknown metadata/values, and scene assignments. Results list
-remaining hardware/design gates explicitly; see [preflight](docs/PREFLIGHT.md).
-
-The compact native Mac shell now provides start/stop, status, in-app simulated
-phone approval/denial, disconnect, helper-failure recovery, and report export.
-It opens stopped and uses the bundled helper and real BridgeSession approval
-logic without enabling Bluetooth or USB. Model/process tests and offline preflight
-pass; the approval, failure/restart, stop, and export UI flows were verified.
-See [Mac bridge shell](docs/MAC_BRIDGE_SHELL.md).
+**Next.** The first live end-to-end hardware run, then scene-specific edits,
+nonlinear display accuracy, and recovery/latency baselines. See
+[the next hardware session](docs/NEXT_HARDWARE_SESSION.md).
 
 ## 1. Product scope
 

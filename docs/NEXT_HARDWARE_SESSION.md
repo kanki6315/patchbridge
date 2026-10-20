@@ -11,7 +11,28 @@
 - The user reports changing gain and saving the simulated preset successfully.
   This confirms the interactive BLE loop, not durability across a helper restart.
 
-## Work completed offline
+These hardware results predate the live bridge and designed iPhone app below.
+None of the live phone → Mac → USB path has run against the QC yet.
+
+## Current software wiring
+
+- **Mac bridge.** `dist/Patchbridge.app` opens stopped with live USB/Bluetooth
+  selected. Start bridge advertises over BLE; USB opens only after a phone is
+  approved and requests a connection. The bundled helper runs the pinned USB
+  adapter (`--usb`), which exposes `set_parameter` and File CREATE `save` only.
+  **Use simulation** switches back to the bundled simulator with BLE and USB off.
+  See [Mac bridge shell](MAC_BRIDGE_SHELL.md).
+- **iPhone app.** The designed app drives `EditorCoordinator` over BLE. It loads
+  capabilities, the snapshot, and the relevant catalog subset, then polls every 2 s
+  while idle. USB loss retries connect with capped backoff and reloads state;
+  edits and saves are never replayed. A local demo mode loads the captured fixture
+  without a bridge. The old `amp-1` 0–10 simulation editor is no longer the phone UI.
+- **Editable controls.** A parameter is editable only when the device marks it
+  editable, it is not scene- or expression-assigned, and it has a declared conversion
+  (explicit range with valid skew, or normalized enum steps). Everything else is
+  shown read-only with a reason. The simulator's 0–10 range is never reused.
+
+## Offline coverage
 
 - BLE command completion waits for both the result and final ATT acknowledgment,
   in either arrival order. This prevents an old acknowledgment from advancing a
@@ -21,61 +42,46 @@
 - The bridge rejects duplicate command IDs and unsupported protocol versions.
   Request-ID tracking is bounded to 4096 commands per connection; reconnect to
   obtain a fresh session after that limit. There is no automatic command retry.
-- The phone model is transport-injectable and tested without Bluetooth. Malformed,
-  stale, missing, or uncertain state cannot become confirmed editor state.
 - USB preflight includes a hash of the full preset, catching routing and other
-  changes that the current parameter-only UI does not display. Missing scene
-  values stay absent instead of borrowing another scene's data.
-- The generic editor coordinator loads capabilities and relevant catalog subsets,
-  caches by catalog/model identity, polls only when idle, and clears uncertain
-  edits on failure. Offline tests include helper restart and stale callbacks.
-  This data layer is compiled into the app but not yet wired to the existing screen.
+  changes that the parameter UI does not display. Missing scene values stay
+  absent instead of borrowing another scene's data.
 - Catalog option labels and symbolic ranges remain intact. Unsupported firmware,
   unknown controls, scene assignments, and expression assignments fail closed.
+- Read-only captured sessions, helper crash, timeout, removal, and preset-change
+  recovery pass through the packaged runtime. See [read-only QC mode](READ_ONLY_QC.md).
 
 Run `tools/check_offline.sh` for Python, Swift and the simulated process/bridge
-round trip. It never connects to hardware or starts BLE advertising.
+round trip. It never connects to hardware or starts BLE advertising. Then run the
+[offline preflight](PREFLIGHT.md) after rebuilding; passing does not claim physical
+QC or Bluetooth compatibility.
 
-The read-only policy and packaged captured-state coordinator path now have offline
-coverage, including removal, crash, timeout, and preset-change recovery. See
-[read-only QC mode](READ_ONLY_QC.md). The packaged launcher remains offline-only;
-activating real USB and connecting the designed screen remain explicit steps.
+## Next session: first live end-to-end run
 
-Run the [offline preflight](PREFLIGHT.md) after rebuilding and before the next
-hardware session. Its report distinguishes software checks from the still-untested
-physical QC and Bluetooth behaviors; passing does not activate live USB.
+With the user present, Cortex Control closed, and the disposable preset
+(`Tremonti w Mic`, My Presets 16) backed up:
 
-## Next session, with the QC still unplugged
+1. Install the current iPhone build and a freshly packaged Mac app. Run the
+   offline preflight first.
+2. Start the bridge, connect from the phone, compare the approval code, approve.
+3. **Read first.** Compare the phone's preset name, blocks, active scene, and a few
+   values against the QC screen before touching anything. Note which parameters
+   the phone offers as editable and which it shows read-only.
+4. Make one reversible edit (Myth Drive gain), confirm readback on the QC, and
+   restore it. Check that the Mac's recent-edits list matches.
+5. Turn a knob on the QC and confirm the phone updates within a poll interval.
+6. Save via File CREATE, switch away on the QC, recall the slot, and confirm the
+   phone and QC both show the saved value.
+7. Recovery, one at a time: background and reopen the phone; quit the helper
+   during an edit; Bluetooth off/on; pull and reconnect the USB cable. Each must
+   show a visible state and never replay an edit.
+8. Record edit-to-confirmation latency and reconnection time as first baselines.
 
-1. Install the new iPhone build and restart the Mac demo when the user is ready.
-   The previously installed app was deliberately not replaced while they were away.
-2. Repeat gain edit, save, scene A/B, and refresh over BLE.
-3. Background the app, reopen, and reconnect. Approve the new token. Verify that
-   unsent/late edits do not replay and the full snapshot reloads.
-4. Stop the Mac helper during an edit. Confirm a visible error, then restart and
-   reauthorize. Do not replay the failed edit automatically.
-5. Exercise Bluetooth off/on and an expired pairing/approval path once.
+## Still unverified after that run
 
-## Software gate before real QC edits from the phone
-
-The phone is still intentionally a **simulation-only editor** (`amp-1`, gain 0–10).
-The Mac BLE demo still launches only the simulated adapter. Do not merely change
-that launch flag: the real USB snapshot uses different block IDs and normalized
-values and exposes a narrower capability set.
-
-The metadata normalizer and generic editor data model are implemented and tested
-against captured evidence (see METADATA_AND_EDITOR_MODEL.md). Connect them to a
-capability-driven, initially read-only QC overview and selected parameter editor. Only explicit numeric ranges and verified
-conversions should become display controls. Unknown skew/ranges remain read-only;
-never reuse the simulator's 0–10 range for a real parameter. Verify this layer
-against the captured preset/catalog fixtures before deploying it.
-
-Then reconnect the QC with the user present, Cortex Control closed and the
-existing disposable preset backed up. Start read-only, compare the phone's
-block/scene/value against the hardware, perform one reversible edit, confirm
-physical-change readback, and finally test File CREATE save/reload. Physical USB
-removal/reconnection and scene-specific parameter edits remain separate tests.
-
-The new whole-preset hash and lifecycle fixes have offline coverage but have not
-been revalidated on real USB/BLE hardware. An atomic read/write transaction is not
-available; simultaneous physical edits still require conservative handling.
+- Scene-specific parameter writes and amp-model controls.
+- Display accuracy of nonlinear (skewed) conversions against the QC's own readout.
+- Switching to another slot and back, preset selection, bypass, and Save As
+  (not exposed by the USB adapter).
+- Native asynchronous device events; the phone relies on polling.
+- Simultaneous physical and remote edits. USB cannot make the read/write pair
+  atomic, so the whole-preset hash check is the only guard.
