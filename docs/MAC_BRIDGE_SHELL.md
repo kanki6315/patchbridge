@@ -47,7 +47,7 @@ Enable **Use simulation** while stopped. This mode never opens USB or Bluetooth.
 6. **Stop bridge** clears approval and stops the helper, including when a request
    is awaiting approval. Quitting stops the helper. Closing the window keeps it running by default; Settings can disable that behavior.
 
-The simulated phone uses the production `BridgeSession` approval path, with
+The simulated phone uses the production `DeviceSession` approval path, with
 `HelperClient(bundle:)` executing the packaged process. It does not use a radio.
 Work runs on a serial worker queue; a generation token prevents a delayed
 completion from restoring an obsolete UI state after stop. Failed operations
@@ -90,7 +90,7 @@ valid, the last snapshot is marked stale, and the shell automatically reconnects
 simulator and loads a fresh snapshot. Bridge actions → Simulate helper failure instead
 ends approval and requires a restart. These are offline tests, not hardware validation.
 
-`BridgeSession(allowsRecovery: true)` reports `device_unavailable` for a device/session
+`DeviceSession(allowsRecovery: true)` reports `device_unavailable` for a device/session
 failure returned by a still-running helper. `recover` retries only `connect` with capped
 exponential backoff. Helper I/O failures still revoke authorization. The editor clears
 pending and confirmed state while recovering and reloads capabilities/catalog before

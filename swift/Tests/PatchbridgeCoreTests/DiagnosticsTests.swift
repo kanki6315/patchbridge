@@ -39,7 +39,7 @@ final class DiagnosticsTests: XCTestCase {
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path,
             capturedFixture: root.appendingPathComponent("tests/fixtures/qc-editor.json"), diagnostics: log)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper); bridge.approve()
+        let bridge = DeviceSession(helper: helper); bridge.approve()
         let response = try bridge.handle(["version": 1, "id": "secret-request-id", "connection_id": bridge.token, "operation": "connect"])
         XCTAssertEqual(response["status"] as? String, "confirmed")
         XCTAssertThrowsError(try bridge.handle(["version": 1, "id": "secret-save-id", "connection_id": bridge.token,

@@ -11,7 +11,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     private let makeHelper: () throws -> HelperClient
     private let peripheral: BridgePeripheral
     private var helper: HelperClient?
-    private var bridge: BridgeSession?
+    private var bridge: DeviceSession?
     private var approved = false
     private var snapshot: [String: Any]?
     private var catalog: [String: Any]?
@@ -23,9 +23,9 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     func start() throws {
         stop()
         let helper = try makeHelper(); self.helper = helper
-        let bridge = BridgeSession(helper: helper, requestTimeout: 40, allowsRecovery: true, now: now)
+        let bridge = DeviceSession(helper: helper, requestTimeout: 40, allowsRecovery: true, now: now)
         self.bridge = bridge
-        bridge.onMutation = { [weak self] request, response in
+        bridge.shared.onMutation = { [weak self] _, request, response in
             guard let self else { return }
             self.presentation.recentEdits.insert(RecentBridgeEdit(request: request, response: response, snapshot: self.snapshot, catalog: self.catalog), at: 0)
             self.presentation.recentEdits = Array(self.presentation.recentEdits.prefix(12))

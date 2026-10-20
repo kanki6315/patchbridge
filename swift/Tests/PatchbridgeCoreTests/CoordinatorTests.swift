@@ -296,7 +296,7 @@ final class CoordinatorTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         var helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        var bridge = BridgeSession(helper: helper); bridge.approve()
+        var bridge = DeviceSession(helper: helper); bridge.approve()
         func roundTrip(_ object: [String: Any]) throws -> [String: Any] {
             let data = try JSONSerialization.data(withJSONObject: object)
             var receiver = ChunkReceiver(); var complete: Data?
@@ -321,7 +321,7 @@ final class CoordinatorTests: XCTestCase {
         helper.stop(); c.refresh()
         XCTAssertEqual(c.phase, .failed); XCTAssertNil(c.editor.snapshot)
         helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
-        bridge = BridgeSession(helper: helper); bridge.approve()
+        bridge = DeviceSession(helper: helper); bridge.approve()
         c.start(); c.authorize()
         XCTAssertEqual(c.phase, .ready)
         XCTAssertEqual(c.editor.value(blockID: "amp-1", parameterID: "gain"), .number(5))
@@ -350,7 +350,7 @@ extension CoordinatorTests {
             return try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path, capturedFixture: fixtureURL)
         }
         var helper = try launch(); defer { helper.stop() }
-        var bridge = BridgeSession(helper: helper, requestTimeout: 0.5)
+        var bridge = DeviceSession(helper: helper, requestTimeout: 0.5)
         bridge.approve()
         let t = OfflineTransport()
         t.handler = { message in
@@ -390,7 +390,7 @@ extension CoordinatorTests {
             c.refresh()
             XCTAssertEqual(c.phase, .failed, fault); XCTAssertNil(c.editor.snapshot); XCTAssertNil(c.editor.pending)
             helper.stop(); try write(original)
-            helper = try launch(); bridge = BridgeSession(helper: helper, requestTimeout: 0.5); bridge.approve()
+            helper = try launch(); bridge = DeviceSession(helper: helper, requestTimeout: 0.5); bridge.approve()
             c.start(); c.authorize()
             XCTAssertEqual(c.phase, .ready, fault)
             XCTAssertEqual(c.editor.snapshot?.scene, "F")
@@ -414,7 +414,7 @@ extension CoordinatorTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper, allowsRecovery: true, macName: "Studio Mac", now: { self.clock })
+        let bridge = DeviceSession(helper: helper, allowsRecovery: true, macName: "Studio Mac", now: { self.clock })
         let t = OfflineTransport(); t.handler = { try bridge.handle($0) }
         let c = EditorCoordinator(automaticPolling: false, phoneName: "Jamie’s iPhone", now: { self.clock }, makeTransport: { t })
         c.start()
@@ -447,7 +447,7 @@ extension CoordinatorTests {
         try write()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path, capturedFixture: file)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper, allowsRecovery: true, now: { self.clock })
+        let bridge = DeviceSession(helper: helper, allowsRecovery: true, now: { self.clock })
         let t = OfflineTransport(); t.handler = { try bridge.handle($0) }
         let c = coordinator(t); c.start(); bridge.approve(); c.authorize()
         document["offline_fault"] = "disconnect"; try write()
@@ -473,7 +473,7 @@ extension CoordinatorTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper)
+        let bridge = DeviceSession(helper: helper)
         let t = OfflineTransport(); t.autoReady = false; t.handler = { try bridge.handle($0) }
         let c = coordinator(t)
         c.start(); t.onDiscovered?("mac", "Studio Mac"); c.chooseMac("mac")
@@ -503,7 +503,7 @@ extension CoordinatorTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper)
+        let bridge = DeviceSession(helper: helper)
         bridge.approve(trusting: true); bridge.revoke()
         let hello = try bridge.handle(["version": 1, "id": "h", "operation": "hello", "trust_token": "guess"])
         XCTAssertEqual(hello["authorization_required"] as? Bool, true)

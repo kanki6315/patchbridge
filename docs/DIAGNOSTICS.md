@@ -27,7 +27,7 @@ a successful offline run is at `dist/Patchbridge-Troubleshooting.json`.
 Future screens can inject a shared `Diagnostics` instance into `HelperClient` and
 `EditorCoordinator`, use `reportData()` for a preview, call `export(to:)` following
 an explicit save action, or call `clear()` to discard the retained events.
-`BridgeSession` uses its helper client's instance. No report is written by default.
+`DeviceSession` uses its helper client's instance. No report is written by default.
 
 ## Contents and limits
 

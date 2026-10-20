@@ -43,6 +43,7 @@ struct RecentBridgeEdit: Identifiable {
         } else {
             let code = (response?["error"] as? [String: Any])?["code"] as? String ?? ""
             switch code {
+            case _ where response?["applied"] as? Bool == false: outcome = .rejected; detail = "Not sent to the device"
             case "stale_context": outcome = .rejected; detail = "Device state changed"
             case "invalid_value": outcome = .rejected; detail = "Value is invalid"
             case "unsupported_parameter", "unsupported_operation", "read_only": outcome = .rejected; detail = "Not supported in this session"

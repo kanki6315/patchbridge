@@ -22,14 +22,14 @@ remain external test inputs and are not included in the app.
 ## Swift integration
 
 Use `HelperClient(bundle: appBundle, capturedFixture: fixtureURL)` to start the
-bundled captured session, then give that client to `BridgeSession`. The helper
+bundled captured session, then give that client to `DeviceSession`. The helper
 client records the read-only launch policy, and the bridge independently rejects
 non-read commands before forwarding them. No caller-supplied command field can
 change this policy. Authorization and connection/session/revision guards remain.
 
 The full offline path is exercised as:
 
-`EditorCoordinator → chunked messages → BridgeSession → bundled HelperClient →
+`EditorCoordinator → chunked messages → DeviceSession → bundled HelperClient →
 ReadOnlyAdapter(CapturedAdapter) → captured state`
 
 The generic coordinator loads the real fixture's preset and relevant metadata,

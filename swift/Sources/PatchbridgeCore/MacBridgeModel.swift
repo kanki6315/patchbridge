@@ -48,7 +48,7 @@ extension OfflineBridgeBackend {
 final class BundledOfflineBackend: OfflineBridgeBackend {
     private let makeHelper: () throws -> HelperClient
     private var helper: HelperClient?
-    private var bridge: BridgeSession?
+    private var bridge: DeviceSession?
     private var session: String?
     private var snapshot: [String: Any]?
     private var catalog: [String: Any]?
@@ -59,8 +59,8 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
     }
     func start() throws {
         stop(); let helper = try makeHelper(); self.helper = helper
-        let bridge = BridgeSession(helper: helper, allowsRecovery: true)
-        bridge.onMutation = { [weak self] request, response in
+        let bridge = DeviceSession(helper: helper, allowsRecovery: true)
+        bridge.shared.onMutation = { [weak self] _, request, response in
             guard let self else { return }
             self.presentation.recentEdits.insert(RecentBridgeEdit(request: request, response: response, snapshot: self.snapshot, catalog: self.catalog), at: 0)
             self.presentation.recentEdits = Array(self.presentation.recentEdits.prefix(12))

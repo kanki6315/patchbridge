@@ -10,13 +10,13 @@ let resultID = CBUUID(string: "79A90003-6E15-4C9F-AC53-147F7E639B01")
 final class Peripheral: NSObject, CBPeripheralManagerDelegate {
     let queue = DispatchQueue(label: "patchbridge.bluetooth")
     var manager: CBPeripheralManager!
-    let session: BridgeSession
+    let session: DeviceSession
     var central: CBCentral?
     var receiver = ChunkReceiver()
     var outgoing = [Data]()
     var transfer: UInt32 = 0
     let result = CBMutableCharacteristic(type: resultID, properties: [.notifyEncryptionRequired], value: nil, permissions: [.readEncryptionRequired])
-    init(session: BridgeSession) {
+    init(session: DeviceSession) {
         self.session = session
         super.init()
         manager = CBPeripheralManager(delegate: self, queue: queue)
@@ -94,7 +94,7 @@ if args.count < 4 {
 do {
     let helper = try HelperClient(python: args[1], source: args[2])
     if args[3] == "--self-test" {
-        let session = BridgeSession(helper: helper)
+        let session = DeviceSession(helper: helper)
         let hello = try session.handle(["version": 1, "id": "hello", "operation": "hello"])
         session.approve()
         let connect = try session.handle(["version": 1, "id": "connect", "operation": "connect", "connection_id": hello["connection_id"]!])
@@ -112,7 +112,7 @@ do {
         print("PASS: Swift → chunked message → authorized bridge → Python simulator → confirmed edit")
         helper.stop()
     } else if args[3] == "--ble" {
-        let peripheral = Peripheral(session: BridgeSession(helper: helper))
+        let peripheral = Peripheral(session: DeviceSession(helper: helper))
         DispatchQueue.global().async {
             while let line = readLine() {
                 if line == "status" { peripheral.status() }
