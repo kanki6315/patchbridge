@@ -49,6 +49,12 @@ final class MacDesktopServicesTests: XCTestCase {
         XCTAssertEqual(model.loginState, .disabled); XCTAssertNotNil(model.loginError)
         login.state = .enabled; model.refresh(); XCTAssertEqual(model.loginState, .enabled)
     }
+    func testNeverRegisteredLoginItemReadsAsOff() {
+        XCTAssertEqual(SystemLoginItem.state(for: .notFound), .disabled)
+        XCTAssertEqual(SystemLoginItem.state(for: .notRegistered), .disabled)
+        XCTAssertEqual(SystemLoginItem.state(for: .requiresApproval), .needsApproval)
+        XCTAssertEqual(SystemLoginItem.state(for: .enabled), .enabled)
+    }
     func testLatePermissionCallbackCannotReenableNotifications() {
         let n = FakeNotifications(); let model = make(FakeLoginItem(), n)
         model.setNotificationsEnabled(true)
