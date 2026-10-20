@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PoC · Block editor component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+    <a href="#" style="height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+      Tremonti w Mic
+    </a>
+    <sc-if value="{{demo}}" hint-placeholder-val="{{false}}">
+      <span style="height: 30px; padding: 0 12px; display: flex; align-items: center; border-radius: 999px; border: 1.5px solid {{t.caution}}; color: {{t.caution}}; font-size: 13px; font-weight: 600;">Demo</span>
+    </sc-if>
+  </div>
+
+  <div style="margin-top: 14px; display: flex; align-items: center; gap: 12px;">
+    <span aria-hidden="true" style="{{chipStyle}}">{{b.code}}</span>
+    <div style="min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 style="margin: 0; font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.title}}</h1>
+      <span style="font-size: 13px; color: {{t.muted}};">{{b.where}}</span>
+    </div>
+  </div>
+
+  <section aria-label="{{heroLabel}}" style="position: relative; height: 288px; margin-top: 10px; display: flex; flex-direction: column; align-items: center;">
+    <span style="font-size: 19px; font-weight: 600;">{{hero.label}}</span>
+
+    <sc-if value="{{isGauge}}" hint-placeholder-val="{{true}}">
+      <div style="position: relative; width: 240px; height: 222px;">
+        <svg width="240" height="240" viewBox="0 0 240 240" role="img" aria-label="{{gaugeAria}}" style="position: absolute; top: 0; left: 0;">
+          <path d="{{g.track}}" fill="none" stroke="{{t.track}}" stroke-width="16" stroke-linecap="round"></path>
+          <path d="{{g.solid}}" fill="none" stroke="{{arcColor}}" stroke-width="16" stroke-linecap="round" opacity="{{g.solidOpacity}}"></path>
+          <path d="{{g.prov}}" fill="none" stroke="{{arcColor}}" stroke-width="16" stroke-dasharray="3 6" opacity="{{g.provOpacity}}"></path>
+          <line x1="{{g.tick.x1}}" y1="{{g.tick.y1}}" x2="{{g.tick.x2}}" y2="{{g.tick.y2}}" stroke="{{t.ink}}" stroke-width="3" stroke-linecap="round" opacity="{{g.provOpacity}}"></line>
+          <circle cx="{{g.thumb.x}}" cy="{{g.thumb.y}}" r="24" fill="none" stroke="{{t.signal}}" stroke-width="2" opacity="{{g.haloOpacity}}"></circle>
+          <circle cx="{{g.thumb.x}}" cy="{{g.thumb.y}}" r="{{g.thumbR}}" fill="{{g.thumbFill}}" stroke="{{g.thumbStroke}}" stroke-width="3"></circle>
+        </svg>
+        <button type="button" aria-label="{{valueAria}}" style="position: absolute; left: 50%; top: 87px; transform: translateX(-50%); height: 66px; padding: 0 12px; box-sizing: border-box; display: flex; align-items: baseline; justify-content: center; gap: 5px; line-height: 66px; white-space: nowrap; border: 0; border-radius: 18px; background: {{v.bg}}; box-shadow: {{v.ring}}; outline: {{v.outline}}; outline-offset: -1.5px; color: {{v.color}}; font: inherit; cursor: {{v.cursor}};">
+          <sc-if value="{{hero.locked}}" hint-placeholder-val="{{false}}">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="align-self: center;"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+          </sc-if>
+          <span style="font-size: {{v.size}}; font-weight: 700; letter-spacing: -0.02em;">{{shownValue}}</span>
+          <sc-if value="{{typing}}" hint-placeholder-val="{{false}}">
+            <span aria-hidden="true" style="align-self: center; width: 3px; height: 40px; margin-left: -3px; border-radius: 2px; background: {{t.signal}};"></span>
+          </sc-if>
+          <span style="font-size: 18px; font-weight: 600; color: {{t.muted}};">{{hero.unit}}</span>
+        </button>
+        <sc-if value="{{fine}}" hint-placeholder-val="{{false}}">
+          <span style="position: absolute; left: 30px; right: 30px; top: 160px; text-align: center; font-size: 14px; font-weight: 600; color: {{t.signal}}; white-space: nowrap;">Fine · 0.05 steps</span>
+        </sc-if>
+        <span style="position: absolute; left: 22px; top: 202px; font-size: 12px; color: {{t.muted}};">{{hero.min}}</span>
+        <span style="position: absolute; right: 16px; top: 202px; font-size: 12px; color: {{t.muted}};">{{hero.max}}</span>
+      </div>
+      <sc-if value="{{showSteppers}}" hint-placeholder-val="{{true}}">
+        <button type="button" aria-label="{{decAria}}" style="position: absolute; left: 0; top: 200px; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: {{t.glass}}; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; cursor: pointer;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+        </button>
+        <button type="button" aria-label="{{incAria}}" style="position: absolute; right: 0; top: 200px; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: {{t.glass}}; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; cursor: pointer;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
+        </button>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{isOptions}}" hint-placeholder-val="{{false}}">
+      <div role="radiogroup" aria-label="{{hero.label}}" style="margin-top: 40px; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+        <sc-for list="{{hero.options}}" as="o" hint-placeholder-count="2">
+          <button type="button" role="radio" aria-checked="{{o.checked}}" style="height: 72px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 20px; border: {{o.border}}; background: {{o.bg}}; box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; font-size: 19px; font-weight: 600; cursor: pointer;">
+            <sc-if value="{{o.on}}" hint-placeholder-val="{{true}}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+            </sc-if>
+            {{o.label}}
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <div style="position: absolute; left: 0; right: 0; top: {{stTop}}; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 500; text-align: center; color: {{stColor}};">
+      <sc-if value="{{st.pending}}" hint-placeholder-val="{{false}}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-dasharray="3 3" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle></svg>
+      </sc-if>
+      <sc-if value="{{st.check}}" hint-placeholder-val="{{true}}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+      </sc-if>
+      <sc-if value="{{st.adjusted}}" hint-placeholder-val="{{false}}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-3"></path></svg>
+      </sc-if>
+      <sc-if value="{{st.warn}}" hint-placeholder-val="{{false}}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4"></path><path d="M12 17.5v.5"></path></svg>
+      </sc-if>
+      <sc-if value="{{st.lock}}" hint-placeholder-val="{{false}}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+      </sc-if>
+      <span>{{st.text}}</span>
+    </div>
+  </section>
+
+  <sc-if value="{{notTyping}}" hint-placeholder-val="{{true}}">
+    <div role="group" aria-label="Parameters" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+      <sc-for list="{{tiles}}" as="p" hint-placeholder-count="7">
+        <button type="button" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" style="{{p.style}}">
+          <span style="display: flex; align-items: center; gap: 4px; max-width: 100%; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <sc-if value="{{p.locked}}" hint-placeholder-val="{{false}}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+            </sc-if>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{p.label}}</span>
+          </span>
+          <span style="{{p.valueStyle}}">{{p.value}}<span style="font-size: 12px; font-weight: 500; margin-left: 3px; opacity: 0.8;">{{p.unit}}</span></span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 12px 16px 34px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: {{t.bar}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); border-top: 1px solid {{t.fgBase}} / 0.08);">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.signal}};"></span>
+        Unsaved
+      </span>
+      <button type="button" style="{{saveStyle}}">Save</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{typing}}" hint-placeholder-val="{{false}}">
+    <div role="dialog" aria-label="{{padAria}}" style="position: absolute; z-index: 40; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 8px 10px 34px; display: flex; flex-direction: column; gap: 8px; border-radius: 28px 28px 0 0; background: {{t.sheet}}; backdrop-filter: blur(30px) saturate(1.7); -webkit-backdrop-filter: blur(30px) saturate(1.7); box-shadow: {{t.sheetLift}};">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 6px;">
+        <button type="button" style="height: 44px; padding: 0 8px; border: 0; background: transparent; color: inherit; font: inherit; font-size: 16px; cursor: pointer;">Cancel</button>
+        <span style="{{rangeStyle}}">{{rangeText}}</span>
+        <span style="width: 64px;"></span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;">
+        <sc-for list="{{keys}}" as="k" hint-placeholder-count="14">
+          <button type="button" aria-label="{{k.aria}}" style="{{k.style}}">{{k.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"blockKey":{"editor":"enum","options":["comp","capture","chorus"],"default":"comp","section":"Screen"},"state":{"editor":"enum","options":["idle","fine","pending","confirmed","adjusted","rejected","typing","typingInvalid"],"default":"idle","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const key = this.props.blockKey ?? 'comp';
+    const state = key === 'comp' ? (this.props.state ?? 'idle') : 'idle';
+    const themeName = this.props.theme ?? 'stage';
+    const demo = this.props.demo ?? false;
+    const THEMES = {
+      stage: { dark: true, ground: 'oklch(0.16 0.008 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', fgBase: 'oklch(1 0 0', track: 'oklch(1 0 0 / 0.13)',
+        glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', bar: 'oklch(0.2 0.009 110 / 0.62)',
+        sheet: 'oklch(0.22 0.01 110 / 0.78)', sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.16), 0 -10px 30px oklch(0 0 0 / 0.4)',
+        signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', caution: 'oklch(0.86 0.13 75)', tileFill: 'oklch(1 0 0 / 0.08)', key: 'oklch(1 0 0 / 0.12)' },
+      daylight: { dark: false, ground: 'oklch(0.975 0.003 110)', ink: 'oklch(0.2 0.01 110)', muted: 'oklch(0.45 0.01 110)', fgBase: 'oklch(0.2 0.01 110', track: 'oklch(0.2 0.01 110 / 0.1)',
+        glass: 'oklch(1 0 0 / 0.66)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 2px 8px oklch(0.2 0.01 110 / 0.06)', bar: 'oklch(1 0 0 / 0.7)',
+        sheet: 'oklch(0.99 0.002 110 / 0.86)', sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.9), 0 -10px 30px oklch(0.2 0.01 110 / 0.14)',
+        signal: 'oklch(0.48 0.12 115)', signalInk: '#ffffff', caution: 'oklch(0.52 0.13 60)', tileFill: 'oklch(1 0 0 / 0.72)', key: 'oklch(1 0 0 / 0.9)' }
+    };
+    const t = THEMES[themeName];
+    const cats = {
+      comp: { hue: 160, chip: 'oklch(0.68 0.12 160)', chipInk: 'oklch(0.17 0.02 160)', arcDark: 'oklch(0.76 0.12 160)', arcLight: 'oklch(0.58 0.12 160)' },
+      capture: { hue: 15, chip: 'oklch(0.72 0.12 15)', chipInk: 'oklch(0.2 0.03 15)', arcDark: 'oklch(0.62 0.01 110)', arcLight: 'oklch(0.62 0.01 110)' },
+      chorus: { hue: 330, chip: 'oklch(0.58 0.18 330)', chipInk: '#ffffff', arcDark: 'oklch(0.76 0.14 330)', arcLight: 'oklch(0.55 0.17 330)' }
+    };
+    const c = cats[key];
+    const arcColor = t.dark ? c.arcDark : c.arcLight;
+    const lockReason = { taper: 'Scale unknown', meter: 'Meter', dep: 'Depends on Sync' };
+    const P = (label, value, unit, pos, extra = {}) => ({ label, value, unit, pos, ...extra });
+    // Values from the captured preset, scene F. Every number steps in 0.1 display units.
+    const blocks = {
+      comp: { code: 'CMP', title: 'Opto Comp (M)', where: 'Compressor · Scene F', hero: 0, params: [
+        P('Threshold', '−34.2', 'dB', 0.359, { min: '−60', max: '+12', range: '−60.0 to +12.0 dB' }),
+        P('Ratio', '4.0', '', 0.268), P('Attack', '15.0', 'ms', 0.178), P('Release', '400.0', 'ms', 0.49),
+        P('Makeup', '+8.0', 'dB', 0.583), P('Mix', '100.0', '%', 1),
+        P('Gain Reduction', '—', '', 0, { locked: 'meter' })
+      ] },
+      capture: { code: 'CAP', title: 'Eltron 30', where: 'Capture OG TS808 · Scene F', hero: 0, params: [
+        P('Gain', '50', '%', 0.5, { locked: 'taper', min: '', max: '' }), P('Bass', '—', '', 0.5, { locked: 'taper' }),
+        P('Mid', '—', '', 0.5, { locked: 'taper' }), P('Treble', '—', '', 0.5, { locked: 'taper' }), P('Volume', '—', '', 0.5, { locked: 'taper' })
+      ] },
+      chorus: { code: 'MOD', title: 'Dual Chorus', where: 'Modulation · Scene F', hero: 1, params: [
+        P('Mix', '73.2', '%', 0.732), P('Mode', 'Chorus', '', 0, { options: ['Chorus', 'Vibe'] }), P('Rate', '—', '', 0.418, { locked: 'dep' }),
+        P('Depth', '50.0', '%', 0.5), P('Width', '70.0', '%', 0.7), P('Tone', '49.5', '', 0.495),
+        P('Sync', 'Off', '', 0, { options: ['Off', 'On'] }), P('Sync Note', '—', '', 0.46, { locked: 'dep' })
+      ] }
+    };
+    const b = blocks[key];
+    const heroP = b.params[b.hero];
+    const isOptions = !!heroP.options;
+    const locked = !!heroP.locked;
+    const typing = state === 'typing' || state === 'typingInvalid';
+    const fine = state === 'fine';
+    const pending = state === 'pending';
+
+    // Gauge position follows the QC's knob travel (normalized), not display units.
+    const cx = 120, cy = 120, r = 96;
+    const ang = (v) => (135 + v * 270) * Math.PI / 180;
+    const pt = (v, rad = r) => ({ x: +(cx + rad * Math.cos(ang(v))).toFixed(2), y: +(cy + rad * Math.sin(ang(v))).toFixed(2) });
+    const arc = (a, z) => { const p0 = pt(a), p1 = pt(Math.max(z, a + 0.0005)); const large = (z - a) * 270 > 180 ? 1 : 0; return 'M ' + p0.x + ' ' + p0.y + ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p1.x + ' ' + p1.y; };
+    const pos = { idle: heroP.pos, fine: 0.416, pending: 0.4167, confirmed: 0.4167, adjusted: 0.4153, rejected: heroP.pos, typing: 0.4167, typingInvalid: heroP.pos };
+    const shownPos = pos[state];
+    const ti = pt(heroP.pos, 80), to = pt(heroP.pos, 112);
+    const g = {
+      track: arc(0, 1), solid: arc(0, pending ? heroP.pos : shownPos), prov: arc(heroP.pos, 0.4167),
+      solidOpacity: locked ? 0.7 : 1, provOpacity: pending ? 1 : 0,
+      tick: { x1: ti.x, y1: ti.y, x2: to.x, y2: to.y }, thumb: pt(shownPos), thumbR: fine ? 16 : 13,
+      thumbFill: locked ? 'transparent' : (fine ? t.signal : '#ffffff'), thumbStroke: locked ? 'oklch(0.62 0.01 110)' : t.ground,
+      haloOpacity: fine ? 0.55 : 0
+    };
+    const valueByState = { idle: heroP.value, fine: '−30.05', pending: '−30.0', confirmed: '−30.0', adjusted: '−30.1', rejected: heroP.value, typing: '−30', typingInvalid: '−75' };
+    const shownValue = locked ? heroP.value : valueByState[state];
+    // The number stays centred in the dial in every state, including fine steps (as iOS scrubbing does).
+    // Only the line under it changes, so the eye never has to follow the value around.
+    const v = {
+      bg: typing ? t.fgBase + ' / 0.08)' : 'transparent',
+      ring: typing ? 'inset 0 0 0 2px ' + (state === 'typingInvalid' ? t.caution : t.signal) : 'none',
+      outline: pending ? '1.5px dashed ' + t.signal : 'none',
+      color: locked ? t.muted : t.ink,
+      cursor: locked ? 'default' : 'text',
+      // A second decimal in fine mode makes the value wider, so it steps down to stay inside the arc.
+      size: locked ? '42px' : fine ? '40px' : '48px'
+    };
+    const statusMap = locked ? { lock: true, text: 'Read-only · scale unknown', color: t.muted }
+      : isOptions ? { text: '', color: t.muted }
+      : ({
+        idle: { text: '', color: t.muted },
+        fine: { text: '', color: t.muted },
+        pending: { pending: true, text: 'Sending…', color: t.signal },
+        confirmed: { check: true, text: 'Confirmed', color: t.signal },
+        adjusted: { adjusted: true, text: 'QC set −30.1 dB', color: t.ink },
+        rejected: { warn: true, text: 'Not applied · scene changed', color: t.caution },
+        typing: { text: '', color: t.muted },
+        typingInvalid: { text: '', color: t.caution }
+      })[state];
+    const st = { pending: !!statusMap.pending, check: !!statusMap.check, adjusted: !!statusMap.adjusted, warn: !!statusMap.warn, lock: !!statusMap.lock, text: statusMap.text };
+
+    const tileBase = { height: '62px', boxSizing: 'border-box', padding: '0 11px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: '2px', borderRadius: '18px', border: '1.5px solid transparent', background: t.tileFill, boxShadow: t.glassEdge, backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)', color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer', minWidth: '0' };
+    const tiles = b.params.map((p, i) => {
+      const active = i === b.hero;
+      let value = p.value;
+      if (active && key === 'comp' && !typing) value = valueByState[state];
+      const style = p.locked ? { ...tileBase, background: t.fgBase + ' / 0.035)', boxShadow: 'inset 0 0 0 1px ' + t.fgBase + ' / 0.1)', backdropFilter: 'none', WebkitBackdropFilter: 'none', cursor: 'default' }
+        : active && pending ? { ...tileBase, border: '1.5px dashed ' + t.signal }
+        : active ? { ...tileBase, background: arcColor.replace(')', ' / 0.2)'), border: '1.5px solid ' + arcColor }
+        : tileBase;
+      return {
+        label: p.label, unit: p.locked ? '' : p.unit, value: p.locked ? lockReason[p.locked] : value, locked: !!p.locked, pressed: active ? 'true' : 'false',
+        aria: p.label + ', ' + (p.locked ? 'read-only, ' + lockReason[p.locked] : value + ' ' + p.unit), style,
+        valueStyle: p.locked ? { fontSize: '13px', fontWeight: 500, color: t.muted, whiteSpace: 'nowrap' } : { fontSize: p.options ? '16px' : '19px', fontWeight: 600, whiteSpace: 'nowrap' }
+      };
+    });
+
+    const hero = {
+      label: locked ? heroP.label + ' · knob position' : heroP.label, unit: locked ? '%' : heroP.unit, min: heroP.min ?? '', max: heroP.max ?? '', locked,
+      options: (heroP.options || []).map((o) => ({ label: o, on: o === heroP.value, checked: o === heroP.value ? 'true' : 'false',
+        bg: o === heroP.value ? arcColor.replace(')', ' / 0.2)') : t.tileFill, border: o === heroP.value ? '1.5px solid ' + arcColor : '1.5px solid transparent' }))
+    };
+
+    const keyBase = { height: '50px', border: '0', borderRadius: '12px', background: t.key, boxShadow: t.glassEdge, color: 'inherit', font: 'inherit', fontSize: '24px', cursor: 'pointer' };
+    const K = (label, aria, style = {}) => ({ label, aria: aria || label, style: { ...keyBase, ...style } });
+    const setDisabled = state === 'typingInvalid';
+    const keys = [K('1'), K('2'), K('3'), K('⌫', 'Delete', { fontSize: '20px' }), K('4'), K('5'), K('6'), K('±', 'Change sign'), K('7'), K('8'), K('9'), K('.', 'Decimal point'),
+      K('0', '0', { gridColumn: 'span 3' }),
+      K('Set', setDisabled ? 'Set, unavailable until the value is in range' : 'Set −30 dB', setDisabled ? { background: t.fgBase + ' / 0.06)', boxShadow: 'none', color: t.muted, fontSize: '17px', fontWeight: 600, cursor: 'not-allowed' } : { background: t.signal, color: t.signalInk, fontSize: '17px', fontWeight: 600 })];
+
+    const ground = t.dark ? 'oklch(0.16 0.012 ' + c.hue + ')' : 'oklch(0.97 0.01 ' + c.hue + ')';
+    const glow = key === 'capture' ? (t.dark ? 'oklch(0.26 0.01 110 / 0.6)' : 'oklch(0.9 0.01 110 / 0.7)') : (t.dark ? 'oklch(0.3 0.06 ' + c.hue + ' / 0.7)' : 'oklch(0.9 0.06 ' + c.hue + ' / 0.8)');
+    return {
+      t, b, hero, g, st, tiles, keys, v, demo, typing, fine, notTyping: !typing, isOptions, isGauge: !isOptions, arcColor,
+      showSteppers: !locked && !isOptions,
+      rootStyle: { width: '402px', height: '874px', position: 'relative', overflow: 'hidden', boxSizing: 'border-box', padding: '62px 16px 0', display: 'flex', flexDirection: 'column', background: 'radial-gradient(120% 55% at 50% 34%, ' + glow + ', transparent 70%), ' + ground, color: t.ink, fontFamily: "-apple-system, 'SF Pro Text', Inter, system-ui, sans-serif", fontVariantNumeric: 'tabular-nums' },
+      chipStyle: { width: '44px', height: '44px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: c.chip, color: c.chipInk, fontSize: '11px', fontWeight: 700, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' },
+      heroLabel: heroP.label + ' control',
+      gaugeAria: heroP.label + ' ' + shownValue + ' ' + heroP.unit + (pending ? ', sending, QC at −34.2' : ''),
+      valueAria: locked ? heroP.label + ', read-only' : heroP.label + ' ' + shownValue + ' ' + heroP.unit + '. Tap to type a value',
+      shownValue,
+      decAria: 'Decrease ' + heroP.label.toLowerCase() + ' by 0.1', incAria: 'Increase ' + heroP.label.toLowerCase() + ' by 0.1',
+      stTop: isOptions ? '252px' : '262px', stColor: statusMap.color,
+      saveStyle: { height: '50px', padding: '0 26px', border: '0', borderRadius: '999px', background: t.signal, color: t.signalInk, font: 'inherit', fontSize: '16px', fontWeight: 600, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)', cursor: 'pointer', opacity: pending ? 0.45 : 1 },
+      padAria: 'Type a value for ' + heroP.label,
+      rangeText: heroP.range || '', rangeStyle: { fontSize: '13px', color: state === 'typingInvalid' ? t.caution : t.muted }
+    };
+  }
+}
+</script>
+</body>
+</html>

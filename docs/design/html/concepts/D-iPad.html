@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1180">
+<title>D · iPad and unfolded split view</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:oklch(0.87 0.17 115)}a:hover{color:oklch(0.93 0.12 115)}
+button{font:inherit;color:inherit;cursor:pointer}
+</style>
+
+<style>html,body{margin:0;width:1180px;height:820px;overflow:hidden;background:#000}</style>
+</head>
+<body>
+
+
+<div style="width: 1180px; height: 820px; position: relative; overflow: hidden; box-sizing: border-box; padding: 28px 24px 20px; display: flex; flex-direction: column; gap: 16px; background: radial-gradient(40% 60% at 84% 52%, oklch(0.3 0.07 27 / 0.6), transparent 70%), oklch(0.16 0.008 110); color: oklch(0.96 0.005 110); font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <header style="display: flex; align-items: center; gap: 14px;">
+    <button type="button" style="height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border: 0; border-radius: 22px; background: oklch(0.26 0.01 110 / 0.6); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06); font-size: 15px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+      Presets
+    </button>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.015em;">Clean Edge Lead</h1>
+      <span style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: oklch(0.78 0.01 110);">
+        Bank 3 · Slot B
+        <span style="display: inline-flex; align-items: center; gap: 6px; color: oklch(0.87 0.17 115); font-weight: 600;"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>2 changes not saved</span>
+      </span>
+    </div>
+    <span style="flex: 1;"></span>
+    <button type="button" aria-label="Bridge: Studio Mac, QC connected, CorOS 4.1.1" style="height: 44px; padding: 0 14px; display: flex; align-items: center; gap: 7px; border: 0; border-radius: 22px; background: oklch(0.26 0.01 110 / 0.6); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06); font-size: 14px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="oklch(0.87 0.17 115)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+      Studio Mac · CorOS 4.1.1
+    </button>
+    <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: 22px; background: oklch(1 0 0 / 0.1); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12); font-size: 15px;">Save As…</button>
+    <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 22px; background: oklch(0.87 0.17 115); color: oklch(0.2 0.04 115); font-size: 15px; font-weight: 600; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.5);">Save to 3B</button>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 20px;">
+    <div style="width: 712px; flex: none; display: flex; flex-direction: column; gap: 14px;">
+      <div role="group" aria-label="Scenes" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px;">
+        
+          <button type="button" aria-pressed="true" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 16px; background: oklch(0.87 0.17 115); color: oklch(0.2 0.04 115); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.5)">
+            <span style="font-size: 16px; font-weight: 700;">A</span>
+            <span style="font-size: 11px;">Rhythm</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 16px; background: oklch(1 0 0 / 0.07); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.1)">
+            <span style="font-size: 16px; font-weight: 700;">B</span>
+            <span style="font-size: 11px;">Lead</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 16px; background: oklch(1 0 0 / 0.07); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.1)">
+            <span style="font-size: 16px; font-weight: 700;">C</span>
+            <span style="font-size: 11px;">Clean</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 16px; background: oklch(1 0 0 / 0.07); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.1)">
+            <span style="font-size: 16px; font-weight: 700;">D</span>
+            <span style="font-size: 11px;">Swell</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 16px; background: oklch(1 0 0 / 0.07); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.1)">
+            <span style="font-size: 16px; font-weight: 700;">E</span>
+            <span style="font-size: 11px;">Solo</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 16px; background: oklch(1 0 0 / 0.07); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.1)">
+            <span style="font-size: 16px; font-weight: 700;">F</span>
+            <span style="font-size: 11px;">Ambient</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 16px; background: oklch(1 0 0 / 0.07); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.1)">
+            <span style="font-size: 16px; font-weight: 700;">G</span>
+            <span style="font-size: 11px;">Dry</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 16px; background: oklch(1 0 0 / 0.07); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.1)">
+            <span style="font-size: 16px; font-weight: 700;">H</span>
+            <span style="font-size: 11px;">Octave</span>
+          </button>
+        
+      </div>
+
+      <section aria-label="Signal chain, 4 rows by 8 slots" style="padding: 10px 10px 10px 4px; display: flex; flex-direction: column; gap: 6px; border-radius: 24px; background: oklch(0.2 0.009 110); box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.06);">
+        
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="width: 22px; text-align: center; font-size: 13px; font-weight: 600; color: oklch(0.72 0.01 110);">1</span>
+            <div style="display: flex; gap: 6px; padding: 3px; border-radius: 19px; background: oklch(1 0 0 / 0.08)">
+              
+                <button type="button" aria-label="Row 1, slot 1, Compressor, Compressor" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: oklch(0.68 0.12 160); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.35), inset 0 -12px 20px oklch(0 0 0 / 0.1); outline: none; outline-offset: 3px">
+                  <span style="font-size: 11px; font-weight: 700; color: oklch(0.17 0.02 160); opacity: 0.85">CMP</span>
+                  <span style="max-width: 100%; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: oklch(0.17 0.02 160)">Compressor</span>
+                </button>
+              
+                <button type="button" aria-label="Row 1, slot 2, Overdrive, bypassed" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1.5px dashed oklch(0.76 0.16 65); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="font-size: 11px; font-weight: 700; color: oklch(0.78 0.01 110); text-decoration: line-through">DRV</span>
+                  <span style="max-width: 100%; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: oklch(0.78 0.01 110)">Bypassed</span>
+                </button>
+              
+                <button type="button" aria-label="Row 1, slot 3, Amp, Crunch 50, selected" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: oklch(0.56 0.2 27); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.35), inset 0 -12px 20px oklch(0 0 0 / 0.1); outline: 2.5px solid oklch(0.87 0.17 115); outline-offset: 3px">
+                  <span style="font-size: 11px; font-weight: 700; color: #ffffff; opacity: 0.85">AMP</span>
+                  <span style="max-width: 100%; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ffffff">Crunch 50</span>
+                </button>
+              
+                <button type="button" aria-label="Row 1, slot 4, Cab, 4×12 Cab" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: oklch(0.52 0.05 50); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.35), inset 0 -12px 20px oklch(0 0 0 / 0.1); outline: none; outline-offset: 3px">
+                  <span style="font-size: 11px; font-weight: 700; color: #ffffff; opacity: 0.85">CAB</span>
+                  <span style="max-width: 100%; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ffffff">4×12 Cab</span>
+                </button>
+              
+                <button type="button" aria-label="Row 1, slot 5, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 1, slot 6, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 1, slot 7, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 1, slot 8, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+            </div>
+          </div>
+        
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="width: 22px; text-align: center; font-size: 13px; font-weight: 600; color: oklch(0.72 0.01 110);">2</span>
+            <div style="display: flex; gap: 6px; padding: 3px; border-radius: 19px; background: transparent">
+              
+                <button type="button" aria-label="Row 2, slot 1, Modulation, Chorus" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: oklch(0.58 0.18 330); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.35), inset 0 -12px 20px oklch(0 0 0 / 0.1); outline: none; outline-offset: 3px">
+                  <span style="font-size: 11px; font-weight: 700; color: #ffffff; opacity: 0.85">MOD</span>
+                  <span style="max-width: 100%; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ffffff">Chorus</span>
+                </button>
+              
+                <button type="button" aria-label="Row 2, slot 2, Delay, Tape Echo" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: oklch(0.7 0.14 245); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.35), inset 0 -12px 20px oklch(0 0 0 / 0.1); outline: none; outline-offset: 3px">
+                  <span style="font-size: 11px; font-weight: 700; color: oklch(0.18 0.04 245); opacity: 0.85">DLY</span>
+                  <span style="max-width: 100%; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: oklch(0.18 0.04 245)">Tape Echo</span>
+                </button>
+              
+                <button type="button" aria-label="Row 2, slot 3, Reverb, Plate" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: oklch(0.82 0.09 210); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.35), inset 0 -12px 20px oklch(0 0 0 / 0.1); outline: none; outline-offset: 3px">
+                  <span style="font-size: 11px; font-weight: 700; color: oklch(0.2 0.03 210); opacity: 0.85">REV</span>
+                  <span style="max-width: 100%; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: oklch(0.2 0.03 210)">Plate</span>
+                </button>
+              
+                <button type="button" aria-label="Row 2, slot 4, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 2, slot 5, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 2, slot 6, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 2, slot 7, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 2, slot 8, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+            </div>
+          </div>
+        
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="width: 22px; text-align: center; font-size: 13px; font-weight: 600; color: oklch(0.72 0.01 110);">3</span>
+            <div style="display: flex; gap: 6px; padding: 3px; border-radius: 19px; background: transparent">
+              
+                <button type="button" aria-label="Row 3, slot 1, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 3, slot 2, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 3, slot 3, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 3, slot 4, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 3, slot 5, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 3, slot 6, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 3, slot 7, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 3, slot 8, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+            </div>
+          </div>
+        
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="width: 22px; text-align: center; font-size: 13px; font-weight: 600; color: oklch(0.72 0.01 110);">4</span>
+            <div style="display: flex; gap: 6px; padding: 3px; border-radius: 19px; background: transparent">
+              
+                <button type="button" aria-label="Row 4, slot 1, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 4, slot 2, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 4, slot 3, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 4, slot 4, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 4, slot 5, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 4, slot 6, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 4, slot 7, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+                <button type="button" aria-label="Row 4, slot 8, empty" style="width: 78px; height: 86px; padding: 10px 9px; box-sizing: border-box; border-radius: 16px; border: 1px solid oklch(0.3 0.01 110); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; background: transparent">
+                  <span style="display: none"></span>
+                  <span style="display: none"></span>
+                </button>
+              
+            </div>
+          </div>
+        
+      </section>
+
+      <section aria-label="Row 1 blocks" style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px;">
+          <span style="font-size: 16px; font-weight: 600;">Row 1</span>
+          <span style="font-size: 13px; color: oklch(0.74 0.01 110);">4 blocks · slots 5–8 empty</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px;">
+          
+            <div style="height: 58px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid oklch(1 0 0 / 0.06);">
+              <span aria-hidden="true" style="width: 40px; height: 40px; flex: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 11px; font-weight: 700; background: oklch(0.68 0.12 160); color: oklch(0.17 0.02 160)">CMP</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 15px; font-weight: 600; color: oklch(0.96 0.005 110)">Compressor</span>
+                <span style="font-size: 13px; color: oklch(0.76 0.01 110); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Threshold −18 dB · Ratio 4:1</span>
+              </div>
+              <button type="button" role="switch" aria-checked="true" aria-label="Compressor active" style="width: 51px; height: 31px; flex: none; padding: 2px; border: 0; border-radius: 16px; display: flex; justify-content: flex-end; background: oklch(0.87 0.17 115)">
+                <span style="width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px oklch(0 0 0 / 0.3);"></span>
+              </button>
+            </div>
+          
+            <div style="height: 58px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid oklch(1 0 0 / 0.06);">
+              <span aria-hidden="true" style="width: 40px; height: 40px; flex: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 11px; font-weight: 700; border: 2px dashed oklch(0.76 0.16 65); color: oklch(0.78 0.01 110); text-decoration: line-through">DRV</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 15px; font-weight: 600; color: oklch(0.72 0.01 110)">Overdrive</span>
+                <span style="font-size: 13px; color: oklch(0.76 0.01 110); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Bypassed</span>
+              </div>
+              <button type="button" role="switch" aria-checked="false" aria-label="Overdrive bypassed" style="width: 51px; height: 31px; flex: none; padding: 2px; border: 0; border-radius: 16px; display: flex; justify-content: flex-start; background: oklch(1 0 0 / 0.18)">
+                <span style="width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px oklch(0 0 0 / 0.3);"></span>
+              </button>
+            </div>
+          
+            <div style="height: 58px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid oklch(1 0 0 / 0.06);">
+              <span aria-hidden="true" style="width: 40px; height: 40px; flex: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 11px; font-weight: 700; background: oklch(0.56 0.2 27); color: #ffffff">AMP</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 15px; font-weight: 600; color: oklch(0.96 0.005 110)">Crunch 50</span>
+                <span style="font-size: 13px; color: oklch(0.76 0.01 110); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Gain 6.2 · Mid 6.5 · Master 7.0</span>
+              </div>
+              <button type="button" role="switch" aria-checked="true" aria-label="Crunch 50 active" style="width: 51px; height: 31px; flex: none; padding: 2px; border: 0; border-radius: 16px; display: flex; justify-content: flex-end; background: oklch(0.87 0.17 115)">
+                <span style="width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px oklch(0 0 0 / 0.3);"></span>
+              </button>
+            </div>
+          
+            <div style="height: 58px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid oklch(1 0 0 / 0.06);">
+              <span aria-hidden="true" style="width: 40px; height: 40px; flex: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 11px; font-weight: 700; background: oklch(0.52 0.05 50); color: #ffffff">CAB</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 15px; font-weight: 600; color: oklch(0.96 0.005 110)">4×12 Cab</span>
+                <span style="font-size: 13px; color: oklch(0.76 0.01 110); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dynamic mic · 2.0 in</span>
+              </div>
+              <button type="button" role="switch" aria-checked="true" aria-label="4×12 Cab active" style="width: 51px; height: 31px; flex: none; padding: 2px; border: 0; border-radius: 16px; display: flex; justify-content: flex-end; background: oklch(0.87 0.17 115)">
+                <span style="width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px oklch(0 0 0 / 0.3);"></span>
+              </button>
+            </div>
+          
+        </div>
+      </section>
+    </div>
+
+    <aside aria-label="Crunch 50 editor" style="flex: 1; min-width: 0; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; border-radius: 28px; background: oklch(0.22 0.025 27 / 0.55); backdrop-filter: blur(30px) saturate(1.7); -webkit-backdrop-filter: blur(30px) saturate(1.7); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06), 0 20px 50px oklch(0 0 0 / 0.35);">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span aria-hidden="true" style="width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: oklch(0.56 0.2 27); color: #fff; font-size: 11px; font-weight: 700; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4);">AMP</span>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 20px; font-weight: 700;">Crunch 50</span>
+          <span style="font-size: 13px; color: oklch(0.82 0.02 27);">Row 1, slot 3 · Scene A</span>
+        </div>
+        <button type="button" role="switch" aria-checked="true" aria-label="Block active" style="width: 51px; height: 31px; padding: 2px; border: 0; border-radius: 16px; background: oklch(0.87 0.17 115); display: flex; justify-content: flex-end;">
+          <span style="width: 27px; height: 27px; border-radius: 50%; background: #fff;"></span>
+        </button>
+      </div>
+
+      <div style="position: relative; margin-top: 14px; display: flex; flex-direction: column; align-items: center;">
+        <span style="font-size: 17px; font-weight: 600;">Gain</span>
+        <div style="position: relative; width: 220px; height: 204px;">
+          <svg width="220" height="220" viewBox="0 0 220 220" role="img" aria-label="Gain 6.4 of 10, sending, QC at 6.2" style="position: absolute; top: 0; left: 0;">
+            <path d="M 47.77 172.23 A 88 88 0 1 1 172.23 172.23" fill="none" stroke="oklch(1 0 0 / 0.13)" stroke-width="15" stroke-linecap="round"></path>
+            <path d="M 47.77 172.23 A 88 88 0 0 1 157.15 35.7" fill="none" stroke="oklch(0.74 0.16 27)" stroke-width="15" stroke-linecap="round"></path>
+            <path d="M 157.15 35.7 A 88 88 0 0 1 163.94 40.47" fill="none" stroke="oklch(0.74 0.16 27)" stroke-width="15" stroke-dasharray="3 6"></path>
+            <line x1="149.65" y1="47.52" x2="164.65" y2="23.88" stroke="oklch(0.97 0.006 27)" stroke-width="3" stroke-linecap="round"></line>
+            <circle cx="163.94" cy="40.47" r="12" fill="#ffffff" stroke="oklch(0.2 0.02 27)" stroke-width="3"></circle>
+          </svg>
+          <button type="button" aria-label="Gain 6.4. Tap to type a value" style="position: absolute; left: 50%; top: 66px; transform: translateX(-50%); height: 70px; padding: 0 12px; border: 0; border-radius: 18px; background: transparent; outline: 1.5px dashed oklch(0.87 0.17 115); outline-offset: -1.5px; font-size: 56px; line-height: 1; font-weight: 700; letter-spacing: -0.02em;">6.4</button>
+          <span style="position: absolute; left: 0; right: 0; top: 140px; text-align: center; font-size: 12px; color: oklch(0.82 0.02 27);">Tap number to type</span>
+        </div>
+        <button type="button" aria-label="Decrease gain by 0.1" style="position: absolute; left: 6px; top: 176px; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: oklch(1 0 0 / 0.1); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.18), inset 0 0 0 1px oklch(1 0 0 / 0.06);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+        </button>
+        <button type="button" aria-label="Increase gain by 0.1" style="position: absolute; right: 6px; top: 176px; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: oklch(1 0 0 / 0.1); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.18), inset 0 0 0 1px oklch(1 0 0 / 0.06);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
+        </button>
+        <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: oklch(0.87 0.17 115);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-dasharray="3 3" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle></svg>
+          Sending 6.4. QC is still at 6.2
+        </div>
+      </div>
+
+      <div role="group" aria-label="Parameters" style="margin-top: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        
+          <button type="button" aria-pressed="true" aria-label="Gain, 6.4" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid oklch(0.74 0.16 27); background: oklch(0.74 0.16 27 / 0.22); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Gain<span style="display: none"></span></span>
+            <span style="font-size: 19px; font-weight: 600; color: inherit">6.4</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" aria-label="Bass, 5.0" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid transparent; background: oklch(1 0 0 / 0.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Bass<span style="display: none"></span></span>
+            <span style="font-size: 19px; font-weight: 600; color: inherit">5.0</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" aria-label="Mid, 6.5" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid transparent; background: oklch(1 0 0 / 0.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Mid<span style="font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 5px; background: oklch(1 0 0 / 0.14)">QC</span></span>
+            <span style="font-size: 19px; font-weight: 600; color: inherit">6.5</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" aria-label="Treble, 5.8" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid transparent; background: oklch(1 0 0 / 0.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Treble<span style="display: none"></span></span>
+            <span style="font-size: 19px; font-weight: 600; color: inherit">5.8</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" aria-label="Presence, 4.0" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid transparent; background: oklch(1 0 0 / 0.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Presence<span style="display: none"></span></span>
+            <span style="font-size: 19px; font-weight: 600; color: inherit">4.0</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" aria-label="Master, 7.0" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid transparent; background: oklch(1 0 0 / 0.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Master<span style="display: none"></span></span>
+            <span style="font-size: 19px; font-weight: 600; color: inherit">7.0</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" aria-label="Channel, Crunch" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid transparent; background: oklch(1 0 0 / 0.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Channel<span style="display: none"></span></span>
+            <span style="font-size: 15px; font-weight: 600; color: inherit">Crunch</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" aria-label="Bright, Off" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid transparent; background: oklch(1 0 0 / 0.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Bright<span style="display: none"></span></span>
+            <span style="font-size: 15px; font-weight: 600; color: oklch(0.82 0.02 27)">Off</span>
+          </button>
+        
+          <button type="button" aria-pressed="false" aria-label="Level, −3.0 dB" style="height: 60px; box-sizing: border-box; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; border-radius: 16px; border: 1.5px solid transparent; background: oklch(1 0 0 / 0.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12)">
+            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.86 0.015 27);">Level<span style="display: none"></span></span>
+            <span style="font-size: 15px; font-weight: 600; color: inherit">−3.0 dB</span>
+          </button>
+        
+      </div>
+    </aside>
+  </div>
+</div>
+
+</body>
+</html>

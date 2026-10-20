@@ -1,0 +1,556 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-20T12:00:00Z"
+  },
+  "title": "Patchbridge concept directions",
+  "launch": {
+    "view": "canvas",
+    "page": "poc"
+  },
+  "pages": [
+    {
+      "id": "poc",
+      "name": "iPhone PoC"
+    },
+    {
+      "id": "components",
+      "name": "Components"
+    },
+    {
+      "id": "concepts",
+      "name": "Concepts"
+    }
+  ],
+  "boards": {
+    "poc/c-welcome.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Welcome",
+      "page": "poc"
+    },
+    "poc/c-found.dc.html": {
+      "x": 1446,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Choose your Mac",
+      "page": "poc"
+    },
+    "poc/c-approve.dc.html": {
+      "x": 1928,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Approve on Mac",
+      "page": "poc"
+    },
+    "poc/c-loading.dc.html": {
+      "x": 2410,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Loading the QC",
+      "page": "poc"
+    },
+    "poc/c-lost.dc.html": {
+      "x": 2892,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Error: connection ended",
+      "page": "poc"
+    },
+    "poc/c-timeout.dc.html": {
+      "x": 3374,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Error: no reply",
+      "page": "poc"
+    },
+    "poc/c-bluetooth.dc.html": {
+      "x": 3856,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Error: Bluetooth off",
+      "page": "poc"
+    },
+    "poc/o-row1.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Overview · row 1",
+      "page": "poc"
+    },
+    "poc/o-row3.dc.html": {
+      "x": 482,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Overview · row 3",
+      "page": "poc"
+    },
+    "poc/o-demo.dc.html": {
+      "x": 964,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Overview · demo mode",
+      "page": "poc"
+    },
+    "poc/o-save.dc.html": {
+      "x": 1446,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Save confirmation",
+      "page": "poc"
+    },
+    "poc/o-saving.dc.html": {
+      "x": 1928,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Saving",
+      "page": "poc"
+    },
+    "poc/o-saved.dc.html": {
+      "x": 2410,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Saved",
+      "page": "poc"
+    },
+    "poc/o-changed.dc.html": {
+      "x": 2892,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Changed on the QC",
+      "page": "poc"
+    },
+    "poc/o-details.dc.html": {
+      "x": 3374,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Connection details",
+      "page": "poc"
+    },
+    "poc/o-landscape.dc.html": {
+      "x": 3856,
+      "y": 1320,
+      "w": 874,
+      "h": 402,
+      "title": "Overview · landscape",
+      "page": "poc"
+    },
+    "poc/e-idle.dc.html": {
+      "x": 0,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · matches the QC",
+      "page": "poc"
+    },
+    "poc/e-fine.dc.html": {
+      "x": 482,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · fine steps (hold, slide out)",
+      "page": "poc"
+    },
+    "poc/e-pending.dc.html": {
+      "x": 964,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · sending",
+      "page": "poc"
+    },
+    "poc/e-confirmed.dc.html": {
+      "x": 1446,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · confirmed",
+      "page": "poc"
+    },
+    "poc/e-adjusted.dc.html": {
+      "x": 1928,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · adjusted by the QC",
+      "page": "poc"
+    },
+    "poc/e-rejected.dc.html": {
+      "x": 2410,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · not applied",
+      "page": "poc"
+    },
+    "poc/e-typing.dc.html": {
+      "x": 2892,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · typing",
+      "page": "poc"
+    },
+    "poc/e-invalid.dc.html": {
+      "x": 3374,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · out of range",
+      "page": "poc"
+    },
+    "poc/e-capture.dc.html": {
+      "x": 3856,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · read-only capture",
+      "page": "poc"
+    },
+    "poc/e-chorus.dc.html": {
+      "x": 4338,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "Editor · option parameter",
+      "page": "poc"
+    },
+    "poc/t-appearance-stage.dc.html": {
+      "x": 0,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "Appearance · Stage",
+      "page": "poc"
+    },
+    "poc/t-appearance-daylight.dc.html": {
+      "x": 482,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "Appearance · Daylight",
+      "page": "poc"
+    },
+    "poc/t-overview.dc.html": {
+      "x": 964,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "Daylight · overview",
+      "page": "poc"
+    },
+    "poc/t-editor.dc.html": {
+      "x": 1446,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "Daylight · editor",
+      "page": "poc"
+    },
+    "poc/t-fine.dc.html": {
+      "x": 1928,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "Daylight · fine steps",
+      "page": "poc"
+    },
+    "poc/t-pending.dc.html": {
+      "x": 2410,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "Daylight · sending",
+      "page": "poc"
+    },
+    "poc/t-connect.dc.html": {
+      "x": 2892,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "Daylight · approve on Mac",
+      "page": "poc"
+    },
+    "poc/t-landscape.dc.html": {
+      "x": 3374,
+      "y": 3960,
+      "w": 874,
+      "h": 402,
+      "title": "Daylight · landscape",
+      "page": "poc"
+    },
+    "poc/Connect.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Connect (Tweaks: step, theme)",
+      "page": "components"
+    },
+    "poc/Overview.dc.html": {
+      "x": 482,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Overview (Tweaks: row, overlay, theme, demo)",
+      "page": "components"
+    },
+    "poc/Editor.dc.html": {
+      "x": 964,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Block editor (Tweaks: block, state, theme, demo)",
+      "page": "components"
+    },
+    "poc/Appearance.dc.html": {
+      "x": 1446,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Appearance (Tweaks: theme)",
+      "page": "components"
+    },
+    "poc/Landscape.dc.html": {
+      "x": 1928,
+      "y": 0,
+      "w": 874,
+      "h": 402,
+      "title": "Landscape (Tweaks: theme)",
+      "page": "components"
+    },
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "A · Preset overview",
+      "page": "concepts"
+    },
+    "A-Editor.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "A · Block editor",
+      "page": "concepts"
+    },
+    "B-Overview.dc.html": {
+      "x": 0,
+      "y": 1260,
+      "w": 390,
+      "h": 844,
+      "title": "B · Preset overview",
+      "page": "concepts"
+    },
+    "B-Editor.dc.html": {
+      "x": 470,
+      "y": 1260,
+      "w": 390,
+      "h": 844,
+      "title": "B · Block editor",
+      "page": "concepts"
+    },
+    "C-Overview.dc.html": {
+      "x": 0,
+      "y": 2520,
+      "w": 390,
+      "h": 844,
+      "title": "C · Preset overview",
+      "page": "concepts"
+    },
+    "C-Editor.dc.html": {
+      "x": 470,
+      "y": 2520,
+      "w": 390,
+      "h": 844,
+      "title": "C · Block editor",
+      "page": "concepts"
+    },
+    "D-Overview.dc.html": {
+      "x": 0,
+      "y": 3780,
+      "w": 390,
+      "h": 844,
+      "title": "D · Preset overview, portrait",
+      "page": "concepts"
+    },
+    "D-Editor.dc.html": {
+      "x": 470,
+      "y": 3780,
+      "w": 390,
+      "h": 844,
+      "title": "D · Block editor",
+      "page": "concepts"
+    },
+    "D-Landscape.dc.html": {
+      "x": 940,
+      "y": 3780,
+      "w": 844,
+      "h": 390,
+      "title": "D · Preset overview, landscape phone",
+      "page": "concepts"
+    },
+    "D-iPad.dc.html": {
+      "x": 1864,
+      "y": 3780,
+      "w": 1180,
+      "h": 820,
+      "title": "D · iPad and unfolded split view",
+      "page": "concepts"
+    },
+    "poc/c-getmac.dc.html": {
+      "w": 402,
+      "h": 874,
+      "title": "Get the Mac app",
+      "page": "poc",
+      "x": 482,
+      "y": 0
+    },
+    "poc/c-linksent.dc.html": {
+      "w": 402,
+      "h": 874,
+      "title": "Link sent to Mac",
+      "page": "poc",
+      "x": 964,
+      "y": 0
+    }
+  },
+  "order": [
+    "poc/c-welcome.dc.html",
+    "poc/c-getmac.dc.html",
+    "poc/c-linksent.dc.html",
+    "poc/c-found.dc.html",
+    "poc/c-approve.dc.html",
+    "poc/c-loading.dc.html",
+    "poc/c-lost.dc.html",
+    "poc/c-timeout.dc.html",
+    "poc/c-bluetooth.dc.html",
+    "poc/o-row1.dc.html",
+    "poc/o-row3.dc.html",
+    "poc/o-demo.dc.html",
+    "poc/o-save.dc.html",
+    "poc/o-saving.dc.html",
+    "poc/o-saved.dc.html",
+    "poc/o-changed.dc.html",
+    "poc/o-details.dc.html",
+    "poc/o-landscape.dc.html",
+    "poc/e-idle.dc.html",
+    "poc/e-fine.dc.html",
+    "poc/e-pending.dc.html",
+    "poc/e-confirmed.dc.html",
+    "poc/e-adjusted.dc.html",
+    "poc/e-rejected.dc.html",
+    "poc/e-typing.dc.html",
+    "poc/e-invalid.dc.html",
+    "poc/e-capture.dc.html",
+    "poc/e-chorus.dc.html",
+    "poc/t-appearance-stage.dc.html",
+    "poc/t-appearance-daylight.dc.html",
+    "poc/t-overview.dc.html",
+    "poc/t-editor.dc.html",
+    "poc/t-fine.dc.html",
+    "poc/t-pending.dc.html",
+    "poc/t-connect.dc.html",
+    "poc/t-landscape.dc.html",
+    "poc/Connect.dc.html",
+    "poc/Overview.dc.html",
+    "poc/Editor.dc.html",
+    "poc/Appearance.dc.html",
+    "poc/Landscape.dc.html",
+    "Main.dc.html",
+    "A-Editor.dc.html",
+    "B-Overview.dc.html",
+    "B-Editor.dc.html",
+    "C-Overview.dc.html",
+    "C-Editor.dc.html",
+    "D-Overview.dc.html",
+    "D-Editor.dc.html",
+    "D-Landscape.dc.html",
+    "D-iPad.dc.html"
+  ],
+  "notes": {
+    "pocConnect": {
+      "x": 0,
+      "y": -280,
+      "text": "Connect: get the Mac app, find, approve, load, recover",
+      "kind": "title1",
+      "maxW": 4258,
+      "page": "poc"
+    },
+    "pocOverview": {
+      "x": 0,
+      "y": 1040,
+      "text": "Preset overview: scenes from the QC, grid map, row list, save",
+      "kind": "title1",
+      "maxW": 4730,
+      "page": "poc"
+    },
+    "pocEditor": {
+      "x": 0,
+      "y": 2360,
+      "text": "Block editor: 0.1 steps, fine 0.05, every edit state",
+      "kind": "title1",
+      "maxW": 4740,
+      "page": "poc"
+    },
+    "pocThemes": {
+      "x": 0,
+      "y": 3680,
+      "text": "Themes: Stage (default) and Daylight",
+      "kind": "title1",
+      "maxW": 4248,
+      "page": "poc"
+    },
+    "titleA": {
+      "x": 0,
+      "y": -280,
+      "text": "A · Floorboard: the QC grid, under glass",
+      "kind": "title1",
+      "maxW": 860,
+      "page": "concepts"
+    },
+    "titleB": {
+      "x": 0,
+      "y": 980,
+      "text": "B · Thumb Lane: one-handed, color-drenched",
+      "kind": "title1",
+      "maxW": 860,
+      "page": "concepts"
+    },
+    "titleC": {
+      "x": 0,
+      "y": 2240,
+      "text": "C · Console: precision first, glass only for chrome",
+      "kind": "title1",
+      "maxW": 860,
+      "page": "concepts"
+    },
+    "titleD": {
+      "x": 0,
+      "y": 3500,
+      "text": "D · Combined: C's grid, B's lane and editor, glass toned down",
+      "kind": "title1",
+      "maxW": 3044,
+      "page": "concepts"
+    }
+  },
+  "designSystems": []
+}

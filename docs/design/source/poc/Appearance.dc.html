@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PoC · Appearance settings component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 402px; height: 874px; position: relative; overflow: hidden; box-sizing: border-box; padding: 62px 16px 34px; display: flex; flex-direction: column; gap: 18px; background: {{t.ground}}; color: {{t.ink}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif;">
+  <a href="#" style="align-self: flex-start; height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+    Connection
+  </a>
+  <h1 style="margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em;">Appearance</h1>
+
+  <div role="radiogroup" aria-label="Theme" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+    <sc-for list="{{cards}}" as="cd" hint-placeholder-count="2">
+      <button type="button" role="radio" aria-checked="{{cd.checked}}" style="{{cd.style}}">
+        <span aria-hidden="true" style="{{cd.previewStyle}}">
+          <span style="{{cd.barStyle}}"></span>
+          <span style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px;">
+            <sc-for list="{{cd.cells}}" as="c" hint-placeholder-count="10">
+              <span style="{{c}}"></span>
+            </sc-for>
+          </span>
+          <span style="{{cd.pillStyle}}"></span>
+        </span>
+        <span style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px;">
+          <span style="font-size: 17px; font-weight: 600;">{{cd.label}}</span>
+          <span style="width: 24px; height: 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: {{cd.radioBg}}; border: {{cd.radioBorder}}; color: {{t.signalInk}};">
+            <sc-if value="{{cd.on}}" hint-placeholder-val="{{true}}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+            </sc-if>
+          </span>
+        </span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+    <label style="min-height: 56px; box-sizing: border-box; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <span style="font-size: 16px;">Match iPhone appearance</span>
+      <button type="button" role="switch" aria-checked="false" aria-label="Match iPhone appearance" style="width: 51px; height: 31px; flex: none; padding: 2px; border: 0; border-radius: 999px; background: {{t.switchOff}}; display: flex; justify-content: flex-start; cursor: pointer;">
+        <span style="width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px oklch(0 0 0 / 0.25);"></span>
+      </button>
+    </label>
+  </div>
+
+  <section aria-label="Block colors in this theme" style="display: flex; flex-direction: column; gap: 8px;">
+    <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Block colors</span>
+    <div style="padding: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 8px; border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+      <sc-for list="{{legend}}" as="l" hint-placeholder-count="9">
+        <span style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+          <span style="{{l.chip}}">{{l.code}}</span>
+          <span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.kind}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const themeName = this.props.theme ?? 'stage';
+    const THEMES = {
+      stage: { label: 'Stage', ground: 'oklch(0.16 0.008 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', group: 'oklch(0.22 0.01 110)', fill: 'oklch(1 0 0 / 0.08)', switchOff: 'oklch(1 0 0 / 0.18)',
+        glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
+        signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', surface: 'oklch(0.2 0.009 110)' },
+      daylight: { label: 'Daylight', ground: 'oklch(0.975 0.003 110)', ink: 'oklch(0.2 0.01 110)', muted: 'oklch(0.45 0.01 110)', group: 'oklch(1 0 0)', fill: 'oklch(0.2 0.01 110 / 0.05)', switchOff: 'oklch(0.2 0.01 110 / 0.16)',
+        glass: 'oklch(1 0 0 / 0.66)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 2px 8px oklch(0.2 0.01 110 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(0.2 0.01 110 / 0.07), 0 1px 3px oklch(0.2 0.01 110 / 0.06)',
+        signal: 'oklch(0.48 0.12 115)', signalInk: '#ffffff', surface: 'oklch(1 0 0)' }
+    };
+    const t = THEMES[themeName];
+    const CAT = [
+      ['WAH', 'Wah', 'oklch(0.52 0.12 200)', '#ffffff'], ['CMP', 'Compressor', 'oklch(0.68 0.12 160)', 'oklch(0.17 0.02 160)'], ['CAP', 'Capture', 'oklch(0.72 0.12 15)', 'oklch(0.2 0.03 15)'],
+      ['DRV', 'Drive', 'oklch(0.76 0.16 65)', 'oklch(0.2 0.04 65)'], ['AMP', 'Amp', 'oklch(0.56 0.2 27)', '#ffffff'], ['CAB', 'Cab', 'oklch(0.52 0.05 50)', '#ffffff'],
+      ['PIT', 'Pitch', 'oklch(0.55 0.16 290)', '#ffffff'], ['MOD', 'Modulation', 'oklch(0.58 0.18 330)', '#ffffff'], ['DLY', 'Delay', 'oklch(0.7 0.14 245)', 'oklch(0.18 0.04 245)'],
+      ['REV', 'Reverb', 'oklch(0.82 0.09 210)', 'oklch(0.2 0.03 210)'], ['DYN', 'Dynamics', 'oklch(0.68 0.12 160)', 'oklch(0.17 0.02 160)'], ['UTL', 'Utility', 'oklch(0.62 0.012 110)', 'oklch(0.16 0.01 110)']
+    ].filter((c) => c[0] !== 'DYN');
+    const legend = CAT.map(([code, kind, bg, ink]) => ({ code, kind, chip: { width: '34px', height: '28px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '9px', background: bg, color: ink, fontSize: '10px', fontWeight: 700 } }));
+    const previewCells = (th) => ['oklch(0.52 0.12 200)', 'oklch(0.68 0.12 160)', 'oklch(0.72 0.12 15)', 'oklch(0.76 0.16 65)', 'oklch(0.55 0.16 290)', '', 'oklch(0.52 0.05 50)', '', 'oklch(0.58 0.18 330)', 'oklch(0.82 0.09 210)']
+      .map((c) => c ? { height: '16px', borderRadius: '4px', background: c } : { height: '16px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid ' + (th === 'stage' ? 'oklch(0.3 0.01 110)' : 'oklch(0.86 0.006 110)') });
+    const card = (key, desc) => {
+      const th = THEMES[key], on = key === themeName;
+      return {
+        label: th.label, desc, on, checked: on ? 'true' : 'false', cells: previewCells(key),
+        style: { padding: '8px 8px 12px', display: 'flex', flexDirection: 'column', gap: '10px', borderRadius: '20px', border: '2px solid ' + (on ? t.signal : 'transparent'), background: t.group, boxShadow: t.panelEdge, color: 'inherit', font: 'inherit', cursor: 'pointer' },
+        previewStyle: { height: '104px', boxSizing: 'border-box', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px', borderRadius: '12px', background: th.ground, boxShadow: 'inset 0 0 0 1px ' + (key === 'stage' ? 'oklch(1 0 0 / 0.08)' : 'oklch(0.2 0.01 110 / 0.08)') },
+        barStyle: { width: '60%', height: '10px', borderRadius: '999px', background: th.ink, opacity: 0.85 },
+        pillStyle: { marginTop: 'auto', alignSelf: 'flex-end', width: '46px', height: '14px', borderRadius: '999px', background: th.signal },
+        radioBg: on ? t.signal : 'transparent', radioBorder: on ? '0' : '2px solid ' + t.muted
+      };
+    };
+    const sceneDots = ['#ff2727', '#0a74e0', '#ffd236', '#ff02c2', '#45f862', '#ff7000', '#0a74e0', '#ff02c2'].map((c) => ({ width: '10px', height: '10px', borderRadius: '50%', background: c }));
+    return {
+      t, legend, sceneDots, themeLabel: t.label,
+      cards: [card('stage', 'Dark. Made for dim studios and stages.'), card('daylight', 'Light. Easier to read in bright rooms.')]
+    };
+  }
+}
+</script>
+</body>
+</html>

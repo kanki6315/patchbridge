@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D · Combined: preset overview, landscape phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:oklch(0.87 0.17 115)}a:hover{color:oklch(0.93 0.12 115)}
+button{font:inherit;color:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 844px; height: 390px; position: relative; overflow: hidden; box-sizing: border-box; padding: 12px 59px 21px; display: flex; flex-direction: column; gap: 12px; background: oklch(0.16 0.008 110); color: oklch(0.96 0.005 110); font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <header style="display: flex; align-items: center; gap: 12px;">
+    <button type="button" aria-label="Presets" style="width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 22px; background: oklch(0.26 0.01 110 / 0.6); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06);">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+    </button>
+    <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+      <h1 style="margin: 0; font-size: 18px; font-weight: 700; white-space: nowrap;">Clean Edge Lead</h1>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: oklch(0.87 0.17 115); font-weight: 600;"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>3B · Edited</span>
+    </div>
+    <div role="group" aria-label="Scenes" style="margin-left: 12px; display: flex; gap: 4px; padding: 3px; border-radius: 16px; background: oklch(0.26 0.01 110 / 0.6); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.16);">
+      <button type="button" aria-pressed="true" style="height: 38px; padding: 0 14px; border: 0; border-radius: 13px; background: oklch(0.87 0.17 115); color: oklch(0.2 0.04 115); font-size: 14px; font-weight: 600;">A Rhythm</button>
+      <button type="button" aria-pressed="false" style="height: 38px; padding: 0 14px; border: 0; border-radius: 13px; background: transparent; font-size: 14px;">B Lead</button>
+      <button type="button" aria-pressed="false" style="height: 38px; padding: 0 14px; border: 0; border-radius: 13px; background: transparent; font-size: 14px;">C Clean</button>
+      <button type="button" aria-pressed="false" style="height: 38px; padding: 0 14px; border: 0; border-radius: 13px; background: transparent; font-size: 14px;">D Swell</button>
+    </div>
+    <span style="flex: 1;"></span>
+    <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 22px; background: oklch(0.87 0.17 115); color: oklch(0.2 0.04 115); font-size: 15px; font-weight: 600; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.5);">Save to 3B</button>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 16px;">
+    <section aria-label="Signal chain, 4 rows by 8 slots" style="flex: none; padding: 8px 8px 8px 4px; display: flex; flex-direction: column; gap: 3px; border-radius: 20px; background: oklch(0.2 0.009 110); box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.06);">
+      <sc-for list="{{grid}}" as="row" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <span style="width: 18px; text-align: center; font-size: 12px; font-weight: 600; color: oklch(0.72 0.01 110);">{{row.n}}</span>
+          <div style="{{row.bandStyle}}">
+            <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="8">
+              <button type="button" aria-label="{{c.aria}}" style="{{c.style}}">{{c.code}}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+
+    <aside aria-label="Selected block" style="flex: 1; min-width: 0; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 10px; border-radius: 20px; background: oklch(0.24 0.01 110 / 0.6); backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.14), inset 0 0 0 1px oklch(1 0 0 / 0.06);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span aria-hidden="true" style="width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: oklch(0.56 0.2 27); color: #fff; font-size: 10px; font-weight: 700;">AMP</span>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+          <span style="font-size: 16px; font-weight: 600;">Crunch 50</span>
+          <span style="font-size: 12px; color: oklch(0.76 0.01 110);">Row 1, slot 3</span>
+        </div>
+        <button type="button" role="switch" aria-checked="true" aria-label="Block active" style="width: 51px; height: 31px; flex: none; padding: 2px; border: 0; border-radius: 16px; background: oklch(0.87 0.17 115); display: flex; justify-content: flex-end;">
+          <span style="width: 27px; height: 27px; border-radius: 50%; background: #fff;"></span>
+        </button>
+      </div>
+      <div style="display: flex; flex-direction: column;">
+        <div style="height: 34px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid oklch(1 0 0 / 0.07); font-size: 14px;"><span>Gain</span><span style="font-weight: 600;">6.2</span></div>
+        <div style="height: 34px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid oklch(1 0 0 / 0.07); font-size: 14px;"><span style="display: flex; align-items: center; gap: 6px;">Mid<span style="font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 5px; background: oklch(1 0 0 / 0.12);">QC</span></span><span style="font-weight: 600;">6.5</span></div>
+        <div style="height: 34px; display: flex; align-items: center; justify-content: space-between; font-size: 14px;"><span>Master</span><span style="font-weight: 600;">7.0</span></div>
+      </div>
+      <span style="flex: 1;"></span>
+      <a href="D-Editor.dc.html" style="height: 44px; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 14px; background: oklch(1 0 0 / 0.1); color: inherit; text-decoration: none; font-size: 15px; font-weight: 500;">
+        Open editor
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+      </a>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":844,"height":390}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cat = {
+      CMP: { bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)', kind: 'Compressor' },
+      DRV: { bg: 'oklch(0.76 0.16 65)', ink: 'oklch(0.2 0.04 65)', kind: 'Drive' },
+      AMP: { bg: 'oklch(0.56 0.2 27)', ink: '#ffffff', kind: 'Amp' },
+      CAB: { bg: 'oklch(0.52 0.05 50)', ink: '#ffffff', kind: 'Cab' },
+      MOD: { bg: 'oklch(0.58 0.18 330)', ink: '#ffffff', kind: 'Modulation' },
+      DLY: { bg: 'oklch(0.7 0.14 245)', ink: 'oklch(0.18 0.04 245)', kind: 'Delay' },
+      REV: { bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)', kind: 'Reverb' }
+    };
+    const layout = [
+      ['CMP', 'DRV-', 'AMP*', 'CAB', '', '', '', ''],
+      ['MOD', 'DLY', 'REV', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', '']
+    ];
+    const cellBase = { width: '54px', height: '56px', padding: '0', boxSizing: 'border-box', borderRadius: '12px', border: '0', fontSize: '12px', fontWeight: 700 };
+    const grid = layout.map((row, ri) => ({
+      n: String(ri + 1),
+      bandStyle: { display: 'flex', gap: '6px', padding: '3px', borderRadius: '15px', background: ri === 0 ? 'oklch(1 0 0 / 0.08)' : 'transparent' },
+      cells: row.map((raw, si) => {
+        const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
+        if (!raw) return { code: '', aria: slot + ', empty', style: { ...cellBase, background: 'transparent', border: '1px solid oklch(0.3 0.01 110)' } };
+        const code = raw.replace(/[*-]/g, '');
+        const c = cat[code];
+        if (raw.endsWith('-')) return { code, aria: slot + ', ' + c.kind + ', bypassed', style: { ...cellBase, background: 'transparent', border: '1.5px dashed ' + c.bg, color: 'oklch(0.78 0.01 110)', textDecoration: 'line-through' } };
+        const sel = raw.endsWith('*');
+        return { code, aria: slot + ', ' + c.kind + (sel ? ', selected' : ''), style: { ...cellBase, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)', outline: sel ? '2.5px solid oklch(0.87 0.17 115)' : 'none', outlineOffset: '2px' } };
+      })
+    }));
+    return { grid };
+  }
+}
+</script>
+</body>
+</html>

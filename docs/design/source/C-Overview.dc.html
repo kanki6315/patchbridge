@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C · Console: preset overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:oklch(0.87 0.17 115)}a:hover{color:oklch(0.93 0.12 115)}
+button{font:inherit;color:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; box-sizing: border-box; padding: 54px 16px 0; display: flex; flex-direction: column; gap: 12px; background: oklch(0.19 0.006 110); color: oklch(0.95 0.005 110); font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif;">
+
+  <header style="display: flex; flex-direction: column; gap: 6px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">Clean Edge Lead</h1>
+      <button type="button" aria-label="Connection details: QC connected, CorOS 4.1.1" style="height: 44px; padding: 0 10px; display: flex; align-items: center; gap: 6px; border: 1px solid oklch(0.31 0.008 110); border-radius: 12px; background: transparent; font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', monospace; font-size: 12px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.87 0.17 115)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+        QC 4.1.1
+      </button>
+    </div>
+    <span style="display: flex; align-items: center; gap: 8px; font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', monospace; font-size: 12px; color: oklch(0.76 0.008 110);">
+      3B · Scene A ·
+      <span style="display: inline-flex; align-items: center; gap: 5px; color: oklch(0.87 0.17 115);"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>2 unsaved</span>
+    </span>
+  </header>
+
+  <section aria-label="Signal chain, 4 rows by 8 slots" style="padding: 12px 8px; border: 1px solid oklch(0.31 0.008 110); border-radius: 18px; background: oklch(0.215 0.007 110);">
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px;">
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="32">
+        <button type="button" aria-label="{{c.aria}}" style="{{c.style}}">{{c.code}}</button>
+      </sc-for>
+    </div>
+    <div style="margin-top: 10px; display: flex; gap: 14px; padding: 0 4px; font-size: 11px; color: oklch(0.76 0.008 110);">
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: oklch(0.76 0.008 110);"></span>Active</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; box-sizing: border-box; border-radius: 3px; border: 1.5px dashed oklch(0.76 0.008 110);"></span>Bypassed</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; box-sizing: border-box; border-radius: 3px; border: 2px solid oklch(0.87 0.17 115);"></span>Selected</span>
+    </div>
+  </section>
+
+  <section aria-label="Selected block" style="border: 1px solid oklch(0.31 0.008 110); border-radius: 18px; background: oklch(0.215 0.007 110); overflow: hidden;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 10px 14px; border-bottom: 1px solid oklch(0.31 0.008 110);">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 17px; font-weight: 600;">Crunch 50</span>
+        <span style="font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', monospace; font-size: 12px; color: oklch(0.76 0.008 110);">Amp · R1 S3</span>
+      </div>
+      <div role="group" aria-label="Bypass" style="display: flex; padding: 2px; border-radius: 12px; background: oklch(0.19 0.006 110);">
+        <button type="button" aria-pressed="true" style="width: 52px; height: 40px; border: 0; border-radius: 10px; background: oklch(0.33 0.01 110); font-size: 14px; font-weight: 600;">On</button>
+        <button type="button" aria-pressed="false" style="width: 52px; height: 40px; border: 0; border-radius: 10px; background: transparent; font-size: 14px; color: oklch(0.76 0.008 110);">Off</button>
+      </div>
+    </div>
+    <sc-for list="{{params}}" as="p" hint-placeholder-count="3">
+      <div style="height: 46px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-bottom: 1px solid oklch(0.27 0.008 110);">
+        <span style="flex: 1; display: flex; align-items: center; gap: 8px; font-size: 15px;">{{p.name}}<span style="{{p.tagStyle}}">{{p.tag}}</span></span>
+        <span aria-hidden="true" style="position: relative; width: 84px; height: 4px; border-radius: 2px; background: oklch(0.32 0.008 110);"><span style="{{p.barStyle}}"></span></span>
+        <span style="width: 44px; text-align: right; font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500;">{{p.value}}</span>
+      </div>
+    </sc-for>
+    <a href="C-Editor.dc.html" style="height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 14px; color: oklch(0.87 0.17 115); text-decoration: none; font-size: 15px; font-weight: 500;">
+      All parameters
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+    </a>
+  </section>
+
+  <section aria-label="Activity" style="display: flex; flex-direction: column; gap: 8px; padding: 0 4px;">
+    <span style="font-size: 13px; font-weight: 600;">Activity</span>
+    <sc-for list="{{log}}" as="l" hint-placeholder-count="3">
+      <div style="display: flex; gap: 10px; font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', monospace; font-size: 12px;">
+        <span style="color: oklch(0.7 0.008 110);">{{l.t}}</span>
+        <span style="color: oklch(0.88 0.006 110);">{{l.text}}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <nav aria-label="Scenes and save" style="position: absolute; left: 12px; right: 12px; bottom: 26px; box-sizing: border-box; height: 64px; padding: 6px; display: flex; align-items: center; gap: 4px; border-radius: 32px; background: oklch(0.26 0.008 110 / 0.62); backdrop-filter: blur(22px) saturate(1.8); -webkit-backdrop-filter: blur(22px) saturate(1.8); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.18), inset 0 0 0 1px oklch(1 0 0 / 0.07), 0 10px 30px oklch(0 0 0 / 0.45);">
+    <button type="button" aria-pressed="true" aria-label="Scene A, Rhythm" style="width: 52px; height: 52px; border: 0; border-radius: 26px; background: oklch(0.95 0.005 110); color: oklch(0.19 0.006 110); font-size: 17px; font-weight: 700;">A</button>
+    <button type="button" aria-pressed="false" aria-label="Scene B, Lead" style="width: 52px; height: 52px; border: 0; border-radius: 26px; background: transparent; font-size: 17px; font-weight: 600;">B</button>
+    <button type="button" aria-pressed="false" aria-label="Scene C, Clean" style="width: 52px; height: 52px; border: 0; border-radius: 26px; background: transparent; font-size: 17px; font-weight: 600;">C</button>
+    <button type="button" aria-pressed="false" aria-label="Scene D, Swell" style="width: 52px; height: 52px; border: 0; border-radius: 26px; background: transparent; font-size: 17px; font-weight: 600;">D</button>
+    <span aria-hidden="true" style="width: 1px; height: 28px; margin: 0 4px; background: oklch(1 0 0 / 0.14);"></span>
+    <button type="button" style="flex: 1; height: 52px; border: 0; border-radius: 26px; background: oklch(0.87 0.17 115); color: oklch(0.2 0.04 115); font-size: 16px; font-weight: 600;">Save</button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cat = {
+      CMP: { bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)', kind: 'Compressor' },
+      DRV: { bg: 'oklch(0.76 0.16 65)', ink: 'oklch(0.2 0.04 65)', kind: 'Drive' },
+      AMP: { bg: 'oklch(0.56 0.2 27)', ink: '#ffffff', kind: 'Amp' },
+      CAB: { bg: 'oklch(0.52 0.05 50)', ink: '#ffffff', kind: 'Cab' },
+      MOD: { bg: 'oklch(0.58 0.18 330)', ink: '#ffffff', kind: 'Modulation' },
+      DLY: { bg: 'oklch(0.7 0.14 245)', ink: 'oklch(0.18 0.04 245)', kind: 'Delay' },
+      REV: { bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)', kind: 'Reverb' }
+    };
+    const base = { height: '40px', padding: '0', boxSizing: 'border-box', borderRadius: '8px', border: '0', fontFamily: "ui-monospace, 'SF Mono', 'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 600 };
+    const layout = [
+      ['CMP', 'DRV', 'AMP*', 'CAB', '', '', '', ''],
+      ['MOD-', 'DLY', 'REV', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', '']
+    ];
+    const cells = [];
+    layout.forEach((row, ri) => row.forEach((raw, si) => {
+      const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
+      if (!raw) {
+        cells.push({ code: '', aria: slot + ', empty', style: { ...base, background: 'transparent', border: '1px solid oklch(0.29 0.008 110)' } });
+        return;
+      }
+      const code = raw.replace(/[*-]/g, '');
+      const c = cat[code];
+      if (raw.endsWith('-')) {
+        cells.push({ code, aria: slot + ', ' + c.kind + ', bypassed', style: { ...base, background: 'transparent', border: '1.5px dashed ' + c.bg, color: 'oklch(0.76 0.008 110)', textDecoration: 'line-through' } });
+        return;
+      }
+      const sel = raw.endsWith('*');
+      cells.push({ code, aria: slot + ', ' + c.kind + (sel ? ', selected' : ''), style: { ...base, background: c.bg, color: c.ink, outline: sel ? '2px solid oklch(0.87 0.17 115)' : 'none', outlineOffset: '2px' } });
+    }));
+    const p = (name, v, tag) => ({ name, value: v.toFixed(1), tag: tag || '',
+      tagStyle: tag ? { fontFamily: "ui-monospace, 'SF Mono', 'JetBrains Mono', monospace", fontSize: '10px', padding: '1px 5px', borderRadius: '4px', border: '1px solid oklch(0.4 0.008 110)', color: 'oklch(0.82 0.008 110)' } : { display: 'none' },
+      barStyle: { position: 'absolute', left: '0', top: '0', bottom: '0', borderRadius: '2px', width: (v * 10) + '%', background: 'oklch(0.68 0.19 27)' } });
+    return {
+      cells,
+      params: [p('Gain', 6.2), p('Mid', 6.5, 'on QC'), p('Master', 7.0)],
+      log: [
+        { t: '14:02:11', text: 'Mid 6.4 → 6.5, turned on the QC' },
+        { t: '14:01:58', text: 'Gain 6.0 → 6.2, confirmed' },
+        { t: '14:01:40', text: 'Scene A selected' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

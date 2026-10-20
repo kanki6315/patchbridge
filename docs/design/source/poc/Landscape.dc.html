@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PoC · Preset overview, landscape</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 874px; height: 402px; position: relative; overflow: hidden; box-sizing: border-box; padding: 14px 62px 21px; display: flex; flex-direction: column; gap: 12px; background: {{t.ground}}; color: {{t.ink}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <header style="display: flex; align-items: center; gap: 14px;">
+    <button type="button" aria-label="Connection details: Studio Mac, QC connected" style="width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; cursor: pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+    </button>
+    <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+      <h1 style="margin: 0; font-size: 18px; font-weight: 700; white-space: nowrap;">Tremonti w Mic</h1>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: {{t.signal}};"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>Unsaved</span>
+    </div>
+    <div role="img" aria-label="{{sceneAria}}" style="margin-left: 8px; display: flex; align-items: center; gap: 10px;">
+      <div aria-hidden="true" style="display: flex; gap: 2px;">
+        <sc-for list="{{scenes}}" as="s" hint-placeholder-count="8">
+          <span style="{{s.cellStyle}}">
+            <span style="{{s.dotStyle}}"></span>
+            <span style="{{s.letterStyle}}">{{s.letter}}</span>
+          </span>
+        </sc-for>
+      </div>
+      <span style="font-size: 13px; font-weight: 600; white-space: nowrap;">{{activeTitle}}</span>
+    </div>
+    <span style="flex: 1;"></span>
+    <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.signal}}; color: {{t.signalInk}}; font: inherit; font-size: 15px; font-weight: 600; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4); cursor: pointer; white-space: nowrap;">Save</button>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 14px;">
+    <section aria-label="Signal chain, 4 rows by 8 slots" style="flex: none; padding: 7px 8px 7px 4px; display: flex; flex-direction: column; gap: 3px; border-radius: 20px; background: {{t.surface}}; box-shadow: {{t.panelEdge}};">
+      <sc-for list="{{grid}}" as="row" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <span style="width: 18px; text-align: center; font-size: 12px; font-weight: 600; color: {{t.muted}};">{{row.n}}</span>
+          <div style="display: flex; gap: 6px; padding: 3px; border-radius: 15px; background: {{row.bandBg}};">
+            <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="8">
+              <button type="button" aria-label="{{c.aria}}" style="{{c.style}}">{{c.code}}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+
+    <aside aria-label="Selected block" style="flex: 1; min-width: 0; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 8px; border-radius: 20px; background: {{t.glass}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); box-shadow: {{t.glassEdge}};">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span aria-hidden="true" style="width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: oklch(0.68 0.12 160); color: oklch(0.17 0.02 160); font-size: 10px; font-weight: 700;">CMP</span>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+          <span style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Opto Comp (M)</span>
+          <span style="font-size: 12px; color: {{t.muted}};">Row 1, slot 2</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column;">
+        <div style="height: 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid {{t.divider}}; font-size: 14px;"><span>Threshold</span><span style="font-weight: 600;">−34.2 dB</span></div>
+        <div style="height: 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid {{t.divider}}; font-size: 14px;"><span>Ratio</span><span style="font-weight: 600;">4.0</span></div>
+        <div style="height: 32px; display: flex; align-items: center; justify-content: space-between; font-size: 14px;"><span>Makeup</span><span style="font-weight: 600;">+8.0 dB</span></div>
+      </div>
+      <span style="flex: 1;"></span>
+      <a href="#" style="height: 44px; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 12px; background: {{t.fill}}; color: inherit; text-decoration: none; font-size: 15px; font-weight: 500;">
+        Edit block
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+      </a>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"$preview":{"width":874,"height":402}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const themeName = this.props.theme ?? 'stage';
+    const THEMES = {
+      stage: { dark: true, ground: 'oklch(0.16 0.008 110)', surface: 'oklch(0.2 0.009 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', hairline: 'oklch(0.3 0.01 110)', divider: 'oklch(1 0 0 / 0.07)',
+        glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
+        fill: 'oklch(1 0 0 / 0.1)', band: 'oklch(1 0 0 / 0.08)', signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)' },
+      daylight: { dark: false, ground: 'oklch(0.975 0.003 110)', surface: 'oklch(1 0 0)', ink: 'oklch(0.2 0.01 110)', muted: 'oklch(0.45 0.01 110)', hairline: 'oklch(0.86 0.006 110)', divider: 'oklch(0.2 0.01 110 / 0.08)',
+        glass: 'oklch(1 0 0 / 0.66)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 2px 8px oklch(0.2 0.01 110 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(0.2 0.01 110 / 0.07), 0 1px 3px oklch(0.2 0.01 110 / 0.06)',
+        fill: 'oklch(0.2 0.01 110 / 0.06)', band: 'oklch(0.2 0.01 110 / 0.05)', signal: 'oklch(0.48 0.12 115)', signalInk: '#ffffff' }
+    };
+    const t = THEMES[themeName];
+    const CAT = {
+      wah: { code: 'WAH', kind: 'Wah', bg: 'oklch(0.52 0.12 200)', ink: '#ffffff' },
+      cmp: { code: 'CMP', kind: 'Compressor', bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)' },
+      cap: { code: 'CAP', kind: 'Neural Capture', bg: 'oklch(0.72 0.12 15)', ink: 'oklch(0.2 0.03 15)' },
+      drv: { code: 'DRV', kind: 'Overdrive', bg: 'oklch(0.76 0.16 65)', ink: 'oklch(0.2 0.04 65)' },
+      pit: { code: 'PIT', kind: 'Pitch', bg: 'oklch(0.55 0.16 290)', ink: '#ffffff' },
+      utl: { code: 'UTL', kind: 'Utility', bg: 'oklch(0.62 0.012 110)', ink: 'oklch(0.16 0.01 110)' },
+      cab: { code: 'CAB', kind: 'Cab', bg: 'oklch(0.52 0.05 50)', ink: '#ffffff' },
+      mod: { code: 'MOD', kind: 'Modulation', bg: 'oklch(0.58 0.18 330)', ink: '#ffffff' },
+      rev: { code: 'REV', kind: 'Reverb', bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)' }
+    };
+    const layout = [
+      ['wah', 'cmp*', 'cap', 'drv', 'pit', 'pit', 'utl', ''],
+      ['', '', 'utl', '', '', '', '', ''],
+      ['', 'cap', '', 'cap', 'cab', '', 'mod', 'rev'],
+      ['', 'cap', '', 'cap', 'cab', '', '', '']
+    ];
+    const base = { width: '56px', height: '58px', padding: '0', boxSizing: 'border-box', borderRadius: '12px', border: '0', font: 'inherit', fontSize: '12px', fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer' };
+    const grid = layout.map((row, ri) => ({
+      n: String(ri + 1),
+      bandBg: ri === 0 ? t.band : 'transparent',
+      cells: row.map((raw, si) => {
+        const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
+        if (!raw) return { code: '', aria: slot + ', empty', style: { ...base, background: 'transparent', border: '1px solid ' + t.hairline, cursor: 'default' } };
+        const k = raw.replace('*', ''), c = CAT[k], sel = raw.endsWith('*');
+        return { code: c.code, aria: slot + ', ' + c.kind + (sel ? ', selected' : ''), style: { ...base, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)', outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' } };
+      })
+    }));
+    const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];
+    const ACTIVE = 5, letters = 'ABCDEFGH';
+    const scenes = QC_SCENES.map(([label, color], i) => {
+      const on = i === ACTIVE;
+      return { letter: letters[i],
+        cellStyle: { width: '28px', height: '36px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '9px', background: on ? t.fill : 'transparent', boxShadow: on ? 'inset 0 0 0 1.5px ' + color : 'none' },
+        dotStyle: { width: on ? '10px' : '8px', height: on ? '10px' : '8px', borderRadius: '50%', background: color, boxShadow: on && t.dark ? '0 0 8px ' + color : (t.dark ? 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' : 'inset 0 0 0 1.5px oklch(0.2 0.01 110 / 0.55)') },
+        letterStyle: { fontSize: '11px', fontWeight: on ? 700 : 500, color: on ? t.ink : t.muted, lineHeight: '1' } };
+    });
+    const activeTitle = 'F · ' + QC_SCENES[ACTIVE][0];
+    return { t, grid, scenes, activeTitle, sceneAria: 'Scene F, RHYTHM, is active on the QC' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PoC · Preset overview component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 402px; height: 874px; position: relative; overflow: hidden; box-sizing: border-box; background: {{t.ground}}; color: {{t.ink}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 62px 16px 0; display: flex; flex-direction: column; gap: 14px;">
+    <header style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <button type="button" aria-label="Connection details: Studio Mac, QC connected" style="height: 44px; padding: 0 14px; display: flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; font-size: 15px; cursor: pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+          Studio Mac
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: 0.7;"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <sc-if value="{{demo}}" hint-placeholder-val="{{false}}">
+          <span style="height: 30px; padding: 0 12px; display: flex; align-items: center; border-radius: 999px; border: 1.5px solid {{t.caution}}; color: {{t.caution}}; font-size: 13px; font-weight: 600;">Demo</span>
+        </sc-if>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Tremonti w Mic</h1>
+        <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: {{t.muted}};">
+          My Presets · 16
+          <span style="{{savedStyle}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>{{savedText}}</span>
+        </span>
+      </div>
+      <div role="img" aria-label="{{sceneAria}}" style="display: flex; flex-direction: column; gap: 6px;">
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;">
+          <span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: {{active.color}};"></span>
+          {{active.title}}
+        </span>
+        <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px;">
+          <sc-for list="{{scenes}}" as="s" hint-placeholder-count="8">
+            <span style="{{s.cellStyle}}">
+              <span style="{{s.dotStyle}}"></span>
+              <span style="{{s.letterStyle}}">{{s.letter}}</span>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+    </header>
+
+    <section aria-label="Signal chain, 4 rows by 8 slots" style="padding: 8px; display: flex; flex-direction: column; gap: 2px; border-radius: 20px; background: {{t.surface}}; box-shadow: {{t.panelEdge}};">
+      <sc-for list="{{grid}}" as="row" hint-placeholder-count="4">
+        <div role="button" aria-label="{{row.aria}}" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; cursor: pointer; background: {{row.bandBg}}; box-shadow: {{row.bandRing}};">
+          <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="8">
+            <span style="{{c.style}}">{{c.code}}</span>
+          </sc-for>
+        </div>
+      </sc-for>
+    </section>
+
+    <section aria-label="{{laneAria}}" style="display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px 4px;">
+        <span style="font-size: 17px; font-weight: 600;">{{laneTitle}}</span>
+        <span style="font-size: 13px; color: {{t.muted}};">{{laneMeta}}</span>
+      </div>
+      <div style="position: relative;">
+        <div aria-hidden="true" style="position: absolute; left: 20px; top: 30px; bottom: 30px; width: 2px; background: {{t.hairline}};"></div>
+        <ol style="list-style: none; margin: 0; padding: 0;">
+          <sc-for list="{{lane}}" as="b" hint-placeholder-count="7">
+            <li style="position: relative; height: 60px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid {{t.divider}};">
+              <span aria-hidden="true" style="{{b.swatchStyle}}">{{b.code}}</span>
+              <a href="#" aria-label="{{b.aria}}" style="flex: 1; min-width: 0; min-height: 52px; display: flex; align-items: center; gap: 8px; color: inherit; text-decoration: none;">
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px;">
+                  <span style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.title}}</span>
+                  <span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.summary}}</span>
+                </span>
+                <sc-if value="{{b.locked}}" hint-placeholder-val="{{false}}">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+                </sc-if>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+              </a>
+            </li>
+          </sc-for>
+        </ol>
+      </div>
+    </section>
+  </div>
+
+  <div style="position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 12px 16px 34px; display: flex; align-items: center; gap: 12px; background: {{t.bar}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); border-top: 1px solid {{t.divider}};">
+    <button type="button" aria-disabled="{{saveDisabled}}" style="flex: 1; height: 54px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 600; background: {{sv.bg}}; color: {{sv.color}}; box-shadow: {{sv.shadow}}; cursor: {{sv.cursor}};">
+      <sc-if value="{{saving}}" hint-placeholder-val="{{false}}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>
+      </sc-if>
+      <sc-if value="{{saved}}" hint-placeholder-val="{{false}}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+      </sc-if>
+      {{saveLabel}}
+    </button>
+  </div>
+
+  <sc-if value="{{toast.show}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: absolute; z-index: 20; left: 16px; right: 16px; top: 116px; box-sizing: border-box; min-height: 56px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-radius: 20px; background: {{t.toast}}; backdrop-filter: blur(24px) saturate(1.7); -webkit-backdrop-filter: blur(24px) saturate(1.7); box-shadow: {{t.float}};">
+      <span style="width: 34px; height: 34px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: {{toast.iconBg}}; color: {{toast.iconColor}};">
+        <sc-if value="{{toast.isSaved}}" hint-placeholder-val="{{true}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+        </sc-if>
+        <sc-if value="{{toast.isDevice}}" hint-placeholder-val="{{false}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 12l3.5-3.5"></path></svg>
+        </sc-if>
+      </span>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+        <span style="font-size: 15px; font-weight: 600;">{{toast.title}}</span>
+        <span style="font-size: 13px; color: {{t.muted}};">{{toast.body}}</span>
+      </span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{sheet.save}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; z-index: 30; inset: 0; background: {{t.scrim}};"></div>
+    <div role="dialog" aria-label="Save over My Presets 16" style="position: absolute; z-index: 40; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 10px 20px 26px; display: flex; flex-direction: column; gap: 16px; border-radius: 34px; background: {{t.sheet}}; backdrop-filter: blur(30px) saturate(1.7); -webkit-backdrop-filter: blur(30px) saturate(1.7); box-shadow: {{t.sheetLift}};">
+      <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: {{t.grabber}};"></span>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px;">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Save over My Presets 16?</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.4; color: {{t.muted}};">Replaces the saved version on the QC.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" style="height: 54px; border: 0; border-radius: 999px; background: {{t.signal}}; color: {{t.signalInk}}; font: inherit; font-size: 17px; font-weight: 600; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4); cursor: pointer;">Save</button>
+        <button type="button" style="height: 54px; border: 0; border-radius: 999px; background: {{t.fill}}; color: inherit; font: inherit; font-size: 17px; cursor: pointer;">Cancel</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{sheet.details}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; z-index: 30; inset: 0; background: {{t.scrim}};"></div>
+    <div role="dialog" aria-label="Connection details" style="position: absolute; z-index: 40; left: 0; right: 0; top: 74px; bottom: 0; box-sizing: border-box; padding: 10px 16px 34px; display: flex; flex-direction: column; gap: 18px; border-radius: 34px 34px 0 0; background: {{t.detailsSheet}}; backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6); box-shadow: {{t.sheetLift}};">
+      <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: {{t.grabber}};"></span>
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700;">Connection</h2>
+        <button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.fill}}; color: inherit; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Done</button>
+      </div>
+      <sc-for list="{{detailGroups}}" as="grp" hint-placeholder-count="3">
+        <section aria-label="{{grp.title}}" style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">{{grp.title}}</span>
+          <div style="border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; overflow: hidden;">
+            <sc-for list="{{grp.rows}}" as="r" hint-placeholder-count="3">
+              <div style="{{r.rowStyle}}">
+                <span>{{r.k}}</span>
+                <span style="display: flex; align-items: center; gap: 6px; text-align: right; color: {{r.vColor}}; font-weight: {{r.vWeight}};">
+                  <sc-if value="{{r.yes}}" hint-placeholder-val="{{false}}">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+                  </sc-if>
+                  {{r.v}}
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+      <button type="button" style="margin-top: auto; height: 52px; border: 0; border-radius: 999px; background: {{t.fill}}; color: {{t.danger}}; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;">Disconnect</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"selectedRow":{"editor":"enum","options":["1","2","3","4"],"default":"1","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details"],"default":"none","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const sel = Number(this.props.selectedRow ?? '1') - 1;
+    const overlay = this.props.overlay ?? 'none';
+    const themeName = this.props.theme ?? 'stage';
+    const demo = this.props.demo ?? false;
+    const THEMES = {
+      stage: { dark: true, ground: 'oklch(0.16 0.008 110)', surface: 'oklch(0.2 0.009 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', hairline: 'oklch(0.3 0.01 110)', divider: 'oklch(1 0 0 / 0.07)',
+        glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)', bar: 'oklch(0.2 0.009 110 / 0.62)',
+        fill: 'oklch(1 0 0 / 0.1)', band: 'oklch(1 0 0 / 0.09)', toast: 'oklch(0.28 0.01 110 / 0.72)', float: 'inset 0 1px 0 oklch(1 0 0 / 0.16), 0 12px 30px oklch(0 0 0 / 0.45)',
+        sheet: 'oklch(0.24 0.01 110 / 0.8)', detailsSheet: 'oklch(0.19 0.008 110 / 0.92)', group: 'oklch(0.24 0.01 110)', sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.16), 0 -10px 30px oklch(0 0 0 / 0.4)',
+        grabber: 'oklch(1 0 0 / 0.3)', scrim: 'oklch(0 0 0 / 0.45)', signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', caution: 'oklch(0.86 0.13 75)', danger: 'oklch(0.8 0.15 30)' },
+      daylight: { dark: false, ground: 'oklch(0.975 0.003 110)', surface: 'oklch(1 0 0)', ink: 'oklch(0.2 0.01 110)', muted: 'oklch(0.45 0.01 110)', hairline: 'oklch(0.86 0.006 110)', divider: 'oklch(0.2 0.01 110 / 0.08)',
+        glass: 'oklch(1 0 0 / 0.66)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 2px 8px oklch(0.2 0.01 110 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(0.2 0.01 110 / 0.07), 0 1px 3px oklch(0.2 0.01 110 / 0.06)', bar: 'oklch(1 0 0 / 0.72)',
+        fill: 'oklch(0.2 0.01 110 / 0.06)', band: 'oklch(0.2 0.01 110 / 0.05)', toast: 'oklch(1 0 0 / 0.82)', float: 'inset 0 1px 0 oklch(1 0 0 / 0.9), 0 12px 30px oklch(0.2 0.01 110 / 0.16)',
+        sheet: 'oklch(0.99 0.002 110 / 0.88)', detailsSheet: 'oklch(0.965 0.004 110 / 0.95)', group: 'oklch(1 0 0)', sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.9), 0 -10px 30px oklch(0.2 0.01 110 / 0.14)',
+        grabber: 'oklch(0.2 0.01 110 / 0.22)', scrim: 'oklch(0.2 0.01 110 / 0.28)', signal: 'oklch(0.48 0.12 115)', signalInk: '#ffffff', caution: 'oklch(0.52 0.13 60)', danger: 'oklch(0.52 0.18 28)' }
+    };
+    const t = THEMES[themeName];
+    // Block category colors belong to the theme. A later "QC match" theme can swap this table.
+    const CAT = {
+      wah: { code: 'WAH', kind: 'Wah', bg: 'oklch(0.52 0.12 200)', ink: '#ffffff' },
+      cmp: { code: 'CMP', kind: 'Compressor', bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)' },
+      cap: { code: 'CAP', kind: 'Neural Capture', bg: 'oklch(0.72 0.12 15)', ink: 'oklch(0.2 0.03 15)' },
+      drv: { code: 'DRV', kind: 'Overdrive', bg: 'oklch(0.76 0.16 65)', ink: 'oklch(0.2 0.04 65)' },
+      pit: { code: 'PIT', kind: 'Pitch', bg: 'oklch(0.55 0.16 290)', ink: '#ffffff' },
+      utl: { code: 'UTL', kind: 'Utility', bg: 'oklch(0.62 0.012 110)', ink: 'oklch(0.16 0.01 110)' },
+      cab: { code: 'CAB', kind: 'Cab', bg: 'oklch(0.52 0.05 50)', ink: '#ffffff' },
+      mod: { code: 'MOD', kind: 'Modulation', bg: 'oklch(0.58 0.18 330)', ink: '#ffffff' },
+      rev: { code: 'REV', kind: 'Reverb', bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)' }
+    };
+    const RO = 'Read-only';
+    const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
+    // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
+    const rows = [
+      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'Eltron 30', 'Capture OG TS808', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
+      [null, null, B('utl', 'Volume', 'Curve Log'), null, null, null, null, null],
+      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2% · Depth 50.0%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms · Trails On')],
+      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, null, null]
+    ];
+    const cellBase = { height: '38px', boxSizing: 'border-box', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, letterSpacing: '0.02em' };
+    const grid = rows.map((row, ri) => {
+      const count = row.filter(Boolean).length;
+      return {
+        aria: 'Row ' + (ri + 1) + ', ' + count + (count === 1 ? ' block' : ' blocks') + (ri === sel ? ', selected' : ''),
+        bandBg: ri === sel ? t.band : 'transparent', bandRing: ri === sel ? 'inset 0 0 0 1.5px ' + t.signal : 'none',
+        cells: row.map((b) => b
+          ? { code: CAT[b.cat].code, style: { ...cellBase, background: CAT[b.cat].bg, color: CAT[b.cat].ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)' } }
+          : { code: '', style: { ...cellBase, border: '1px solid ' + t.hairline } })
+      };
+    });
+    const sw = { position: 'relative', width: '42px', height: '42px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', fontSize: '11px', fontWeight: 700, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' };
+    const laneBlocks = rows[sel].map((b, si) => b && { ...b, slot: si + 1 }).filter(Boolean);
+    const lane = laneBlocks.map((b) => ({
+      code: CAT[b.cat].code, title: b.title, summary: b.summary, locked: b.locked,
+      aria: b.title + ', ' + CAT[b.cat].kind + ', slot ' + b.slot + '. ' + b.summary,
+      swatchStyle: { ...sw, background: CAT[b.cat].bg, color: CAT[b.cat].ink }
+    }));
+    const empty = 8 - laneBlocks.length;
+
+    // Scene names and colors come from the QC (scene_labels / scene_colors) and never follow the theme.
+    const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];
+    const ACTIVE = 5;
+    const letters = 'ABCDEFGH';
+    const titleOf = (i) => 'Scene ' + letters[i] + (QC_SCENES[i][0] ? ' · ' + QC_SCENES[i][0] : '');
+    const scenes = QC_SCENES.map(([label, color], i) => {
+      const on = i === ACTIVE;
+      return {
+        letter: letters[i],
+        cellStyle: { height: '40px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '12px', background: on ? t.fill : 'transparent', boxShadow: on ? 'inset 0 0 0 1.5px ' + color : 'none' },
+        dotStyle: { width: on ? '12px' : '9px', height: on ? '12px' : '9px', borderRadius: '50%', background: color, boxShadow: on && t.dark ? '0 0 10px ' + color : (t.dark ? 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' : 'inset 0 0 0 1.5px oklch(0.2 0.01 110 / 0.55)') },
+        letterStyle: { fontSize: '12px', fontWeight: on ? 700 : 500, color: on ? t.ink : t.muted, lineHeight: '1' }
+      };
+    });
+    const sceneAria = titleOf(ACTIVE) + ' is active on the QC. ' + QC_SCENES.map((s, i) => letters[i] + (s[0] ? ' ' + s[0] : '')).join(', ');
+
+    const saving = overlay === 'saving', saved = overlay === 'saved';
+    const toast = overlay === 'saved' ? { show: true, isSaved: true, isDevice: false, title: 'Saved to My Presets 16', body: '', iconBg: t.signal, iconColor: t.signalInk }
+      : overlay === 'deviceChange' ? { show: true, isSaved: false, isDevice: true, title: 'Changed on the QC', body: 'Opto Comp threshold −30.0 dB', iconBg: t.fill, iconColor: t.ink }
+      : { show: false, isSaved: false, isDevice: false, title: '', body: '', iconBg: 'transparent', iconColor: 'inherit' };
+    const rowStyle = { minHeight: '46px', boxSizing: 'border-box', padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', borderBottom: '1px solid ' + t.divider, fontSize: '15px' };
+    const R = (k, v, opts = {}) => ({ k, v, yes: !!opts.yes, rowStyle, vColor: opts.muted ? t.muted : t.ink, vWeight: opts.muted ? 400 : 500 });
+    const detailGroups = [
+      { title: 'Bridge', rows: [R('Mac', 'Studio Mac'), R('Link', 'Bluetooth', { yes: true })] },
+      { title: 'Quad Cortex', rows: [R('Firmware', 'CorOS 4.1.1', { yes: true }), R('Connection', 'Direct USB'), R('Patchbridge', 'Bridge 0.1', { muted: true })] },
+      { title: 'Available right now', rows: [R('Edit parameters', 'Supported ones', { yes: true }), R('Save to this slot', 'Yes', { yes: true }), R('Scenes, bypass, Save As', 'Not yet', { muted: true })] },
+      { title: 'App', rows: [R('Appearance', (themeName === 'stage' ? 'Stage' : 'Daylight') + ' ›')] }
+    ];
+    return {
+      t, demo, grid, lane, scenes, saving, saved, toast, detailGroups, sceneAria,
+      active: { title: titleOf(ACTIVE), color: QC_SCENES[ACTIVE][1] },
+      sheet: { save: overlay === 'saveSheet', details: overlay === 'details' },
+      laneTitle: 'Row ' + (sel + 1),
+      laneMeta: laneBlocks.length + (laneBlocks.length === 1 ? ' block' : ' blocks') + (empty ? ' · ' + empty + ' empty' : ''),
+      laneAria: 'Row ' + (sel + 1) + ' blocks',
+      savedText: saved ? 'Saved' : 'Unsaved',
+      savedStyle: { display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: saved ? t.muted : t.signal },
+      saveLabel: saving ? 'Saving on the QC…' : saved ? 'Saved' : 'Save to My Presets 16',
+      saveDisabled: saving || saved ? 'true' : 'false',
+      sv: saving || saved ? { bg: t.fill, color: t.muted, shadow: 'none', cursor: 'default' } : { bg: t.signal, color: t.signalInk, shadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)', cursor: 'pointer' }
+    };
+  }
+}
+</script>
+</body>
+</html>

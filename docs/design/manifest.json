@@ -1,0 +1,462 @@
+[
+  {
+    "key": "poc/c-welcome.dc.html",
+    "slug": "c-welcome",
+    "page": "iPhone PoC",
+    "title": "Welcome",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-welcome.png",
+    "html": "html/screens/c-welcome.html"
+  },
+  {
+    "key": "poc/c-getmac.dc.html",
+    "slug": "c-getmac",
+    "page": "iPhone PoC",
+    "title": "Get the Mac app",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-getmac.png",
+    "html": "html/screens/c-getmac.html"
+  },
+  {
+    "key": "poc/c-linksent.dc.html",
+    "slug": "c-linksent",
+    "page": "iPhone PoC",
+    "title": "Link sent to Mac",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-linksent.png",
+    "html": "html/screens/c-linksent.html"
+  },
+  {
+    "key": "poc/c-found.dc.html",
+    "slug": "c-found",
+    "page": "iPhone PoC",
+    "title": "Choose your Mac",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-found.png",
+    "html": "html/screens/c-found.html"
+  },
+  {
+    "key": "poc/c-approve.dc.html",
+    "slug": "c-approve",
+    "page": "iPhone PoC",
+    "title": "Approve on Mac",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-approve.png",
+    "html": "html/screens/c-approve.html"
+  },
+  {
+    "key": "poc/c-loading.dc.html",
+    "slug": "c-loading",
+    "page": "iPhone PoC",
+    "title": "Loading the QC",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-loading.png",
+    "html": "html/screens/c-loading.html"
+  },
+  {
+    "key": "poc/c-lost.dc.html",
+    "slug": "c-lost",
+    "page": "iPhone PoC",
+    "title": "Error: connection ended",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-lost.png",
+    "html": "html/screens/c-lost.html"
+  },
+  {
+    "key": "poc/c-timeout.dc.html",
+    "slug": "c-timeout",
+    "page": "iPhone PoC",
+    "title": "Error: no reply",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-timeout.png",
+    "html": "html/screens/c-timeout.html"
+  },
+  {
+    "key": "poc/c-bluetooth.dc.html",
+    "slug": "c-bluetooth",
+    "page": "iPhone PoC",
+    "title": "Error: Bluetooth off",
+    "w": 402,
+    "h": 874,
+    "png": "screens/c-bluetooth.png",
+    "html": "html/screens/c-bluetooth.html"
+  },
+  {
+    "key": "poc/o-row1.dc.html",
+    "slug": "o-row1",
+    "page": "iPhone PoC",
+    "title": "Overview · row 1",
+    "w": 402,
+    "h": 874,
+    "png": "screens/o-row1.png",
+    "html": "html/screens/o-row1.html"
+  },
+  {
+    "key": "poc/o-row3.dc.html",
+    "slug": "o-row3",
+    "page": "iPhone PoC",
+    "title": "Overview · row 3",
+    "w": 402,
+    "h": 874,
+    "png": "screens/o-row3.png",
+    "html": "html/screens/o-row3.html"
+  },
+  {
+    "key": "poc/o-demo.dc.html",
+    "slug": "o-demo",
+    "page": "iPhone PoC",
+    "title": "Overview · demo mode",
+    "w": 402,
+    "h": 874,
+    "png": "screens/o-demo.png",
+    "html": "html/screens/o-demo.html"
+  },
+  {
+    "key": "poc/o-save.dc.html",
+    "slug": "o-save",
+    "page": "iPhone PoC",
+    "title": "Save confirmation",
+    "w": 402,
+    "h": 874,
+    "png": "screens/o-save.png",
+    "html": "html/screens/o-save.html"
+  },
+  {
+    "key": "poc/o-saving.dc.html",
+    "slug": "o-saving",
+    "page": "iPhone PoC",
+    "title": "Saving",
+    "w": 402,
+    "h": 874,
+    "png": "screens/o-saving.png",
+    "html": "html/screens/o-saving.html"
+  },
+  {
+    "key": "poc/o-saved.dc.html",
+    "slug": "o-saved",
+    "page": "iPhone PoC",
+    "title": "Saved",
+    "w": 402,
+    "h": 874,
+    "png": "screens/o-saved.png",
+    "html": "html/screens/o-saved.html"
+  },
+  {
+    "key": "poc/o-changed.dc.html",
+    "slug": "o-changed",
+    "page": "iPhone PoC",
+    "title": "Changed on the QC",
+    "w": 402,
+    "h": 874,
+    "png": "screens/o-changed.png",
+    "html": "html/screens/o-changed.html"
+  },
+  {
+    "key": "poc/o-details.dc.html",
+    "slug": "o-details",
+    "page": "iPhone PoC",
+    "title": "Connection details",
+    "w": 402,
+    "h": 874,
+    "png": "screens/o-details.png",
+    "html": "html/screens/o-details.html"
+  },
+  {
+    "key": "poc/o-landscape.dc.html",
+    "slug": "o-landscape",
+    "page": "iPhone PoC",
+    "title": "Overview · landscape",
+    "w": 874,
+    "h": 402,
+    "png": "screens/o-landscape.png",
+    "html": "html/screens/o-landscape.html"
+  },
+  {
+    "key": "poc/e-idle.dc.html",
+    "slug": "e-idle",
+    "page": "iPhone PoC",
+    "title": "Editor · matches the QC",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-idle.png",
+    "html": "html/screens/e-idle.html"
+  },
+  {
+    "key": "poc/e-fine.dc.html",
+    "slug": "e-fine",
+    "page": "iPhone PoC",
+    "title": "Editor · fine steps (hold, slide out)",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-fine.png",
+    "html": "html/screens/e-fine.html"
+  },
+  {
+    "key": "poc/e-pending.dc.html",
+    "slug": "e-pending",
+    "page": "iPhone PoC",
+    "title": "Editor · sending",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-pending.png",
+    "html": "html/screens/e-pending.html"
+  },
+  {
+    "key": "poc/e-confirmed.dc.html",
+    "slug": "e-confirmed",
+    "page": "iPhone PoC",
+    "title": "Editor · confirmed",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-confirmed.png",
+    "html": "html/screens/e-confirmed.html"
+  },
+  {
+    "key": "poc/e-adjusted.dc.html",
+    "slug": "e-adjusted",
+    "page": "iPhone PoC",
+    "title": "Editor · adjusted by the QC",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-adjusted.png",
+    "html": "html/screens/e-adjusted.html"
+  },
+  {
+    "key": "poc/e-rejected.dc.html",
+    "slug": "e-rejected",
+    "page": "iPhone PoC",
+    "title": "Editor · not applied",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-rejected.png",
+    "html": "html/screens/e-rejected.html"
+  },
+  {
+    "key": "poc/e-typing.dc.html",
+    "slug": "e-typing",
+    "page": "iPhone PoC",
+    "title": "Editor · typing",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-typing.png",
+    "html": "html/screens/e-typing.html"
+  },
+  {
+    "key": "poc/e-invalid.dc.html",
+    "slug": "e-invalid",
+    "page": "iPhone PoC",
+    "title": "Editor · out of range",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-invalid.png",
+    "html": "html/screens/e-invalid.html"
+  },
+  {
+    "key": "poc/e-capture.dc.html",
+    "slug": "e-capture",
+    "page": "iPhone PoC",
+    "title": "Editor · read-only capture",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-capture.png",
+    "html": "html/screens/e-capture.html"
+  },
+  {
+    "key": "poc/e-chorus.dc.html",
+    "slug": "e-chorus",
+    "page": "iPhone PoC",
+    "title": "Editor · option parameter",
+    "w": 402,
+    "h": 874,
+    "png": "screens/e-chorus.png",
+    "html": "html/screens/e-chorus.html"
+  },
+  {
+    "key": "poc/t-appearance-stage.dc.html",
+    "slug": "t-appearance-stage",
+    "page": "iPhone PoC",
+    "title": "Appearance · Stage",
+    "w": 402,
+    "h": 874,
+    "png": "screens/t-appearance-stage.png",
+    "html": "html/screens/t-appearance-stage.html"
+  },
+  {
+    "key": "poc/t-appearance-daylight.dc.html",
+    "slug": "t-appearance-daylight",
+    "page": "iPhone PoC",
+    "title": "Appearance · Daylight",
+    "w": 402,
+    "h": 874,
+    "png": "screens/t-appearance-daylight.png",
+    "html": "html/screens/t-appearance-daylight.html"
+  },
+  {
+    "key": "poc/t-overview.dc.html",
+    "slug": "t-overview",
+    "page": "iPhone PoC",
+    "title": "Daylight · overview",
+    "w": 402,
+    "h": 874,
+    "png": "screens/t-overview.png",
+    "html": "html/screens/t-overview.html"
+  },
+  {
+    "key": "poc/t-editor.dc.html",
+    "slug": "t-editor",
+    "page": "iPhone PoC",
+    "title": "Daylight · editor",
+    "w": 402,
+    "h": 874,
+    "png": "screens/t-editor.png",
+    "html": "html/screens/t-editor.html"
+  },
+  {
+    "key": "poc/t-fine.dc.html",
+    "slug": "t-fine",
+    "page": "iPhone PoC",
+    "title": "Daylight · fine steps",
+    "w": 402,
+    "h": 874,
+    "png": "screens/t-fine.png",
+    "html": "html/screens/t-fine.html"
+  },
+  {
+    "key": "poc/t-pending.dc.html",
+    "slug": "t-pending",
+    "page": "iPhone PoC",
+    "title": "Daylight · sending",
+    "w": 402,
+    "h": 874,
+    "png": "screens/t-pending.png",
+    "html": "html/screens/t-pending.html"
+  },
+  {
+    "key": "poc/t-connect.dc.html",
+    "slug": "t-connect",
+    "page": "iPhone PoC",
+    "title": "Daylight · approve on Mac",
+    "w": 402,
+    "h": 874,
+    "png": "screens/t-connect.png",
+    "html": "html/screens/t-connect.html"
+  },
+  {
+    "key": "poc/t-landscape.dc.html",
+    "slug": "t-landscape",
+    "page": "iPhone PoC",
+    "title": "Daylight · landscape",
+    "w": 874,
+    "h": 402,
+    "png": "screens/t-landscape.png",
+    "html": "html/screens/t-landscape.html"
+  },
+  {
+    "key": "Main.dc.html",
+    "slug": "Main",
+    "page": "Concepts",
+    "title": "A · Preset overview",
+    "w": 390,
+    "h": 844,
+    "png": "concepts/Main.png",
+    "html": "html/concepts/Main.html"
+  },
+  {
+    "key": "A-Editor.dc.html",
+    "slug": "A-Editor",
+    "page": "Concepts",
+    "title": "A · Block editor",
+    "w": 390,
+    "h": 844,
+    "png": "concepts/A-Editor.png",
+    "html": "html/concepts/A-Editor.html"
+  },
+  {
+    "key": "B-Overview.dc.html",
+    "slug": "B-Overview",
+    "page": "Concepts",
+    "title": "B · Preset overview",
+    "w": 390,
+    "h": 844,
+    "png": "concepts/B-Overview.png",
+    "html": "html/concepts/B-Overview.html"
+  },
+  {
+    "key": "B-Editor.dc.html",
+    "slug": "B-Editor",
+    "page": "Concepts",
+    "title": "B · Block editor",
+    "w": 390,
+    "h": 844,
+    "png": "concepts/B-Editor.png",
+    "html": "html/concepts/B-Editor.html"
+  },
+  {
+    "key": "C-Overview.dc.html",
+    "slug": "C-Overview",
+    "page": "Concepts",
+    "title": "C · Preset overview",
+    "w": 390,
+    "h": 844,
+    "png": "concepts/C-Overview.png",
+    "html": "html/concepts/C-Overview.html"
+  },
+  {
+    "key": "C-Editor.dc.html",
+    "slug": "C-Editor",
+    "page": "Concepts",
+    "title": "C · Block editor",
+    "w": 390,
+    "h": 844,
+    "png": "concepts/C-Editor.png",
+    "html": "html/concepts/C-Editor.html"
+  },
+  {
+    "key": "D-Overview.dc.html",
+    "slug": "D-Overview",
+    "page": "Concepts",
+    "title": "D · Preset overview, portrait",
+    "w": 390,
+    "h": 844,
+    "png": "concepts/D-Overview.png",
+    "html": "html/concepts/D-Overview.html"
+  },
+  {
+    "key": "D-Editor.dc.html",
+    "slug": "D-Editor",
+    "page": "Concepts",
+    "title": "D · Block editor",
+    "w": 390,
+    "h": 844,
+    "png": "concepts/D-Editor.png",
+    "html": "html/concepts/D-Editor.html"
+  },
+  {
+    "key": "D-Landscape.dc.html",
+    "slug": "D-Landscape",
+    "page": "Concepts",
+    "title": "D · Preset overview, landscape phone",
+    "w": 844,
+    "h": 390,
+    "png": "concepts/D-Landscape.png",
+    "html": "html/concepts/D-Landscape.html"
+  },
+  {
+    "key": "D-iPad.dc.html",
+    "slug": "D-iPad",
+    "page": "Concepts",
+    "title": "D · iPad and unfolded split view",
+    "w": 1180,
+    "h": 820,
+    "png": "concepts/D-iPad.png",
+    "html": "html/concepts/D-iPad.html"
+  }
+]

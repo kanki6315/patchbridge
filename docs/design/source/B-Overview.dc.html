@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>B · Thumb Lane: preset overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:oklch(0.74 0.12 112)}a:hover{color:oklch(0.82 0.1 112)}
+button{font:inherit;color:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; box-sizing: border-box; background: oklch(0.15 0.008 110); color: oklch(0.96 0.005 110); font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <header style="box-sizing: border-box; padding: 54px 16px 20px; display: flex; flex-direction: column; gap: 16px; background: oklch(0.74 0.12 112); color: oklch(0.17 0.03 112); border-radius: 0 0 32px 32px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <button type="button" style="height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border: 0; border-radius: 22px; background: oklch(0.17 0.03 112 / 0.1); font-size: 15px; font-weight: 500;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        Presets
+      </button>
+      <button type="button" aria-label="Bridge: Studio Mac, live" style="height: 44px; padding: 0 14px; display: flex; align-items: center; gap: 8px; border: 0; border-radius: 22px; background: oklch(0.17 0.03 112 / 0.1); font-size: 14px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7l10 10-5 5V2l5 5L7 17"></path></svg>
+        Studio Mac · Live
+      </button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; text-wrap: balance;">Clean Edge Lead</h1>
+      <span style="display: flex; align-items: center; gap: 10px; font-size: 15px;">
+        Bank 3 · Slot B
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>Edited, not saved</span>
+      </span>
+    </div>
+    <div role="group" aria-label="Scenes" style="display: flex; gap: 8px;">
+      <button type="button" aria-pressed="true" style="flex: 1; height: 48px; border: 0; border-radius: 16px; background: oklch(0.17 0.03 112); color: oklch(0.84 0.13 112); font-size: 15px; font-weight: 600;">A Rhythm</button>
+      <button type="button" aria-pressed="false" style="flex: 1; height: 48px; border: 1.5px solid oklch(0.17 0.03 112 / 0.4); border-radius: 16px; background: transparent; font-size: 15px; font-weight: 500;">B Lead</button>
+      <button type="button" aria-pressed="false" style="flex: 1; height: 48px; border: 1.5px solid oklch(0.17 0.03 112 / 0.4); border-radius: 16px; background: transparent; font-size: 15px; font-weight: 500;">C Clean</button>
+      <button type="button" aria-label="More scenes" style="width: 48px; height: 48px; flex: none; display: flex; align-items: center; justify-content: center; border: 1.5px solid oklch(0.17 0.03 112 / 0.4); border-radius: 16px; background: transparent;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+      </button>
+    </div>
+  </header>
+
+  <div role="tablist" aria-label="Signal chain rows" style="margin: 16px 16px 6px; padding: 3px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-radius: 14px; background: oklch(1 0 0 / 0.07);">
+    <button type="button" role="tab" aria-selected="true" style="height: 40px; border: 0; border-radius: 11px; background: oklch(1 0 0 / 0.17); font-size: 14px; font-weight: 600;">Row 1 · 4</button>
+    <button type="button" role="tab" aria-selected="false" style="height: 40px; border: 0; border-radius: 11px; background: transparent; font-size: 14px; color: oklch(0.82 0.01 110);">Row 2 · 3</button>
+    <button type="button" role="tab" aria-selected="false" style="height: 40px; border: 0; border-radius: 11px; background: transparent; font-size: 14px; color: oklch(0.7 0.01 110);">Row 3</button>
+    <button type="button" role="tab" aria-selected="false" style="height: 40px; border: 0; border-radius: 11px; background: transparent; font-size: 14px; color: oklch(0.7 0.01 110);">Row 4</button>
+  </div>
+
+  <div style="position: relative;">
+  <div aria-hidden="true" style="position: absolute; left: 37px; top: 36px; bottom: 36px; width: 2px; background: oklch(0.34 0.01 110);"></div>
+  <ol style="list-style: none; margin: 0; padding: 0 16px;">
+    <sc-for list="{{blocks}}" as="b" hint-placeholder-count="4">
+      <li style="position: relative; height: 76px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid oklch(1 0 0 / 0.06);">
+        <span aria-hidden="true" style="{{b.swatchStyle}}">{{b.code}}</span>
+        <a href="B-Editor.dc.html" style="flex: 1; min-width: 0; min-height: 60px; display: flex; flex-direction: column; justify-content: center; gap: 3px; color: inherit; text-decoration: none;">
+          <span style="{{b.nameStyle}}">{{b.name}}</span>
+          <span style="font-size: 13px; color: oklch(0.76 0.01 110); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.summary}}</span>
+        </a>
+        <button type="button" role="switch" aria-checked="{{b.on}}" aria-label="{{b.switchLabel}}" style="{{b.switchStyle}}">
+          <span style="width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px oklch(0 0 0 / 0.3);"></span>
+        </button>
+      </li>
+    </sc-for>
+  </ol>
+  </div>
+  <p style="margin: 14px 16px 0; font-size: 13px; color: oklch(0.72 0.01 110);">Slots 5 to 8 in this row are empty.</p>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 12px 16px 34px; display: flex; gap: 10px; background: oklch(0.17 0.008 110 / 0.7); backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); border-top: 1px solid oklch(1 0 0 / 0.08);">
+    <button type="button" style="flex: 1; height: 56px; border: 0; border-radius: 20px; background: oklch(1 0 0 / 0.1); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12); font-size: 16px; font-weight: 500;">Save As…</button>
+    <button type="button" style="flex: 1.5; height: 56px; border: 0; border-radius: 20px; background: oklch(0.74 0.12 112); color: oklch(0.17 0.03 112); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.45); font-size: 16px; font-weight: 600;">Save to 3B</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cat = {
+      CMP: { bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)' },
+      DRV: { bg: 'oklch(0.76 0.16 65)', ink: 'oklch(0.2 0.04 65)' },
+      AMP: { bg: 'oklch(0.56 0.2 27)', ink: '#ffffff' },
+      CAB: { bg: 'oklch(0.52 0.05 50)', ink: '#ffffff' }
+    };
+    const sw = { position: 'relative', zIndex: 1, width: '44px', height: '44px', flex: 'none', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '13px', fontSize: '11px', fontWeight: 700 };
+    const sws = { width: '51px', height: '31px', flex: 'none', padding: '2px', border: '0', borderRadius: '16px', display: 'flex' };
+    const block = (code, name, summary, on = true) => {
+      const c = cat[code];
+      return {
+        code, name, on: on ? 'true' : 'false',
+        summary: on ? summary : 'Bypassed. Signal passes through unchanged',
+        switchLabel: name + (on ? ' active' : ' bypassed'),
+        swatchStyle: on
+          ? { ...sw, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' }
+          : { ...sw, background: 'oklch(0.15 0.008 110)', border: '2px dashed ' + c.bg, color: 'oklch(0.78 0.01 110)', textDecoration: 'line-through' },
+        nameStyle: { fontSize: '17px', fontWeight: 600, color: on ? 'oklch(0.96 0.005 110)' : 'oklch(0.72 0.01 110)' },
+        switchStyle: on
+          ? { ...sws, justifyContent: 'flex-end', background: 'oklch(0.74 0.12 112)' }
+          : { ...sws, justifyContent: 'flex-start', background: 'oklch(1 0 0 / 0.18)' }
+      };
+    };
+    return {
+      blocks: [
+        block('CMP', 'Compressor', 'Threshold −18 dB · Ratio 4:1'),
+        block('DRV', 'Overdrive', '', false),
+        block('AMP', 'Crunch 50', 'Gain 6.2 · Mid 6.5 · Master 7.0'),
+        block('CAB', '4×12 Cab', 'Mic 1 dynamic · Distance 2.0 in')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

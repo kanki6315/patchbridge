@@ -149,7 +149,7 @@ components:
     padding: "8px"
 ---
 
-<!-- SEED: drawn from concept direction D and the "iPhone PoC" page of the "Patchbridge concept directions" canvas (2026-10-20), not from shipped code. Re-run /impeccable document once the SwiftUI screens exist to capture the real tokens and components. Unprefixed color tokens are the Stage theme; daylight-* tokens are the Daylight theme. -->
+<!-- SEED: drawn from concept direction D and the "iPhone PoC" page of the "Patchbridge concept directions" canvas (2026-10-20), not from shipped code. Rendered boards and their source are in docs/design/. Re-run /impeccable document once the SwiftUI screens exist to capture the real tokens and components. Unprefixed color tokens are the Stage theme; daylight-* tokens are the Daylight theme. -->
 
 # Design System: Patchbridge
 
@@ -196,7 +196,7 @@ A near-black olive ground, one electric chartreuse signal, and a fixed set of ca
 - **Scene colors.** Scene names and colors come from the Quad Cortex (`scene_labels` and `scene_colors`, ARGB) and are shown exactly as the player set them. They are user data, not theme tokens.
 
 ### Tertiary
-- **Caution Amber** (#ffc469): used only for edits the QC rejected or adjusted, always alongside a triangle icon and a sentence saying what happened ("Not applied. Scene changed first, so the QC kept 6.2").
+- **Caution Amber** (#ffc469): used only for edits the QC rejected or adjusted, always alongside a triangle icon and a short reason ("Not applied · scene changed").
 
 ### Neutral
 - **Stage Black** (#0d0e0a, oklch(0.16 0.008 110)): the app background on every screen.
@@ -248,6 +248,8 @@ In SwiftUI, every role maps to a Dynamic Type style and scales with it. The size
 
 **The Steady Digits Rule.** Values always use tabular figures. If a number shifts sideways while you drag, the digits are proportional.
 
+**The No Helper Text Rule.** Text earns its place only if it reports state (the QC's value, an edit's outcome, the connection) or a consequence the player can't see. Instructions, reassurance, and labels that repeat what the layout already shows are cut. If the interface needs a sentence to explain how it works, fix the interface. The status line is empty when there's nothing to report. Errors get one short sentence of consequence, never a paragraph.
+
 **The Step Shows Its Precision Rule.** Values display at the precision of their step: one decimal for the default 0.1 step ("15.0 ms", "100.0 %"), two decimals only while fine steps are active ("−30.05").
 
 ## 4. Elevation
@@ -279,7 +281,7 @@ Controls feel tactile, confident and native. They are big enough to hit with a g
 - **Pressed / Focus:** pressed scales to 0.97 and brightens the fill (150ms, ease-out-quint). Focus uses a 2px signal-colored ring offset by 2px. Disabled drops to 40% opacity and is never the only signal that something is unavailable.
 
 ### Chips
-- **Scene strip:** shows the QC's state; it isn't a control while the bridge can't switch scenes. A heading line shows the active scene's dot and title ("Scene F · RHYTHM") with "Change scenes on the QC". Below it, eight 40px cells A–H each hold the scene's color dot and letter. The active cell gets a fill, a 1.5px ring in the scene's own color, a larger dot, and in Stage a soft glow. Landscape uses 28×36 cells beside the preset name. Once the bridge advertises `select_scene`, the same cells become buttons; no new layout is needed.
+- **Scene strip:** shows the QC's state; it isn't a control while the bridge can't switch scenes. A heading line shows the active scene's dot and title ("Scene F · RHYTHM"). Below it, eight 40px cells A–H each hold the scene's color dot and letter. The active cell gets a fill, a 1.5px ring in the scene's own color, a larger dot, and in Stage a soft glow. Landscape uses 28×36 cells beside the preset name. Once the bridge advertises `select_scene`, the same cells become buttons; no new layout is needed.
 - **Device tag:** a small 10px label ("QC") on a white-14% fill, marking a value that was last changed on the hardware.
 
 ### Cards / Containers
@@ -290,10 +292,16 @@ Controls feel tactile, confident and native. They are big enough to hit with a g
 ### Inputs / Fields
 - **Switches:** standard iOS switches, 51×31. On is Signal; off is white at 18%.
 - **Value field (tap-to-type):** the hero number. At rest it has no border. While the QC hasn't confirmed a change it gets a 1.5px dashed Signal outline. While you're typing it shows a solid 2px Signal ring with a cursor. When the QC rejects a change it gets a Caution outline plus a status line.
-- **Number pad:** a custom glass bottom sheet with 28px top corners, because the iOS decimal pad has no minus key and values like −34.2 dB need one. A toolbar holds Cancel and the range hint ("−60.0 to +12.0 dB · step 0.1"). Below it are 50px keys in a 4-column grid (1 2 3 ⌫ / 4 5 6 ± / 7 8 9 . / 0 Set), with Set as the Signal key. Nothing is sent until you tap Set. Out-of-range input is never clamped silently: the ring and range hint turn Caution, the status line says the limit ("Lowest is −60.0 dB"), and Set is unavailable.
+- **Number pad:** a custom glass bottom sheet with 28px top corners, because the iOS decimal pad has no minus key and values like −34.2 dB need one. A toolbar holds Cancel and the range ("−60.0 to +12.0 dB"). Below it are 50px keys in a 4-column grid (1 2 3 ⌫ / 4 5 6 ± / 7 8 9 . / 0 Set), with Set as the Signal key. Nothing is sent until you tap Set. Out-of-range input is never clamped silently: the ring and the range turn Caution, and Set is unavailable.
 - **Approval code:** the connection token is shown as a short 6-character code split 3·3 ("4F7·K2Q") in a glass panel. The same code must appear on the Mac. The bridge currently uses a full UUID; deriving a short display code from it is an engineering change.
 
 ### Navigation
+- **Getting the Mac app:** an iPhone can't install Mac apps, so the flow's job is to move the link onto the Mac with the least effort. "No Patchbridge on your Mac yet?" appears on Welcome, and "Not installed on your Mac? Get the Mac app" appears while searching. Both open **Get Patchbridge for Mac**:
+  - **Send to my Mac** (primary): opens the iOS share sheet with the Mac App Store link. AirDrop is recommended because the link opens straight in the App Store on the Mac.
+  - **Copy link**: a fallback for Messages, Mail or Notes, which sync to the Mac.
+  - **A short link to type on the Mac**: for players who prefer typing. The address is a placeholder until a domain exists.
+  - There's no QR code, because Macs don't scan them conveniently.
+  - After sharing, **Link sent to your Mac** lists the three real steps on the Mac (install, open and connect the QC, come back), with Find my Mac as the primary action.
 - **Connect flow:** Welcome (the three-node iPhone → Mac → QC diagram, three real setup steps, Find my Mac, Try the demo preset) → Choose your Mac → Approve on your Mac (short code, "I've approved it") → Reading the QC (skeleton; nothing is sent) → overview. Recoverable failures get full-screen states with one sentence of consequence and one action: connection ended, no reply (outcome unknown), Bluetooth off. Reconnecting always reloads the QC's state and never replays edits.
 - **Phone portrait:** the overview is the bridge status pill (opens Connection details), a Demo badge in demo mode, the Display-weight preset name with "My Presets · 16" and the unsaved dot, and the scene strip. Below sit the grid map and the row list, with a glass save bar holding one action, "Save to My Presets 16". Save asks for confirmation in a floating sheet, then shows "Saving on the QC…" and a "Saved on the QC" toast. Tapping a row in the list pushes the block editor. Preset browsing and Save As are hidden until the bridge supports them.
 - **Connection details sheet:** bridge, firmware and connection facts; what works right now (supported operations, from capabilities); App → Appearance; Disconnect in Danger.
@@ -304,9 +312,9 @@ Controls feel tactile, confident and native. They are big enough to hit with a g
 ### Parameter Gauge (signature)
 This is the heart of the editor, modelled on Apple Home's controls. It is a 270° arc 240px across with a 16px stroke on a white-13% track, filled in the category's arc color up to the QC's confirmed value. A pending change extends past that as a dashed segment up to the requested value, with a 3px tick marking where the QC currently sits. The thumb is a 26px white circle. The hero number sits in the middle, with its unit beside it and the status line below. The arc follows the QC's knob travel (the normalized value), not display units, so a non-linear control sits where the hardware knob would.
 - **Steps:** dragging snaps to 0.1 in display units, with a selection haptic at every step and a rigid haptic at the ends of the range.
-- **Fine steps (0.05):** touch and hold the thumb, then slide outward, away from the dial, as with iOS's fine scrubbing. The value never moves: it stays centred in the dial and gains a second decimal ("−30.05"). Three quiet cues confirm the mode. The thumb fills with Signal inside a soft Signal halo, the line under the number changes from "dB · Tap number to type" to "dB · Fine, 0.05 steps" in Signal, and a rigid haptic fires as the mode engages. The status line says how to leave it ("Slide back toward the dial for 0.1 steps"). There's no ruler, badge or other extra overlay. Sliding back inside the ring returns to 0.1 steps. Release sends the final value; intermediate values are coalesced and only the last one is guaranteed to be sent.
-- **Value layout:** the number is centred in the dial at 52px, always with the unit on the line below it, never beside it. That keeps the widest values ("−34.2", "400.0") clear of the arc and thumb.
-- **Read-only:** for a control the QC doesn't describe well enough to convert, the arc is drawn in muted graphite up to the knob position, the thumb is a hollow ring, and the value is replaced by a lock and the position ("50 %"). Steppers and typing are hidden, and the status line explains why in one sentence.
+- **Fine steps (0.05):** touch and hold the thumb, then slide outward, away from the dial, as with iOS's fine scrubbing. The value never moves: it stays centred in the dial and gains a second decimal ("−30.05"). Three quiet cues confirm the mode. The thumb fills with Signal inside a soft Signal halo, a single line "Fine · 0.05 steps" appears under the number in Signal (only in this mode), and a rigid haptic fires as the mode engages. There's no ruler, badge or other extra overlay. Sliding back inside the ring returns to 0.1 steps. Release sends the final value; intermediate values are coalesced and only the last one is guaranteed to be sent.
+- **Value layout:** the number and its unit form one group, centred together on the dial's centre point, horizontally and vertically. The number is 48px (40px in fine mode, so the second decimal still clears the arc); the unit sits on the same line, baseline-aligned, at 18px in Muted Ink ("−34.2 dB"). A read-only value's lock joins the group on the left. The typing ring and pending outline wrap the whole group. At those sizes the widest values ("−34.2 dB", "400.0 ms") stay clear of the arc and thumb. There's no helper text under the number: the number reads as tappable on its own, and the line under it is reserved for fine mode. A read-only control shows its knob position as a percentage with a lock ("50 %").
+- **Read-only:** for a control the QC doesn't describe well enough to convert, the arc is drawn in muted graphite up to the knob position, the thumb is a hollow ring, and the value is replaced by a lock and the position ("50 %"). Steppers and typing are hidden, and the status line gives the short reason ("Read-only · scale unknown").
 - **Options:** an enum parameter swaps the gauge for large option buttons (72px, category-tinted when selected, with a check). Choosing one sends it immediately.
 
 ### Parameter Tiles
@@ -318,9 +326,9 @@ State changes take 150–250ms with an ease-out-quint curve. The dashed-to-solid
 ## 6. Do's and Don'ts
 
 ### Do:
-- **Do** show the QC's confirmed value first, and draw any change the QC hasn't confirmed yet as a dashed outline or dashed arc segment, with a status line ("Sending 6.4. QC is still at 6.2").
-- **Do** say what happened when an edit fails, in Caution Amber with a triangle icon: "Not applied. Scene changed first, so the QC kept 6.2."
-- **Do** keep the unsaved state visible on every screen: a Signal dot plus "Edited, not saved" or "2 changes not saved", and a Save button within reach of the thumb.
+- **Do** show the QC's confirmed value first, and draw any change the QC hasn't confirmed yet as a dashed outline or dashed arc segment, with the status "Sending…". The tick on the arc shows where the QC still is, so the text doesn't need to repeat it.
+- **Do** say what happened when an edit fails, in Caution Amber with a triangle icon and a short reason: "Not applied · scene changed".
+- **Do** keep the unsaved state visible on every screen: a Signal dot plus "Unsaved", and a Save button within reach of the thumb.
 - **Do** keep the QC's 4×8 grid and its rows. Adapt the layout to size class: a map plus row list in portrait, the full grid in landscape, and grid plus persistent editor at regular width.
 - **Do** make every numeric value tappable for exact entry (the Tap-the-Number Rule), and show the valid range and step while typing.
 - **Do** pair every category color with its text code, and every state with a shape or a word (the Shape-Plus-Color Rule).
