@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duo · Folded, outer screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 466px; height: 678px; position: relative; overflow: hidden; box-sizing: border-box; background: {{t.ground}}; color: {{t.ink}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 0; display: flex; flex-direction: column; gap: 14px;">
+    <header style="display: flex; align-items: center; gap: 12px;">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+        <h1 style="margin: 0; font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tremonti w Mic</h1>
+        <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: {{t.muted}};">
+          My Presets · 16
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: {{t.signal}};"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>Unsaved</span>
+        </span>
+      </div>
+      <button type="button" aria-label="Connection details: Studio Mac, QC connected" style="height: 40px; padding: 0 13px; display: flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; font-size: 15px; cursor: pointer;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+        Studio Mac
+      </button>
+    </header>
+
+    <section aria-label="Signal chain, 4 rows by 8 slots" style="padding: 8px; display: flex; flex-direction: column; gap: 6px; border-radius: 20px; background: {{t.surface}}; box-shadow: {{t.panelEdge}};">
+      <sc-for list="{{grid}}" as="row" hint-placeholder-count="4">
+        <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px;">
+          <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="8">
+            <button type="button" aria-label="{{c.aria}}" style="{{c.style}}">{{c.code}}</button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </section>
+
+    <div role="img" aria-label="{{sceneAria}}" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;">
+      <sc-for list="{{scenes}}" as="s" hint-placeholder-count="8">
+        <span style="{{s.cellStyle}}">
+          <span style="display: flex; align-items: center; gap: 6px;">
+            <span style="{{s.dotStyle}}"></span>
+            <span style="{{s.letterStyle}}">{{s.letter}}</span>
+          </span>
+          <span style="{{s.nameStyle}}">{{s.name}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 12px 16px 30px; display: flex; background: {{t.bar}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); border-top: 1px solid {{t.divider}};">
+    <button type="button" style="flex: 1; height: 54px; border: 0; border-radius: 999px; background: {{t.signal}}; color: {{t.signalInk}}; font: inherit; font-size: 17px; font-weight: 600; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4); cursor: pointer;">Save to My Presets 16</button>
+  </div>
+
+  <!-- Block menu: a medium-detent sheet with no scrim, so the grid above stays live. Tapping another block swaps the sheet's contents. -->
+  <sc-if value="{{sheet}}" hint-placeholder-val="{{false}}">
+    <div role="dialog" aria-label="Opto Comp (M)" style="position: absolute; z-index: 40; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 8px 18px 20px; display: flex; flex-direction: column; gap: 10px; border-radius: 34px; background: {{t.sheet}}; backdrop-filter: blur(30px) saturate(1.7); -webkit-backdrop-filter: blur(30px) saturate(1.7); box-shadow: {{t.sheetLift}};">
+      <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: {{t.grabber}};"></span>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span aria-hidden="true" style="width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: {{cmp.bg}}; color: {{cmp.ink}}; font-size: 11px; font-weight: 700; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4);">CMP</span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Opto Comp (M)</span>
+          <span style="font-size: 13px; color: {{t.muted}};">Compressor · Row 1, slot 2</span>
+        </span>
+        <button type="button" aria-label="Close" style="width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: {{t.fill}}; color: {{t.muted}}; cursor: pointer;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+
+      <ul role="list" aria-label="Key parameters" style="list-style: none; margin: 0; padding: 0;">
+        <sc-for list="{{rowsP}}" as="p" hint-placeholder-count="4">
+          <li style="height: 58px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid {{t.divider}};">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 15px;">{{p.label}}</span>
+              <sc-if value="{{p.pending}}" hint-placeholder-val="{{false}}">
+                <span role="status" style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: {{t.signal}}; white-space: nowrap;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-dasharray="3 3" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle></svg>
+                  Sending · QC at −34.2
+                </span>
+              </sc-if>
+            </span>
+            <button type="button" aria-label="{{p.decAria}}" style="{{stepStyle}}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+            </button>
+            <button type="button" aria-label="{{p.valueAria}}" style="{{p.valueStyle}}">{{p.value}}<span style="font-size: 13px; font-weight: 500; margin-left: 3px; color: {{t.muted}};">{{p.unit}}</span></button>
+            <button type="button" aria-label="{{p.incAria}}" style="{{stepStyle}}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
+            </button>
+          </li>
+        </sc-for>
+      </ul>
+
+      <a href="#" style="height: 50px; margin-top: 4px; padding: 0 14px 0 18px; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.fill}}; color: inherit; text-decoration: none; font-size: 16px; font-weight: 600;">
+        <span style="flex: 1;">Open editor</span>
+        <span style="font-size: 14px; font-weight: 400; color: {{t.muted}};">All 7 controls</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: 0.7;"><path d="M9 18l6-6-6-6"></path></svg>
+      </a>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["grid","sheet","pending"],"default":"grid","section":"Screen"},"$preview":{"width":466,"height":678}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const state = this.props.state ?? 'grid';
+    const sheet = state !== 'grid', pending = state === 'pending';
+    const t = { ground: 'oklch(0.16 0.008 110)', surface: 'oklch(0.2 0.009 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', hairline: 'oklch(0.3 0.01 110)', divider: 'oklch(1 0 0 / 0.07)',
+      glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)', bar: 'oklch(0.2 0.009 110 / 0.62)',
+      sheet: 'oklch(0.24 0.01 110 / 0.86)', sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.16), 0 -10px 30px oklch(0 0 0 / 0.4)', grabber: 'oklch(1 0 0 / 0.3)',
+      fill: 'oklch(1 0 0 / 0.1)', signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)' };
+    const CAT = {
+      wah: { code: 'WAH', kind: 'Wah', bg: 'oklch(0.52 0.12 200)', ink: '#ffffff' },
+      cmp: { code: 'CMP', kind: 'Compressor', bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)' },
+      cap: { code: 'CAP', kind: 'Neural Capture', bg: 'oklch(0.72 0.12 15)', ink: 'oklch(0.2 0.03 15)' },
+      drv: { code: 'DRV', kind: 'Overdrive', bg: 'oklch(0.76 0.16 65)', ink: 'oklch(0.2 0.04 65)' },
+      pit: { code: 'PIT', kind: 'Pitch', bg: 'oklch(0.55 0.16 290)', ink: '#ffffff' },
+      utl: { code: 'UTL', kind: 'Utility', bg: 'oklch(0.62 0.012 110)', ink: 'oklch(0.16 0.01 110)' },
+      cab: { code: 'CAB', kind: 'Cab', bg: 'oklch(0.52 0.05 50)', ink: '#ffffff' },
+      mod: { code: 'MOD', kind: 'Modulation', bg: 'oklch(0.58 0.18 330)', ink: '#ffffff' },
+      rev: { code: 'REV', kind: 'Reverb', bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)' }
+    };
+    // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
+    const rows = [
+      [['wah', 'Bad Horse'], ['cmp', 'Opto Comp (M)'], ['cap', 'Eltron 30'], ['drv', 'Myth Drive'], ['pit', 'Transpose'], ['pit', 'Poly Octaver'], ['utl', 'Adaptive Gate'], null],
+      [null, null, ['utl', 'Volume'], null, null, null, null, null],
+      [null, ['cap', 'Eltron 30'], null, ['cap', 'Eltron 30'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, ['mod', 'Dual Chorus'], ['rev', 'Plate Tight']],
+      [null, ['cap', 'Eltron 30'], null, ['cap', 'Eltron 30'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, null, null]
+    ];
+    // The outer screen is wider than a Pro, so the whole grid fits at touch size and becomes the way in.
+    const cellBase = { height: '70px', minWidth: '0', padding: '0', boxSizing: 'border-box', borderRadius: '11px', border: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', font: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer' };
+    const grid = rows.map((row, ri) => ({
+      cells: row.map((b, si) => {
+        const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
+        if (!b) return { code: '', aria: slot + ', empty', style: { ...cellBase, background: 'transparent', border: '1px solid ' + t.hairline, cursor: 'default' } };
+        const c = CAT[b[0]], sel = sheet && ri === 0 && si === 1;
+        return { code: c.code, aria: slot + ', ' + b[1] + ', ' + c.kind + (sel ? ', selected' : ''),
+          style: { ...cellBase, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)', outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' } };
+      })
+    }));
+
+    const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];
+    const ACTIVE = 5, letters = 'ABCDEFGH';
+    const scenes = QC_SCENES.map(([label, color], i) => {
+      const on = i === ACTIVE;
+      return { letter: letters[i], name: label,
+        cellStyle: { height: '52px', minWidth: '0', boxSizing: 'border-box', padding: '0 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', borderRadius: '12px', background: on ? t.fill : 'transparent', boxShadow: on ? 'inset 0 0 0 1.5px ' + color : 'inset 0 0 0 1px ' + t.divider },
+        dotStyle: { width: on ? '11px' : '9px', height: on ? '11px' : '9px', flex: 'none', borderRadius: '50%', background: color, boxShadow: on ? '0 0 10px ' + color : 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' },
+        letterStyle: { fontSize: '14px', fontWeight: on ? 700 : 600, color: on ? t.ink : t.muted, lineHeight: '1' },
+        nameStyle: { maxWidth: '100%', height: '12px', lineHeight: '1', fontSize: '12px', fontWeight: on ? 700 : 500, color: on ? t.ink : t.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } };
+    });
+
+    // The first four editable controls. Everything else is one tap away in the full editor.
+    const P = (label, value, unit, extra = {}) => ({ label, value, unit, ...extra });
+    const params = [P('Threshold', pending ? '−30.0' : '−34.2', 'dB', { pending }), P('Ratio', '4.0', ''), P('Attack', '15.0', 'ms'), P('Makeup', '+8.0', 'dB')];
+    const valueBase = { font: 'inherit', width: '108px', height: '40px', flex: 'none', boxSizing: 'border-box', padding: '0', display: 'flex', alignItems: 'baseline', justifyContent: 'center', lineHeight: '40px', border: '0', borderRadius: '12px', background: 'transparent', color: 'inherit', fontSize: '18px', fontWeight: 600, whiteSpace: 'nowrap', cursor: 'text' };
+    const rowsP = params.map((p) => ({
+      ...p, pending: !!p.pending,
+      valueStyle: p.pending ? { ...valueBase, outline: '1.5px dashed ' + t.signal, outlineOffset: '-1.5px' } : valueBase,
+      valueAria: p.label + ' ' + p.value + ' ' + p.unit + (p.pending ? ', sending, QC at −34.2' : '') + '. Tap to type a value',
+      decAria: 'Decrease ' + p.label.toLowerCase() + ' by 0.1', incAria: 'Increase ' + p.label.toLowerCase() + ' by 0.1'
+    }));
+
+    return {
+      t, grid, scenes, sheet, rowsP, cmp: CAT.cmp,
+      sceneAria: 'Scene F, RHYTHM, is active on the QC. ' + QC_SCENES.map((s, i) => letters[i] + (s[0] ? ' ' + s[0] : '')).join(', '),
+      stepStyle: 'width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: ' + t.fill + '; box-shadow: ' + t.glassEdge + '; color: inherit; cursor: pointer'
+    };
+  }
+}
+</script>
+</body>
+</html>

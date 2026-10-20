@@ -23,6 +23,10 @@
       "name": "Mac bridge"
     },
     {
+      "id": "duo",
+      "name": "iPhone Duo"
+    },
+    {
       "id": "components",
       "name": "Components"
     },
@@ -93,7 +97,7 @@
       "y": 1320,
       "w": 402,
       "h": 874,
-      "title": "Overview \u00b7 row 1",
+      "title": "Overview · row 1",
       "page": "poc"
     },
     "poc/o-row3.dc.html": {
@@ -101,7 +105,7 @@
       "y": 1320,
       "w": 402,
       "h": 874,
-      "title": "Overview \u00b7 row 3",
+      "title": "Overview · row 3",
       "page": "poc"
     },
     "poc/o-demo.dc.html": {
@@ -109,7 +113,7 @@
       "y": 1320,
       "w": 402,
       "h": 874,
-      "title": "Overview \u00b7 demo mode",
+      "title": "Overview · demo mode",
       "page": "poc"
     },
     "poc/o-save.dc.html": {
@@ -157,7 +161,7 @@
       "y": 1320,
       "w": 874,
       "h": 402,
-      "title": "Overview \u00b7 landscape",
+      "title": "Overview · landscape",
       "page": "poc"
     },
     "poc/e-idle.dc.html": {
@@ -165,7 +169,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 matches the QC",
+      "title": "Editor · matches the QC",
       "page": "poc"
     },
     "poc/e-fine.dc.html": {
@@ -173,7 +177,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 fine steps (hold, slide out)",
+      "title": "Editor · fine steps (hold, slide out)",
       "page": "poc"
     },
     "poc/e-pending.dc.html": {
@@ -181,7 +185,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 sending",
+      "title": "Editor · sending",
       "page": "poc"
     },
     "poc/e-confirmed.dc.html": {
@@ -189,7 +193,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 confirmed",
+      "title": "Editor · confirmed",
       "page": "poc"
     },
     "poc/e-adjusted.dc.html": {
@@ -197,7 +201,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 adjusted by the QC",
+      "title": "Editor · adjusted by the QC",
       "page": "poc"
     },
     "poc/e-rejected.dc.html": {
@@ -205,7 +209,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 not applied",
+      "title": "Editor · not applied",
       "page": "poc"
     },
     "poc/e-typing.dc.html": {
@@ -213,7 +217,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 typing",
+      "title": "Editor · typing",
       "page": "poc"
     },
     "poc/e-invalid.dc.html": {
@@ -221,7 +225,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 out of range",
+      "title": "Editor · out of range",
       "page": "poc"
     },
     "poc/e-capture.dc.html": {
@@ -229,7 +233,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 read-only capture",
+      "title": "Editor · read-only capture",
       "page": "poc"
     },
     "poc/e-chorus.dc.html": {
@@ -237,7 +241,7 @@
       "y": 2640,
       "w": 402,
       "h": 874,
-      "title": "Editor \u00b7 option parameter",
+      "title": "Editor · option parameter",
       "page": "poc"
     },
     "poc/t-appearance-stage.dc.html": {
@@ -245,7 +249,7 @@
       "y": 3960,
       "w": 402,
       "h": 874,
-      "title": "Appearance \u00b7 Stage",
+      "title": "Appearance · Stage",
       "page": "poc"
     },
     "poc/t-appearance-daylight.dc.html": {
@@ -253,7 +257,7 @@
       "y": 3960,
       "w": 402,
       "h": 874,
-      "title": "Appearance \u00b7 Daylight",
+      "title": "Appearance · Daylight",
       "page": "poc"
     },
     "poc/t-overview.dc.html": {
@@ -261,7 +265,7 @@
       "y": 3960,
       "w": 402,
       "h": 874,
-      "title": "Daylight \u00b7 overview",
+      "title": "Daylight · overview",
       "page": "poc"
     },
     "poc/t-editor.dc.html": {
@@ -269,7 +273,7 @@
       "y": 3960,
       "w": 402,
       "h": 874,
-      "title": "Daylight \u00b7 editor",
+      "title": "Daylight · editor",
       "page": "poc"
     },
     "poc/t-fine.dc.html": {
@@ -277,7 +281,7 @@
       "y": 3960,
       "w": 402,
       "h": 874,
-      "title": "Daylight \u00b7 fine steps",
+      "title": "Daylight · fine steps",
       "page": "poc"
     },
     "poc/t-pending.dc.html": {
@@ -285,7 +289,7 @@
       "y": 3960,
       "w": 402,
       "h": 874,
-      "title": "Daylight \u00b7 sending",
+      "title": "Daylight · sending",
       "page": "poc"
     },
     "poc/t-connect.dc.html": {
@@ -293,7 +297,7 @@
       "y": 3960,
       "w": 402,
       "h": 874,
-      "title": "Daylight \u00b7 approve on Mac",
+      "title": "Daylight · approve on Mac",
       "page": "poc"
     },
     "poc/t-landscape.dc.html": {
@@ -301,7 +305,7 @@
       "y": 3960,
       "w": 874,
       "h": 402,
-      "title": "Daylight \u00b7 landscape",
+      "title": "Daylight · landscape",
       "page": "poc"
     },
     "poc/Connect.dc.html": {
@@ -349,7 +353,7 @@
       "y": 0,
       "w": 390,
       "h": 844,
-      "title": "A \u00b7 Preset overview",
+      "title": "A · Preset overview",
       "page": "concepts"
     },
     "A-Editor.dc.html": {
@@ -357,7 +361,7 @@
       "y": 0,
       "w": 390,
       "h": 844,
-      "title": "A \u00b7 Block editor",
+      "title": "A · Block editor",
       "page": "concepts"
     },
     "B-Overview.dc.html": {
@@ -365,7 +369,7 @@
       "y": 1260,
       "w": 390,
       "h": 844,
-      "title": "B \u00b7 Preset overview",
+      "title": "B · Preset overview",
       "page": "concepts"
     },
     "B-Editor.dc.html": {
@@ -373,7 +377,7 @@
       "y": 1260,
       "w": 390,
       "h": 844,
-      "title": "B \u00b7 Block editor",
+      "title": "B · Block editor",
       "page": "concepts"
     },
     "C-Overview.dc.html": {
@@ -381,7 +385,7 @@
       "y": 2520,
       "w": 390,
       "h": 844,
-      "title": "C \u00b7 Preset overview",
+      "title": "C · Preset overview",
       "page": "concepts"
     },
     "C-Editor.dc.html": {
@@ -389,7 +393,7 @@
       "y": 2520,
       "w": 390,
       "h": 844,
-      "title": "C \u00b7 Block editor",
+      "title": "C · Block editor",
       "page": "concepts"
     },
     "D-Overview.dc.html": {
@@ -397,7 +401,7 @@
       "y": 3780,
       "w": 390,
       "h": 844,
-      "title": "D \u00b7 Preset overview, portrait",
+      "title": "D · Preset overview, portrait",
       "page": "concepts"
     },
     "D-Editor.dc.html": {
@@ -405,7 +409,7 @@
       "y": 3780,
       "w": 390,
       "h": 844,
-      "title": "D \u00b7 Block editor",
+      "title": "D · Block editor",
       "page": "concepts"
     },
     "D-Landscape.dc.html": {
@@ -413,7 +417,7 @@
       "y": 3780,
       "w": 844,
       "h": 390,
-      "title": "D \u00b7 Preset overview, landscape phone",
+      "title": "D · Preset overview, landscape phone",
       "page": "concepts"
     },
     "D-iPad.dc.html": {
@@ -421,7 +425,7 @@
       "y": 3780,
       "w": 1180,
       "h": 820,
-      "title": "D \u00b7 iPad and unfolded split view",
+      "title": "D · iPad and unfolded split view",
       "page": "concepts"
     },
     "poc/c-getmac.dc.html": {
@@ -499,7 +503,7 @@
       "y": 1140,
       "w": 480,
       "h": 700,
-      "title": "Connected \u00b7 recent edits",
+      "title": "Connected · recent edits",
       "page": "mac",
       "radius": 18
     },
@@ -553,7 +557,7 @@
       "y": 2620,
       "w": 380,
       "h": 122,
-      "title": "Notification \u00b7 approval",
+      "title": "Notification · approval",
       "page": "mac",
       "radius": 15
     },
@@ -562,7 +566,7 @@
       "y": 2620,
       "w": 380,
       "h": 78,
-      "title": "Notification \u00b7 QC lost",
+      "title": "Notification · QC lost",
       "page": "mac",
       "radius": 15
     },
@@ -571,7 +575,7 @@
       "y": 2280,
       "w": 340,
       "h": 322,
-      "title": "Menu bar \u00b7 ready",
+      "title": "Menu bar · ready",
       "page": "mac",
       "radius": 15
     },
@@ -580,7 +584,7 @@
       "y": 2280,
       "w": 340,
       "h": 322,
-      "title": "Menu bar \u00b7 connected",
+      "title": "Menu bar · connected",
       "page": "mac",
       "radius": 15
     },
@@ -589,7 +593,7 @@
       "y": 2280,
       "w": 340,
       "h": 516,
-      "title": "Menu bar \u00b7 approve",
+      "title": "Menu bar · approve",
       "page": "mac",
       "radius": 15
     },
@@ -598,7 +602,7 @@
       "y": 2280,
       "w": 340,
       "h": 441,
-      "title": "Menu bar \u00b7 QC lost",
+      "title": "Menu bar · QC lost",
       "page": "mac",
       "radius": 15
     },
@@ -607,7 +611,7 @@
       "y": 2280,
       "w": 340,
       "h": 460,
-      "title": "Menu bar \u00b7 bridge stopped",
+      "title": "Menu bar · bridge stopped",
       "page": "mac",
       "radius": 15
     },
@@ -625,7 +629,7 @@
       "y": 3420,
       "w": 480,
       "h": 700,
-      "title": "Daylight \u00b7 ready",
+      "title": "Daylight · ready",
       "page": "mac",
       "radius": 18
     },
@@ -634,7 +638,7 @@
       "y": 3420,
       "w": 480,
       "h": 700,
-      "title": "Daylight \u00b7 approve",
+      "title": "Daylight · approve",
       "page": "mac",
       "radius": 18
     },
@@ -643,7 +647,7 @@
       "y": 3420,
       "w": 480,
       "h": 700,
-      "title": "Daylight \u00b7 connected",
+      "title": "Daylight · connected",
       "page": "mac",
       "radius": 18
     },
@@ -652,7 +656,7 @@
       "y": 3420,
       "w": 340,
       "h": 322,
-      "title": "Daylight \u00b7 menu bar",
+      "title": "Daylight · menu bar",
       "page": "mac",
       "radius": 15
     },
@@ -661,7 +665,7 @@
       "y": 3420,
       "w": 340,
       "h": 516,
-      "title": "Daylight \u00b7 menu bar approve",
+      "title": "Daylight · menu bar approve",
       "page": "mac",
       "radius": 15
     },
@@ -767,7 +771,7 @@
       "y": 1060,
       "w": 1180,
       "h": 820,
-      "title": "Overview \u00b7 Opto Comp",
+      "title": "Overview · Opto Comp",
       "page": "ipad"
     },
     "ipad/o-row3.dc.html": {
@@ -775,7 +779,7 @@
       "y": 1060,
       "w": 1180,
       "h": 820,
-      "title": "Overview \u00b7 row 3 block",
+      "title": "Overview · row 3 block",
       "page": "ipad"
     },
     "ipad/o-demo.dc.html": {
@@ -783,7 +787,7 @@
       "y": 1060,
       "w": 1180,
       "h": 820,
-      "title": "Overview \u00b7 demo mode",
+      "title": "Overview · demo mode",
       "page": "ipad"
     },
     "ipad/o-save.dc.html": {
@@ -839,7 +843,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 fine steps (hold, slide out)",
+      "title": "Editor · fine steps (hold, slide out)",
       "page": "ipad"
     },
     "ipad/e-pending.dc.html": {
@@ -847,7 +851,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 sending",
+      "title": "Editor · sending",
       "page": "ipad"
     },
     "ipad/e-confirmed.dc.html": {
@@ -855,7 +859,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 confirmed",
+      "title": "Editor · confirmed",
       "page": "ipad"
     },
     "ipad/e-adjusted.dc.html": {
@@ -863,7 +867,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 adjusted by the QC",
+      "title": "Editor · adjusted by the QC",
       "page": "ipad"
     },
     "ipad/e-rejected.dc.html": {
@@ -871,7 +875,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 not applied",
+      "title": "Editor · not applied",
       "page": "ipad"
     },
     "ipad/e-typing.dc.html": {
@@ -879,7 +883,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 typing",
+      "title": "Editor · typing",
       "page": "ipad"
     },
     "ipad/e-invalid.dc.html": {
@@ -887,7 +891,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 out of range",
+      "title": "Editor · out of range",
       "page": "ipad"
     },
     "ipad/e-capture.dc.html": {
@@ -895,7 +899,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 read-only capture",
+      "title": "Editor · read-only capture",
       "page": "ipad"
     },
     "ipad/e-chorus.dc.html": {
@@ -903,7 +907,7 @@
       "y": 2120,
       "w": 1180,
       "h": 820,
-      "title": "Editor \u00b7 option parameter",
+      "title": "Editor · option parameter",
       "page": "ipad"
     },
     "ipad/p-overview.dc.html": {
@@ -911,7 +915,7 @@
       "y": 3180,
       "w": 820,
       "h": 1180,
-      "title": "Portrait \u00b7 overview",
+      "title": "Portrait · overview",
       "page": "ipad"
     },
     "ipad/p-pending.dc.html": {
@@ -919,7 +923,7 @@
       "y": 3180,
       "w": 820,
       "h": 1180,
-      "title": "Portrait \u00b7 sending",
+      "title": "Portrait · sending",
       "page": "ipad"
     },
     "ipad/p-typing.dc.html": {
@@ -927,8 +931,121 @@
       "y": 3180,
       "w": 820,
       "h": 1180,
-      "title": "Portrait \u00b7 typing",
+      "title": "Portrait · typing",
       "page": "ipad"
+    },
+    "duo/u-row.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 626,
+      "h": 890,
+      "title": "Unfolded · row",
+      "page": "duo"
+    },
+    "duo/u-idle.dc.html": {
+      "x": 706,
+      "y": 0,
+      "w": 626,
+      "h": 890,
+      "title": "Unfolded · editing",
+      "page": "duo"
+    },
+    "duo/u-pending.dc.html": {
+      "x": 1412,
+      "y": 0,
+      "w": 626,
+      "h": 890,
+      "title": "Unfolded · sending a value",
+      "page": "duo"
+    },
+    "duo/h-row.dc.html": {
+      "x": 0,
+      "y": 1290,
+      "w": 626,
+      "h": 890,
+      "title": "Half-folded · row",
+      "page": "duo"
+    },
+    "duo/h-edit.dc.html": {
+      "x": 706,
+      "y": 1290,
+      "w": 626,
+      "h": 890,
+      "title": "Half-folded · editing",
+      "page": "duo"
+    },
+    "duo/h-type.dc.html": {
+      "x": 1412,
+      "y": 1290,
+      "w": 626,
+      "h": 890,
+      "title": "Half-folded · typing a value",
+      "page": "duo"
+    },
+    "duo/Fold.dc.html": {
+      "x": 0,
+      "y": 2580,
+      "w": 860,
+      "h": 1000,
+      "title": "Fold prototype (Play)",
+      "page": "duo",
+      "is_interactive": true
+    },
+    "duo/f-half.dc.html": {
+      "x": 940,
+      "y": 2580,
+      "w": 860,
+      "h": 1000,
+      "title": "Fold prototype · half-folded",
+      "page": "duo"
+    },
+    "duo/xl-grid.dc.html": {
+      "x": 0,
+      "y": 3980,
+      "w": 678,
+      "h": 466,
+      "title": "Outer landscape · grid",
+      "page": "duo"
+    },
+    "duo/xl-sheet.dc.html": {
+      "x": 758,
+      "y": 3980,
+      "w": 678,
+      "h": 466,
+      "title": "Outer landscape · block menu",
+      "page": "duo"
+    },
+    "duo/xl-pending.dc.html": {
+      "x": 1516,
+      "y": 3980,
+      "w": 678,
+      "h": 466,
+      "title": "Outer landscape · block menu, sending",
+      "page": "duo"
+    },
+    "duo/x-grid.dc.html": {
+      "x": 0,
+      "y": 4846,
+      "w": 466,
+      "h": 678,
+      "title": "Outer portrait · grid",
+      "page": "duo"
+    },
+    "duo/x-sheet.dc.html": {
+      "x": 546,
+      "y": 4846,
+      "w": 466,
+      "h": 678,
+      "title": "Outer portrait · block menu",
+      "page": "duo"
+    },
+    "duo/x-pending.dc.html": {
+      "x": 1092,
+      "y": 4846,
+      "w": 466,
+      "h": 678,
+      "title": "Outer portrait · block menu, sending",
+      "page": "duo"
     }
   },
   "order": [
@@ -1040,7 +1157,21 @@
     "ipad/e-chorus.dc.html",
     "ipad/p-overview.dc.html",
     "ipad/p-pending.dc.html",
-    "ipad/p-typing.dc.html"
+    "ipad/p-typing.dc.html",
+    "duo/u-row.dc.html",
+    "duo/u-idle.dc.html",
+    "duo/u-pending.dc.html",
+    "duo/h-row.dc.html",
+    "duo/h-edit.dc.html",
+    "duo/h-type.dc.html",
+    "duo/Fold.dc.html",
+    "duo/f-half.dc.html",
+    "duo/xl-grid.dc.html",
+    "duo/xl-sheet.dc.html",
+    "duo/xl-pending.dc.html",
+    "duo/x-grid.dc.html",
+    "duo/x-sheet.dc.html",
+    "duo/x-pending.dc.html"
   ],
   "notes": {
     "pocConnect": {
@@ -1078,7 +1209,7 @@
     "titleA": {
       "x": 0,
       "y": -280,
-      "text": "A \u00b7 Floorboard: the QC grid, under glass",
+      "text": "A · Floorboard: the QC grid, under glass",
       "kind": "title1",
       "maxW": 860,
       "page": "concepts"
@@ -1086,7 +1217,7 @@
     "titleB": {
       "x": 0,
       "y": 980,
-      "text": "B \u00b7 Thumb Lane: one-handed, color-drenched",
+      "text": "B · Thumb Lane: one-handed, color-drenched",
       "kind": "title1",
       "maxW": 860,
       "page": "concepts"
@@ -1094,7 +1225,7 @@
     "titleC": {
       "x": 0,
       "y": 2240,
-      "text": "C \u00b7 Console: precision first, glass only for chrome",
+      "text": "C · Console: precision first, glass only for chrome",
       "kind": "title1",
       "maxW": 860,
       "page": "concepts"
@@ -1102,7 +1233,7 @@
     "titleD": {
       "x": 0,
       "y": 3500,
-      "text": "D \u00b7 Combined: C's grid, B's lane and editor, glass toned down",
+      "text": "D · Combined: C's grid, B's lane and editor, glass toned down",
       "kind": "title1",
       "maxW": 3044,
       "page": "concepts"
