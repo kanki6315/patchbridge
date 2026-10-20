@@ -29,6 +29,26 @@ private struct PatchCableMark: View {
         }
     }
 
+    /// The mark as a menu bar template image; `alpha` dims it while the bridge isn't connected.
+    static func menuBarImage(alpha: CGFloat, description: String) -> NSImage {
+        let image = NSImage(size: NSSize(width: 20, height: 16), flipped: true) { rect in
+            guard let context = NSGraphicsContext.current?.cgContext else { return false }
+            let scale = min(rect.width / 300, rect.height / 250)
+            context.translateBy(x: (rect.width - 300 * scale) / 2, y: (rect.height - 250 * scale) / 2)
+            context.scaleBy(x: scale, y: scale)
+            context.setFillColor(NSColor.black.withAlphaComponent(alpha).cgColor)
+            context.addPath(path(cable).cgPath); context.fillPath(using: .evenOdd)
+            var parts = path(jacks)
+            parts.addRoundedRect(in: CGRect(x: 1, y: 181, width: 37, height: 26), cornerSize: CGSize(width: 3, height: 3))
+            parts.addRoundedRect(in: CGRect(x: 169, y: 45, width: 38, height: 27), cornerSize: CGSize(width: 3, height: 3))
+            context.addPath(parts.cgPath); context.fillPath()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = description
+        return image
+    }
+
     /// Parses the absolute M/L/H/V/C/Q/Z commands the mark uses.
     private static func path(_ data: String) -> Path {
         var tokens: [String] = []
@@ -340,7 +360,7 @@ final class Host: NSObject, NSApplicationDelegate {
         window.contentView = NSHostingView(rootView: BridgeWindow(model: model, exportReport: { [weak self] in self?.exportReport() }))
         window.contentMinSize = NSSize(width: 480, height: 700)
         self.window = window
-        let status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        let status = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         status.button?.target = self; status.button?.action = #selector(togglePopover); statusItem = status
         popover.behavior = .transient
         popover.contentSize = NSSize(width: 360, height: 560)
@@ -355,8 +375,10 @@ final class Host: NSObject, NSApplicationDelegate {
         window.center(); showWindow()
     }
     private func updateStatus() {
-        let symbol = model.phase == .connected ? "square.grid.3x3.fill" : [.failed, .recovering].contains(model.phase) ? "exclamationmark.triangle" : model.phase == .awaitingApproval ? "person.crop.circle.badge.questionmark" : "square.grid.3x3"
-        statusItem?.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Patchbridge: \(model.title)")
+        let description = "Patchbridge: \(model.title)"
+        let attention = [.failed, .recovering].contains(model.phase) ? "exclamationmark.triangle" : model.phase == .awaitingApproval ? "person.crop.circle.badge.questionmark" : nil
+        statusItem?.button?.image = attention.flatMap { NSImage(systemSymbolName: $0, accessibilityDescription: description) }
+            ?? PatchCableMark.menuBarImage(alpha: model.phase == .connected ? 1 : 0.5, description: description)
         statusItem?.button?.toolTip = model.title
     }
     @objc private func togglePopover() {
