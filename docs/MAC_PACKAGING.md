@@ -136,6 +136,16 @@ Build numbering and validation match iOS. Output is retained under
 `build/release-macos/<version>-<build>/`; an existing output directory is never replaced.
 A successful clean upload creates `macos/v<version>-<build>` locally, without pushing.
 Dirty releases require `--allow-dirty` and never create a tag.
+Each release also saves its starting commit and dirty state in `release-source.json`.
+
+The archive retains the host app's dSYM and a UUID-verified helper dSYM built with
+debug information. Automatic symbol upload is disabled for both local export and
+Xcode upload: the bundled prebuilt Python framework, standard-library extensions,
+and protobuf wheel do not include recoverable debug information. This avoids the
+missing-dSYM upload warnings, but Apple will not receive automatic crash symbols.
+Keep the archive for local host/helper crash symbolication. Full runtime symbols
+require matching vendor dSYMs or rebuilding those dependencies with debug information;
+empty dSYMs are not a substitute.
 
 The Mac pipeline first builds the isolated runtime using the local dependencies above,
 then generates `mac/PatchbridgeMac.xcodeproj` from `mac/project.yml` and archives a native

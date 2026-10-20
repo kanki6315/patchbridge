@@ -2,6 +2,7 @@
 """Build, archive, verify and upload Patchbridge for Mac. Upload is the default."""
 import argparse
 import datetime as dt
+import json
 import os
 from pathlib import Path
 import plistlib
@@ -46,6 +47,22 @@ def verify_app(app, team, bundle, version, build):
             raise ValueError('Every embedded binary must use this team’s App Store distribution signature.')
     if not (app / 'Contents/embedded.provisionprofile').is_file():
         raise ValueError('Exported app is missing its distribution provisioning profile.')
+
+
+def archive_helper_symbols(archive, symbols):
+    binary = archive / 'Products/Applications/Patchbridge.app/Contents/MacOS/patchbridge-helper'
+    dwarf = symbols / 'Contents/Resources/DWARF/patchbridge-helper'
+    def uuids(path):
+        return set(re.findall(r'UUID: ([0-9A-Fa-f-]+) \(([^)]+)\)',
+                              run('xcrun', 'dwarfdump', '--uuid', path, capture=True)))
+    expected = uuids(binary)
+    if not expected or uuids(dwarf) != expected:
+        raise ValueError('Helper dSYM UUIDs do not match the archived helper.')
+    if 'DW_TAG_compile_unit' not in run('xcrun', 'dwarfdump', '--debug-info', dwarf, capture=True):
+        raise ValueError('Helper dSYM contains no debug information.')
+    destination = archive / 'dSYMs' / symbols.name
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(symbols, destination)
 
 
 def main(argv=None):
@@ -99,11 +116,15 @@ def main(argv=None):
         if user:
             upload_auth = ['--username', user, '--password', f'@keychain:{password_key}']
     out.mkdir(parents=True)
+    (out / 'release-source.json').write_text(json.dumps(
+        dict(commit=commit, dirty=dirty, version=version, build=build), indent=2) + '\n')
     print(f'Patchbridge Mac {version} ({build}); upload={not args.no_upload}', flush=True)
     # Existing packager validates the isolated runtime closure before it can enter an archive.
     run(sys.executable, 'tools/package_mac.py')
     payload = out / 'Payload.app'
     shutil.copytree(ROOT / 'dist/Patchbridge.app', payload)
+    symbols = out / 'patchbridge-helper.dSYM'
+    shutil.copytree(ROOT / 'dist/dSYMs/patchbridge-helper.dSYM', symbols)
     if not args.skip_tests:
         run(sys.executable, 'tools/check_mac_package.py')
         env = dict(os.environ, PATCHBRIDGE_TEST_BUNDLE='1', PYTHON_BIN=sys.executable)
@@ -119,8 +140,11 @@ def main(argv=None):
         f'PATCHBRIDGE_ROOT={ROOT}', f'PATCHBRIDGE_PAYLOAD={payload}', f'DEVELOPMENT_TEAM={team}',
         f'PRODUCT_BUNDLE_IDENTIFIER={bundle}', f'MARKETING_VERSION={version}', f'CURRENT_PROJECT_VERSION={build}',
         f'CODE_SIGN_ENTITLEMENTS={ROOT / "mac/Patchbridge.entitlements"}')
+    archive_helper_symbols(archive, symbols)
+    # The prebuilt Python framework and protobuf wheel have no recoverable DWARF.
+    # Preserve our real dSYMs locally; don't request an incomplete symbol upload.
     options = dict(method='app-store-connect', destination='export', teamID=team, signingStyle='automatic',
-                   uploadSymbols=True, manageAppVersionAndBuildNumber=False)
+                   uploadSymbols=False, manageAppVersionAndBuildNumber=False)
     if key:
         profile = run(sys.executable, 'asc_profile.py', '--platform', 'mac', '--key-id', key_id,
                       '--issuer-id', issuer, '--key-path', key, '--team', team, '--bundle-id', bundle,
@@ -159,7 +183,7 @@ def main(argv=None):
         if not dirty:
             if run('git', 'rev-parse', 'HEAD', capture=True) != commit or run('git', 'status', '--porcelain', '--', '.', capture=True):
                 raise ValueError('Upload completed but checkout changed; no tag created.')
-            run('git', 'tag', '-a', tag, '-m', f'Patchbridge Mac {version} ({build})')
+            run('git', 'tag', '-a', tag, commit, '-m', f'Patchbridge Mac {version} ({build})')
         print('Uploaded. Apple processing/acceptance remains pending; no Git tags were pushed.')
     else:
         print(f'Verified package: {package}. Nothing uploaded or tagged.')
