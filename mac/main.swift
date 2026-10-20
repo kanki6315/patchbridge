@@ -89,17 +89,17 @@ struct BridgeWindow: View {
                 Button("Export report…", action: exportReport)
                 Spacer()
                 if active {
-                    Menu {
-                        Button("Stop bridge") { model.stop() }
-                        if model.phase == .connected && model.isSimulation {
+                    Button("Stop bridge") { model.stop() }.disabled(model.busy)
+                    if model.phase == .connected && model.isSimulation {
+                        Menu {
                             Button("Simulate gain edit") { model.simulateEdit() }
                             Button("Simulate rejected edit") { model.simulateEdit(rejected: true) }
                             Button("Check connection") { model.refresh() }
                             Button("Simulate USB interruption") { model.simulateUSBRemoval() }
                             Button("Simulate helper failure") { model.simulateFailure() }
-                        }
-                    } label: { Image(systemName: "ellipsis.circle").accessibilityLabel("Bridge actions") }
-                    .menuStyle(.borderlessButton).fixedSize().disabled(model.busy)
+                        } label: { Image(systemName: "ellipsis.circle").accessibilityLabel("Simulation actions") }
+                        .menuStyle(.borderlessButton).fixedSize().disabled(model.busy)
+                    }
                 }
             }.font(.callout)
             if !menuActions.isEmpty {
