@@ -68,3 +68,40 @@ struct PrimaryButton: View {
             .foregroundStyle(theme.signalInk).background(theme.signal, in: Capsule())
     }
 }
+
+/// The device's own name for UI copy: iPad layouts say "iPad" where iPhone ones say "iPhone".
+var deviceName: String { UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone" }
+
+struct AppearanceSettings: View {
+    let theme: PhoneTheme
+    @AppStorage("appearance") private var appearance = "Stage"
+    @AppStorage("matchSystem") private var matchSystem = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Appearance").font(.largeTitle.bold())
+                ForEach(["Stage", "Daylight"], id: \.self) { name in
+                    let preview = PhoneTheme(daylight: name == "Daylight")
+                    Button { appearance = name; matchSystem = false } label: {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack { Text(name).font(.headline); Spacer(); if appearance == name && !matchSystem { Image(systemName: "checkmark.circle.fill") } }
+                            HStack(spacing: 6) { ForEach(["Compressor", "Amp", "Cab", "Delay", "Reverb"], id: \.self) { category in
+                                Text(BlockCategory(category).code).font(.caption2.bold()).frame(maxWidth: .infinity).frame(height: 32).background(BlockCategory(category).color, in: RoundedRectangle(cornerRadius: 7)).foregroundStyle(BlockCategory(category).darkInk ? Color.black : Color.white)
+                            } }
+                        }.padding(20).foregroundStyle(preview.ink).background(preview.surface, in: RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(appearance == name && !matchSystem ? theme.signal : theme.line, lineWidth: 1.5))
+                    }.buttonStyle(.plain).accessibilityIdentifier("theme-\(name)")
+                        .accessibilityValue(appearance == name && !matchSystem ? "Selected" : "Not selected")
+                }
+                Toggle("Match \(deviceName) appearance", isOn: $matchSystem)
+                Text("Block colors").font(.headline)
+                LazyVGrid(columns: dynamicTypeSize.isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 12) {
+                    ForEach(["Dynamics", "Overdrive", "Amp", "Cab", "Modulation", "Delay", "Reverb", "Wah", "Capture", "Pitch", "Utility"], id: \.self) { name in
+                        HStack { Circle().fill(BlockCategory(name).color).frame(width: 12, height: 12); Text(name).font(.footnote) }.frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                Text("Scene colors always come from your QC.").font(.footnote).foregroundStyle(theme.muted)
+            }
+        }
+    }
+}

@@ -5,7 +5,7 @@ settings:
   base:
     SWIFT_VERSION: '5.0'
     IPHONEOS_DEPLOYMENT_TARGET: '17.0'
-    TARGETED_DEVICE_FAMILY: '1'
+    TARGETED_DEVICE_FAMILY: '1,2'
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: TDBAHN96B3
 targets:
@@ -13,7 +13,8 @@ targets:
     type: application
     platform: iOS
     sources:
-      - Patchbridge
+      - path: Patchbridge
+        excludes: [".impeccable/**"]
       - path: ../tests/fixtures/qc-editor.json
         buildPhase: resources
       - ../swift/Sources/PatchbridgeCore/BLECentral.swift
@@ -27,13 +28,14 @@ targets:
       base:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: com.arjunakankipati.patchbridge
-        TARGETED_DEVICE_FAMILY: '1'
+        TARGETED_DEVICE_FAMILY: '1,2'
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_CFBundleDisplayName: Patchbridge
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: Connect to your Mac to view and edit your Quad Cortex preset over Bluetooth.
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: '0.1'
   PatchbridgeUITests:
