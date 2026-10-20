@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duo · Inner screen, flat and half-folded</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div lang="en" style="{{rootStyle}}">
+
+  <!-- Top half: the view. Flat, it carries the full header and named scenes; half-folded, it becomes a display and gives that room to the grid. -->
+  <div style="{{topStyle}}">
+    <header style="display: flex; align-items: center; gap: 12px;">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+        <h1 style="{{titleStyle}}">Tremonti w Mic</h1>
+        <span style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">
+          My Presets · 16
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: {{t.signal}};"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>Unsaved</span>
+        </span>
+      </div>
+      <div role="img" aria-label="{{sceneAria}}" aria-hidden="{{flatAria}}" style="{{stripWrapStyle}}">
+        <span style="font-size: 13px; font-weight: 600; white-space: nowrap;">Scene F · RHYTHM</span>
+        <div aria-hidden="true" style="display: flex; gap: 2px;">
+          <sc-for list="{{strip}}" as="s" hint-placeholder-count="8">
+            <span style="{{s.cellStyle}}">
+              <span style="{{s.dotStyle}}"></span>
+              <span style="{{s.letterStyle}}">{{s.letter}}</span>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+      <button type="button" aria-label="Connection details: Studio Mac, QC connected" style="height: 40px; flex: none; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; border: 0; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; font-size: 15px; cursor: pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M20 6L9 17l-5-5"></path></svg>
+        <span style="{{pillLabelStyle}}">Studio Mac</span>
+      </button>
+    </header>
+
+    <div role="img" aria-label="{{sceneAria}}" aria-hidden="{{halfAria}}" style="{{chipsStyle}}">
+      <sc-for list="{{chips}}" as="s" hint-placeholder-count="8">
+        <span style="{{s.cellStyle}}">
+          <span style="display: flex; align-items: center; gap: 6px;">
+            <span style="{{s.dotStyle}}"></span>
+            <span style="{{s.letterStyle}}">{{s.letter}}</span>
+          </span>
+          <span style="{{s.nameStyle}}">{{s.name}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <section aria-label="Signal chain, 4 rows by 8 slots" style="flex: 1; min-height: 0; box-sizing: border-box; padding: 5px; display: flex; flex-direction: column; gap: 2px; border-radius: 20px; background: {{t.surface}}; box-shadow: {{t.panelEdge}};">
+      <sc-for list="{{grid}}" as="row" hint-placeholder-count="4">
+        <div style="{{row.bandStyle}}">
+          <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="8">
+            <button type="button" aria-label="{{c.aria}}" style="{{c.style}}"><span style="{{c.codeStyle}}">{{c.code}}</span><span style="{{c.nameStyle}}">{{c.name}}</span></button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </section>
+  </div>
+
+  <!-- The hinge. Flat, a hairline marks where the view ends and the controls begin; folded, the crease shadow fades in. -->
+  <div aria-hidden="true" style="{{creaseStyle}}"></div>
+  <div aria-hidden="true" style="position: absolute; z-index: 2; left: 24px; right: 24px; top: 445px; height: 1px; background: {{t.divider}};"></div>
+
+  <!-- Bottom half: the control deck. Identical in both postures, so folding never moves what is under your fingers. -->
+  <div style="{{deckStyle}}">
+    <div aria-hidden="true" style="{{deckShadeStyle}}"></div>
+
+    <sc-if value="{{isRow}}" hint-placeholder-val="{{true}}">
+      <div style="height: 44px; flex: none; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 17px; font-weight: 600;">Row 1</span>
+        <span style="font-size: 13px; color: {{t.muted}};">7 blocks · 1 empty</span>
+        <span style="flex: 1;"></span>
+        <button type="button" style="{{savePill}}">Save to My Presets 16</button>
+      </div>
+      <div style="position: relative;">
+        <div aria-hidden="true" style="position: absolute; left: 19px; top: 25px; bottom: 25px; width: 2px; background: {{t.hairline}};"></div>
+        <ol aria-label="Row 1 blocks" style="list-style: none; margin: 0; padding: 0;">
+          <sc-for list="{{lane}}" as="b" hint-placeholder-count="7">
+            <li style="position: relative; height: 50px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid {{t.divider}};">
+              <span aria-hidden="true" style="{{b.swatchStyle}}">{{b.code}}</span>
+              <a href="#" aria-label="{{b.aria}}" style="flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none;">
+                <span style="flex: none; width: 168px; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.title}}</span>
+                <span style="flex: 1; min-width: 0; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.summary}}</span>
+                <sc-if value="{{b.locked}}" hint-placeholder-val="{{false}}">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+                </sc-if>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+              </a>
+            </li>
+          </sc-for>
+        </ol>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isEditor}}" hint-placeholder-val="{{false}}">
+      <div style="height: 44px; flex: none; display: flex; align-items: center; gap: 10px;">
+        <a href="#" aria-label="Back to row 1" style="height: 40px; padding: 0 12px 0 4px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+          Row 1
+        </a>
+        <span aria-hidden="true" style="width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: {{cmp.bg}}; color: {{cmp.ink}}; font-size: 10px; font-weight: 700; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4);">CMP</span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+          <span style="font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Opto Comp (M)</span>
+          <span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap;">Compressor · slot 2</span>
+        </span>
+        <sc-if value="{{notTyping}}" hint-placeholder-val="{{true}}">
+          <button type="button" aria-label="Save to My Presets 16" style="{{savePill}}">Save</button>
+        </sc-if>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex; gap: 20px;">
+        <section aria-label="Threshold control" style="position: relative; width: 280px; flex: none; height: 288px; display: flex; flex-direction: column; align-items: center;">
+          <span style="font-size: 17px; font-weight: 600;">Threshold</span>
+          <div style="position: relative; width: 240px; height: 222px;">
+            <svg width="240" height="240" viewBox="0 0 240 240" role="img" aria-label="{{gaugeAria}}" style="position: absolute; top: 0; left: 0;">
+              <path d="{{g.track}}" fill="none" stroke="{{t.track}}" stroke-width="16" stroke-linecap="round"></path>
+              <path d="{{g.solid}}" fill="none" stroke="{{arcColor}}" stroke-width="16" stroke-linecap="round"></path>
+              <path d="{{g.prov}}" fill="none" stroke="{{arcColor}}" stroke-width="16" stroke-dasharray="3 6" opacity="{{g.provOpacity}}"></path>
+              <line x1="{{g.tick.x1}}" y1="{{g.tick.y1}}" x2="{{g.tick.x2}}" y2="{{g.tick.y2}}" stroke="{{t.ink}}" stroke-width="3" stroke-linecap="round" opacity="{{g.provOpacity}}"></line>
+              <circle cx="{{g.thumb.x}}" cy="{{g.thumb.y}}" r="13" fill="#ffffff" stroke="{{t.ground}}" stroke-width="3"></circle>
+            </svg>
+            <button type="button" aria-label="{{valueAria}}" style="{{valueStyle}}">
+              <span style="font-size: 48px; font-weight: 700; letter-spacing: -0.02em;">{{value}}</span>
+              <sc-if value="{{typing}}" hint-placeholder-val="{{false}}">
+                <span aria-hidden="true" style="align-self: center; width: 3px; height: 40px; margin-left: -3px; border-radius: 2px; background: {{t.signal}};"></span>
+              </sc-if>
+              <span style="font-size: 18px; font-weight: 600; color: {{t.muted}};">dB</span>
+            </button>
+            <span style="position: absolute; left: 64px; top: 182px; font-size: 12px; color: {{t.muted}};">−60</span>
+            <span style="position: absolute; right: 64px; top: 182px; font-size: 12px; color: {{t.muted}};">+12</span>
+          </div>
+          <sc-if value="{{notTyping}}" hint-placeholder-val="{{true}}">
+            <button type="button" aria-label="Decrease threshold by 0.1" style="{{stepStyle}}; left: 0;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+            </button>
+            <button type="button" aria-label="Increase threshold by 0.1" style="{{stepStyle}}; right: 0;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
+            </button>
+          </sc-if>
+          <div role="status" style="position: absolute; left: 0; right: 0; top: 262px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 500; color: {{t.signal}};">
+            <sc-if value="{{pending}}" hint-placeholder-val="{{false}}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-dasharray="3 3" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle></svg>
+              <span>Sending…</span>
+            </sc-if>
+          </div>
+        </section>
+
+        <sc-if value="{{notTyping}}" hint-placeholder-val="{{true}}">
+          <div role="group" aria-label="Parameters" style="flex: 1; min-width: 0; align-self: flex-start; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+            <sc-for list="{{tiles}}" as="p" hint-placeholder-count="7">
+              <button type="button" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" style="{{p.style}}">
+                <span style="display: flex; align-items: center; gap: 4px; max-width: 100%; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  <sc-if value="{{p.locked}}" hint-placeholder-val="{{false}}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+                  </sc-if>
+                  <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{p.label}}</span>
+                </span>
+                <span style="{{p.valueStyle}}">{{p.value}}<span style="font-size: 12px; font-weight: 500; margin-left: 3px; opacity: 0.8;">{{p.unit}}</span></span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{typing}}" hint-placeholder-val="{{false}}">
+          <div role="dialog" aria-label="Type a value for Threshold" style="flex: 1; min-width: 0; height: 300px; box-sizing: border-box; padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; border-radius: 20px; background: {{t.sheet}}; backdrop-filter: blur(30px) saturate(1.7); -webkit-backdrop-filter: blur(30px) saturate(1.7); box-shadow: {{t.glassEdge}};">
+            <div style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 2px;">
+              <button type="button" style="height: 40px; padding: 0 6px; border: 0; background: transparent; color: inherit; font: inherit; font-size: 16px; cursor: pointer;">Cancel</button>
+              <span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap;">−60.0 to +12.0 dB</span>
+            </div>
+            <div style="flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 6px;">
+              <sc-for list="{{keys}}" as="k" hint-placeholder-count="14">
+                <button type="button" aria-label="{{k.aria}}" style="{{k.style}}">{{k.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"posture":{"editor":"enum","options":["flat","half"],"default":"flat","section":"Screen"},"state":{"editor":"enum","options":["row","edit","pending","type"],"default":"edit","section":"Screen"},"fold3d":{"editor":"boolean","default":false,"section":"Screen"},"$preview":{"width":626,"height":890}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const half = (this.props.posture ?? 'flat') === 'half';
+    const state = this.props.state ?? 'edit';
+    const fold3d = !!this.props.fold3d;
+    const typing = state === 'type', pending = state === 'pending', rowState = state === 'row';
+    const t = { ground: 'oklch(0.16 0.008 110)', surface: 'oklch(0.2 0.009 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', hairline: 'oklch(0.3 0.01 110)', divider: 'oklch(1 0 0 / 0.07)',
+      glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
+      sheet: 'oklch(0.22 0.01 110 / 0.78)', fill: 'oklch(1 0 0 / 0.1)', band: 'oklch(1 0 0 / 0.09)', track: 'oklch(1 0 0 / 0.13)', tileFill: 'oklch(1 0 0 / 0.08)', key: 'oklch(1 0 0 / 0.12)',
+      signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)' };
+    // One motion for the whole fold: ease-out-quint. Layout-driven pieces (the scene row collapsing, the grid growing) share it so they move as one.
+    const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
+    const tr = (props, ms = 560, delay = 0) => props.map((p) => p + ' ' + ms + 'ms ' + ease + ' ' + delay + 'ms').join(', ');
+    const CAT = {
+      wah: { code: 'WAH', kind: 'Wah', bg: 'oklch(0.52 0.12 200)', ink: '#ffffff' },
+      cmp: { code: 'CMP', kind: 'Compressor', bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)' },
+      cap: { code: 'CAP', kind: 'Neural Capture', bg: 'oklch(0.72 0.12 15)', ink: 'oklch(0.2 0.03 15)' },
+      drv: { code: 'DRV', kind: 'Overdrive', bg: 'oklch(0.76 0.16 65)', ink: 'oklch(0.2 0.04 65)' },
+      pit: { code: 'PIT', kind: 'Pitch', bg: 'oklch(0.55 0.16 290)', ink: '#ffffff' },
+      utl: { code: 'UTL', kind: 'Utility', bg: 'oklch(0.62 0.012 110)', ink: 'oklch(0.16 0.01 110)' },
+      cab: { code: 'CAB', kind: 'Cab', bg: 'oklch(0.52 0.05 50)', ink: '#ffffff' },
+      mod: { code: 'MOD', kind: 'Modulation', bg: 'oklch(0.58 0.18 330)', ink: '#ffffff' },
+      rev: { code: 'REV', kind: 'Reverb', bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)' }
+    };
+    const RO = 'Read-only';
+    const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
+    // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
+    const rows = [
+      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'Eltron 30', 'Capture OG TS808', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
+      [null, null, B('utl', 'Volume', 'Curve Log'), null, null, null, null, null],
+      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms')],
+      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S', 'Cab', true), null, null, null]
+    ];
+    const cellBase = { minWidth: '0', boxSizing: 'border-box', padding: '7px 5px 7px 6px', borderRadius: '12px', border: '0', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', font: 'inherit', textAlign: 'left', cursor: 'pointer' };
+    const grid = rows.map((row, ri) => ({
+      bandStyle: { flex: '1', minHeight: '0', display: 'grid', gridTemplateColumns: 'repeat(8, minmax(0, 1fr))', gap: '5px', padding: '3px', borderRadius: '15px', background: rowState && ri === 0 ? t.band : 'transparent', boxShadow: rowState && ri === 0 ? 'inset 0 0 0 1.5px ' + t.signal : 'none' },
+      cells: row.map((b, si) => {
+        const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
+        if (!b) return { code: '', name: '', aria: slot + ', empty', style: { ...cellBase, background: 'transparent', border: '1px solid ' + t.hairline, cursor: 'default' }, codeStyle: {}, nameStyle: {} };
+        const c = CAT[b.cat], sel = !rowState && ri === 0 && si === 1;
+        return { code: c.code, name: b.title, aria: slot + ', ' + b.title + ', ' + c.kind + (sel ? ', selected' : ''),
+          style: { ...cellBase, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)', outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' },
+          codeStyle: { fontSize: '11px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: '1' },
+          nameStyle: { maxWidth: '100%', fontSize: '11px', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: '1.2', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical' } };
+      })
+    }));
+
+    const sw = { position: 'relative', width: '40px', height: '40px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', fontSize: '11px', fontWeight: 700, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' };
+    const lane = rows[0].map((b, si) => b && { ...b, slot: si + 1 }).filter(Boolean).map((b) => ({
+      code: CAT[b.cat].code, title: b.title, summary: b.summary, locked: b.locked,
+      aria: b.title + ', ' + CAT[b.cat].kind + ', slot ' + b.slot + '. ' + b.summary,
+      swatchStyle: { ...sw, background: CAT[b.cat].bg, color: CAT[b.cat].ink }
+    }));
+
+    // Scene names and colors come from the QC and never follow the theme. Blank names fall back to the letter alone.
+    const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];
+    const ACTIVE = 5, letters = 'ABCDEFGH';
+    const dot = (on, color, size) => ({ width: size + 'px', height: size + 'px', flex: 'none', borderRadius: '50%', background: color, boxShadow: on ? '0 0 10px ' + color : 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' });
+    const chips = QC_SCENES.map(([label, color], i) => {
+      const on = i === ACTIVE;
+      return { letter: letters[i], name: label,
+        cellStyle: { height: '52px', minWidth: '0', boxSizing: 'border-box', padding: '0 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', borderRadius: '14px', background: on ? t.fill : 'transparent', boxShadow: on ? 'inset 0 0 0 1.5px ' + color : 'none' },
+        dotStyle: dot(on, color, on ? 11 : 9),
+        letterStyle: { fontSize: '14px', fontWeight: on ? 700 : 600, color: on ? t.ink : t.muted, lineHeight: '1' },
+        nameStyle: { maxWidth: '100%', height: '11px', fontSize: '11px', fontWeight: on ? 700 : 500, color: on ? t.ink : t.muted, lineHeight: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } };
+    });
+    const strip = QC_SCENES.map(([, color], i) => {
+      const on = i === ACTIVE;
+      return { letter: letters[i],
+        cellStyle: { width: '28px', height: '34px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '9px', background: on ? t.fill : 'transparent', boxShadow: on ? 'inset 0 0 0 1.5px ' + color : 'none' },
+        dotStyle: dot(on, color, on ? 10 : 8),
+        letterStyle: { fontSize: '11px', fontWeight: on ? 700 : 500, color: on ? t.ink : t.muted, lineHeight: '1' } };
+    });
+
+    const cx = 120, cy = 120, r = 96, from = 0.359, to = 0.4167;
+    const ang = (v) => (135 + v * 270) * Math.PI / 180;
+    const pt = (v, rad = r) => ({ x: +(cx + rad * Math.cos(ang(v))).toFixed(2), y: +(cy + rad * Math.sin(ang(v))).toFixed(2) });
+    const arc = (a, z) => { const p0 = pt(a), p1 = pt(Math.max(z, a + 0.0005)); const large = (z - a) * 270 > 180 ? 1 : 0; return 'M ' + p0.x + ' ' + p0.y + ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p1.x + ' ' + p1.y; };
+    const ti = pt(from, 80), to2 = pt(from, 112);
+    // While typing, the arc stays at the QC's value; nothing moves until Set.
+    const g = { track: arc(0, 1), solid: arc(0, from), prov: arc(from, to), provOpacity: pending ? 1 : 0, tick: { x1: ti.x, y1: ti.y, x2: to2.x, y2: to2.y }, thumb: pt(pending ? to : from) };
+    const value = typing ? '−30' : pending ? '−30.0' : '−34.2';
+    const arcColor = 'oklch(0.76 0.12 160)';
+
+    const tileBase = { height: '62px', minWidth: '0', boxSizing: 'border-box', padding: '0 11px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: '2px', borderRadius: '18px', border: '1.5px solid transparent', background: t.tileFill, boxShadow: t.glassEdge, color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' };
+    const params = [['Threshold', pending ? '−30.0' : '−34.2', 'dB'], ['Ratio', '4.0', ''], ['Attack', '15.0', 'ms'], ['Release', '400.0', 'ms'], ['Makeup', '+8.0', 'dB'], ['Mix', '100.0', '%'], ['Gain Reduction', 'Meter', '', true]];
+    const tiles = params.map(([label, v, unit, locked], i) => ({
+      label, value: v, unit, locked: !!locked, pressed: i === 0 ? 'true' : 'false',
+      aria: label + ', ' + (locked ? 'read-only meter' : v + ' ' + unit),
+      style: locked ? { ...tileBase, background: 'oklch(1 0 0 / 0.035)', boxShadow: 'inset 0 0 0 1px oklch(1 0 0 / 0.1)', cursor: 'default' }
+        : i === 0 && pending ? { ...tileBase, border: '1.5px dashed ' + t.signal }
+        : i === 0 ? { ...tileBase, background: 'oklch(0.76 0.12 160 / 0.2)', border: '1.5px solid ' + arcColor } : tileBase,
+      valueStyle: locked ? { fontSize: '13px', fontWeight: 500, color: t.muted, whiteSpace: 'nowrap' } : { fontSize: '19px', fontWeight: 600, whiteSpace: 'nowrap' }
+    }));
+
+    const keyBase = { minHeight: '0', border: '0', borderRadius: '12px', background: t.key, boxShadow: t.glassEdge, color: 'inherit', font: 'inherit', fontSize: '22px', cursor: 'pointer' };
+    const K = (label, aria, style = {}) => ({ label, aria: aria || label, style: { ...keyBase, ...style } });
+    const keys = [K('1'), K('2'), K('3'), K('⌫', 'Delete', { fontSize: '19px' }), K('4'), K('5'), K('6'), K('±', 'Change sign'), K('7'), K('8'), K('9'), K('.', 'Decimal point'),
+      K('0', '0', { gridColumn: 'span 3' }), K('Set', 'Set −30 dB', { background: t.signal, color: t.signalInk, fontSize: '17px', fontWeight: 600 })];
+
+    // Each half is its own surface so the 3D fold can hinge them apart at y = 445.
+    const halfBase = { position: 'absolute', left: '0', right: '0', height: '445px', boxSizing: 'border-box', background: t.ground };
+    return {
+      t, grid, lane, chips, strip, g, tiles, keys, value, arcColor, typing, pending, notTyping: !typing, cmp: CAT.cmp,
+      isRow: rowState, isEditor: !rowState,
+      sceneAria: 'Scene F, RHYTHM, is active on the QC. ' + QC_SCENES.map((s, i) => letters[i] + (s[0] ? ' ' + s[0] : '')).join(', '),
+      flatAria: half ? 'false' : 'true', halfAria: half ? 'true' : 'false',
+      rootStyle: { width: '626px', height: '890px', position: 'relative', overflow: fold3d ? 'visible' : 'hidden', background: fold3d ? 'transparent' : t.ground, color: t.ink, fontFamily: "-apple-system, 'SF Pro Text', Inter, system-ui, sans-serif", fontVariantNumeric: 'tabular-nums', perspective: fold3d ? '2200px' : 'none', perspectiveOrigin: '50% 30%' },
+      topStyle: { ...halfBase, top: '0', zIndex: 1, padding: half ? '48px 24px 18px' : '48px 24px 12px', display: 'flex', flexDirection: 'column', gap: '12px', borderRadius: fold3d ? '44px 44px 0 0' : '0', transition: tr(['padding']) },
+      titleStyle: { margin: '0', fontSize: half ? '22px' : '30px', lineHeight: '1.1', fontWeight: 700, letterSpacing: half ? '-0.015em' : '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', transition: tr(['font-size', 'letter-spacing']) },
+      // The named scene row folds up into the header strip; the grid takes the space it frees.
+      chipsStyle: { display: 'grid', gridTemplateColumns: 'repeat(8, minmax(0, 1fr))', gap: '6px', height: half ? '0px' : '52px', marginBottom: half ? '-12px' : '0px', overflow: 'hidden', opacity: half ? 0 : 1, transform: half ? 'translateY(-14px) scale(0.96)' : 'none', transformOrigin: '100% 0', transition: tr(['height', 'margin-bottom'], 560) + ', ' + tr(['opacity', 'transform'], 320) },
+      stripWrapStyle: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', maxWidth: half ? '260px' : '0px', overflow: 'hidden', opacity: half ? 1 : 0, transform: half ? 'none' : 'translateY(10px)', transition: tr(['max-width'], 560) + ', ' + tr(['opacity', 'transform'], 360, half ? 120 : 0) },
+      pillLabelStyle: { display: 'inline-block', maxWidth: half ? '0px' : '110px', marginLeft: half ? '0px' : '7px', overflow: 'hidden', whiteSpace: 'nowrap', opacity: half ? 0 : 1, transition: tr(['max-width', 'margin-left', 'opacity'], 420) },
+      creaseStyle: { position: 'absolute', zIndex: 3, left: '0', right: '0', top: '435px', height: '20px', pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent, oklch(0 0 0 / 0.4) 50%, transparent)', opacity: half ? 1 : 0, transition: tr(['opacity'], 480, half ? 160 : 0) },
+      // In 3D the deck hinges back to lie on the table while the view stays upright facing the player.
+      deckStyle: { ...halfBase, top: '445px', zIndex: 0, padding: half ? '20px 24px 20px' : '14px 24px 20px', display: 'flex', flexDirection: 'column', gap: '10px', borderRadius: fold3d ? '0 0 44px 44px' : '0', transformOrigin: '50% 0', transform: fold3d && half ? 'rotateX(64deg)' : 'rotateX(0deg)', transition: tr(['padding'], 560) + ', ' + tr(['transform'], 760) },
+      deckShadeStyle: { position: 'absolute', inset: '0', borderRadius: 'inherit', pointerEvents: 'none', background: 'linear-gradient(to bottom, oklch(0 0 0 / 0.45), transparent 40%)', opacity: fold3d && half ? 1 : 0, transition: tr(['opacity'], 760) },
+      gaugeAria: 'Threshold ' + value + ' dB' + (pending ? ', sending, QC at −34.2' : ''),
+      valueAria: typing ? 'Threshold, typing −30' : 'Threshold ' + value + ' dB. Tap to type a value',
+      valueStyle: { position: 'absolute', left: '50%', top: '87px', transform: 'translateX(-50%)', font: 'inherit', height: '66px', padding: '0 12px', boxSizing: 'border-box', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '5px', lineHeight: '66px', whiteSpace: 'nowrap', border: '0', borderRadius: '18px', background: typing ? 'oklch(1 0 0 / 0.08)' : 'transparent', boxShadow: typing ? 'inset 0 0 0 2px ' + t.signal : 'none', outline: pending ? '1.5px dashed ' + t.signal : 'none', outlineOffset: '-1.5px', color: 'inherit', cursor: 'text' },
+      stepStyle: 'position: absolute; top: 200px; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: ' + t.glass + '; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: ' + t.glassEdge + '; color: inherit; font: inherit; cursor: pointer',
+      savePill: { height: '44px', padding: '0 22px', border: '0', borderRadius: '999px', background: t.signal, color: t.signalInk, font: 'inherit', fontSize: '15px', fontWeight: 600, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)', cursor: 'pointer', whiteSpace: 'nowrap', opacity: pending ? 0.45 : 1 }
+    };
+  }
+}
+</script>
+</body>
+</html>

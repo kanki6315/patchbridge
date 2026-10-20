@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duo · Folded, outer screen landscape</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div lang="en" style="width: 678px; height: 466px; position: relative; overflow: hidden; box-sizing: border-box; padding: 14px 36px; display: flex; flex-direction: column; gap: 10px; background: {{t.ground}}; color: {{t.ink}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <header style="height: 44px; flex: none; display: flex; align-items: center; gap: 10px;">
+    <button type="button" aria-label="Connection details: Studio Mac, QC connected" style="width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; cursor: pointer;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+    </button>
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+      <h1 style="margin: 0; font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tremonti w Mic</h1>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: {{t.signal}};"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>Unsaved</span>
+    </div>
+    <div role="img" aria-label="{{sceneAria}}" style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 13px; font-weight: 600; white-space: nowrap;">F · RHYTHM</span>
+      <div aria-hidden="true" style="display: flex; gap: 2px;">
+        <sc-for list="{{scenes}}" as="s" hint-placeholder-count="8">
+          <span style="{{s.cellStyle}}">
+            <span style="{{s.dotStyle}}"></span>
+            <span style="{{s.letterStyle}}">{{s.letter}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+    <button type="button" aria-label="Save to My Presets 16" style="height: 40px; padding: 0 20px; flex: none; border: 0; border-radius: 999px; background: {{t.signal}}; color: {{t.signalInk}}; font: inherit; font-size: 15px; font-weight: 600; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4); cursor: pointer;">Save</button>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 14px;">
+    <section aria-label="Signal chain, 4 rows by 8 slots" style="flex: 1; min-width: 0; box-sizing: border-box; padding: 8px; display: flex; flex-direction: column; gap: 5px; border-radius: 20px; background: {{t.surface}}; box-shadow: {{t.panelEdge}};">
+      <sc-for list="{{grid}}" as="row" hint-placeholder-count="4">
+        <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px;">
+          <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="8">
+            <button type="button" aria-label="{{c.aria}}" style="{{c.style}}"><span style="{{c.codeStyle}}">{{c.code}}</span><sc-if value="{{named}}" hint-placeholder-val="{{true}}"><span style="{{c.nameStyle}}">{{c.name}}</span></sc-if></button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </section>
+
+    <!-- Block menu: a side panel instead of a bottom sheet, so no row of the grid is ever covered. Tapping another block swaps its contents. -->
+    <sc-if value="{{sheet}}" hint-placeholder-val="{{false}}">
+      <div role="dialog" aria-label="Opto Comp (M)" style="width: 280px; flex: none; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 8px; border-radius: 28px; background: {{t.sheet}}; backdrop-filter: blur(30px) saturate(1.7); -webkit-backdrop-filter: blur(30px) saturate(1.7); box-shadow: {{t.panelFloat}};">
+        <div style="height: 44px; display: flex; align-items: center; gap: 10px;">
+          <span aria-hidden="true" style="width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: {{cmp.bg}}; color: {{cmp.ink}}; font-size: 11px; font-weight: 700; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4);">CMP</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+            <span style="font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Opto Comp (M)</span>
+            <span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap;">Row 1, slot 2</span>
+          </span>
+          <button type="button" aria-label="Close" style="width: 32px; height: 32px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: {{t.fill}}; color: {{t.muted}}; cursor: pointer;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+
+        <ul role="list" aria-label="Key parameters" style="list-style: none; margin: 0; padding: 0;">
+          <sc-for list="{{rowsP}}" as="p" hint-placeholder-count="4">
+            <li style="display: flex; flex-direction: column; border-bottom: 1px solid {{t.divider}};">
+              <span style="height: 54px; display: flex; align-items: center; gap: 5px;">
+                <span style="flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.label}}</span>
+                <button type="button" aria-label="{{p.decAria}}" style="{{stepStyle}}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+                </button>
+                <button type="button" aria-label="{{p.valueAria}}" style="{{p.valueStyle}}">{{p.value}}<span style="font-size: 12px; font-weight: 500; margin-left: 3px; color: {{t.muted}};">{{p.unit}}</span></button>
+                <button type="button" aria-label="{{p.incAria}}" style="{{stepStyle}}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
+                </button>
+              </span>
+              <sc-if value="{{p.pending}}" hint-placeholder-val="{{false}}">
+                <span role="status" style="margin: -6px 0 8px; display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: {{t.signal}}; white-space: nowrap;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-dasharray="3 3" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle></svg>
+                  Sending −30.0 · QC at −34.2
+                </span>
+              </sc-if>
+            </li>
+          </sc-for>
+        </ul>
+
+        <span style="flex: 1;"></span>
+        <a href="#" style="height: 44px; padding: 0 12px 0 16px; display: flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.fill}}; color: inherit; text-decoration: none; font-size: 15px; font-weight: 600;">
+          <span style="flex: 1;">Open editor</span>
+          <span style="font-size: 13px; font-weight: 400; color: {{t.muted}};">All 7</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: 0.7;"><path d="M9 18l6-6-6-6"></path></svg>
+        </a>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["grid","sheet","pending"],"default":"grid","section":"Screen"},"$preview":{"width":678,"height":466}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const state = this.props.state ?? 'grid';
+    const sheet = state !== 'grid', pending = state === 'pending';
+    const t = { ground: 'oklch(0.16 0.008 110)', surface: 'oklch(0.2 0.009 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', hairline: 'oklch(0.3 0.01 110)', divider: 'oklch(1 0 0 / 0.07)',
+      glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
+      panelFloat: 'inset 0 1px 0 oklch(1 0 0 / 0.16), 0 20px 50px oklch(0 0 0 / 0.35)', sheet: 'oklch(0.24 0.01 110 / 0.86)',
+      fill: 'oklch(1 0 0 / 0.1)', signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)' };
+    const CAT = {
+      wah: { code: 'WAH', kind: 'Wah', bg: 'oklch(0.52 0.12 200)', ink: '#ffffff' },
+      cmp: { code: 'CMP', kind: 'Compressor', bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)' },
+      cap: { code: 'CAP', kind: 'Neural Capture', bg: 'oklch(0.72 0.12 15)', ink: 'oklch(0.2 0.03 15)' },
+      drv: { code: 'DRV', kind: 'Overdrive', bg: 'oklch(0.76 0.16 65)', ink: 'oklch(0.2 0.04 65)' },
+      pit: { code: 'PIT', kind: 'Pitch', bg: 'oklch(0.55 0.16 290)', ink: '#ffffff' },
+      utl: { code: 'UTL', kind: 'Utility', bg: 'oklch(0.62 0.012 110)', ink: 'oklch(0.16 0.01 110)' },
+      cab: { code: 'CAB', kind: 'Cab', bg: 'oklch(0.52 0.05 50)', ink: '#ffffff' },
+      mod: { code: 'MOD', kind: 'Modulation', bg: 'oklch(0.58 0.18 330)', ink: '#ffffff' },
+      rev: { code: 'REV', kind: 'Reverb', bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)' }
+    };
+    // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
+    const rows = [
+      [['wah', 'Bad Horse'], ['cmp', 'Opto Comp (M)'], ['cap', 'Eltron 30'], ['drv', 'Myth Drive'], ['pit', 'Transpose'], ['pit', 'Poly Octaver'], ['utl', 'Adaptive Gate'], null],
+      [null, null, ['utl', 'Volume'], null, null, null, null, null],
+      [null, ['cap', 'Eltron 30'], null, ['cap', 'Eltron 30'], ['cab', '412 CA Trad S'], null, ['mod', 'Dual Chorus'], ['rev', 'Plate Tight']],
+      [null, ['cap', 'Eltron 30'], null, ['cap', 'Eltron 30'], ['cab', '412 CA Trad S'], null, null, null]
+    ];
+    // Full width, the grid shows names. With the menu open it narrows to codes, so every block stays in reach.
+    const named = !sheet;
+    const cellBase = named
+      ? { minWidth: '0', boxSizing: 'border-box', padding: '7px 5px 7px 6px', borderRadius: '12px', border: '0', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', font: 'inherit', textAlign: 'left', cursor: 'pointer' }
+      : { minWidth: '0', boxSizing: 'border-box', padding: '0', borderRadius: '9px', border: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', font: 'inherit', cursor: 'pointer' };
+    const grid = rows.map((row, ri) => ({
+      cells: row.map((b, si) => {
+        const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
+        if (!b) return { code: '', name: '', aria: slot + ', empty', style: { ...cellBase, background: 'transparent', border: '1px solid ' + t.hairline, cursor: 'default' }, codeStyle: {}, nameStyle: {} };
+        const c = CAT[b[0]], sel = sheet && ri === 0 && si === 1;
+        return { code: c.code, name: b[1], aria: slot + ', ' + b[1] + ', ' + c.kind + (sel ? ', selected' : ''),
+          style: { ...cellBase, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)', outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' },
+          codeStyle: { fontSize: named ? '11px' : '10px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: '1' },
+          nameStyle: { maxWidth: '100%', fontSize: '11px', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: '1.2', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical' } };
+      })
+    }));
+
+    const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];
+    const ACTIVE = 5, letters = 'ABCDEFGH';
+    const scenes = QC_SCENES.map(([, color], i) => {
+      const on = i === ACTIVE;
+      return { letter: letters[i],
+        cellStyle: { width: '26px', height: '36px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '9px', background: on ? t.fill : 'transparent', boxShadow: on ? 'inset 0 0 0 1.5px ' + color : 'none' },
+        dotStyle: { width: on ? '10px' : '8px', height: on ? '10px' : '8px', borderRadius: '50%', background: color, boxShadow: on ? '0 0 8px ' + color : 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' },
+        letterStyle: { fontSize: '11px', fontWeight: on ? 700 : 500, color: on ? t.ink : t.muted, lineHeight: '1' } };
+    });
+
+    // The first four editable controls. Everything else is one tap away in the full editor.
+    const P = (label, value, unit, extra = {}) => ({ label, value, unit, ...extra });
+    const params = [P('Threshold', pending ? '−30.0' : '−34.2', 'dB', { pending }), P('Ratio', '4.0', ''), P('Attack', '15.0', 'ms'), P('Makeup', '+8.0', 'dB')];
+    const valueBase = { font: 'inherit', width: '76px', height: '40px', flex: 'none', boxSizing: 'border-box', padding: '0', display: 'flex', alignItems: 'baseline', justifyContent: 'center', lineHeight: '40px', border: '0', borderRadius: '12px', background: 'transparent', color: 'inherit', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap', cursor: 'text' };
+    const rowsP = params.map((p) => ({
+      ...p, pending: !!p.pending,
+      valueStyle: p.pending ? { ...valueBase, outline: '1.5px dashed ' + t.signal, outlineOffset: '-1.5px' } : valueBase,
+      valueAria: p.label + ' ' + p.value + ' ' + p.unit + (p.pending ? ', sending, QC at −34.2' : '') + '. Tap to type a value',
+      decAria: 'Decrease ' + p.label.toLowerCase() + ' by 0.1', incAria: 'Increase ' + p.label.toLowerCase() + ' by 0.1'
+    }));
+
+    return {
+      t, grid, scenes, sheet, named, rowsP, cmp: CAT.cmp,
+      sceneAria: 'Scene F, RHYTHM, is active on the QC. ' + QC_SCENES.map((s, i) => letters[i] + (s[0] ? ' ' + s[0] : '')).join(', '),
+      stepStyle: 'width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: ' + t.fill + '; box-shadow: ' + t.glassEdge + '; color: inherit; cursor: pointer'
+    };
+  }
+}
+</script>
+</body>
+</html>

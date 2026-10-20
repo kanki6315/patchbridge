@@ -137,6 +137,11 @@ if [ "$dirty" = 0 ] && [ -n "$(git status --porcelain -- .)" ]; then
 fi
 
 if [ "$run_tests" = 1 ]; then
+    log "Select iPhone test simulator"
+    test_destination="${TEST_DESTINATION:-}"
+    if [ -z "$test_destination" ]; then
+        test_destination="$(python3 "$here/tools/test_destination.py")"
+    fi
     log "Swift core tests"
     swift test --package-path swift 2>&1 | tee "$out/swift-test.log"
     log "Python bridge tests (offline)"
@@ -144,7 +149,7 @@ if [ "$run_tests" = 1 ]; then
     log "iPhone UI tests (simulator)"
     xcodebuild test \
         -project ios/Patchbridge.xcodeproj -scheme Patchbridge \
-        -destination "${TEST_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}" \
+        -destination "$test_destination" \
         -derivedDataPath build/tests \
         CODE_SIGNING_ALLOWED=NO \
         2>&1 | tee "$out/xcodebuild-test.log" | pretty

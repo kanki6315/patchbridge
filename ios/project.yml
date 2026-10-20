@@ -30,6 +30,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.arjunakankipati.patchbridge
         TARGETED_DEVICE_FAMILY: '1'
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_CFBundleDisplayName: Patchbridge
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: Connect to your Mac to view and edit your Quad Cortex preset over Bluetooth.
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
