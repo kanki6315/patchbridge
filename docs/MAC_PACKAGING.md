@@ -3,7 +3,7 @@
 `dist/Patchbridge Offline.app` is a local, standalone simulation host. Open it in
 Finder to open the stopped bridge shell. Choose Start bridge, Simulate phone
 connection, and Approve connection to read a snapshot from the bundled simulator.
-Closing the window stops the helper. No terminal,
+Closing the window keeps the helper running in the menu bar by default; Stop or Quit ends it. No terminal,
 Homebrew, separately installed Python, Bluetooth advertising, or USB access is
 needed at runtime. The existing installed phone app and BLE demo are unchanged.
 
@@ -61,7 +61,7 @@ SHA-256 hashes of packaged files before the final app signature.
 - The Swift bundle initializer never falls back to a system interpreter. Its
   environment is limited to system PATH and a UTF-8 locale. Explicit Python/source
   paths remain available only in the development initializer.
-- The host owns the process on a worker queue. Closing it closes helper stdin;
+- The host owns the process on a worker queue. Stopping or quitting closes helper stdin;
   existing bounded terminate/kill cleanup handles a helper that fails to exit.
   Startup/protocol failures are shown in the host window. No automatic mutation
   retries or background launch agents are installed.

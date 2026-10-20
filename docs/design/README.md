@@ -69,10 +69,10 @@ The bridge window, drawn at 480 × 700 pt. It opens with the iPhone → Mac → 
 
 ### Setup
 
-Bluetooth permission, finding the QC, Cortex Control holding the USB connection, Bluetooth off, and ready for an iPhone.
+Bluetooth permission, finding the QC, an unavailable USB connection, Bluetooth off, and ready for an iPhone.
 
 <table>
-<tr><td align="center" valign="top"><a href="html/mac/m-firstrun.html"><img src="mac/m-firstrun.png" width="220" alt="Bluetooth permission"></a><br><sub>Bluetooth permission</sub></td><td align="center" valign="top"><a href="html/mac/m-noqc.html"><img src="mac/m-noqc.png" width="220" alt="Waiting for the QC"></a><br><sub>Waiting for the QC</sub></td><td align="center" valign="top"><a href="html/mac/m-cortex.html"><img src="mac/m-cortex.png" width="220" alt="Cortex Control has the QC"></a><br><sub>Cortex Control has the QC</sub></td><td align="center" valign="top"><a href="html/mac/m-btoff.html"><img src="mac/m-btoff.png" width="220" alt="Bluetooth off"></a><br><sub>Bluetooth off</sub></td></tr>
+<tr><td align="center" valign="top"><a href="html/mac/m-firstrun.html"><img src="mac/m-firstrun.png" width="220" alt="Bluetooth permission"></a><br><sub>Bluetooth permission</sub></td><td align="center" valign="top"><a href="html/mac/m-noqc.html"><img src="mac/m-noqc.png" width="220" alt="Waiting for the QC"></a><br><sub>Waiting for the QC</sub></td><td align="center" valign="top"><a href="html/mac/m-cortex.html"><img src="mac/m-cortex.png" width="220" alt="QC connection unavailable"></a><br><sub>QC connection unavailable</sub></td><td align="center" valign="top"><a href="html/mac/m-btoff.html"><img src="mac/m-btoff.png" width="220" alt="Bluetooth off"></a><br><sub>Bluetooth off</sub></td></tr>
 <tr><td align="center" valign="top"><a href="html/mac/m-ready.html"><img src="mac/m-ready.png" width="220" alt="Ready for an iPhone"></a><br><sub>Ready for an iPhone</sub></td></tr>
 </table>
 
@@ -87,7 +87,7 @@ Approval uses the same short code as the iPhone. While connected, the window sho
 
 ### Running in the menu bar
 
-Closing the window leaves Patchbridge running in the menu bar, so the iPhone keeps editing; quitting releases the QC. The menu bar icon changes shape for each state. The popover handles approval and problems without reopening the window, and notifications cover approval requests and a lost QC.
+Closing the window leaves Patchbridge running in the menu bar, so the iPhone keeps editing; quitting or stopping the bridge releases its QC session. The menu bar icon changes shape for each state. The popover handles approval and problems without reopening the window. Planned notifications open the current approval request or report a lost QC; an old notification must never approve a new connection.
 
 <table>
 <tr><td align="center" valign="top"><a href="html/mac/m-closing.html"><img src="mac/m-closing.png" width="220" alt="Closing the window"></a><br><sub>Closing the window</sub></td><td colspan="2" align="center" valign="top"><a href="html/mac/mb-icons.html"><img src="mac/mb-icons.png" width="460" alt="Menu bar icon states"></a><br><sub>Menu bar icon states</sub></td><td align="center" valign="top"><a href="html/mac/mb-notify-request.html"><img src="mac/mb-notify-request.png" width="260" alt="Notification · approval"></a><br><sub>Notification · approval</sub></td></tr>
@@ -110,11 +110,42 @@ Closing the window leaves Patchbridge running in the menu bar, so the iPhone kee
 These designs assume changes that aren't built yet:
 
 - **Scene data:** `PresetSnapshot` and `tools/export_editor_fixture.py` need `scene_labels` and `scene_colors` from the QC.
-- **Approval code:** the bridge token is a full UUID; the iPhone and Mac need a short shared display code.
+- **Approval code:** both clients now derive a short display code from the full connection UUID. Authorization continues to use the full token.
 - **Fine steps:** the 0.05 hold-and-slide gesture should send only the final value on release.
 - **Capabilities:** scene switching, bypass writes, Save As and preset switching stay hidden until the bridge advertises them.
 - **Mac app distribution:** Get Patchbridge for Mac assumes a Mac App Store link. A direct download changes only the link and the App Store wording. The short typeable address is a placeholder.
-- **Menu bar mode:** the bridge keeps running when its window closes, with a menu bar item and an optional Dock icon. Quitting is the only thing that releases the QC.
+- **Menu bar mode:** the offline shell now keeps running when its window closes, with a menu bar popover and a keep-running setting. Dock visibility and opt-in launch-at-login now use native macOS services. Stop and Quit both end the session.
 - **Bridge state for the Mac UI:** the window and popover need the current preset, scene, unsaved flag and a short log of recent edit outcomes from the coordinator.
-- **Cortex Control and firmware checks:** the bridge needs to detect Cortex Control holding the USB connection, and to refuse writes on untested CorOS versions.
+- **Cortex Control and firmware checks:** the bridge needs to detect an unavailable USB connection, and to refuse writes on untested CorOS versions.
 - **Notifications:** approval requests and a lost QC are posted as macOS notifications, which needs notification permission.
+
+## Mac implementation contract (2026-10-20)
+
+The boards describe the intended live product. The current Mac package remains visibly
+simulation-only; it does not advertise Bluetooth or open USB. It implements the window,
+approval code, snapshot facts, menu bar, appearance, close-window preference, Dock
+visibility, optional notifications, login registration and bounded recent-edit history.
+Notifications and login launch default off; Dock visibility defaults on. The login
+control reports actual OS status, including unavailable for this local ad-hoc build. Use actual bundle version information, never the sample build number.
+
+Device labels are display data, not identity proof. Advertise the Mac’s actual computer
+name; exchange it in hello. The phone sends an optional app display name and falls back
+to “iPhone”; a Mac name falls back to “Mac”. Do not assume access to an iPhone’s personal
+system name. Names are bounded and stripped of control/direction override characters.
+
+The opt-in bridge recovery path preserves approval only while the same phone transport
+and helper remain alive. Retry device connection with 1–8 second backoff, load a new
+snapshot and capabilities before edits resume, and never replay edits or saves. A helper
+crash or phone disconnect invalidates approval. Physical USB removal remains unverified.
+
+“Not applied” requires an explicit pre-write rejection; a failed readback or timeout is
+“Outcome unknown”. Keep that distinction after recovery; a successful connection is not
+proof of the interrupted write outcome. Show scene names/colors only when supplied by
+the device; otherwise use the scene letter. Preset, firmware and dirty state are live
+facts only after a confirmed read; retained facts during recovery are labelled last known.
+
+Missing boards: Bluetooth denied/restricted, startup/loading, withdrawn approval, second
+phone, intentionally stopped, read-only, empty activity, and uncertain save. Reuse the
+existing status layout with a single recovery action and amber text plus an icon for
+attention; no fabricated data. Use the native notification layout and open the live
+request to compare codes. Settings use native controls; unavailable features are omitted.

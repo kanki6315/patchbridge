@@ -3,10 +3,13 @@ import Foundation
 /// Own on the main queue, like EditorTransport. Screens observe onChange and render editor's
 /// confirmed state. start/reconnect requires fresh authorization; mutations are never replayed.
 public final class EditorCoordinator {
-    public enum Phase: Equatable { case disconnected, connecting, awaitingApproval, loading, ready, failed }
+    public enum Phase: Equatable { case disconnected, connecting, awaitingApproval, loading, recovering, ready, failed }
     public let editor = GenericEditor()
     private let diagnostics: Diagnostics
     public private(set) var phase: Phase = .disconnected
+    public private(set) var macName = "Mac"
+    public private(set) var approvalCode: String?
+    private let phoneName: String
     public private(set) var error: String?
     public private(set) var status = "Disconnected"
     public var onChange: (() -> Void)?
@@ -33,9 +36,10 @@ public final class EditorCoordinator {
     private var request: Request?
 
     public init(pollInterval: TimeInterval = 2, timeout: TimeInterval = 15,
-                automaticPolling: Bool = true, diagnostics: Diagnostics = .shared,
+                automaticPolling: Bool = true, phoneName: String = DeviceIdentity.phoneName, diagnostics: Diagnostics = .shared,
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
                 makeTransport: @escaping () -> EditorTransport = { BLECentral() }) {
+        self.phoneName = DeviceIdentity.name(phoneName, fallback: "iPhone")
         self.diagnostics = diagnostics
         self.pollInterval = max(0.5, pollInterval.isFinite ? pollInterval : 2)
         self.timeout = max(0.5, timeout.isFinite ? timeout : 15)
@@ -74,7 +78,7 @@ public final class EditorCoordinator {
         generation = UUID(); timer?.invalidate(); timer = nil
         let old = transport; transport = nil
         old?.onReady = nil; old?.onDisconnected = nil; old?.onStatus = nil; old?.onResponse = nil
-        request = nil; staged = nil; connection = nil; session = nil; revision = 0
+        request = nil; staged = nil; macName = "Mac"; approvalCode = nil; connection = nil; session = nil; revision = 0
         operations.removeAll(); nextPoll = .infinity; editor.disconnect()
         phase = .disconnected; status = "Disconnected"; old?.disconnect(); onChange?()
     }
@@ -87,6 +91,7 @@ public final class EditorCoordinator {
     public func tick() {
         if let request, now() >= request.deadline { fail("Request timed out; its outcome is unknown. Reconnect before editing."); return }
         if phase == .ready, !busy, now() >= nextPoll { refresh() }
+        if phase == .recovering, !busy, now() >= nextPoll { send("recover") }
     }
     public func edit(blockID: String, parameterID: String, value: ParameterValue) throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
@@ -106,6 +111,7 @@ public final class EditorCoordinator {
     private func send(_ operation: String, command: [String: Any]? = nil) {
         guard request == nil, let transport else { return }
         var message = command ?? ["version": 1, "id": UUID().uuidString, "operation": operation]
+        if operation == "hello" { message["device_name"] = phoneName }
         if let connection { message["connection_id"] = connection }
         if let session { message["session_id"] = session }
         if operation == "catalog" { message["payload"] = ["model_ids": requestedModels.sorted()] }
@@ -132,6 +138,8 @@ public final class EditorCoordinator {
             if pending.operation == "hello" {
                 guard let token = response["connection_id"] as? String, !token.isEmpty,
                       response["authorization_required"] as? Bool == true else { throw EditorFailure.invalidState }
+                macName = DeviceIdentity.name(response["mac_name"] as? String, fallback: "Mac")
+                approvalCode = DeviceIdentity.approvalCode(token)
                 connection = token; phase = .awaitingApproval; status = "Approve on Mac, then authorize"
                 onChange?(); return
             }
@@ -142,6 +150,15 @@ public final class EditorCoordinator {
                 let message = detail?["message"] as? String ?? code
                 if pending.operation == "connect", code == "unauthorized" {
                     phase = .awaitingApproval; error = message; onChange?(); return
+                }
+                if code == "device_unavailable" {
+                    let uncertain = ["set_parameter", "save"].contains(pending.operation)
+                    editor.disconnect(); staged = nil; session = nil; operations.removeAll()
+                    phase = .recovering; status = "QC unavailable · reconnecting"
+                    if uncertain { error = "Last edit or save outcome unknown. It will not be retried." }
+                    let delay = response["retry_after"] as? Double ?? 1
+                    nextPoll = now() + (delay.isFinite ? min(8, max(0.5, delay)) : 1)
+                    onChange?(); return
                 }
                 // Only explicit, session-preserving rejections are recoverable. Resync before more edits.
                 if ["set_parameter", "save"].contains(pending.operation),
@@ -154,10 +171,10 @@ public final class EditorCoordinator {
             }
             guard let newSession = response["session_id"] as? String, !newSession.isEmpty,
                   let newRevision = integer(response["revision"]),
-                  pending.operation == "connect" || (newSession == session && newRevision >= revision),
+                  ["connect", "recover"].contains(pending.operation) || (newSession == session && newRevision >= revision),
                   let result = response["result"] as? [String: Any] else { throw EditorFailure.staleContext }
-            if pending.operation == "connect" {
-                session = newSession; revision = newRevision
+            if ["connect", "recover"].contains(pending.operation) {
+                phase = .loading; session = newSession; revision = newRevision
                 staged = try decode(PresetSnapshot.self, result["state"])
                 send("capabilities"); return
             }

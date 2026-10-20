@@ -353,3 +353,25 @@ State changes take 150–250ms with an ease-out-quint curve. The dashed-to-solid
 - **Don't** offer free color customization. Themes are curated sets that pass contrast as a whole.
 - **Don't** show buttons for operations the bridge doesn't support yet (scene switching, bypass writes, Save As, preset switching).
 - **Don't** invent scene names, guess a control's scale, or fill a value the QC didn't report.
+
+## Mac bridge implementation
+
+The Mac surface is an Operate view: a 480-point window and a compact menu-bar popover,
+with the same Stage/Daylight palette, native system typography and SF Symbols. Controls
+stay available below scrollable status content. The offline package always identifies
+itself as Simulation and never implies a physical phone or QC is connected.
+
+Settings use native grouped forms. Match Mac follows system appearance. Show in Dock
+and Keep running default on; notifications and launch at login default off. OS permission,
+registration and error states are displayed explicitly, never as a successful toggle
+without confirmation from the OS. Hidden Dock mode retains the menu-bar escape route.
+
+Recent edits are confirmed command history, not a list of current parameter values.
+Each row carries preset/scene context, time, an outcome word and an icon. Explicit
+rejections say Not applied; a failed/absent readback says Outcome unknown. Missing
+metadata never receives invented names or units. Empty history is plain text. Twelve
+entries are retained in memory; the popover shows three and the window provides Clear.
+
+Notifications open the current request for code comparison. They never approve a phone,
+and old alerts are withdrawn when their state ends. No session tokens or preset data
+are included. This preserves the same approval rule in the window and menu bar.

@@ -121,7 +121,10 @@ def main():
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'HelperClient.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'Diagnostics.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'BridgeSession.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'DeviceIdentity.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'MacBridgeModel.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'RecentBridgeEdit.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'MacDesktopServices.swift',
         ROOT / 'mac' / 'main.swift', '-o', executables / 'Patchbridge')
     plist = {'CFBundleExecutable': 'Patchbridge', 'CFBundleIdentifier': 'dev.patchbridge.offline',
              'CFBundleName': 'Patchbridge Offline', 'CFBundlePackageType': 'APPL',

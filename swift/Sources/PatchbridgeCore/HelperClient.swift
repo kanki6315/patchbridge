@@ -120,7 +120,11 @@ public final class HelperClient {
         let termDeadline = Date().addingTimeInterval(0.5)
         while process.isRunning && Date() < termDeadline { Thread.sleep(forTimeInterval: 0.01) }
         if process.isRunning { kill(process.processIdentifier, SIGKILL) }
-        process.waitUntilExit()
+        // Foundation reaps Process children. waitUntilExit can strand the caller's
+        // run loop when launch and shutdown occur on different threads; keep every
+        // shutdown stage bounded, including the post-kill observation.
+        let killDeadline = Date().addingTimeInterval(0.5)
+        while process.isRunning && Date() < killDeadline { Thread.sleep(forTimeInterval: 0.01) }
         try? output.fileHandleForReading.close()
         buffer.removeAll(); events.removeAll()
     }

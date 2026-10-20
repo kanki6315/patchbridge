@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EditorView: View {
     @ObservedObject var model: EditorModel
+    @AppStorage("patchbridge.phoneName") private var phoneName = ""
     @State private var precise = false
     @State private var entry = ""
     @State private var entryError = false
@@ -17,8 +18,13 @@ struct EditorView: View {
                 }
                 Section("Connection") {
                     Label(model.status, systemImage: model.ready ? "checkmark.circle" : "antenna.radiowaves.left.and.right")
+                    if !model.connected {
+                        TextField("Phone name (optional)", text: $phoneName)
+                        Text("Shown on the Mac for approval. Leave blank to use iPhone.").font(.caption).foregroundStyle(.secondary)
+                    }
                     if model.busy { ProgressView("Waiting for Mac…") }
                     if model.needsApproval {
+                        Text("\(model.macName) · \(model.approvalCode)").font(.headline).monospacedDigit()
                         Text("In the Mac bridge terminal, enter the approval command shown for this connection.")
                             .foregroundStyle(.secondary)
                         Button("I’ve approved on Mac", action: model.authorize).disabled(model.busy)

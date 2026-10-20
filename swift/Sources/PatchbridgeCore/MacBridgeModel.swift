@@ -2,7 +2,18 @@
 import Foundation
 import Combine
 
+struct MacBridgePresentation {
+    var macName = DeviceIdentity.macName
+    var phoneName = "iPhone"
+    var approvalCode = ""
+    var preset: String?
+    var scene: String?
+    var dirty = false
+    var recovering = false
+    var recentEdits: [RecentBridgeEdit] = []
+}
 protocol OfflineBridgeBackend: AnyObject {
+    var presentation: MacBridgePresentation { get }
     func start() throws
     func requestPhone() throws
     func approve() throws
@@ -10,6 +21,15 @@ protocol OfflineBridgeBackend: AnyObject {
     func refresh() throws
     func stop()
     func interruptHelper()
+    func interruptDevice() throws
+    func editSimulation(value: Double, stale: Bool) throws
+    func clearRecentEdits()
+}
+extension OfflineBridgeBackend {
+    var presentation: MacBridgePresentation { MacBridgePresentation() }
+    func interruptDevice() throws { throw BridgeFailure.protocolError }
+    func editSimulation(value: Double, stale: Bool) throws { throw BridgeFailure.protocolError }
+    func clearRecentEdits() {}
 }
 
 /// Only constructs a bundled simulator. No radio or USB transport is available here.
@@ -18,19 +38,35 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
     private var helper: HelperClient?
     private var bridge: BridgeSession?
     private var session: String?
+    private var snapshot: [String: Any]?
+    private var catalog: [String: Any]?
+    private var revision = 0
+    private(set) var presentation = MacBridgePresentation()
     init(makeHelper: @escaping () throws -> HelperClient = { try HelperClient(bundle: .main) }) {
         self.makeHelper = makeHelper
     }
-    func start() throws { stop(); let helper = try makeHelper(); self.helper = helper; bridge = BridgeSession(helper: helper) }
+    func start() throws {
+        stop(); let helper = try makeHelper(); self.helper = helper
+        let bridge = BridgeSession(helper: helper, allowsRecovery: true)
+        bridge.onMutation = { [weak self] request, response in
+            guard let self else { return }
+            self.presentation.recentEdits.insert(RecentBridgeEdit(request: request, response: response, snapshot: self.snapshot, catalog: self.catalog), at: 0)
+            self.presentation.recentEdits = Array(self.presentation.recentEdits.prefix(12))
+        }
+        self.bridge = bridge
+    }
     private func send(_ operation: String) throws -> [String: Any] {
         guard let bridge else { throw BridgeFailure.disconnected }
         var message: [String: Any] = ["version": 1, "id": UUID().uuidString, "operation": operation, "connection_id": bridge.token]
+        if operation == "hello" { message["device_name"] = DeviceIdentity.phoneName }
         if let session { message["session_id"] = session }
         return try bridge.handle(message)
     }
     func requestPhone() throws {
         let reply = try send("hello")
         guard reply["authorization_required"] as? Bool == true else { throw BridgeFailure.protocolError }
+        presentation.phoneName = bridge?.phoneName ?? "iPhone"
+        presentation.approvalCode = bridge?.approvalCode ?? ""
     }
     func approve() throws {
         guard let bridge else { throw BridgeFailure.disconnected }
@@ -39,12 +75,39 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
         guard reply["status"] as? String == "confirmed", let session = reply["session_id"] as? String else { throw BridgeFailure.protocolError }
         self.session = session
         try refresh()
+        let catalogReply = try send("catalog")
+        catalog = catalogReply["result"] as? [String: Any]
     }
-    func revoke() { bridge?.revoke(); session = nil }
+    func editSimulation(value: Double, stale: Bool) throws {
+        guard let bridge, let session, let snapshot else { throw BridgeFailure.disconnected }
+        let request: [String: Any] = ["version": 1, "id": UUID().uuidString, "operation": "set_parameter",
+            "connection_id": bridge.token, "session_id": session, "revision": stale ? -1 : revision,
+            "preset_id": snapshot["preset_id"] ?? "", "scene": snapshot["scene"] ?? "",
+            "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": value]]
+        _ = try bridge.handle(request)
+        try refresh()
+    }
+    func clearRecentEdits() { presentation.recentEdits.removeAll() }
+    func revoke() { bridge?.revoke(); session = nil; snapshot = nil; catalog = nil
+        let history = presentation.recentEdits
+        presentation = MacBridgePresentation(); presentation.recentEdits = history }
+    func interruptDevice() throws {
+        guard let bridge else { throw BridgeFailure.disconnected }
+        try bridge.simulateDeviceRemoval(); session = nil; presentation.recovering = true
+    }
     func refresh() throws {
-        let reply = try send("snapshot")
-        guard reply["status"] as? String == "confirmed",
-              let result = reply["result"] as? [String: Any], result["state"] is [String: Any] else { throw BridgeFailure.protocolError }
+        let reply = try send(bridge?.recovering == true ? "recover" : "snapshot")
+        if (reply["error"] as? [String: Any])?["code"] as? String == "device_unavailable" {
+            presentation.recovering = true; session = nil; return
+        }
+        guard reply["status"] as? String == "confirmed", let session = reply["session_id"] as? String,
+              let result = reply["result"] as? [String: Any], let state = result["state"] as? [String: Any],
+              let dirty = state["dirty"] as? Bool else { throw BridgeFailure.protocolError }
+        self.session = session; snapshot = state; revision = reply["revision"] as? Int ?? 0
+        presentation.preset = state["name"] as? String
+        presentation.scene = state["scene"] as? String
+        presentation.dirty = dirty
+        presentation.recovering = false
     }
     func stop() { revoke(); helper?.stop(); bridge = nil; helper = nil }
     func interruptHelper() { helper?.stop() }
@@ -52,8 +115,10 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
 
 /// Main-queue UI owner; helper/session work is serialized off the UI thread.
 final class MacBridgeModel: ObservableObject {
-    enum Phase: Equatable { case stopped, starting, running, awaitingApproval, approving, connected, stopping, failed }
+    enum Phase: Equatable { case stopped, starting, running, awaitingApproval, approving, connected, recovering, stopping, failed }
     @Published private(set) var phase: Phase = .stopped
+    @Published private(set) var presentation = MacBridgePresentation()
+    private var recoveryTimer: Timer?
     @Published private(set) var busy = false
     @Published private(set) var detail = "Start the bridge to try a simulated phone connection."
     var onChange: (() -> Void)?
@@ -69,6 +134,7 @@ final class MacBridgeModel: ObservableObject {
         case .awaitingApproval: return "Approval requested"
         case .approving: return "Verifying connection…"
         case .connected: return "Simulated iPhone connected"
+        case .recovering: return "QC connection interrupted"
         case .stopping: return "Stopping bridge…"
         case .failed: return "Bridge needs attention"
         }
@@ -81,11 +147,18 @@ final class MacBridgeModel: ObservableObject {
             let failed: Bool
             do { try work(backend); failed = false }
             catch { backend.stop(); failed = true }
+            let presentation = backend.presentation
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.generation == epoch else { return }
                 self.busy = false
-                self.phase = failed ? .failed : success
+                self.presentation = presentation
+                self.phase = failed ? .failed : presentation.recovering ? .recovering : success
                 self.detail = failed ? failureMessage : message
+                self.recoveryTimer?.invalidate(); self.recoveryTimer = nil
+                if self.phase == .recovering {
+                    self.detail = "Simulated USB interruption. The phone stays approved. Reloading state before editing resumes."
+                    self.recoveryTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: false) { [weak self] _ in self?.refresh() }
+                }
                 self.onChange?()
             }
         }
@@ -112,19 +185,32 @@ final class MacBridgeModel: ObservableObject {
         perform({ try $0.approve() }, success: .connected, message: "Approval granted. A snapshot was confirmed by the bundled helper.")
     }
     func disconnectPhone() {
-        guard (phase == .awaitingApproval || phase == .connected) && !busy else { return }
+        guard (phase == .awaitingApproval || phase == .connected || phase == .recovering) && !busy else { return }
         let denied = phase == .awaitingApproval
         perform({ $0.revoke() }, success: .running,
                 message: denied ? "Request denied. Simulate another phone when you’re ready." : "Phone disconnected. A new connection will need approval.")
     }
     func refresh() {
-        guard phase == .connected && !busy else { return }
+        guard (phase == .connected || phase == .recovering) && !busy else { return }
         perform({ try $0.refresh() }, success: .connected, message: "Connection checked. The helper returned a confirmed snapshot.")
+    }
+    func simulateEdit(rejected: Bool = false) {
+        guard phase == .connected && !busy else { return }
+        perform({ try $0.editSimulation(value: 7.5, stale: rejected) }, success: .connected,
+                message: rejected ? "The simulated edit was rejected. Confirmed state was reloaded." : "Gain confirmed by the simulator.")
+    }
+    func clearRecentEdits() {
+        guard !busy else { return }
+        perform({ $0.clearRecentEdits() }, success: phase, message: detail)
+    }
+    func simulateUSBRemoval() {
+        guard phase == .connected && !busy else { return }
+        perform({ try $0.interruptDevice() }, success: .recovering, message: "Recovering simulated USB connection.")
     }
     func simulateFailure() {
         guard phase == .connected && !busy else { return }
         perform({ $0.interruptHelper(); try $0.refresh() }, success: .connected, message: "Connection checked.")
     }
-    func shutdown() { generation = UUID(); queue.sync { backend.stop() } }
+    func shutdown() { recoveryTimer?.invalidate(); recoveryTimer = nil; generation = UUID(); queue.sync { backend.stop() } }
 }
 #endif

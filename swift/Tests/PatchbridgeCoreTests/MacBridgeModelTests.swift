@@ -68,3 +68,63 @@ extension MacBridgeModelTests {
         XCTAssertNotEqual(model.phase, .connected)
     }
 }
+
+extension MacBridgeModelTests {
+    func testShellAutomaticallyRecoversDeviceButKeepsApprovalCode() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let model = MacBridgeModel(backend: BundledOfflineBackend(makeHelper: {
+            try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
+        }))
+        defer { model.shutdown() }
+        waitFor(model, .running) { model.start() }
+        waitFor(model, .awaitingApproval) { model.requestPhone() }
+        let code = model.presentation.approvalCode
+        XCTAssertFalse(code.isEmpty)
+        waitFor(model, .connected) { model.approve() }
+        XCTAssertNotNil(model.presentation.preset)
+        waitFor(model, .recovering) { model.simulateUSBRemoval() }
+        waitFor(model, .connected) {}
+        XCTAssertEqual(model.presentation.approvalCode, code)
+        waitFor(model, .stopped) { model.stop() }
+        XCTAssertNil(model.presentation.preset)
+        XCTAssertTrue(model.presentation.approvalCode.isEmpty)
+    }
+}
+
+extension MacBridgeModelTests {
+    func testRecentEditsUseActualResultsAndRemainBoundedAndClearable() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let backend = BundledOfflineBackend(makeHelper: { try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path) })
+        try backend.start(); defer { backend.stop() }
+        try backend.requestPhone(); try backend.approve()
+        XCTAssertTrue(backend.presentation.recentEdits.isEmpty)
+        try backend.editSimulation(value: 7.5, stale: false)
+        XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .confirmed)
+        XCTAssertEqual(backend.presentation.recentEdits.first?.value, "7.5")
+        XCTAssertEqual(backend.presentation.recentEdits.first?.title, "Gain · Simulated amp")
+        try backend.editSimulation(value: 6, stale: true)
+        XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .rejected)
+        XCTAssertNil(backend.presentation.recentEdits.first?.value)
+        for _ in 0..<15 { try backend.editSimulation(value: 7, stale: false) }
+        XCTAssertEqual(backend.presentation.recentEdits.count, 12)
+        backend.interruptHelper()
+        XCTAssertThrowsError(try backend.editSimulation(value: 8, stale: false))
+        XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .unknown)
+        backend.stop()
+        XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .unknown)
+        let report = String(data: try Diagnostics.shared.reportData(), encoding: .utf8)!
+        XCTAssertFalse(report.contains("Simulated amp")); XCTAssertFalse(report.contains("Simulation 1"))
+        backend.clearRecentEdits(); XCTAssertTrue(backend.presentation.recentEdits.isEmpty)
+    }
+    func testHistoryNeverCallsUnknownOutcomesRejectedOrConfirmsMissingReadback() {
+        let request: [String: Any] = ["operation": "set_parameter", "payload": ["block_id": "amp", "parameter_id": "gain", "value": 5]]
+        for code in ["adapter_failure", "disconnected", "timeout"] {
+            let entry = RecentBridgeEdit(request: request, response: ["status": "error", "error": ["code": code]], snapshot: nil, catalog: nil)
+            XCTAssertEqual(entry.outcome, .unknown)
+        }
+        let malformed = RecentBridgeEdit(request: request, response: ["status": "confirmed"], snapshot: nil, catalog: nil)
+        XCTAssertEqual(malformed.outcome, .unknown)
+        let adjusted = RecentBridgeEdit(request: request, response: ["status": "confirmed", "result": ["state": ["scene": "A", "blocks": [["id": "amp", "scenes": ["A": ["parameters": ["gain": 4]]]]]]]], snapshot: nil, catalog: nil)
+        XCTAssertEqual(adjusted.outcome, .adjusted)
+    }
+}

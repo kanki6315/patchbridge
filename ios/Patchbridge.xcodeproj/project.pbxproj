@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A12345678901234567890123A /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A12345678901234567890123B /* DeviceIdentity.swift */; };
 		0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */; };
 		5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */; };
 		5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A12345678901234567890123B /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchbridgeApp.swift; sourceTree = "<group>"; };
 		3E125DD1594C135E050EF4E8 /* BLECentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLECentral.swift; sourceTree = "<group>"; };
 		3E68459E6EE63B03631133E9 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
@@ -67,6 +69,7 @@
 				6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */,
 				F59B2D058255097DC58ED315 /* EditorCoordinator.swift */,
 				E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */,
+				A12345678901234567890123B /* DeviceIdentity.swift */,
 				42253D1C8C450F010DE25BCD /* GenericEditor.swift */,
 			);
 			name = PatchbridgeCore;
@@ -138,6 +141,7 @@
 				5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */,
 				B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */,
 				5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */,
+				A12345678901234567890123A /* DeviceIdentity.swift in Sources */,
 				AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */,
 				B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */,
 				8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */,

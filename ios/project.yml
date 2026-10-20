@@ -18,6 +18,7 @@ targets:
       - ../swift/Sources/PatchbridgeCore/Chunks.swift
       - ../swift/Sources/PatchbridgeCore/CommandExchange.swift
       - ../swift/Sources/PatchbridgeCore/EditorModel.swift
+      - ../swift/Sources/PatchbridgeCore/DeviceIdentity.swift
       - ../swift/Sources/PatchbridgeCore/GenericEditor.swift
       - ../swift/Sources/PatchbridgeCore/EditorCoordinator.swift
       - ../swift/Sources/PatchbridgeCore/Diagnostics.swift
