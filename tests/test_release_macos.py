@@ -37,7 +37,7 @@ class MacReleaseTests(unittest.TestCase):
                                           'MAC_ASC_PASSWORD_KEYCHAIN': 'test-reference'}, clear=True)
         self.env.start(); self.addCleanup(self.env.stop)
         for target, value in [('ROOT', self.root), ('run', self.run_tool), ('verify_app', self.verify),
-                              ('archive_helper_symbols', self.symbols)]:
+                              ('archive_symbols', self.symbols)]:
             mock = patch.object(release, target, value); mock.start(); self.addCleanup(mock.stop)
         process = patch.object(release.subprocess, 'run', side_effect=lambda *a, **kw: self.calls.append(('tests',)))
         process.start(); self.addCleanup(process.stop)
@@ -86,7 +86,7 @@ class MacReleaseTests(unittest.TestCase):
         self.assertIn('abc123', self.calls[tag])
         options = plistlib.loads((self.root / f'build/release-macos/{VERSION}-42/ExportOptions.plist').read_bytes())
         self.assertEqual(options['destination'], 'export') # Upload only the inspected package.
-        self.assertFalse(options['uploadSymbols'])
+        self.assertTrue(options['uploadSymbols'])
         source = json.loads((self.root / f'build/release-macos/{VERSION}-42/release-source.json').read_text())
         self.assertEqual(source, dict(commit='abc123', dirty=False, version=VERSION, build='42'))
         self.assertLess(self.calls.index(('symbols',)), verified)
@@ -148,7 +148,7 @@ class MacReleaseTests(unittest.TestCase):
         self.invoke()
         upload, = self.xcode_uploads
         options = plistlib.loads(Path(upload[upload.index('-exportOptionsPlist') + 1]).read_bytes())
-        self.assertFalse(options['uploadSymbols'])
+        self.assertTrue(options['uploadSymbols'])
         self.assertIn('-allowProvisioningUpdates', upload)
         self.assertLess(self.calls.index(('verify',)), self.calls.index(upload))
         tag = next(c for c in self.calls if c[:3] == ('git', 'tag', '-a'))
@@ -170,25 +170,46 @@ class MacReleaseTests(unittest.TestCase):
         self.assertFalse(self.uploaded()); self.assertFalse(self.tagged())
 
 
-class HelperSymbolTests(unittest.TestCase):
-    def test_archive_requires_matching_uuids_and_real_debug_info(self):
+class SymbolTests(unittest.TestCase):
+    BINARIES = ['MacOS/Patchbridge', 'MacOS/patchbridge-helper', 'Frameworks/Python',
+                'Resources/Python/lib-dynload/_json.cpython-314-darwin.so',
+                'Resources/Helper/google/_upb/_message.cpython-314-darwin.so']
+
+    def make(self, root, dsyms, empty=()):
+        """An archive whose binaries and dSYMs report UUIDs by file name."""
+        archive = root / 'App.xcarchive'
+        contents = archive / 'Products/Applications/Patchbridge.app/Contents'
+        for binary in self.BINARIES:
+            (contents / binary).parent.mkdir(parents=True, exist_ok=True)
+            (contents / binary).write_bytes(b'binary')
+        host = archive / 'dSYMs/Patchbridge.app.dSYM/Contents/Resources/DWARF/Patchbridge'
+        host.parent.mkdir(parents=True); host.write_bytes(b'host')
+        symbols = root / 'dSYMs'
+        for name in dsyms:
+            dwarf = symbols / (name + '.dSYM') / 'Contents/Resources/DWARF' / name
+            dwarf.parent.mkdir(parents=True); dwarf.write_bytes(b'dwarf')
+        def run(*args, capture=False):
+            name = Path(args[-1]).name
+            if args[2] == '--debug-info':
+                return '' if name in empty else 'DW_TAG_compile_unit'
+            return f'UUID: {abs(hash(name)):032X} (arm64) {args[-1]}'
+        return archive, symbols, run
+
+    def test_every_archived_binary_needs_a_dsym_with_debug_info(self):
+        names = ['patchbridge-helper', 'Python', '_json.cpython-314-darwin.so', '_message.cpython-314-darwin.so']
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            symbols = root / 'patchbridge-helper.dSYM'
-            dwarf = symbols / 'Contents/Resources/DWARF/patchbridge-helper'
-            dwarf.parent.mkdir(parents=True)
-            dwarf.write_bytes(b'test')
-            archive = root / 'App.xcarchive'
-            uuid = 'UUID: 70DF4C1E-ACCB-3E36-AC7F-0D4AFE9FE1B7 (arm64) binary'
-            with patch.object(release, 'run', side_effect=[uuid, uuid, 'DW_TAG_compile_unit']):
-                release.archive_helper_symbols(archive, symbols)
-            self.assertEqual((archive / 'dSYMs' / symbols.name /
-                              'Contents/Resources/DWARF/patchbridge-helper').read_bytes(), b'test')
-            for outputs in ([uuid, ''], [uuid, uuid, ''], ['', '']):
-                with patch.object(release, 'run', side_effect=outputs):
+            archive, symbols, run = self.make(Path(tmp), names)
+            with patch.object(release, 'run', side_effect=run):
+                release.archive_symbols(archive, symbols)
+            self.assertEqual(sorted(p.name for p in (archive / 'dSYMs').iterdir()),
+                             sorted(['Patchbridge.app.dSYM', *(n + '.dSYM' for n in names)]))
+        for missing, empty in (('Python', ()), ('_message.cpython-314-darwin.so', ()), (None, ('_json.cpython-314-darwin.so',))):
+            with tempfile.TemporaryDirectory() as tmp:
+                archive, symbols, run = self.make(Path(tmp), [n for n in names if n != missing], empty)
+                with patch.object(release, 'run', side_effect=run):
                     with self.assertRaises(ValueError):
-                        release.archive_helper_symbols(root / 'Rejected.xcarchive', symbols)
-                self.assertFalse((root / 'Rejected.xcarchive').exists())
+                        release.archive_symbols(archive, symbols)
+                self.assertFalse((archive / 'dSYMs/patchbridge-helper.dSYM').exists())
 
 
 class ExportVerificationTests(unittest.TestCase):

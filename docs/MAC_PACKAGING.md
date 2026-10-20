@@ -12,9 +12,30 @@ That mode never starts a radio or opens USB. Self-tests and report-export CLI ch
 also remain simulated. No Homebrew or separately installed Python is needed at runtime.
 See [Mac bridge shell](MAC_BRIDGE_SHELL.md) for controls and limitations.
 
+## Build the runtime
+
+The bundled CPython and protobuf are built from source so that every bundled binary
+has a dSYM. Prebuilt runtimes such as Homebrew's discard their object files, so their
+crashes can't be symbolicated. Build once, and again only when the pins change:
+
+```sh
+/opt/homebrew/bin/python3 tools/build_runtime.py
+```
+
+This is the only step that downloads anything. It fetches the pinned CPython 3.14.6
+source and protobuf 7.36.2 sdist, plus the setuptools and wheel wheels used only to
+build protobuf. Each is checked against the SHA-256 in the script and cached under
+`build/runtime-src/downloads`. The build runs with a system-only `PATH` and no
+pkg-config, so Homebrew libraries can't leak in. It targets arm64 and macOS 26.0. The
+macOS 27 SDK declares `dup3` and `pipe2`, which macOS 26 lacks, so configure is told
+they're unavailable. LTO and PGO are off so `dsymutil` can read the object files.
+The output in `build/runtime` holds the framework, a dSYM for the Python library,
+for each `lib-dynload` extension and for protobuf's `_message` extension, and
+`runtime-manifest.json` with the source hashes and dSYM UUIDs.
+
 ## Build and check without downloads
 
-From the repository root, with the existing local arm64 CPython 3.14 and Xcode:
+From the repository root, with the runtime above and Xcode:
 
 ```sh
 /opt/homebrew/bin/python3 tools/package_mac.py
@@ -22,14 +43,16 @@ From the repository root, with the existing local arm64 CPython 3.14 and Xcode:
 tools/check_offline.sh
 ```
 
-Additional local build inputs are the already captured qc-mcp checkout at
-`/private/tmp/patchbridge-qc-mcp` and protobuf in `.venv-hardware`. The builder reads
+The packager re-runs itself under the built runtime. It copies the matching dSYMs
+into `dist/dSYMs` next to the helper launcher's, and fails if any bundled binary's
+UUID has no matching dSYM. Another local build input is the already captured qc-mcp
+checkout at `/private/tmp/patchbridge-qc-mcp`. The builder reads
 qc-mcp Git objects at `f634ecd3dcf426090b90bc4cc176e4b500494b9e`, never mutable working
-files, and verifies protobuf files against the installed wheel's SHA-256 RECORD.
+files, and verifies protobuf files against the RECORD of the wheel it built from source.
 Missing inputs fail the build without fetching anything. Unrelated MCP-server,
 bridge/FIFO, Windows, and audio modules/dependencies are not included. Protobuf's
-universal extension is thinned to arm64 and given a relocatable library ID before
-signing. Its original wheel bytes are verified before modification. Native audit
+extension is given a relocatable library ID before signing. Its wheel bytes are
+verified before modification. Native audit
 accepts only system libraries and the explicitly identified bundled library IDs.
 
 The builder replaces only the fixed generated `dist/Patchbridge.app`.
@@ -40,7 +63,7 @@ schemas, plus protobuf 7.36.2 with its native upb extension. Python, qc-mcp, and
 protobuf licenses are included. No pip,
 package manager, network, interpreter discovery, or downloads occur.
 
-The current runtime is CPython 3.14.6, arm64, built for **macOS 26.0+**. The builder
+The current runtime is CPython 3.14.6, arm64, built for **macOS 26.0+**. The packager
 reads that deployment floor from the actual runtime rather than claiming older
 macOS support. The manifest inside
 `Contents/Resources/build-manifest.json` records runtime/version/platform and
@@ -100,9 +123,7 @@ restart, stop, and report export were exercised through the UI on 2026-10-20.
 ## Distribution work remaining
 
 The artifact is **ad-hoc signed**, not Developer ID signed or notarized. It is for
-local use on this Mac, not a Gatekeeper-ready release. For distribution, use a
-controlled runtime build with the desired minimum macOS version/architectures,
-complete live validation of the bundled USB adapter with the user present, add production
+local use on this Mac, not a Gatekeeper-ready release. For distribution, complete live validation of the bundled USB adapter with the user present, add production
 signing/hardened-runtime configuration and notarization, and test on a clean Mac.
 These checks validate the packaged dependency/protocol path against recorded evidence.
 The live host is wired, but physical iPhone-to-Mac-to-QC operation and cable recovery
@@ -138,14 +159,12 @@ A successful clean upload creates `macos/v<version>-<build>` locally, without pu
 Dirty releases require `--allow-dirty` and never create a tag.
 Each release also saves its starting commit and dirty state in `release-source.json`.
 
-The archive retains the host app's dSYM and a UUID-verified helper dSYM built with
-debug information. Automatic symbol upload is disabled for both local export and
-Xcode upload: the bundled prebuilt Python framework, standard-library extensions,
-and protobuf wheel do not include recoverable debug information. This avoids the
-missing-dSYM upload warnings, but Apple will not receive automatic crash symbols.
-Keep the archive for local host/helper crash symbolication. Full runtime symbols
-require matching vendor dSYMs or rebuilding those dependencies with debug information;
-empty dSYMs are not a substitute.
+The archive holds dSYMs for the host app, the helper launcher, the Python library,
+every bundled standard-library extension and protobuf's extension. Before export the
+release checks that each dSYM contains debug information and that every Mach-O in the
+archived app has a dSYM with a matching UUID. A missing or empty one stops the
+release. Symbol upload is on, so Apple receives symbols for crashes anywhere in the
+app, including the bundled runtime.
 
 The Mac pipeline first builds the isolated runtime using the local dependencies above,
 then generates `mac/PatchbridgeMac.xcodeproj` from `mac/project.yml` and archives a native
