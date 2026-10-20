@@ -2,7 +2,7 @@
 
 Design boards for the first iPhone build, exported from the design canvas so they can be read without it. The visual system and its rules live in [DESIGN.md](../../DESIGN.md); product intent is in [PRODUCT.md](../../PRODUCT.md).
 
-All screens use the captured preset in `tests/fixtures/qc-editor.json` (Tremonti w Mic, scene F) and the scene names and colors from `hardware-results/2026-10-20/initial-preset.json`. They're drawn at iPhone 17 Pro size (402 × 874 pt) in the default **Stage** theme unless marked **Daylight**.
+All screens use the captured preset in `tests/fixtures/qc-editor.json` (Tremonti w Mic, scene F) and the scene names and colors from `hardware-results/2026-10-20/initial-preset.json`. They're drawn at iPhone 17 Pro size (402 × 874 pt) in the default **Stage** theme unless marked **Daylight**. The iPhone Duo boards use the Duo's own screen sizes.
 
 ## What's here
 
@@ -62,6 +62,24 @@ Appearance settings and the Daylight theme.
 <tr><td colspan="2" align="center" valign="top"><a href="html/screens/t-landscape.html"><img src="screens/t-landscape.png" width="380" alt="Daylight · landscape"></a><br><sub>Daylight · landscape</sub></td></tr>
 </table>
 
+## iPhone Duo
+
+The foldable, in its three postures. The inner screen is 626 × 890 pt and the outer screen 466 × 678 pt. The outer screen is about half as wide as the inner screen is tall, so the hinge runs across the inner screen's long side: held upright and half-folded, the fold sits at y ≈ 445. Postures change the layout, not the model: the same grid, scenes, dial and save rules apply everywhere.
+
+- **Inner screen, flat and half-folded:** one layout in both postures, split at the hinge. The top half is the view (header, scenes, the named grid) and the bottom half is the control deck (the row's blocks, then the dial and controls, then the number pad). The deck is identical in both postures, so folding never moves what is under your fingers.
+- **Folding** changes only the view. The named scene row folds up into a strip in the header, the status pill shrinks to its icon, the title tightens, the grid grows into the freed space and the crease shadow fades in. It is one 560 ms ease-out-quint motion, with the scene strip arriving 120 ms in. With Reduce Motion it switches instantly. The fold prototype boards show it in 3D; the Play version lives in the design canvas. Nothing interactive sits within 14 pt of the fold. The dark band on the half-folded boards marks the hinge and isn't part of the UI.
+- **Folded, outer screen in landscape (the main folded posture):** the whole named grid fills the screen under a one-line header with status, name, scenes and Save. Tapping a block opens the block menu as a side panel with the first four controls and Open editor. The grid narrows to codes beside it, so no row is covered and tapping another block swaps the menu's contents.
+- **Folded, outer screen in portrait:** the same idea with the menu as a medium-height sheet with no dimming, which leaves the top rows visible.
+
+<table>
+<tr><td align="center" valign="top"><a href="html/screens/duo-u-row.html"><img src="screens/duo-u-row.png" width="180" alt="Unfolded · row"></a><br><sub>Unfolded · row</sub></td><td align="center" valign="top"><a href="html/screens/duo-u-idle.html"><img src="screens/duo-u-idle.png" width="180" alt="Unfolded · editing"></a><br><sub>Unfolded · editing</sub></td><td align="center" valign="top"><a href="html/screens/duo-u-pending.html"><img src="screens/duo-u-pending.png" width="180" alt="Unfolded · sending a value"></a><br><sub>Unfolded · sending a value</sub></td></tr>
+<tr><td align="center" valign="top"><a href="html/screens/duo-h-row.html"><img src="screens/duo-h-row.png" width="180" alt="Half-folded · row"></a><br><sub>Half-folded · row</sub></td><td align="center" valign="top"><a href="html/screens/duo-h-edit.html"><img src="screens/duo-h-edit.png" width="180" alt="Half-folded · editing"></a><br><sub>Half-folded · editing</sub></td><td align="center" valign="top"><a href="html/screens/duo-h-type.html"><img src="screens/duo-h-type.png" width="180" alt="Half-folded · typing a value"></a><br><sub>Half-folded · typing a value</sub></td></tr>
+<tr><td align="center" valign="top"><a href="html/screens/duo-Fold.html"><img src="screens/duo-Fold.png" width="260" alt="Fold prototype · unfolded"></a><br><sub>Fold prototype · unfolded</sub></td><td align="center" valign="top"><a href="html/screens/duo-f-half.html"><img src="screens/duo-f-half.png" width="260" alt="Fold prototype · half-folded"></a><br><sub>Fold prototype · half-folded</sub></td></tr>
+<tr><td align="center" valign="top"><a href="html/screens/duo-xl-grid.html"><img src="screens/duo-xl-grid.png" width="300" alt="Outer landscape · grid"></a><br><sub>Outer landscape · grid</sub></td><td align="center" valign="top"><a href="html/screens/duo-xl-sheet.html"><img src="screens/duo-xl-sheet.png" width="300" alt="Outer landscape · block menu"></a><br><sub>Outer landscape · block menu</sub></td></tr>
+<tr><td align="center" valign="top"><a href="html/screens/duo-xl-pending.html"><img src="screens/duo-xl-pending.png" width="300" alt="Outer landscape · block menu, sending"></a><br><sub>Outer landscape · block menu, sending</sub></td></tr>
+<tr><td align="center" valign="top"><a href="html/screens/duo-x-grid.html"><img src="screens/duo-x-grid.png" width="180" alt="Outer portrait · grid"></a><br><sub>Outer portrait · grid</sub></td><td align="center" valign="top"><a href="html/screens/duo-x-sheet.html"><img src="screens/duo-x-sheet.png" width="180" alt="Outer portrait · block menu"></a><br><sub>Outer portrait · block menu</sub></td><td align="center" valign="top"><a href="html/screens/duo-x-pending.html"><img src="screens/duo-x-pending.png" width="180" alt="Outer portrait · block menu, sending"></a><br><sub>Outer portrait · block menu, sending</sub></td></tr>
+</table>
+
 ## Engineering dependencies
 
 These designs assume changes that aren't built yet:
@@ -71,3 +89,4 @@ These designs assume changes that aren't built yet:
 - **Fine steps:** the 0.05 hold-and-slide gesture should send only the final value on release.
 - **Capabilities:** scene switching, bypass writes, Save As and preset switching stay hidden until the bridge advertises them.
 - **Mac app distribution:** Get Patchbridge for Mac assumes a Mac App Store link. A direct download changes only the link and the App Store wording. The short typeable address is a placeholder.
+- **Fold posture:** the Duo layouts switch on hinge posture (flat, half-folded, closed). The half-folded layout needs the app to know that the device is half open, not just its size class. Without that signal, it falls back to the unfolded layout. The hinge position (across the inner screen's long side) is inferred from the screen sizes and should be checked against the hardware.

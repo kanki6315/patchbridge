@@ -15,6 +15,10 @@
       "name": "iPhone PoC"
     },
     {
+      "id": "duo",
+      "name": "iPhone Duo"
+    },
+    {
       "id": "components",
       "name": "Components"
     },
@@ -431,6 +435,119 @@
       "page": "poc",
       "x": 964,
       "y": 0
+    },
+    "duo/u-row.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 626,
+      "h": 890,
+      "title": "Unfolded · row",
+      "page": "duo"
+    },
+    "duo/u-idle.dc.html": {
+      "x": 706,
+      "y": 0,
+      "w": 626,
+      "h": 890,
+      "title": "Unfolded · editing",
+      "page": "duo"
+    },
+    "duo/u-pending.dc.html": {
+      "x": 1412,
+      "y": 0,
+      "w": 626,
+      "h": 890,
+      "title": "Unfolded · sending a value",
+      "page": "duo"
+    },
+    "duo/h-row.dc.html": {
+      "x": 0,
+      "y": 1290,
+      "w": 626,
+      "h": 890,
+      "title": "Half-folded · row",
+      "page": "duo"
+    },
+    "duo/h-edit.dc.html": {
+      "x": 706,
+      "y": 1290,
+      "w": 626,
+      "h": 890,
+      "title": "Half-folded · editing",
+      "page": "duo"
+    },
+    "duo/h-type.dc.html": {
+      "x": 1412,
+      "y": 1290,
+      "w": 626,
+      "h": 890,
+      "title": "Half-folded · typing a value",
+      "page": "duo"
+    },
+    "duo/Fold.dc.html": {
+      "x": 0,
+      "y": 2580,
+      "w": 860,
+      "h": 1000,
+      "title": "Fold prototype (Play)",
+      "page": "duo",
+      "is_interactive": true
+    },
+    "duo/f-half.dc.html": {
+      "x": 940,
+      "y": 2580,
+      "w": 860,
+      "h": 1000,
+      "title": "Fold prototype · half-folded",
+      "page": "duo"
+    },
+    "duo/xl-grid.dc.html": {
+      "x": 0,
+      "y": 3980,
+      "w": 678,
+      "h": 466,
+      "title": "Outer landscape · grid",
+      "page": "duo"
+    },
+    "duo/xl-sheet.dc.html": {
+      "x": 758,
+      "y": 3980,
+      "w": 678,
+      "h": 466,
+      "title": "Outer landscape · block menu",
+      "page": "duo"
+    },
+    "duo/xl-pending.dc.html": {
+      "x": 1516,
+      "y": 3980,
+      "w": 678,
+      "h": 466,
+      "title": "Outer landscape · block menu, sending",
+      "page": "duo"
+    },
+    "duo/x-grid.dc.html": {
+      "x": 0,
+      "y": 4846,
+      "w": 466,
+      "h": 678,
+      "title": "Outer portrait · grid",
+      "page": "duo"
+    },
+    "duo/x-sheet.dc.html": {
+      "x": 546,
+      "y": 4846,
+      "w": 466,
+      "h": 678,
+      "title": "Outer portrait · block menu",
+      "page": "duo"
+    },
+    "duo/x-pending.dc.html": {
+      "x": 1092,
+      "y": 4846,
+      "w": 466,
+      "h": 678,
+      "title": "Outer portrait · block menu, sending",
+      "page": "duo"
     }
   },
   "order": [
@@ -484,7 +601,21 @@
     "D-Overview.dc.html",
     "D-Editor.dc.html",
     "D-Landscape.dc.html",
-    "D-iPad.dc.html"
+    "D-iPad.dc.html",
+    "duo/u-row.dc.html",
+    "duo/u-idle.dc.html",
+    "duo/u-pending.dc.html",
+    "duo/h-row.dc.html",
+    "duo/h-edit.dc.html",
+    "duo/h-type.dc.html",
+    "duo/Fold.dc.html",
+    "duo/f-half.dc.html",
+    "duo/xl-grid.dc.html",
+    "duo/xl-sheet.dc.html",
+    "duo/xl-pending.dc.html",
+    "duo/x-grid.dc.html",
+    "duo/x-sheet.dc.html",
+    "duo/x-pending.dc.html"
   ],
   "notes": {
     "pocConnect": {
