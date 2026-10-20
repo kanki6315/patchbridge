@@ -1,0 +1,2858 @@
+{
+  "catalog": {
+    "id": "06b878c142ba45b1c5f643f22940816c6b7cbec3b2ae11946ac9c857e022b11b",
+    "metadata_version": 1,
+    "models": {
+      "1": {
+        "name": "Myth Drive",
+        "category": "Guitar Overdrive",
+        "parameters": {
+          "0": {
+            "defaultValue": "5",
+            "max": "10",
+            "min": "0",
+            "name": "GAIN",
+            "type": "float",
+            "units": "",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "GAIN",
+              "unit": "",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "1": {
+            "defaultValue": "5",
+            "max": "10",
+            "min": "0",
+            "name": "TREBLE",
+            "type": "float",
+            "units": "",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "TREBLE",
+              "unit": "",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "2": {
+            "defaultValue": "5",
+            "max": "10",
+            "min": "0",
+            "name": "LEVEL",
+            "type": "float",
+            "units": "",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "LEVEL",
+              "unit": "",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          }
+        }
+      },
+      "5007": {
+        "name": "Opto Comp (M)",
+        "category": "Compressor",
+        "parameters": {
+          "0": {
+            "defaultValue": "-40.0",
+            "max": "12.0",
+            "min": "-60.0",
+            "name": "THRESHOLD",
+            "skew": "LIN_SKEW",
+            "steps": "721",
+            "type": "float",
+            "units": "dB",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "THRESHOLD",
+              "unit": "dB",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": -60.0,
+              "maximum": 12.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "1": {
+            "defaultValue": "4.0",
+            "max": "20.0",
+            "min": "2.0",
+            "name": "RATIO",
+            "skew": "0.6",
+            "steps": "190",
+            "type": "float",
+            "units": "",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "RATIO",
+              "unit": "",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 2.0,
+              "maximum": 20.0,
+              "mapping": "power",
+              "exponent": 0.6
+            }
+          },
+          "2": {
+            "defaultValue": "15.0",
+            "max": "250.0",
+            "min": "1.0",
+            "name": "ATTACK",
+            "skew": "0.6",
+            "steps": "500",
+            "type": "float",
+            "units": "ms",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "ATTACK",
+              "unit": "ms",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 1.0,
+              "maximum": 250.0,
+              "mapping": "power",
+              "exponent": 0.6
+            }
+          },
+          "3": {
+            "defaultValue": "400.0",
+            "max": "1200.0",
+            "min": "50.0",
+            "name": "RELEASE",
+            "skew": "0.6",
+            "steps": "600",
+            "type": "float",
+            "units": "ms",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "RELEASE",
+              "unit": "ms",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 50.0,
+              "maximum": 1200.0,
+              "mapping": "power",
+              "exponent": 0.6
+            }
+          },
+          "4": {
+            "defaultValue": "8.0",
+            "max": "48.0",
+            "min": "-48.0",
+            "name": "MAKEUP",
+            "skew": "LIN_SKEW",
+            "steps": "481",
+            "type": "float",
+            "units": "dB",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "MAKEUP",
+              "unit": "dB",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": -48.0,
+              "maximum": 48.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "5": {
+            "defaultValue": "100",
+            "max": "100",
+            "min": "0",
+            "name": "MIX",
+            "skew": "LIN_SKEW",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "MIX",
+              "unit": "%",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "6": {
+            "defaultValue": "0",
+            "max": "0",
+            "min": "-50",
+            "name": "GAIN REDUCTION",
+            "steps": "180",
+            "type": "grMeter",
+            "units": "dB",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "GAIN REDUCTION",
+              "unit": "dB",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Unsupported parameter type."
+            }
+          }
+        }
+      },
+      "7001": {
+        "name": "Dual Chorus",
+        "category": "Modulation",
+        "parameters": {
+          "0": {
+            "defaultValue": "60",
+            "displayPos": "0",
+            "max": "100",
+            "min": "0",
+            "name": "MIX",
+            "skew": "LIN_SKEW",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "MIX",
+              "unit": "%",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "1": {
+            "defaultValue": "0",
+            "displayPos": "1",
+            "max": "1",
+            "min": "0",
+            "name": "MODE",
+            "skew": "LIN_SKEW",
+            "stepNames": "Chorus,Vibe",
+            "steps": "2",
+            "type": "switch",
+            "units": "",
+            "control": {
+              "kind": "enum",
+              "encoding": "qc_normalized",
+              "name": "MODE",
+              "unit": "",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "options": [
+                {
+                  "label": "Chorus",
+                  "value": 0.0
+                },
+                {
+                  "label": "Vibe",
+                  "value": 1.0
+                }
+              ]
+            }
+          },
+          "2": {
+            "defaultValue": "1.0",
+            "displayPos": "2",
+            "max": "6.5",
+            "min": "0.5",
+            "name": "RATE",
+            "skew": "0.6",
+            "steps": "101",
+            "toggleOff": "6",
+            "type": "float",
+            "units": "Hz",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "RATE",
+              "unit": "Hz",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Conditional control dependencies are not yet implemented."
+            }
+          },
+          "3": {
+            "defaultValue": "50",
+            "displayPos": "5",
+            "max": "100",
+            "min": "0",
+            "name": "DEPTH",
+            "skew": "LIN_SKEW",
+            "steps": "101",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "DEPTH",
+              "unit": "%",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "4": {
+            "defaultValue": "70",
+            "displayPos": "6",
+            "max": "100",
+            "min": "0",
+            "name": "WIDTH",
+            "skew": "LIN_SKEW",
+            "steps": "101",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "WIDTH",
+              "unit": "%",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "5": {
+            "defaultValue": "50",
+            "displayPos": "7",
+            "max": "100",
+            "min": "0",
+            "name": "TONE",
+            "skew": "LIN_SKEW",
+            "steps": "101",
+            "type": "float",
+            "units": "",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "TONE",
+              "unit": "",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "6": {
+            "defaultValue": "0",
+            "displayPos": "3",
+            "max": "1",
+            "min": "0",
+            "name": "SYNC",
+            "skew": "LIN_SKEW",
+            "stepNames": "Off,On",
+            "steps": "2",
+            "type": "switch",
+            "units": "",
+            "control": {
+              "kind": "enum",
+              "encoding": "qc_normalized",
+              "name": "SYNC",
+              "unit": "",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "options": [
+                {
+                  "label": "Off",
+                  "value": 0.0
+                },
+                {
+                  "label": "On",
+                  "value": 1.0
+                }
+              ]
+            }
+          },
+          "7": {
+            "defaultValue": "13",
+            "displayPos": "4",
+            "max": "20",
+            "min": "7",
+            "name": "SYNC NOTE",
+            "stepNames": "1/16,1/8T,1/16D,1/8,1/4T,1/8D,1/4,1/2T,1/4D,1/2,1/1T,1/2D,1/1,1/1D",
+            "steps": "14",
+            "toggleOn": "6",
+            "tooltip": "Synced notes subdivision values are constrained by the Tempo and the RATE parameter range",
+            "type": "rotarySwitch",
+            "units": "",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "SYNC NOTE",
+              "unit": "",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Conditional control dependencies are not yet implemented."
+            }
+          }
+        }
+      },
+      "8014": {
+        "name": "Plate Tight",
+        "category": "Reverb",
+        "parameters": {
+          "0": {
+            "defaultValue": "35",
+            "max": "100",
+            "min": "0",
+            "name": "MIX",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "MIX",
+              "unit": "%",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "1": {
+            "defaultValue": "70",
+            "max": "100",
+            "min": "0",
+            "name": "DECAY",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "DECAY",
+              "unit": "%",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "2": {
+            "defaultValue": "60",
+            "max": "200",
+            "min": "1",
+            "name": "PRE DELAY",
+            "skew": "0.5",
+            "steps": "500",
+            "type": "float",
+            "units": "ms",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "PRE DELAY",
+              "unit": "ms",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 1.0,
+              "maximum": 200.0,
+              "mapping": "power",
+              "exponent": 0.5
+            }
+          },
+          "3": {
+            "defaultValue": "200",
+            "max": "800",
+            "min": "20",
+            "name": "HIGH PASS",
+            "skew": "0.5",
+            "steps": "500",
+            "type": "float",
+            "units": "Hz",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "HIGH PASS",
+              "unit": "Hz",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 20.0,
+              "maximum": 800.0,
+              "mapping": "power",
+              "exponent": 0.5
+            }
+          },
+          "4": {
+            "defaultValue": "3100",
+            "max": "12000",
+            "min": "800",
+            "name": "LOW PASS",
+            "skew": "0.5",
+            "steps": "500",
+            "type": "float",
+            "units": "Hz",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "LOW PASS",
+              "unit": "Hz",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 800.0,
+              "maximum": 12000.0,
+              "mapping": "power",
+              "exponent": 0.5
+            }
+          },
+          "5": {
+            "defaultValue": "50",
+            "max": "100",
+            "min": "0",
+            "name": "LF DAMPING",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "LF DAMPING",
+              "unit": "%",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "6": {
+            "defaultValue": "50",
+            "max": "100",
+            "min": "0",
+            "name": "HF DAMPING",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "HF DAMPING",
+              "unit": "%",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "7": {
+            "defaultValue": "50",
+            "max": "100",
+            "min": "0",
+            "name": "MOD DEPTH",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "MOD DEPTH",
+              "unit": "%",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "8": {
+            "defaultValue": "1",
+            "max": "1",
+            "min": "0",
+            "name": "TRAILS",
+            "stepNames": "Off,On",
+            "steps": "2",
+            "type": "switch",
+            "control": {
+              "kind": "enum",
+              "encoding": "qc_normalized",
+              "name": "TRAILS",
+              "unit": "",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "options": [
+                {
+                  "label": "Off",
+                  "value": 0.0
+                },
+                {
+                  "label": "On",
+                  "value": 1.0
+                }
+              ]
+            }
+          }
+        }
+      },
+      "9018": {
+        "name": "Bad Horse",
+        "category": "Wah",
+        "parameters": {
+          "0": {
+            "defaultValue": "0.5",
+            "max": "1",
+            "min": "0",
+            "name": "WAH",
+            "type": "float",
+            "units": "",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "WAH",
+              "unit": "",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          }
+        }
+      },
+      "12007": {
+        "name": "412 CA Trad S UKV30 90s (M)",
+        "category": "Cabsim Guitar (M)",
+        "parameters": {
+          "0": {
+            "defaultValue": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+            "max": "999",
+            "min": "0",
+            "name": "ir selector",
+            "replaces": "1",
+            "steps": "1000",
+            "type": "string",
+            "units": "",
+            "control": {
+              "kind": "text",
+              "encoding": "qc_normalized",
+              "name": "ir selector",
+              "unit": "",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "String writes are not validated."
+            }
+          },
+          "1": {
+            "defaultValue": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+            "max": "999",
+            "min": "0",
+            "name": "ir selector",
+            "replaces": "9",
+            "steps": "1000",
+            "type": "string",
+            "units": "",
+            "control": {
+              "kind": "text",
+              "encoding": "qc_normalized",
+              "name": "ir selector",
+              "unit": "",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "String writes are not validated."
+            }
+          }
+        }
+      },
+      "14000": {
+        "name": "Eltron 30",
+        "category": "Neural Capture",
+        "parameters": {
+          "0": {
+            "defaultValue": "0.0",
+            "max": "24.0",
+            "min": "-24.0",
+            "name": "GAIN",
+            "type": "float",
+            "units": "dB",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "GAIN",
+              "unit": "dB",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "1": {
+            "defaultValue": "0.0",
+            "max": "6.0",
+            "min": "-6.0",
+            "name": "BASS",
+            "type": "float",
+            "units": "dB",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "BASS",
+              "unit": "dB",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "2": {
+            "defaultValue": "0.0",
+            "max": "6.0",
+            "min": "-6.0",
+            "name": "MID",
+            "type": "float",
+            "units": "dB",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "MID",
+              "unit": "dB",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "3": {
+            "defaultValue": "0.0",
+            "max": "6.0",
+            "min": "-6.0",
+            "name": "TREBLE",
+            "type": "float",
+            "units": "dB",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "TREBLE",
+              "unit": "dB",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "4": {
+            "defaultValue": "0.0",
+            "max": "24.0",
+            "min": "-24.0",
+            "name": "VOLUME",
+            "type": "float",
+            "units": "dB",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "VOLUME",
+              "unit": "dB",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "5": {
+            "defaultValue": "",
+            "hidden": "true",
+            "max": "9999",
+            "min": "0",
+            "name": "file_name",
+            "selfTestValue": "eltron_self_test",
+            "steps": "",
+            "type": "string",
+            "control": {
+              "kind": "text",
+              "encoding": "qc_normalized",
+              "name": "file_name",
+              "unit": "",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "String writes are not validated."
+            }
+          }
+        }
+      },
+      "16001": {
+        "name": "Adaptive Gate",
+        "category": "Utility",
+        "parameters": {
+          "0": {
+            "defaultValue": "30",
+            "max": "100",
+            "min": "0",
+            "name": "NOISE REDUCTION",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "NOISE REDUCTION",
+              "unit": "%",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          }
+        }
+      },
+      "16006": {
+        "name": "Volume",
+        "category": "Utility",
+        "parameters": {
+          "0": {
+            "defaultValue": "100",
+            "max": "100",
+            "min": "0",
+            "min_string": "OFF",
+            "name": "LEVEL",
+            "steps": "500",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "unknown",
+              "encoding": "qc_normalized",
+              "name": "LEVEL",
+              "unit": "%",
+              "editable": false,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "reason": "Missing or unresolved taper; no conversion is assumed."
+            }
+          },
+          "1": {
+            "defaultValue": "1",
+            "max": "1",
+            "min": "0",
+            "name": "CURVE",
+            "stepNames": "Linear,Log",
+            "steps": "2",
+            "type": "switch",
+            "control": {
+              "kind": "enum",
+              "encoding": "qc_normalized",
+              "name": "CURVE",
+              "unit": "",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "options": [
+                {
+                  "label": "Linear",
+                  "value": 0.0
+                },
+                {
+                  "label": "Log",
+                  "value": 1.0
+                }
+              ]
+            }
+          }
+        }
+      },
+      "18004": {
+        "name": "Poly Octaver",
+        "category": "Pitch",
+        "parameters": {
+          "0": {
+            "defaultValue": "100",
+            "max": "100",
+            "min": "0",
+            "name": "DRY",
+            "skew": "LIN_SKEW",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "DRY",
+              "unit": "%",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "1": {
+            "defaultValue": "50",
+            "max": "100",
+            "min": "0",
+            "name": "OCT",
+            "skew": "LIN_SKEW",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "OCT",
+              "unit": "%",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "2": {
+            "defaultValue": "50",
+            "max": "100",
+            "min": "0",
+            "name": "SUB",
+            "skew": "LIN_SKEW",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "SUB",
+              "unit": "%",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          }
+        }
+      },
+      "18010": {
+        "name": "Transpose",
+        "category": "Pitch",
+        "parameters": {
+          "0": {
+            "defaultValue": "100",
+            "hidden": "true",
+            "max": "100",
+            "min": "0",
+            "name": "MIX",
+            "skew": "LIN_SKEW",
+            "steps": "1001",
+            "type": "float",
+            "units": "%",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "MIX",
+              "unit": "%",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "1": {
+            "defaultValue": "0",
+            "hidden": "true",
+            "max": "24",
+            "min": "-24",
+            "name": "PITCH COARSE",
+            "showAsInteger": "true",
+            "skew": "LIN_SKEW",
+            "steps": "49",
+            "type": "float",
+            "units": "Semitones",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "PITCH COARSE",
+              "unit": "Semitones",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": -24.0,
+              "maximum": 24.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "2": {
+            "defaultValue": "0",
+            "hidden": "true",
+            "max": "100",
+            "min": "-100",
+            "name": "PITCH FINE",
+            "showAsInteger": "true",
+            "skew": "LIN_SKEW",
+            "steps": "201",
+            "type": "float",
+            "units": "Cents",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "PITCH FINE",
+              "unit": "Cents",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": -100.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          },
+          "3": {
+            "defaultValue": "0",
+            "max": "12",
+            "min": "-12",
+            "name": "SEMITONES",
+            "showAsInteger": "true",
+            "skew": "LIN_SKEW",
+            "steps": "25",
+            "type": "float",
+            "units": "Semitones",
+            "control": {
+              "kind": "number",
+              "encoding": "qc_normalized",
+              "name": "SEMITONES",
+              "unit": "Semitones",
+              "editable": true,
+              "mapping_source": "device_metadata",
+              "verification": "not_hardware_calibrated",
+              "minimum": -12.0,
+              "maximum": 12.0,
+              "mapping": "power",
+              "exponent": 1.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "snapshot": {
+    "preset_id": "captured:My Presets:16",
+    "catalog_id": "06b878c142ba45b1c5f643f22940816c6b7cbec3b2ae11946ac9c857e022b11b",
+    "name": "Tremonti w Mic",
+    "scene": "F",
+    "dirty": true,
+    "blocks": [
+      {
+        "id": "0:0",
+        "model_id": "9018",
+        "position": [
+          0,
+          0
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.0
+            }
+          }
+        },
+        "editable_parameters": []
+      },
+      {
+        "id": "0:1",
+        "model_id": "5007",
+        "position": [
+          0,
+          1
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.35896527767181396,
+              "1": 0.267580509185791,
+              "2": 0.1778104156255722,
+              "3": 0.4898037314414978,
+              "4": 0.5833333134651184,
+              "5": 1.0,
+              "6": 1.0,
+              "7": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.35896527767181396,
+              "1": 0.267580509185791,
+              "2": 0.1778104156255722,
+              "3": 0.4898037314414978,
+              "4": 0.5833333134651184,
+              "5": 1.0,
+              "6": 1.0,
+              "7": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.35896527767181396,
+              "1": 0.267580509185791,
+              "2": 0.1778104156255722,
+              "3": 0.4898037314414978,
+              "4": 0.5833333134651184,
+              "5": 1.0,
+              "6": 1.0,
+              "7": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.35896527767181396,
+              "1": 0.267580509185791,
+              "2": 0.1778104156255722,
+              "3": 0.4898037314414978,
+              "4": 0.5833333134651184,
+              "5": 1.0,
+              "6": 1.0,
+              "7": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.35896527767181396,
+              "1": 0.267580509185791,
+              "2": 0.1778104156255722,
+              "3": 0.4898037314414978,
+              "4": 0.5833333134651184,
+              "5": 1.0,
+              "6": 1.0,
+              "7": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.35896527767181396,
+              "1": 0.267580509185791,
+              "2": 0.1778104156255722,
+              "3": 0.4898037314414978,
+              "4": 0.5833333134651184,
+              "5": 1.0,
+              "6": 1.0,
+              "7": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.35896527767181396,
+              "1": 0.267580509185791,
+              "2": 0.1778104156255722,
+              "3": 0.4898037314414978,
+              "4": 0.5833333134651184,
+              "5": 1.0,
+              "6": 1.0,
+              "7": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.35896527767181396,
+              "1": 0.267580509185791,
+              "2": 0.1778104156255722,
+              "3": 0.4898037314414978,
+              "4": 0.5833333134651184,
+              "5": 1.0,
+              "6": 1.0,
+              "7": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ]
+      },
+      {
+        "id": "0:2",
+        "model_id": "14000",
+        "position": [
+          0,
+          2
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
+              "6": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
+              "6": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
+              "6": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
+              "6": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
+              "6": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
+              "6": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
+              "6": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.5625625252723694,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
+              "6": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      {
+        "id": "0:3",
+        "model_id": "1",
+        "position": [
+          0,
+          3
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.3577812612056732,
+              "1": 0.4180625081062317,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.3577812612056732,
+              "1": 0.4180625081062317,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.3577812612056732,
+              "1": 0.4180625081062317,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.3577812612056732,
+              "1": 0.4180625081062317,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.3577812612056732,
+              "1": 0.4180625081062317,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.3577812612056732,
+              "1": 0.4180625081062317,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.3577812612056732,
+              "1": 0.4180625081062317,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.3577812612056732,
+              "1": 0.4180625081062317,
+              "2": 0.5,
+              "3": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1",
+          "2"
+        ]
+      },
+      {
+        "id": "0:4",
+        "model_id": "18010",
+        "position": [
+          0,
+          4
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.45723438262939453,
+              "4": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.45723438262939453,
+              "4": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.45723438262939453,
+              "4": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.45723438262939453,
+              "4": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.45723438262939453,
+              "4": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.45723438262939453,
+              "4": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.45723438262939453,
+              "4": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.45723438262939453,
+              "4": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ]
+      },
+      {
+        "id": "0:5",
+        "model_id": "18004",
+        "position": [
+          0,
+          5
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 1.0,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1",
+          "2"
+        ]
+      },
+      {
+        "id": "0:6",
+        "model_id": "16001",
+        "position": [
+          0,
+          6
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.1613437682390213,
+              "1": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.1613437682390213,
+              "1": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.1613437682390213,
+              "1": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.1613437682390213,
+              "1": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.1613437682390213,
+              "1": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.1613437682390213,
+              "1": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.1613437682390213,
+              "1": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.1613437682390213,
+              "1": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0"
+        ]
+      },
+      {
+        "id": "1:2",
+        "model_id": "16006",
+        "position": [
+          1,
+          2
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.0,
+              "1": 1.0,
+              "2": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.0,
+              "1": 1.0,
+              "2": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.0,
+              "1": 1.0,
+              "2": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.0,
+              "1": 1.0,
+              "2": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.0,
+              "1": 1.0,
+              "2": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.0,
+              "1": 1.0,
+              "2": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.0,
+              "1": 1.0,
+              "2": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.0,
+              "1": 1.0,
+              "2": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "id": "2:1",
+        "model_id": "14000",
+        "position": [
+          2,
+          1
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      {
+        "id": "2:3",
+        "model_id": "14000",
+        "position": [
+          2,
+          3
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
+              "6": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
+              "6": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
+              "6": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
+              "6": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
+              "6": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
+              "6": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
+              "6": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
+              "6": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      {
+        "id": "2:4",
+        "model_id": "12007",
+        "position": [
+          2,
+          4
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          }
+        },
+        "editable_parameters": []
+      },
+      {
+        "id": "2:6",
+        "model_id": "7001",
+        "position": [
+          2,
+          6
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.7319531440734863,
+              "1": 0.0,
+              "2": 0.4178006052970886,
+              "3": 0.5,
+              "4": 0.699999988079071,
+              "5": 0.4950624704360962,
+              "6": 0.0,
+              "7": 0.4615384638309479,
+              "8": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.7319531440734863,
+              "1": 0.0,
+              "2": 0.4178006052970886,
+              "3": 0.5,
+              "4": 0.699999988079071,
+              "5": 0.4950624704360962,
+              "6": 0.0,
+              "7": 0.4615384638309479,
+              "8": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.7319531440734863,
+              "1": 0.0,
+              "2": 0.4178006052970886,
+              "3": 0.5,
+              "4": 0.699999988079071,
+              "5": 0.4950624704360962,
+              "6": 0.0,
+              "7": 0.4615384638309479,
+              "8": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.7319531440734863,
+              "1": 0.0,
+              "2": 0.4178006052970886,
+              "3": 0.5,
+              "4": 0.699999988079071,
+              "5": 0.4950624704360962,
+              "6": 0.0,
+              "7": 0.4615384638309479,
+              "8": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.7319531440734863,
+              "1": 0.0,
+              "2": 0.4178006052970886,
+              "3": 0.5,
+              "4": 0.699999988079071,
+              "5": 0.4950624704360962,
+              "6": 0.0,
+              "7": 0.4615384638309479,
+              "8": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.7319531440734863,
+              "1": 0.0,
+              "2": 0.4178006052970886,
+              "3": 0.5,
+              "4": 0.699999988079071,
+              "5": 0.4950624704360962,
+              "6": 0.0,
+              "7": 0.4615384638309479,
+              "8": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.7319531440734863,
+              "1": 0.0,
+              "2": 0.4178006052970886,
+              "3": 0.5,
+              "4": 0.699999988079071,
+              "5": 0.4950624704360962,
+              "6": 0.0,
+              "7": 0.4615384638309479,
+              "8": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.7319531440734863,
+              "1": 0.0,
+              "2": 0.4178006052970886,
+              "3": 0.5,
+              "4": 0.699999988079071,
+              "5": 0.4950624704360962,
+              "6": 0.0,
+              "7": 0.4615384638309479,
+              "8": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7"
+        ]
+      },
+      {
+        "id": "2:7",
+        "model_id": "8014",
+        "position": [
+          2,
+          7
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.24397927522659302,
+              "1": 0.43199965357780457,
+              "2": 0.5445019602775574,
+              "3": 0.4803844690322876,
+              "4": 0.4531635046005249,
+              "5": 0.5,
+              "6": 0.5,
+              "7": 0.5,
+              "8": 1.0,
+              "9": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.24397927522659302,
+              "1": 0.43199965357780457,
+              "2": 0.5445019602775574,
+              "3": 0.4803844690322876,
+              "4": 0.4531635046005249,
+              "5": 0.5,
+              "6": 0.5,
+              "7": 0.5,
+              "8": 1.0,
+              "9": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.24397927522659302,
+              "1": 0.43199965357780457,
+              "2": 0.5445019602775574,
+              "3": 0.4803844690322876,
+              "4": 0.4531635046005249,
+              "5": 0.5,
+              "6": 0.5,
+              "7": 0.5,
+              "8": 1.0,
+              "9": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.24397927522659302,
+              "1": 0.43199965357780457,
+              "2": 0.5445019602775574,
+              "3": 0.4803844690322876,
+              "4": 0.4531635046005249,
+              "5": 0.5,
+              "6": 0.5,
+              "7": 0.5,
+              "8": 1.0,
+              "9": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.24397927522659302,
+              "1": 0.43199965357780457,
+              "2": 0.5445019602775574,
+              "3": 0.4803844690322876,
+              "4": 0.4531635046005249,
+              "5": 0.5,
+              "6": 0.5,
+              "7": 0.5,
+              "8": 1.0,
+              "9": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.24397927522659302,
+              "1": 0.43199965357780457,
+              "2": 0.5445019602775574,
+              "3": 0.4803844690322876,
+              "4": 0.4531635046005249,
+              "5": 0.5,
+              "6": 0.5,
+              "7": 0.5,
+              "8": 1.0,
+              "9": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.24397927522659302,
+              "1": 0.43199965357780457,
+              "2": 0.5445019602775574,
+              "3": 0.4803844690322876,
+              "4": 0.4531635046005249,
+              "5": 0.5,
+              "6": 0.5,
+              "7": 0.5,
+              "8": 1.0,
+              "9": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.24397927522659302,
+              "1": 0.43199965357780457,
+              "2": 0.5445019602775574,
+              "3": 0.4803844690322876,
+              "4": 0.4531635046005249,
+              "5": 0.5,
+              "6": 0.5,
+              "7": 0.5,
+              "8": 1.0,
+              "9": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ]
+      },
+      {
+        "id": "3:1",
+        "model_id": "14000",
+        "position": [
+          3,
+          1
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
+              "6": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      {
+        "id": "3:3",
+        "model_id": "14000",
+        "position": [
+          3,
+          3
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
+              "6": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
+              "6": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
+              "6": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
+              "6": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
+              "6": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
+              "6": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
+              "6": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.5,
+              "1": 0.5,
+              "2": 0.5,
+              "3": 0.5,
+              "4": 0.5,
+              "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
+              "6": 0.0
+            }
+          }
+        },
+        "editable_parameters": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      {
+        "id": "3:4",
+        "model_id": "12007",
+        "position": [
+          3,
+          4
+        ],
+        "scenes": {
+          "A": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "B": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "C": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "D": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "E": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "F": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "G": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          },
+          "H": {
+            "parameters": {
+              "0": 0.0,
+              "1": "ML_412 Cali Trad S UKV30 90s_Dynamic 57",
+              "2": 0.49999991059303284,
+              "3": 0.5,
+              "4": 0.2900000214576721,
+              "5": 0.25,
+              "6": 0.0,
+              "7": 1.0,
+              "8": 0.0,
+              "9": "ML_412 Cali Trad S UKV30 90s_Ribbon 160",
+              "10": 0.49999991059303284,
+              "11": 0.5,
+              "12": 0.12000000476837158,
+              "13": 0.49000000953674316,
+              "14": 0.0,
+              "15": 1.0,
+              "16": 0.0,
+              "17": 1.0,
+              "18": 0.5595231652259827,
+              "19": "",
+              "20": "",
+              "21": 0.0
+            }
+          }
+        },
+        "editable_parameters": []
+      }
+    ]
+  }
+}

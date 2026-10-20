@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "patchbridge"
+version = "0.1.0"
+description = "Local QC bridge helper and simulation"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+usb = ["qc-mcp @ git+https://github.com/lexasoft123/qc-mcp.git@f634ecd3dcf426090b90bc4cc176e4b500494b9e"]
+
+[project.scripts]
+patchbridge-helper = "patchbridge.helper:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

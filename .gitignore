@@ -1,0 +1,40 @@
+# Python environments and generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.venv-hardware/
+build/
+dist/
+.build/
+.swiftpm/
+.venv-*/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# macOS and Xcode per-user state
+.DS_Store
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.ipa
+*.dSYM/
+
+# Local secrets, signing material, and editor/tool state
+.env
+.env.*
+!.env.example
+*.p12
+*.mobileprovision
+.impeccable/
+.idea/
+.vscode/
+
+# Raw device captures and troubleshooting exports remain local.
+# The normalized tests/fixtures/ data is intentionally versioned.
+/hardware-results/
+Patchbridge-Troubleshooting*.json
+*.log
