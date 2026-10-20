@@ -14,6 +14,7 @@ The marketing site, plus the support and privacy pages App Store Connect asks fo
 - **Links and contact:** `src/site.ts`. An empty store URL shows a "coming soon" tag instead of a dead link.
 - **Domain:** set `site` in `astro.config.mjs` (used for canonical and Open Graph URLs).
 - **Look:** tokens in `src/styles/global.css` mirror the app's Stage theme in `../DESIGN.md`. Screens in `src/assets/screens/` are copies of the design boards in `../docs/design/`.
+- **Social image:** `public/og.png` is built from those screens. Run `node ../tools/render_og_image.mjs` after changing them (needs Google Chrome).
 
 ## Run and deploy
 
