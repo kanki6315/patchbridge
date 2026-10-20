@@ -27,6 +27,7 @@ class MacReleaseTests(unittest.TestCase):
         self.dirty = False
         self.fail = None
         self.duplicate = False
+        self.xcode_uploads = []
         self.env = patch.dict(os.environ, {'DEVELOPER_DIR': str(self.root), 'MAC_ASC_USERNAME': 'test@example.invalid',
                                           'MAC_ASC_PASSWORD_KEYCHAIN': 'test-reference'}, clear=True)
         self.env.start(); self.addCleanup(self.env.stop)
@@ -46,6 +47,12 @@ class MacReleaseTests(unittest.TestCase):
         if args[:2] == ('git', 'rev-parse'): return 'abc123'
         if args[:3] == ('git', 'tag', '--list'): return 'duplicate' if self.duplicate else ''
         if args[0] == 'xcodebuild' and args[1] == '-exportArchive':
+            options = plistlib.loads(Path(args[args.index('-exportOptionsPlist') + 1]).read_bytes())
+            if options['destination'] == 'upload':
+                self.xcode_uploads.append(args)
+                if self.fail == 'xcode-upload':
+                    raise subprocess.CalledProcessError(1, args)
+                return ''
             export = Path(args[args.index('-exportPath') + 1]); export.mkdir()
             (export / 'Patchbridge.pkg').write_text('stub')
         if args[:2] == ('pkgutil', '--expand-full'):
@@ -56,7 +63,7 @@ class MacReleaseTests(unittest.TestCase):
     def invoke(self, *args):
         release.main(['--build', '42', '--skip-tests', *args])
 
-    def uploaded(self): return any(c[:3] == ('xcrun', 'altool', '--upload-app') for c in self.calls)
+    def uploaded(self): return bool(self.xcode_uploads) or any(c[:3] == ('xcrun', 'altool', '--upload-app') for c in self.calls)
     def tagged(self): return any(c[:3] == ('git', 'tag', '-a') for c in self.calls)
 
     def test_default_uploads_verified_package_then_tags(self):
@@ -120,6 +127,30 @@ class MacReleaseTests(unittest.TestCase):
         os.environ.pop('MAC_ASC_USERNAME')
         with self.assertRaises(ValueError): self.invoke()
         self.assertFalse(any('tools/package_mac.py' in c for c in self.calls))
+
+    def test_xcode_account_uploads_after_verification_then_tags(self):
+        os.environ.pop('MAC_ASC_USERNAME'); os.environ.pop('MAC_ASC_PASSWORD_KEYCHAIN')
+        self.invoke()
+        upload, = self.xcode_uploads
+        self.assertIn('-allowProvisioningUpdates', upload)
+        self.assertLess(self.calls.index(('verify',)), self.calls.index(upload))
+        tag = next(c for c in self.calls if c[:3] == ('git', 'tag', '-a'))
+        self.assertLess(self.calls.index(upload), self.calls.index(tag))
+        exports = [c for c in self.calls if c[:2] == ('xcodebuild', '-exportArchive')]
+        self.assertEqual(exports[0][exports[0].index('-archivePath') + 1],
+                         upload[upload.index('-archivePath') + 1])
+
+    def test_xcode_upload_failure_never_tags(self):
+        os.environ.pop('MAC_ASC_USERNAME'); os.environ.pop('MAC_ASC_PASSWORD_KEYCHAIN')
+        self.fail = 'xcode-upload'
+        with self.assertRaises(subprocess.CalledProcessError): self.invoke()
+        self.assertFalse(self.tagged())
+
+    def test_xcode_account_verification_failure_never_uploads(self):
+        os.environ.pop('MAC_ASC_USERNAME'); os.environ.pop('MAC_ASC_PASSWORD_KEYCHAIN')
+        self.fail = 'verify'
+        with self.assertRaises(ValueError): self.invoke()
+        self.assertFalse(self.uploaded()); self.assertFalse(self.tagged())
 
 
 class ExportVerificationTests(unittest.TestCase):

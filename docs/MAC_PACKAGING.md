@@ -143,12 +143,15 @@ Release app with dSYMs. Its helper inherits the host sandbox; the host requests 
 Bluetooth and user-selected file access. Nested runtime binaries are signed with the
 archive identity. The exported installer is signature-checked and expanded; bundle ID,
 version/build, host/helper entitlements, provisioning-profile presence, and distribution
-signatures for all bundled binaries are checked before that exact package is uploaded.
+signatures for all bundled binaries are checked before upload. With explicit upload
+credentials, altool uploads that exact package. With the Xcode account fallback, Xcode
+exports and uploads the same archive after the local package passes verification.
 `--skip-tests` skips regression tests, not package construction or distribution verification.
 
 Use the same `.release.env` API key as iOS, with local Apple Distribution and Mac Installer
 Distribution certificates/private keys. The shared `asc_profile.py --platform mac` manages
-Mac App Store profiles. Without an API key, Xcode handles automatic signing; upload needs
+Mac App Store profiles. Without an API key, signing and upload use the Apple ID signed
+into Xcode (Settings → Accounts), matching iOS. To override upload with altool, set both
 `MAC_ASC_USERNAME` and `MAC_ASC_PASSWORD_KEYCHAIN`, referencing an app-specific password
 already in Keychain. `--no-upload` does not require upload credentials. Add the macOS
 platform to the app’s App Store Connect record before uploading.

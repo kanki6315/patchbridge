@@ -94,9 +94,10 @@ def main(argv=None):
         upload_auth = ['--api-key', key_id, '--api-issuer', issuer, '--p8-file-path', key]
     elif not args.no_upload:
         user, password_key = os.environ.get('MAC_ASC_USERNAME'), os.environ.get('MAC_ASC_PASSWORD_KEYCHAIN')
-        if not user or not password_key:
-            raise ValueError('Upload requires ASC API-key settings or MAC_ASC_USERNAME and MAC_ASC_PASSWORD_KEYCHAIN.')
-        upload_auth = ['--username', user, '--password', f'@keychain:{password_key}']
+        if bool(user) != bool(password_key):
+            raise ValueError('Set both MAC_ASC_USERNAME and MAC_ASC_PASSWORD_KEYCHAIN, or neither to use the Apple ID signed into Xcode.')
+        if user:
+            upload_auth = ['--username', user, '--password', f'@keychain:{password_key}']
     out.mkdir(parents=True)
     print(f'Patchbridge Mac {version} ({build}); upload={not args.no_upload}', flush=True)
     # Existing packager validates the isolated runtime closure before it can enter an archive.
@@ -145,7 +146,16 @@ def main(argv=None):
     if not args.no_upload:
         if run('git', 'rev-parse', 'HEAD', capture=True) != commit or (not dirty and run('git', 'status', '--porcelain', '--', '.', capture=True)):
             raise ValueError('Checkout changed during release; no upload or tag created.')
-        run('xcrun', 'altool', '--upload-app', '-f', package, *upload_auth)
+        if upload_auth:
+            run('xcrun', 'altool', '--upload-app', '-f', package, *upload_auth)
+        else:
+            # Xcode can use its signed-in Apple ID; altool cannot. Verify a local
+            # export first, then let Xcode export/upload the same archive.
+            upload_options = out / 'UploadOptions.plist'
+            upload_options.write_bytes(plistlib.dumps(dict(options, destination='upload')))
+            run('xcodebuild', '-exportArchive', '-archivePath', archive,
+                '-exportPath', out / 'upload', '-exportOptionsPlist', upload_options,
+                '-allowProvisioningUpdates')
         if not dirty:
             if run('git', 'rev-parse', 'HEAD', capture=True) != commit or run('git', 'status', '--porcelain', '--', '.', capture=True):
                 raise ValueError('Upload completed but checkout changed; no tag created.')
