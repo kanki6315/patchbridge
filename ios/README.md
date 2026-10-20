@@ -127,3 +127,16 @@ A successful upload from a clean, unchanged checkout creates a local tag such
 as `ios/v0.1-293.18.30`; the script does not push it. `--no-upload` avoids uploading
 the app but still requires signing and may access Apple's provisioning service.
 Release workflow tests stub build/signing tools so they never upload anything.
+
+
+## App icon
+
+The app icon is `Patchbridge/AppIcon.icon`, an editable Icon Composer document.
+It uses the selected original “03 Patch Cable” design, rebuilt as SVG with both
+segmented jack ends, chartreuse foreground, and a dark olive background. Open the
+`.icon` document in Icon Composer to edit its appearance. The imported vector is
+in `AppIcon.icon/Assets/patch-cable.svg`; its standalone design source and exported
+default, dark, and tinted previews are in `../docs/design/brand/`. Keep the two
+SVG copies in sync when changing the mark. `project.yml` sets `AppIcon` as the
+primary icon and includes the document through the `Patchbridge` source folder.
+Xcode compiles the layered icon and generates fallback PNGs for older iOS versions.
