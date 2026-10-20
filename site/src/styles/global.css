@@ -1,0 +1,194 @@
+/* Patchbridge web: the app's Stage theme, carried onto the page.
+   Token values come from DESIGN.md; keep them in sync with the app. */
+
+:root {
+  color-scheme: dark;
+
+  /* Stage theme */
+  --signal: #d1e14a;
+  --signal-ink: #161802;
+  --ground: #0d0e0a;
+  --surface: #161612;
+  --surface-raised: #24241f;
+  --glass-fill: rgb(36 36 31 / 0.6);
+  --hairline: #2e2e29;
+  --ink: #f2f2ee;
+  --ink-muted: #b1b2ab;
+  --caution: #ffc469;
+
+  /* Block categories: fill + ink */
+  --cat-dynamics: #49af7e;   --cat-dynamics-ink: #08120c;
+  --cat-drive: #f59926;      --cat-drive-ink: #221202;
+  --cat-amp: #d02c2a;        --cat-amp-ink: #ffffff;
+  --cat-cab: #81614f;        --cat-cab-ink: #ffffff;
+  --cat-modulation: #b249ac; --cat-modulation-ink: #ffffff;
+  --cat-delay: #46a6ef;      --cat-delay-ink: #021322;
+  --cat-reverb: #79d4e4;     --cat-reverb-ink: #031a1e;
+  --cat-wah: #007c84;        --cat-wah-ink: #ffffff;
+  --cat-capture: #e5848c;    --cat-capture-ink: #221012;
+  --cat-pitch: #735cc7;      --cat-pitch-ink: #ffffff;
+  --cat-utility: #86877f;    --cat-utility-ink: #0d0e09;
+
+  /* Glass and depth */
+  --glass-edge: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  --panel-float: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 20px 50px rgb(0 0 0 / 0.35);
+  --block-highlight: inset 0 1px 0 rgb(255 255 255 / 0.35);
+
+  /* Type */
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+  --text-display: clamp(2.75rem, 1.4rem + 5vw, 5.5rem);
+  --text-h2: clamp(2rem, 1.3rem + 2.6vw, 3.4rem);
+  --text-h3: 1.25rem;
+  --text-lede: clamp(1.125rem, 1rem + 0.45vw, 1.375rem);
+  --text-body: 1.0625rem;
+  --text-caption: 0.875rem;
+  --text-label: 0.75rem;
+
+  /* Space & shape */
+  --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.5rem);
+  --section: clamp(5rem, 3rem + 8vw, 10rem);
+  --max: 76rem;
+  --r-cell: 9px;
+  --r-sm: 12px;
+  --r-md: 15px;
+  --r-lg: 18px;
+  --r-panel: 20px;
+  --r-sheet: 28px;
+  --r-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out-quint */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layers (DESIGN.md Layer Order Rule) */
+  --z-sticky: 10;
+  --z-toast: 20;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+p { margin: 0; text-wrap: pretty; }
+
+[hidden] { display: none !important; }
+
+img { display: block; max-width: 100%; height: auto; }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection { background: var(--signal); color: var(--signal-ink); }
+
+.wrap {
+  width: 100%;
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Pills: the app's button vocabulary */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 50px;
+  padding: 0 1.5rem;
+  border-radius: var(--r-pill);
+  font: 600 1.0625rem/1 var(--font);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 150ms var(--ease-out), filter 150ms var(--ease-out), background-color 150ms var(--ease-out);
+}
+.btn:active { transform: scale(0.97); }
+.btn svg { width: 1.15em; height: 1.15em; flex: none; }
+
+.btn-primary { background: var(--signal); color: var(--signal-ink); }
+.btn-primary:hover { filter: brightness(1.08); }
+
+.btn-glass {
+  background: var(--glass-fill);
+  color: var(--ink);
+  box-shadow: var(--glass-edge);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+}
+.btn-glass:hover { background: rgb(52 52 46 / 0.7); }
+
+/* A store link that doesn't exist yet: a quiet tag, not a fake button. */
+.btn-soon {
+  min-height: 40px;
+  padding: 0 1rem;
+  background: transparent;
+  color: var(--ink-muted);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: default;
+}
+.btn-soon:active { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .btn-glass {
+    background: var(--surface-raised);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

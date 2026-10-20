@@ -1,0 +1,205 @@
+---
+import '../styles/global.css';
+import Logo from '../components/Logo.astro';
+import { site } from '../site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'Edit your Quad Cortex from your iPhone. Patchbridge shows the preset, the chain and every value the QC actually holds.',
+} = Astro.props;
+
+const pageTitle = title ? `${title} · ${site.name}` : `${site.name}: your Quad Cortex, within reach`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const nav = [
+  { href: '/support', label: 'Support' },
+  { href: '/privacy', label: 'Privacy' },
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0d0e0a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/og.png', Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Entrance motion runs only under .intro, and the class always comes off,
+         so a stalled animation timeline can never leave content hidden. -->
+    <script is:inline>
+      document.documentElement.classList.add('intro');
+      setTimeout(function () { document.documentElement.classList.remove('intro'); }, 2400);
+    </script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href="/" aria-label={`${site.name} home`}>
+          <Logo size={30} />
+          <span>{site.name}</span>
+        </a>
+        <nav aria-label="Site">
+          <ul>
+            {nav.map((item) => (
+              <li>
+                <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap foot">
+        <div class="foot-brand">
+          <Logo size={24} />
+          <span>© {new Date().getFullYear()} {site.name}</span>
+        </div>
+        <ul class="foot-links">
+          <li><a href="/support">Support</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+        </ul>
+        <p class="disclaimer">
+          Quad Cortex is a trademark of Neural DSP Technologies. {site.name} is an independent app and isn't affiliated with or endorsed by Neural DSP.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .skip {
+    position: absolute;
+    left: var(--gutter);
+    top: -4rem;
+    z-index: var(--z-toast);
+    padding: 0.75rem 1rem;
+    border-radius: var(--r-pill);
+    background: var(--signal);
+    color: var(--signal-ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .skip:focus { top: 0.75rem; }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background: rgb(13 14 10 / 0.72);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .site-header { background: var(--ground); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 64px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--ink);
+    text-decoration: none;
+    font: 700 1.125rem/1 var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  .brand :global(svg) { color: var(--signal); }
+
+  nav ul {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 0.9rem;
+    border-radius: var(--r-pill);
+    color: var(--ink-muted);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 150ms var(--ease-out), background-color 150ms var(--ease-out);
+  }
+  nav a:hover { color: var(--ink); background: rgb(255 255 255 / 0.06); }
+  nav a[aria-current='page'] { color: var(--ink); box-shadow: var(--glass-edge); background: var(--glass-fill); }
+
+  .site-footer {
+    border-top: 1px solid var(--hairline);
+    padding-block: 3rem 2.5rem;
+    color: var(--ink-muted);
+    font-size: var(--text-caption);
+  }
+  .foot {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 1.5rem 2rem;
+  }
+  .foot-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--ink);
+  }
+  .foot-brand :global(svg) { color: var(--signal); }
+  .foot-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .foot-links a {
+    display: inline-block;
+    padding-block: 0.6rem;
+    text-decoration: none;
+  }
+  .foot-links a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  .disclaimer {
+    grid-column: 1 / -1;
+    max-width: 65ch;
+    font-size: 0.8125rem;
+  }
+
+  @media (max-width: 40rem) {
+    .foot { grid-template-columns: 1fr; }
+    .foot-links { justify-content: flex-start; }
+  }
+</style>

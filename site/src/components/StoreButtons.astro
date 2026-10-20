@@ -1,0 +1,32 @@
+---
+import { site } from '../site';
+
+interface Props { class?: string }
+const { class: className } = Astro.props;
+---
+<div class:list={['store', className]}>
+  {site.appStoreUrl ? (
+    <a class="btn btn-primary" href={site.appStoreUrl}>
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+      Download for iPhone
+    </a>
+  ) : (
+    <span class="btn btn-soon">iPhone app coming soon</span>
+  )}
+  {site.macAppUrl ? (
+    <a class="btn btn-glass" href={site.macAppUrl}>
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg>
+      Get the Mac bridge
+    </a>
+  ) : (
+    <span class="btn btn-soon">Mac bridge coming soon</span>
+  )}
+</div>
+
+<style>
+  .store {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>

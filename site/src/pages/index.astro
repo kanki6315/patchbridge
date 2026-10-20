@@ -1,0 +1,402 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import SignalGrid from '../components/SignalGrid.astro';
+import Gauge from '../components/Gauge.astro';
+import StoreButtons from '../components/StoreButtons.astro';
+
+import appIcon from '../assets/app-icon.png';
+import phoneOverview from '../assets/screens/phone-overview.png';
+import phoneFine from '../assets/screens/phone-fine.png';
+import phoneWelcome from '../assets/screens/phone-welcome.png';
+import phoneLandscape from '../assets/screens/phone-landscape.png';
+import ipadOverview from '../assets/screens/ipad-overview.png';
+import macConnected from '../assets/screens/mac-connected.png';
+
+// Copy is deliberately short placeholder text: rewrite freely.
+const truths = [
+  { state: 'pending', title: 'Sending', body: 'Dashed until the QC confirms it.' },
+  { state: 'confirmed', title: 'Confirmed', body: 'Solid means it’s on the QC.' },
+  { state: 'rejected', title: 'Not applied', body: 'If the QC says no, you’ll know why.' },
+  { state: 'unsaved', title: 'Unsaved', body: 'Nothing saves until you tap Save.' },
+];
+
+const shots = [
+  { src: phoneOverview, alt: 'iPhone: the preset Tremonti w Mic, scene F, the signal-chain grid with row 1 selected and its blocks listed below.', caption: 'The whole chain, one thumb away', kind: 'phone' },
+  { src: phoneFine, alt: 'iPhone: the Opto Comp threshold gauge at −30.05 dB in fine 0.05 steps.', caption: 'Fine steps when you need them', kind: 'phone' },
+  { src: ipadOverview, alt: 'iPad: grid, row list, all eight scenes and a persistent block editor on one screen.', caption: 'Everything at once on iPad', kind: 'tablet' },
+  { src: phoneLandscape, alt: 'iPhone in landscape: the full 4 by 8 grid beside an inspector.', caption: 'Turn sideways for the full grid', kind: 'wide' },
+  { src: macConnected, alt: 'Mac bridge window: iPhone, Mac and Quad Cortex connected, with recent edits and one not applied.', caption: 'The Mac bridge keeps score', kind: 'mac' },
+  { src: phoneWelcome, alt: 'iPhone welcome screen: iPhone to Mac over Bluetooth, Mac to QC over USB.', caption: 'Setup in two steps', kind: 'phone' },
+];
+---
+<Base>
+  <!-- Hero -->
+  <section class="hero wrap" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <h1 id="hero-title">Your Quad Cortex, within&nbsp;reach.</h1>
+      <p class="lede">
+        Edit presets from your iPhone without bending over the floor unit.
+        See the chain, nudge a value, save when you mean&nbsp;it.
+      </p>
+      <StoreButtons class="hero-cta" />
+      <p class="needs">Needs a Mac nearby, connected to the QC over USB.</p>
+    </div>
+    <div class="hero-rig">
+      <SignalGrid />
+    </div>
+  </section>
+
+  <!-- The device is the truth -->
+  <section class="truth" data-truth data-state="confirmed" aria-labelledby="truth-title">
+    <div class="wrap truth-grid">
+      <div class="truth-copy">
+        <h2 id="truth-title">What you see is what the QC&nbsp;holds.</h2>
+        <p class="sub">Every edit shows its real state. No guessing whether it landed.</p>
+        <ul class="truths">
+          {truths.map((t) => (
+            <li class="truth-item" data-for={t.state}>
+              <span class:list={['mark', `mark-${t.state}`]} aria-hidden="true"></span>
+              <span>
+                <b>{t.title}</b>
+                <span>{t.body}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="truth-dial">
+        <div class="editor-head" aria-hidden="true">
+          <span class="chip">CMP</span>
+          <span><b>Opto Comp (M)</b><span>Compressor · Scene F</span></span>
+        </div>
+        <Gauge />
+      </div>
+    </div>
+  </section>
+
+  <!-- How it connects: a real sequence, so it's numbered. -->
+  <section class="how wrap" aria-labelledby="how-title">
+    <h2 id="how-title">Phone to Mac to&nbsp;QC.</h2>
+    <div class="chain" aria-hidden="true">
+      <div class="node">
+        <span class="disc"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span>
+        <span>iPhone</span>
+      </div>
+      <div class="link link-bt"><span>Bluetooth</span><svg viewBox="0 0 100 4" preserveAspectRatio="none"><line x1="0" y1="2" x2="100" y2="2"/></svg></div>
+      <div class="node">
+        <span class="disc"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span>
+        <span>Mac</span>
+      </div>
+      <div class="link link-usb"><span>USB</span><svg viewBox="0 0 100 4" preserveAspectRatio="none"><line x1="0" y1="2" x2="100" y2="2"/></svg></div>
+      <div class="node">
+        <span class="disc"><svg viewBox="0 0 24 24" class="qc"><rect x="4" y="8" width="3.2" height="3.2" rx=".8"/><rect x="8.3" y="8" width="3.2" height="3.2" rx=".8"/><rect x="12.6" y="8" width="3.2" height="3.2" rx=".8"/><rect x="16.9" y="8" width="3.2" height="3.2" rx=".8"/><rect x="4" y="12.6" width="3.2" height="3.2" rx=".8" opacity=".5"/><rect x="8.3" y="12.6" width="3.2" height="3.2" rx=".8"/><rect x="12.6" y="12.6" width="3.2" height="3.2" rx=".8" opacity=".5"/><rect x="16.9" y="12.6" width="3.2" height="3.2" rx=".8"/></svg></span>
+        <span>QC</span>
+      </div>
+    </div>
+    <ol class="steps">
+      <li><b>Install the free Mac bridge.</b> <span>It owns the USB connection.</span></li>
+      <li><b>Plug in your QC.</b> <span>Close Cortex Control first.</span></li>
+      <li><b>Approve your iPhone on the Mac.</b> <span>Match the six-character code once.</span></li>
+    </ol>
+  </section>
+
+  <!-- Screens -->
+  <section class="screens" aria-labelledby="screens-title">
+    <div class="wrap screens-head">
+      <h2 id="screens-title">Built for the way you&nbsp;play.</h2>
+      <p class="sub">iPhone, iPad and a small Mac window. Native, calm, and dark for the stage.</p>
+    </div>
+    <div class="rail" role="region" aria-label="App screens" tabindex="0">
+      {shots.map((s) => (
+        <figure class:list={['shot', `shot-${s.kind}`]}>
+          <Image src={s.src} alt={s.alt} widths={[480, 960, 1400]} sizes="(max-width: 40rem) 80vw, 50vw" loading="lazy" decoding="async" />
+          <figcaption>{s.caption}</figcaption>
+        </figure>
+      ))}
+    </div>
+  </section>
+
+  <!-- Closing call -->
+  <section class="close wrap" aria-labelledby="close-title">
+    <Image class="icon" src={appIcon} alt="" width={168} height={168} loading="lazy" />
+    <h2 id="close-title">Dial it in from where you&nbsp;stand.</h2>
+    <StoreButtons class="close-cta" />
+  </section>
+</Base>
+
+<style>
+  /* Hero */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    gap: clamp(2.5rem, 5vw, 5rem);
+    padding-block: clamp(3rem, 2rem + 6vw, 7.5rem) var(--section);
+  }
+  .hero-copy { display: grid; gap: 1.5rem; }
+  h1 {
+    font-size: var(--text-display);
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+  }
+  .lede {
+    max-width: 34ch;
+    color: var(--ink-muted);
+    font-size: var(--text-lede);
+    line-height: 1.5;
+  }
+  .hero-cta { margin-top: 0.5rem; }
+  .needs { color: var(--ink-muted); font-size: var(--text-caption); }
+
+  @media (max-width: 60rem) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-copy { max-width: 36rem; }
+  }
+
+  h2 { font-size: var(--text-h2); letter-spacing: -0.03em; }
+  .sub {
+    max-width: 44ch;
+    margin-top: 1rem;
+    color: var(--ink-muted);
+    font-size: var(--text-lede);
+    line-height: 1.5;
+  }
+
+  /* Truth: the editor's tinted ground with one soft category glow. */
+  .truth {
+    position: relative;
+    padding-block: var(--section);
+    background:
+      radial-gradient(40rem 32rem at 72% 50%, oklch(0.3 0.07 160 / 0.9), transparent 70%),
+      oklch(0.16 0.012 160);
+  }
+  .truth-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(3rem, 6vw, 6rem);
+  }
+  @media (max-width: 52rem) {
+    .truth-grid { grid-template-columns: 1fr; }
+    .truth-dial { order: -1; }
+  }
+
+  .truths {
+    display: grid;
+    gap: 0.25rem;
+    margin: 2.5rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .truth-item {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1rem 0.85rem 0.85rem;
+    border-radius: var(--r-lg);
+    transition: background-color 250ms var(--ease-out), box-shadow 250ms var(--ease-out);
+  }
+  .truth-item > span:last-child { display: grid; line-height: 1.4; }
+  .truth-item b { font-weight: 600; font-size: 1.0625rem; }
+  .truth-item > span:last-child > span { color: var(--ink-muted); }
+
+  [data-truth][data-state='pending'] [data-for='pending'],
+  [data-truth][data-state='confirmed'] [data-for='confirmed'],
+  [data-truth][data-state='rejected'] [data-for='rejected'] {
+    background: var(--glass-fill);
+    box-shadow: var(--glass-edge);
+  }
+
+  /* Each mark is the app's own state shape. */
+  .mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.5rem; height: 2.5rem;
+    border-radius: var(--r-sm);
+  }
+  .mark-pending { outline: 1.5px dashed var(--signal); outline-offset: -4px; }
+  .mark-confirmed { outline: 1.5px solid oklch(0.74 0.12 160); outline-offset: -4px; }
+  .mark-confirmed::after {
+    content: '';
+    width: 1rem; height: 1rem;
+    background: oklch(0.74 0.12 160);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .mark-rejected::after {
+    content: '';
+    width: 1.3rem; height: 1.3rem;
+    background: var(--caution);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 2.2 14.5 13.5h-13z' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M8 6.5v3.2' stroke='black' stroke-width='1.4' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='11.6' r='.85'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .mark-unsaved::after {
+    content: '';
+    width: 0.65rem; height: 0.65rem;
+    border-radius: 50%;
+    background: var(--signal);
+  }
+
+  .truth-dial { display: grid; justify-items: center; gap: 1.5rem; }
+  .editor-head {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    justify-self: center;
+  }
+  .editor-head > span:last-child { display: grid; line-height: 1.2; }
+  .editor-head b { font: 700 1.5rem/1.1 var(--font-display); letter-spacing: -0.015em; }
+  .editor-head > span:last-child > span { color: var(--ink-muted); font-size: 0.875rem; }
+  .chip {
+    display: grid;
+    place-items: center;
+    width: 2.75rem; height: 2.75rem;
+    border-radius: var(--r-sm);
+    background: var(--cat-dynamics);
+    color: var(--cat-dynamics-ink);
+    font-size: var(--text-label);
+    font-weight: 700;
+    box-shadow: var(--block-highlight);
+  }
+
+  /* How it connects */
+  .how { padding-block: var(--section); }
+  .chain {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr auto;
+    align-items: start;
+    gap: 0 clamp(0.5rem, 2vw, 1.5rem);
+    max-width: 44rem;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+  .node {
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+    color: var(--ink-muted);
+    font-size: 0.9375rem;
+  }
+  .disc {
+    display: grid;
+    place-items: center;
+    width: clamp(4rem, 3rem + 4vw, 5.5rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--surface-raised);
+    box-shadow: var(--glass-edge);
+    color: var(--ink);
+  }
+  .disc svg {
+    width: 42%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .disc svg.qc { fill: currentColor; stroke: none; }
+  .link {
+    display: grid;
+    gap: 0.4rem;
+    justify-items: center;
+    padding-top: calc(clamp(4rem, 3rem + 4vw, 5.5rem) / 2 - 1.1rem);
+    color: var(--ink-muted);
+    font-size: var(--text-caption);
+    font-weight: 600;
+  }
+  .link svg { width: 100%; height: 4px; overflow: visible; }
+  .link line { stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+  .link-usb line { stroke: var(--ink-muted); }
+  .link-bt line {
+    stroke: var(--signal);
+    stroke-dasharray: 6 5;
+    animation: flow 1.2s linear infinite;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 2rem clamp(1.5rem, 4vw, 3rem);
+    margin: clamp(3rem, 6vw, 4.5rem) 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+  .steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 2.25rem 1fr;
+    gap: 0.15rem 1rem;
+    align-items: start;
+  }
+  .steps li::before {
+    content: counter(step);
+    grid-row: span 2;
+    display: grid;
+    place-items: center;
+    width: 2.25rem; height: 2.25rem;
+    border-radius: 50%;
+    background: var(--surface-raised);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    align-self: start;
+  }
+  .steps b { font-size: 1.125rem; font-weight: 600; line-height: 1.35; padding-top: 0.3rem; }
+  .steps span { color: var(--ink-muted); }
+
+  /* Screens rail */
+  .screens { padding-bottom: var(--section); }
+  .rail {
+    --h: clamp(24rem, 18rem + 22vw, 36rem);
+    display: flex;
+    gap: clamp(1rem, 2.5vw, 2rem);
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    padding: 0.5rem max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter))) 1.5rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter)));
+    scrollbar-width: thin;
+    scrollbar-color: var(--hairline) transparent;
+    overscroll-behavior-x: contain;
+  }
+  .rail:focus-visible { outline-offset: -2px; }
+  .shot {
+    flex: none;
+    display: grid;
+    gap: 0.9rem;
+    margin: 0;
+    scroll-snap-align: start;
+  }
+  .shot :global(img) {
+    height: var(--h);
+    width: auto;
+    border-radius: 2.25rem;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 0 0 1px var(--hairline), 0 30px 60px -30px rgb(0 0 0 / 0.8);
+  }
+  .shot-tablet :global(img) { border-radius: 1.5rem; }
+  .shot-wide :global(img) { height: calc(var(--h) * 0.55); border-radius: 1.75rem; }
+  .shot-wide { align-self: end; }
+  .shot-mac :global(img) { height: calc(var(--h) * 0.85); border-radius: 0.9rem; }
+  .shot-mac { align-self: end; }
+  figcaption { color: var(--ink-muted); font-size: 0.9375rem; }
+
+  /* Close */
+  .close {
+    display: grid;
+    justify-items: center;
+    gap: 2rem;
+    padding-block: 0 var(--section);
+    text-align: center;
+  }
+  .close :global(.icon) {
+    width: clamp(6rem, 4rem + 6vw, 10.5rem);
+    height: auto;
+    border-radius: 22.5%;
+    box-shadow: 0 30px 80px -20px oklch(0.87 0.17 115 / 0.25);
+  }
+  .close h2 { max-width: 14ch; }
+  .close-cta { justify-content: center; }
+
+  @keyframes flow { to { stroke-dashoffset: -11; } }
+</style>

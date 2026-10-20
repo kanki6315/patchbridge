@@ -1,0 +1,21 @@
+---
+// The Patch Cable "pb" mark from docs/design/brand/patch-cable.svg.
+interface Props { size?: number; class?: string }
+const { size = 28, class: className } = Astro.props;
+---
+<svg
+  class={className}
+  width={size}
+  height={size}
+  viewBox="0 0 300 250"
+  aria-hidden="true"
+  focusable="false"
+>
+  <g fill="currentColor">
+    <path fill-rule="evenodd" d="M5 182V123C5 90 24 74 57 74H108C133 74 147 88 147 113V132C147 139 152 139 159 141L168 144Q174 146 174 138V70H203V77H249C278 77 294 92 294 119V139C294 167 278 183 250 183H204C186 183 174 177 161 165L155 160Q149 155 142 158C134 175 120 183 100 183H54C35 183 35 155 54 155H100C112 155 119 148 119 137V116C119 108 114 104 105 104H57C42 104 35 111 35 124V182ZM203 105V149Q203 155 210 155H249C259 155 265 149 265 139V120C265 110 260 105 249 105Z"/>
+    <rect x="1" y="181" width="37" height="26" rx="3"/>
+    <path d="M10 211H29V227H10Z M13 231H26L30 237Q30 241 25 245Q20 249 15 245L9 240Q7 236 13 231Z"/>
+    <rect x="169" y="45" width="38" height="27" rx="3"/>
+    <path d="M179 21H198V41H179Z M181 1H194L199 7Q200 11 196 14V17H180V14Q175 11 178 7Z"/>
+  </g>
+</svg>

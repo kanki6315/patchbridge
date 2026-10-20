@@ -1,0 +1,285 @@
+---
+// The editor's signature gauge, replaying a short edit: pending (dashed) →
+// confirmed (solid) → rejected (caution). Without JS it rests on a confirmed
+// value. Geometry mirrors DESIGN.md: a 270° arc, 16px stroke, white thumb.
+
+const MIN = -60;
+const MAX = 12;
+const START = -34.2;
+const R = 100;
+const C = 130; // centre in a 260 × 260 viewBox
+const SWEEP = 270;
+
+const frac = (v: number) => (v - MIN) / (MAX - MIN);
+const point = (f: number) => {
+  const a = ((135 + SWEEP * f) * Math.PI) / 180;
+  return { x: C + R * Math.cos(a), y: C + R * Math.sin(a) };
+};
+const s = point(0);
+const e = point(1);
+const arc = `M ${s.x} ${s.y} A ${R} ${R} 0 1 1 ${e.x} ${e.y}`;
+const t = point(frac(START));
+const fmt = (v: number) => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(1);
+---
+<div class="gauge" data-gauge data-state="confirmed" data-min={MIN} data-max={MAX} data-start={START}>
+  <div class="dial">
+    <svg viewBox="0 0 260 260" aria-hidden="true">
+      <defs>
+        <mask id="pending-mask" maskUnits="userSpaceOnUse">
+          <path class="mask-run" d={arc} pathLength="100" stroke="#fff" stroke-width="20" fill="none" stroke-dasharray="0 100" />
+        </mask>
+      </defs>
+      <path class="track" d={arc} />
+      <path class="pending" d={arc} mask="url(#pending-mask)" />
+      <path class="fill" d={arc} pathLength="100" stroke-dasharray={`${frac(START) * 100} 100`} />
+      <line class="tick" x1={t.x} y1={t.y} x2={t.x} y2={t.y} />
+      <circle class="thumb" cx={t.x} cy={t.y} r="13" />
+    </svg>
+    <div class="readout">
+      <span class="num tnum" data-num>{fmt(START)}</span><span class="unit">dB</span>
+    </div>
+    <span class="range range-min tnum" aria-hidden="true">−60</span>
+    <span class="range range-max tnum" aria-hidden="true">+12</span>
+  </div>
+  <p class="status" data-status aria-live="polite"><span class="status-icon" aria-hidden="true"></span><span data-status-text>Threshold · on the QC</span></p>
+  <button class="replay btn btn-glass" type="button" data-replay hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4.5h4.5"/></svg>
+    Play it again
+  </button>
+</div>
+
+<script>
+  type State = 'confirmed' | 'pending' | 'rejected';
+
+  const ease = (x: number) => 1 - Math.pow(1 - x, 5);
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-gauge]')) {
+    const min = Number(root.dataset.min);
+    const max = Number(root.dataset.max);
+    const start = Number(root.dataset.start);
+    const svg = root.querySelector('svg')!;
+    const arc = svg.querySelector<SVGPathElement>('.track')!;
+    const fill = svg.querySelector<SVGPathElement>('.fill')!;
+    const run = svg.querySelector<SVGPathElement>('.mask-run')!;
+    const thumb = svg.querySelector<SVGCircleElement>('.thumb')!;
+    const tick = svg.querySelector<SVGLineElement>('.tick')!;
+    const num = root.querySelector<HTMLElement>('[data-num]')!;
+    const text = root.querySelector<HTMLElement>('[data-status-text]')!;
+    const replay = root.querySelector<HTMLButtonElement>('[data-replay]')!;
+    const section = root.closest<HTMLElement>('[data-truth]');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const total = arc.getTotalLength();
+
+    const frac = (v: number) => (v - min) / (max - min);
+    const fmt = (v: number) => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(1);
+    const at = (f: number) => arc.getPointAtLength(total * f);
+
+    let confirmed = start;
+    let shown = start;
+
+    const set = (state: State, label: string) => {
+      root.dataset.state = state;
+      if (section) section.dataset.state = state;
+      text.textContent = label;
+    };
+
+    const draw = (value: number) => {
+      shown = value;
+      const f = frac(value);
+      const c = frac(confirmed);
+      const p = at(f);
+      thumb.setAttribute('cx', String(p.x));
+      thumb.setAttribute('cy', String(p.y));
+      num.textContent = fmt(value);
+      fill.setAttribute('stroke-dasharray', `${Math.min(f, c) * 100} 100`);
+      const lo = Math.min(f, c);
+      const hi = Math.max(f, c);
+      run.setAttribute('stroke-dasharray', `0 ${lo * 100} ${(hi - lo) * 100} 100`);
+      // The tick marks where the QC still is, a little outside the arc.
+      const q = at(c);
+      const dx = q.x - 130;
+      const dy = q.y - 130;
+      const len = Math.hypot(dx, dy);
+      tick.setAttribute('x1', String(130 + (dx / len) * 88));
+      tick.setAttribute('y1', String(130 + (dy / len) * 88));
+      tick.setAttribute('x2', String(130 + (dx / len) * 112));
+      tick.setAttribute('y2', String(130 + (dy / len) * 112));
+    };
+
+    // Values move in honest 0.1 steps, like dragging the real gauge.
+    const sweep = async (to: number, ms: number) => {
+      if (reduce) return draw(to);
+      const from = shown;
+      const t0 = performance.now();
+      await new Promise<void>((done) => {
+        const frame = (now: number) => {
+          const k = Math.min(1, (now - t0) / ms);
+          draw(Math.round((from + (to - from) * ease(k)) * 10) / 10);
+          k < 1 ? requestAnimationFrame(frame) : done();
+        };
+        requestAnimationFrame(frame);
+      });
+    };
+
+    let playing = false;
+    const play = async () => {
+      if (playing) return;
+      playing = true;
+      replay.hidden = true;
+      confirmed = start;
+      draw(start);
+      set('confirmed', 'Threshold · on the QC');
+      await wait(700);
+
+      set('pending', 'Sending…');
+      await sweep(-30.0, 900);
+      await wait(1300);
+      confirmed = -30.0;
+      draw(-30.0);
+      set('confirmed', 'Confirmed by the QC');
+      await wait(1800);
+
+      set('pending', 'Sending…');
+      await sweep(-24.5, 800);
+      await wait(1200);
+      set('rejected', 'Not applied · scene changed');
+      await sweep(-30.0, 500);
+      await wait(400);
+
+      playing = false;
+      replay.hidden = false;
+    };
+
+    draw(start);
+    replay.addEventListener('click', play);
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          play();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    io.observe(root);
+  }
+</script>
+
+<style>
+  .gauge {
+    display: grid;
+    justify-items: center;
+    gap: 1rem;
+  }
+  .dial {
+    position: relative;
+    width: min(100%, 22rem);
+    aspect-ratio: 1;
+  }
+  .dial svg { width: 100%; height: 100%; overflow: visible; }
+
+  .track, .fill, .pending {
+    fill: none;
+    stroke-width: 16;
+    stroke-linecap: round;
+  }
+  .track { stroke: rgb(255 255 255 / 0.13); }
+  .fill {
+    /* Category arc color: Dynamics raised to oklch L 0.74 for the dark ground. */
+    stroke: oklch(0.74 0.12 160);
+  }
+  .pending {
+    stroke: oklch(0.74 0.12 160 / 0.9);
+    stroke-linecap: butt;
+    stroke-dasharray: 5 5;
+  }
+  .tick {
+    stroke: var(--ink);
+    stroke-width: 3;
+    stroke-linecap: round;
+    opacity: 0;
+    transition: opacity 150ms var(--ease-out);
+  }
+  .thumb {
+    fill: #fff;
+    stroke: var(--ground);
+    stroke-width: 3;
+    filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.5));
+  }
+
+  .readout {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    align-content: center;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: auto;
+    width: max-content;
+    height: max-content;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--r-md);
+    outline: 1.5px dashed transparent;
+    outline-offset: 0;
+    transition: outline-color 150ms var(--ease-out);
+  }
+  .num {
+    font: 700 clamp(2.75rem, 2rem + 3vw, 3.75rem)/1 var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  .unit { color: var(--ink-muted); font-size: 1.125rem; font-weight: 600; }
+
+  .range {
+    position: absolute;
+    bottom: 4%;
+    color: var(--ink-muted);
+    font-size: var(--text-caption);
+  }
+  .range-min { left: 18%; }
+  .range-max { right: 18%; }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 1.75rem;
+    color: var(--ink-muted);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+  .status-icon {
+    width: 1rem; height: 1rem;
+    border-radius: 50%;
+  }
+
+  .replay { min-height: 44px; font-size: 0.9375rem; }
+
+  /* States, each with a shape as well as a color (Shape-Plus-Color Rule). */
+  [data-state='pending'] .readout { outline-color: var(--signal); }
+  [data-state='pending'] .tick { opacity: 1; }
+  [data-state='pending'] .status { color: var(--signal); }
+  [data-state='pending'] .status-icon {
+    border: 1.5px dashed var(--signal);
+    animation: spin 2.4s linear infinite;
+  }
+
+  [data-state='confirmed'] .status-icon {
+    border-radius: 0;
+    background: var(--ink-muted);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  [data-state='rejected'] .readout { outline: 1.5px solid var(--caution); }
+  [data-state='rejected'] .status { color: var(--caution); }
+  [data-state='rejected'] .status-icon {
+    border-radius: 0;
+    background: var(--caution);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 2.2 14.5 13.5h-13z' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M8 6.5v3.2' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='11.6' r='.9'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
