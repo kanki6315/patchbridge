@@ -12,6 +12,8 @@ public final class DeviceSession {
     public var recovering: Bool { shared.recovering }
     /// The shared session generation this device last joined; nil while not joined.
     var adoptedGeneration: Int?
+    /// This device's number in diagnostics: its place in the bridge's admission order.
+    public internal(set) var index = 0
     private var authorized = false
     /// This device's entry in the bridge's trust registry. Kept across connections.
     private var trustToken: String?
@@ -32,7 +34,7 @@ public final class DeviceSession {
     }
     deinit { shared.forget(ObjectIdentifier(self)) }
     public func approve(trusting: Bool = false) {
-        authorized = true; helper.diagnostics.record(.bridgeApproved)
+        authorized = true; helper.diagnostics.record(.bridgeApproved, device: index)
         if trusting { trustToken = shared.trust.add(name: phoneName); trustedConnection = true }
     }
     /// The connected phone keeps its current approval; its next connection needs a code.
@@ -41,7 +43,7 @@ public final class DeviceSession {
         trustToken = nil; trustedConnection = false
     }
     public func revoke() {
-        helper.diagnostics.record(.bridgeRevoked)
+        helper.diagnostics.record(.bridgeRevoked, device: index)
         _ = try? shared.leave(self)
         endConnection()
     }
@@ -72,16 +74,16 @@ public final class DeviceSession {
                 if let offered = message["trust_token"] as? String, shared.trust.name(for: offered) != nil {
                     authorized = true; trustedConnection = true; trustToken = offered
                     shared.trust.rename(offered, to: phoneName)
-                    helper.diagnostics.record(.bridgeApproved)
+                    helper.diagnostics.record(.bridgeApproved, device: index)
                 }
             }
             return ["version": 1, "id": message["id"] ?? NSNull(), "connection_id": token, "authorization_required": !isTrustedConnection,
                     "mac_name": macName, "approval_code": approvalCode, "max_message_bytes": 1_048_576]
         }
-        guard authorized else { helper.diagnostics.record(.requestRejected, operation: operation, code: "unauthorized"); throw BridgeFailure.unauthorized }
-        guard message["connection_id"] as? String == token else { helper.diagnostics.record(.requestRejected, operation: operation, code: "stale_session"); throw BridgeFailure.staleSession }
+        guard authorized else { helper.diagnostics.record(.requestRejected, operation: operation, code: "unauthorized", device: index); throw BridgeFailure.unauthorized }
+        guard message["connection_id"] as? String == token else { helper.diagnostics.record(.requestRejected, operation: operation, code: "stale_session", device: index); throw BridgeFailure.staleSession }
         if helper.readOnly && !["connect", "disconnect", "identify", "capabilities", "snapshot", "catalog", "subscribe", "recover"].contains(operation) {
-            helper.diagnostics.record(.writeBlocked, operation: operation, code: "read_only")
+            helper.diagnostics.record(.writeBlocked, operation: operation, code: "read_only", device: index)
             throw BridgeFailure.readOnly
         }
         let mutation = ["set_parameter", "save", "set_bypass", "select_scene", "select_preset", "save_as"].contains(operation)
@@ -117,7 +119,7 @@ public final class DeviceSession {
             switch operation {
             case "connect", "recover": result = try shared.join(self, message)
             case "disconnect": result = (try shared.leave(self, forwarding: message), false)
-            default: result = try shared.forward(message)
+            default: result = try shared.forward(message, for: self)
             }
         } catch {
             if mutation { shared.onMutation?(phoneName, message, nil) }

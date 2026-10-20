@@ -270,7 +270,7 @@ Small changes; the editing model already copes with shared state.
 - No change to trust storage: `TrustStore` is already keyed by Mac, and each device
   holds its own token.
 
-## Phase 5: verification
+## Phase 5: verification (done offline; hardware pass not run)
 
 - Unit tests per phase (above), plus `tools/check_offline.sh` with two simulated
   devices.
@@ -289,8 +289,12 @@ Small changes; the editing model already copes with shared state.
   other is backgrounded, then foreground it; trusted reconnect after Bluetooth
   loss; quit the app on one device mid-edit; repeat with AirPods and a keyboard
   connected to the Mac.
-- Diagnostics: tag events with a short per-session device index (not the name)
-  so exported reports show which device did what.
+- Diagnostics: events carry `device`, the bridge's admission-order number for the
+  device (not its name), and helper requests sent for a device carry it too. The
+  bridge also records `bridge_full`, `revoked` and `busy` refusals. See
+  [diagnostics](DIAGNOSTICS.md).
+- The hardware pass is in [hardware validation](HARDWARE_VALIDATION.md#two-device-bridge-pass)
+  and has not been run.
 
 ## Out of scope
 

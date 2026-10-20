@@ -49,8 +49,14 @@ final class CentralRouter {
     private let owner: DispatchQueue
     private let radio: DispatchQueue
     private let now: () -> TimeInterval
-    init(radio: DispatchQueue, owner: DispatchQueue, now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
-        self.radio = radio; self.owner = owner; self.now = now
+    private let diagnostics: Diagnostics
+    init(radio: DispatchQueue, owner: DispatchQueue, diagnostics: Diagnostics = .shared,
+         now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+        self.radio = radio; self.owner = owner; self.diagnostics = diagnostics; self.now = now
+    }
+    private func refuseBusy(_ message: [String: Any]) -> PeripheralReply {
+        diagnostics.record(.requestRejected, operation: message["operation"] as? String, code: "busy")
+        return PeripheralReply(message: Self.busyReply(message))
     }
 
     static func errorReply(_ message: [String: Any], code: String, text: String, retryAfter: TimeInterval? = nil) -> [String: Any] {
@@ -98,7 +104,7 @@ final class CentralRouter {
             return .success
         }
         // The editor sends one request at a time; a second is refused, never queued.
-        guard !entry.inFlight else { reply(id, entry.epoch, PeripheralReply(message: Self.busyReply(object))); return .success }
+        guard !entry.inFlight else { reply(id, entry.epoch, refuseBusy(object)); return .success }
         entries[id]?.inFlight = true
         let epoch = entry.epoch, received = now()
         owner.async { [weak self] in
@@ -108,7 +114,7 @@ final class CentralRouter {
             // A request that would finish after its client gave up is refused, never run late.
             // `hello` needs no USB, so it is always answered.
             let late = self.now() - received > Self.queueDeadline && object["operation"] as? String != "hello"
-            let answer = late ? PeripheralReply(message: Self.busyReply(object))
+            let answer = late ? self.refuseBusy(object)
                 : self.onMessage?(id, object) ?? PeripheralReply(message: Self.errorReply(object, code: "disconnected", text: "The bridge stopped."))
             self.radio.async { self.reply(id, epoch, answer, completing: true) }
         }

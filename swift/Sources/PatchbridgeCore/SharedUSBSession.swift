@@ -51,6 +51,8 @@ public final class SharedUSBSession {
     private var joined = Set<ObjectIdentifier>()
     private struct Admitted { weak var device: DeviceSession? }
     private var admitted: [Admitted] = []
+    /// Diagnostics numbers devices in admission order for this run; never reused.
+    private var admissions = 0
     private var retryAt: TimeInterval = 0
     private var retryDelay: TimeInterval = 1
     public init(helper: HelperClient, requestTimeout: TimeInterval = 5, allowsRecovery: Bool = false,
@@ -67,7 +69,9 @@ public final class SharedUSBSession {
         let device = DeviceSession(shared: self); register(device)
         return device
     }
-    func register(_ device: DeviceSession) { admitted.append(Admitted(device: device)) }
+    func register(_ device: DeviceSession) {
+        admissions += 1; device.index = admissions; admitted.append(Admitted(device: device))
+    }
     /// Ends trust for one entry. A connected device keeps this connection; its next one needs a code.
     public func revokeTrust(id: UUID) {
         devices.filter { $0.trustEntryID == id }.forEach { $0.revokeTrust() }
@@ -90,9 +94,9 @@ public final class SharedUSBSession {
 
     /// Sends one request to the helper. A transport failure ends every device; an adapter
     /// failure starts shared recovery. Returns the raw response and whether recovery began.
-    func forward(_ message: [String: Any]) throws -> (response: [String: Any], recovering: Bool) {
+    func forward(_ message: [String: Any], for device: DeviceSession? = nil) throws -> (response: [String: Any], recovering: Bool) {
         let response: [String: Any]
-        do { response = try helper.request(message, timeout: requestTimeout) }
+        do { response = try helper.request(message, timeout: requestTimeout, device: device?.index) }
         catch { failAll(); throw error }
         let code = (response["error"] as? [String: Any])?["code"] as? String
         if allowsRecovery && ["adapter_failure", "disconnected"].contains(code ?? ""), response["session_id"] as? String == nil {
@@ -115,16 +119,16 @@ public final class SharedUSBSession {
     func join(_ device: DeviceSession, _ message: [String: Any]) throws -> (response: [String: Any], recovering: Bool) {
         var result: (response: [String: Any], recovering: Bool)
         if let session = helperSession {
-            result = try forward(["operation": "snapshot", "session_id": session])
+            result = try forward(["operation": "snapshot", "session_id": session], for: device)
             guard !result.recovering, result.response["status"] as? String == "confirmed" else { return result }
-            let identity = try forward(["operation": "identify", "session_id": session])
+            let identity = try forward(["operation": "identify", "session_id": session], for: device)
             guard !identity.recovering, identity.response["status"] as? String == "confirmed" else { return identity }
             let state = (result.response["result"] as? [String: Any])?["state"] ?? NSNull()
             result.response["result"] = ["device": identity.response["result"] ?? NSNull(), "state": state]
         } else {
             var forwarded = message
             forwarded["operation"] = "connect"; forwarded.removeValue(forKey: "session_id")
-            result = try forward(forwarded)
+            result = try forward(forwarded, for: device)
             guard !result.recovering, result.response["status"] as? String == "confirmed" else { return result }
         }
         if recovering { recovering = false; retryDelay = 1 }
@@ -140,9 +144,9 @@ public final class SharedUSBSession {
         guard joined.isEmpty else { return response }
         if var message {
             if let helperSession { message["session_id"] = helperSession }
-            response = try forward(message).response
+            response = try forward(message, for: device).response
         }
-        else if let session = helperSession { _ = try? helper.request(["operation": "disconnect", "session_id": session]); helperSession = nil }
+        else if let session = helperSession { _ = try? helper.request(["operation": "disconnect", "session_id": session], device: device.index); helperSession = nil }
         if helperSession == nil { recovering = false; retryDelay = 1; retryAt = 0 }
         return response
     }

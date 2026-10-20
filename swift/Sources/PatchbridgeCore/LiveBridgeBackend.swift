@@ -20,7 +20,8 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     private var order = [UUID]()
     /// Devices disconnected from the Mac. CoreBluetooth can't drop one central, so their
     /// requests are refused until they say hello again or leave.
-    private var revoked = Set<UUID>()
+    /// Value: the device's diagnostics number.
+    private var revoked = [UUID: Int]()
     private var snapshot: [String: Any]?
     private var catalog: [String: Any]?
     private var status = "Starting Bluetooth. USB opens after you approve a phone and it requests a connection."
@@ -113,7 +114,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         snapshot = nil; catalog = nil
     }
     private func deviceLeft(_ id: UUID) {
-        revoked.remove(id)
+        revoked[id] = nil
         guard let shared, let device = devices.removeValue(forKey: id) else { return }
         let name = device.phoneName, trusted = device.trustEntryID != nil
         states[id] = nil; order.removeAll { $0 == id }
@@ -132,8 +133,8 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     }
     /// Ends one device's session; its next request learns it was disconnected.
     private func end(_ id: UUID) {
-        guard devices[id] != nil else { return }
-        deviceLeft(id); revoked.insert(id)
+        guard let index = devices[id]?.index else { return }
+        deviceLeft(id); revoked[id] = index
     }
     func revokeTrust(id: UUID) { shared?.revokeTrust(id: id); publish() }
     func refresh() throws {} // Devices poll; the Mac must not create a competing USB session.
@@ -151,12 +152,16 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         guard let shared else { return PeripheralReply(message: failure(request, code: "disconnected")) }
         var admission = PeripheralReply.Admission.unchanged
         if request["operation"] as? String == "hello" {
-            revoked.remove(id) // A fresh hello starts over.
+            revoked[id] = nil // A fresh hello starts over.
             if devices[id] == nil {
-                guard let device = shared.admit() else { return PeripheralReply(message: shared.bridgeFullReply(request), admission: .release) }
+                guard let device = shared.admit() else {
+                    shared.helper.diagnostics.record(.requestRejected, operation: "hello", code: "bridge_full")
+                    return PeripheralReply(message: shared.bridgeFullReply(request), admission: .release)
+                }
                 devices[id] = device; order.append(id); admission = .admit
             }
-        } else if revoked.contains(id) {
+        } else if let index = revoked[id] {
+            shared.helper.diagnostics.record(.requestRejected, operation: request["operation"] as? String, code: "revoked", device: index)
             return PeripheralReply(message: CentralRouter.errorReply(request, code: "revoked", text: "This device was disconnected on the Mac."))
         }
         guard let device = devices[id] else { return PeripheralReply(message: failure(request, code: "unauthorized")) }

@@ -14,13 +14,16 @@ public final class Diagnostics {
         let operation: String?
         let code: String?
         let durationMilliseconds: Int?
+        /// The bridge's per-run index for the device (1 for the first admitted, and so on).
+        /// A small counter, never a device identifier or name; omitted when not device-specific.
+        let device: Int?
     }
     private struct Report: Encodable {
         let schemaVersion = 1
         let protocolVersion = 1
         let appVersion: String
         let presetContentsIncluded = false
-        let scope = "In-memory structured events only; no raw messages, stderr, paths, device/session identifiers, or preset data."
+        let scope = "In-memory structured events only; no raw messages, stderr, paths, device/session identifiers, or preset data. Device numbers are per-run admission counters."
         let platform: String
         let osVersion: String
         let capacity: Int
@@ -34,15 +37,16 @@ public final class Diagnostics {
     private var sequence = 0
     private var dropped = 0
     public init(capacity: Int = 256) { self.capacity = min(1024, max(1, capacity)) }
-    private static let operations: Set<String> = ["hello", "connect", "disconnect", "identify", "capabilities", "snapshot", "catalog", "subscribe", "set_parameter", "set_bypass", "select_scene", "select_preset", "save", "save_as"]
-    private static let codes: Set<String> = ["timeout", "disconnected", "protocol_error", "unauthorized", "stale_session", "stale_context", "read_only", "overflow", "invalid_value", "invalid_request", "unsupported_operation", "unsupported_parameter", "unsupported_firmware", "adapter_failure", "already_connected", "transport_failure"]
-    public func record(_ event: Event, operation: String? = nil, code: String? = nil, duration: TimeInterval? = nil) {
+    private static let operations: Set<String> = ["hello", "connect", "disconnect", "identify", "capabilities", "snapshot", "catalog", "subscribe", "recover", "set_parameter", "set_bypass", "select_scene", "select_preset", "save", "save_as"]
+    private static let codes: Set<String> = ["timeout", "disconnected", "protocol_error", "unauthorized", "stale_session", "stale_context", "read_only", "overflow", "invalid_value", "invalid_request", "unsupported_operation", "unsupported_parameter", "unsupported_firmware", "adapter_failure", "already_connected", "transport_failure", "bridge_full", "revoked", "busy"]
+    public func record(_ event: Event, operation: String? = nil, code: String? = nil, duration: TimeInterval? = nil, device: Int? = nil) {
         lock.lock(); defer { lock.unlock() }
         sequence += 1
         let safeDuration = duration.flatMap { $0.isFinite ? Int(min(3_600_000, max(0, $0 * 1000))) : nil }
         entries.append(Entry(sequence: sequence, elapsedMilliseconds: Int(min(2_147_483_647, max(0, (ProcessInfo.processInfo.systemUptime - started) * 1000))),
                              event: event, operation: operation.map { Self.operations.contains($0) ? $0 : "unknown" },
-                             code: code.map { Self.codes.contains($0) ? $0 : "unknown" }, durationMilliseconds: safeDuration))
+                             code: code.map { Self.codes.contains($0) ? $0 : "unknown" }, durationMilliseconds: safeDuration,
+                             device: device.flatMap { (1...9999).contains($0) ? $0 : nil }))
         if entries.count > capacity { entries.removeFirst(); dropped += 1 }
     }
     public func clear() { lock.lock(); defer { lock.unlock() }; entries.removeAll(); sequence = 0; dropped = 0 }
