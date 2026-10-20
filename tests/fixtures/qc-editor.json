@@ -1098,49 +1098,57 @@
             "parameters": {
               "0": 1.0,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
               "0": 1.0,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
               "0": 1.0,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
               "0": 1.0,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
               "0": 1.0,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
               "0": 1.0,
               "1": 0.0
-            }
+            },
+            "bypass": true
           },
           "G": {
             "parameters": {
               "0": 1.0,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
               "0": 1.0,
               "1": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": []
@@ -1163,7 +1171,8 @@
               "5": 1.0,
               "6": 1.0,
               "7": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
@@ -1175,7 +1184,8 @@
               "5": 1.0,
               "6": 1.0,
               "7": 0.0
-            }
+            },
+            "bypass": true
           },
           "C": {
             "parameters": {
@@ -1187,7 +1197,8 @@
               "5": 1.0,
               "6": 1.0,
               "7": 0.0
-            }
+            },
+            "bypass": true
           },
           "D": {
             "parameters": {
@@ -1199,7 +1210,8 @@
               "5": 1.0,
               "6": 1.0,
               "7": 0.0
-            }
+            },
+            "bypass": true
           },
           "E": {
             "parameters": {
@@ -1211,7 +1223,8 @@
               "5": 1.0,
               "6": 1.0,
               "7": 0.0
-            }
+            },
+            "bypass": true
           },
           "F": {
             "parameters": {
@@ -1223,7 +1236,8 @@
               "5": 1.0,
               "6": 1.0,
               "7": 0.0
-            }
+            },
+            "bypass": true
           },
           "G": {
             "parameters": {
@@ -1235,7 +1249,8 @@
               "5": 1.0,
               "6": 1.0,
               "7": 0.0
-            }
+            },
+            "bypass": true
           },
           "H": {
             "parameters": {
@@ -1247,7 +1262,8 @@
               "5": 1.0,
               "6": 1.0,
               "7": 0.0
-            }
+            },
+            "bypass": true
           }
         },
         "editable_parameters": [
@@ -1276,7 +1292,8 @@
               "4": 0.5,
               "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "B": {
             "parameters": {
@@ -1287,7 +1304,8 @@
               "4": 0.5,
               "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "C": {
             "parameters": {
@@ -1298,7 +1316,8 @@
               "4": 0.5,
               "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
@@ -1309,7 +1328,8 @@
               "4": 0.5,
               "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
@@ -1320,7 +1340,8 @@
               "4": 0.5,
               "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
@@ -1331,7 +1352,8 @@
               "4": 0.5,
               "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
@@ -1342,7 +1364,8 @@
               "4": 0.5,
               "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
@@ -1353,7 +1376,8 @@
               "4": 0.5,
               "5": "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808",
               "6": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": [
@@ -1377,7 +1401,8 @@
               "1": 0.4180625081062317,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "B": {
             "parameters": {
@@ -1385,7 +1410,8 @@
               "1": 0.4180625081062317,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
@@ -1393,7 +1419,8 @@
               "1": 0.4180625081062317,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "D": {
             "parameters": {
@@ -1401,7 +1428,8 @@
               "1": 0.4180625081062317,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "E": {
             "parameters": {
@@ -1409,7 +1437,8 @@
               "1": 0.4180625081062317,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "F": {
             "parameters": {
@@ -1417,7 +1446,8 @@
               "1": 0.4180625081062317,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "G": {
             "parameters": {
@@ -1425,7 +1455,8 @@
               "1": 0.4180625081062317,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "H": {
             "parameters": {
@@ -1433,7 +1464,8 @@
               "1": 0.4180625081062317,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           }
         },
         "editable_parameters": [
@@ -1457,7 +1489,8 @@
               "2": 0.5,
               "3": 0.45723438262939453,
               "4": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
@@ -1466,7 +1499,8 @@
               "2": 0.5,
               "3": 0.45723438262939453,
               "4": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
@@ -1475,7 +1509,8 @@
               "2": 0.5,
               "3": 0.45723438262939453,
               "4": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
@@ -1484,7 +1519,8 @@
               "2": 0.5,
               "3": 0.45723438262939453,
               "4": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
@@ -1493,7 +1529,8 @@
               "2": 0.5,
               "3": 0.45723438262939453,
               "4": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
@@ -1502,7 +1539,8 @@
               "2": 0.5,
               "3": 0.45723438262939453,
               "4": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
@@ -1511,7 +1549,8 @@
               "2": 0.5,
               "3": 0.45723438262939453,
               "4": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
@@ -1520,7 +1559,8 @@
               "2": 0.5,
               "3": 0.45723438262939453,
               "4": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": [
@@ -1544,7 +1584,8 @@
               "1": 0.5,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "B": {
             "parameters": {
@@ -1552,7 +1593,8 @@
               "1": 0.5,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "C": {
             "parameters": {
@@ -1560,7 +1602,8 @@
               "1": 0.5,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "D": {
             "parameters": {
@@ -1568,7 +1611,8 @@
               "1": 0.5,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "E": {
             "parameters": {
@@ -1576,7 +1620,8 @@
               "1": 0.5,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "F": {
             "parameters": {
@@ -1584,7 +1629,8 @@
               "1": 0.5,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           },
           "G": {
             "parameters": {
@@ -1592,7 +1638,8 @@
               "1": 0.5,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
@@ -1600,7 +1647,8 @@
               "1": 0.5,
               "2": 0.5,
               "3": 0.0
-            }
+            },
+            "bypass": true
           }
         },
         "editable_parameters": [
@@ -1621,49 +1669,57 @@
             "parameters": {
               "0": 0.1613437682390213,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
               "0": 0.1613437682390213,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
               "0": 0.1613437682390213,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
               "0": 0.1613437682390213,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
               "0": 0.1613437682390213,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
               "0": 0.1613437682390213,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
               "0": 0.1613437682390213,
               "1": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
               "0": 0.1613437682390213,
               "1": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": [
@@ -1683,56 +1739,64 @@
               "0": 0.0,
               "1": 1.0,
               "2": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
               "0": 0.0,
               "1": 1.0,
               "2": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
               "0": 0.0,
               "1": 1.0,
               "2": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
               "0": 0.0,
               "1": 1.0,
               "2": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
               "0": 0.0,
               "1": 1.0,
               "2": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
               "0": 0.0,
               "1": 1.0,
               "2": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
               "0": 0.0,
               "1": 1.0,
               "2": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
               "0": 0.0,
               "1": 1.0,
               "2": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": [
@@ -1757,7 +1821,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
@@ -1768,7 +1833,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
@@ -1779,7 +1845,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
@@ -1790,7 +1857,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
@@ -1801,7 +1869,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "F": {
             "parameters": {
@@ -1812,7 +1881,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "G": {
             "parameters": {
@@ -1823,7 +1893,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "H": {
             "parameters": {
@@ -1834,7 +1905,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": true
           }
         },
         "editable_parameters": [
@@ -1861,7 +1933,8 @@
               "4": 0.5,
               "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "B": {
             "parameters": {
@@ -1872,7 +1945,8 @@
               "4": 0.5,
               "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "C": {
             "parameters": {
@@ -1883,7 +1957,8 @@
               "4": 0.5,
               "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "D": {
             "parameters": {
@@ -1894,7 +1969,8 @@
               "4": 0.5,
               "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "E": {
             "parameters": {
@@ -1905,7 +1981,8 @@
               "4": 0.5,
               "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
@@ -1916,7 +1993,8 @@
               "4": 0.5,
               "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
@@ -1927,7 +2005,8 @@
               "4": 0.5,
               "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
@@ -1938,7 +2017,8 @@
               "4": 0.5,
               "5": "9e8c12bc926042554443092a6c6a0e229961bf984e3b5ce5233420a2a390e42cPaul's MT16 6",
               "6": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": [
@@ -1981,7 +2061,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
@@ -2007,7 +2088,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
@@ -2033,7 +2115,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
@@ -2059,7 +2142,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
@@ -2085,7 +2169,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
@@ -2111,7 +2196,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
@@ -2137,7 +2223,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
@@ -2163,7 +2250,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": []
@@ -2187,7 +2275,8 @@
               "6": 0.0,
               "7": 0.4615384638309479,
               "8": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
@@ -2200,7 +2289,8 @@
               "6": 0.0,
               "7": 0.4615384638309479,
               "8": 0.0
-            }
+            },
+            "bypass": true
           },
           "C": {
             "parameters": {
@@ -2213,7 +2303,8 @@
               "6": 0.0,
               "7": 0.4615384638309479,
               "8": 0.0
-            }
+            },
+            "bypass": true
           },
           "D": {
             "parameters": {
@@ -2226,7 +2317,8 @@
               "6": 0.0,
               "7": 0.4615384638309479,
               "8": 0.0
-            }
+            },
+            "bypass": true
           },
           "E": {
             "parameters": {
@@ -2239,7 +2331,8 @@
               "6": 0.0,
               "7": 0.4615384638309479,
               "8": 0.0
-            }
+            },
+            "bypass": true
           },
           "F": {
             "parameters": {
@@ -2252,7 +2345,8 @@
               "6": 0.0,
               "7": 0.4615384638309479,
               "8": 0.0
-            }
+            },
+            "bypass": true
           },
           "G": {
             "parameters": {
@@ -2265,7 +2359,8 @@
               "6": 0.0,
               "7": 0.4615384638309479,
               "8": 0.0
-            }
+            },
+            "bypass": true
           },
           "H": {
             "parameters": {
@@ -2278,7 +2373,8 @@
               "6": 0.0,
               "7": 0.4615384638309479,
               "8": 0.0
-            }
+            },
+            "bypass": true
           }
         },
         "editable_parameters": [
@@ -2312,7 +2408,8 @@
               "7": 0.5,
               "8": 1.0,
               "9": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
@@ -2326,7 +2423,8 @@
               "7": 0.5,
               "8": 1.0,
               "9": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
@@ -2340,7 +2438,8 @@
               "7": 0.5,
               "8": 1.0,
               "9": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
@@ -2354,7 +2453,8 @@
               "7": 0.5,
               "8": 1.0,
               "9": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
@@ -2368,7 +2468,8 @@
               "7": 0.5,
               "8": 1.0,
               "9": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
@@ -2382,7 +2483,8 @@
               "7": 0.5,
               "8": 1.0,
               "9": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
@@ -2396,7 +2498,8 @@
               "7": 0.5,
               "8": 1.0,
               "9": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
@@ -2410,7 +2513,8 @@
               "7": 0.5,
               "8": 1.0,
               "9": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": [
@@ -2442,7 +2546,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
@@ -2453,7 +2558,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
@@ -2464,7 +2570,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
@@ -2475,7 +2582,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
@@ -2486,7 +2594,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "F": {
             "parameters": {
@@ -2497,7 +2606,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "G": {
             "parameters": {
@@ -2508,7 +2618,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "H": {
             "parameters": {
@@ -2519,7 +2630,8 @@
               "4": 0.5,
               "5": "1d00fe7beb718aaadf5057a4911b7a22b266616eaa96005a1af64cff215da7d2Paul's MT16 7",
               "6": 0.0
-            }
+            },
+            "bypass": true
           }
         },
         "editable_parameters": [
@@ -2546,7 +2658,8 @@
               "4": 0.5,
               "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "B": {
             "parameters": {
@@ -2557,7 +2670,8 @@
               "4": 0.5,
               "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "C": {
             "parameters": {
@@ -2568,7 +2682,8 @@
               "4": 0.5,
               "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "D": {
             "parameters": {
@@ -2579,7 +2694,8 @@
               "4": 0.5,
               "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
               "6": 0.0
-            }
+            },
+            "bypass": true
           },
           "E": {
             "parameters": {
@@ -2590,7 +2706,8 @@
               "4": 0.5,
               "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
@@ -2601,7 +2718,8 @@
               "4": 0.5,
               "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
@@ -2612,7 +2730,8 @@
               "4": 0.5,
               "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
               "6": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
@@ -2623,7 +2742,8 @@
               "4": 0.5,
               "5": "a4959788eee1b8856ff82338c01392f8884fc133bd436c956ec8ec1ba7475b53Bogna Uber 1",
               "6": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": [
@@ -2666,7 +2786,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "B": {
             "parameters": {
@@ -2692,7 +2813,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "C": {
             "parameters": {
@@ -2718,7 +2840,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "D": {
             "parameters": {
@@ -2744,7 +2867,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "E": {
             "parameters": {
@@ -2770,7 +2894,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "F": {
             "parameters": {
@@ -2796,7 +2921,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "G": {
             "parameters": {
@@ -2822,7 +2948,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           },
           "H": {
             "parameters": {
@@ -2848,7 +2975,8 @@
               "19": "",
               "20": "",
               "21": 0.0
-            }
+            },
+            "bypass": false
           }
         },
         "editable_parameters": []

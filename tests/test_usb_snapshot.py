@@ -29,6 +29,10 @@ def preset(spec):
             param_values=[Value(v) for v in p['values']]) for p in data['params']])
     return NS(name=spec['name'], chains=[NS(row=ch['row'], models=[model(m) for m in ch['models']])
                                        for ch in spec['chains']],
+              bypass=[NS(row=row['row'], colBypass=[NS(
+                  column=col['column'], sceneMode=col['scene_mode'],
+                  sceneBypass=[NS(bypass=value) for value in col['scene_bypass']])
+                  for col in row['cols']]) for row in spec.get('bypass', [])],
               SerializeToString=lambda: json.dumps(spec, sort_keys=True).encode())
 
 
@@ -111,6 +115,60 @@ class SnapshotTests(unittest.TestCase):
         for scene in (-1, 8, 99):
             self.scene.selected_scene = scene
             with self.assertRaises(RuntimeError): self.adapter.snapshot()
+
+
+class BypassSnapshotTests(unittest.TestCase):
+    """Self-contained regression coverage; no local capture or QC dependency."""
+    def setUp(self):
+        self.adapter = USBAdapter()
+        self.adapter.qc = Mock()
+        self.adapter.metadata = {'id': 'catalog', 'models': {}}
+        empty = NS(hash=0, params=[])
+        block = NS(hash=1, params=[])
+        self.flags = [False, True, False, True, False, True, False, True]
+        self.preset = NS(
+            name='Disposable', chains=[NS(models=[]), NS(models=[empty, block])],
+            bypass=[NS(row=0, colBypass=[]), NS(row=0, colBypass=[
+                NS(column=0, sceneMode=False, sceneBypass=[NS(bypass=False)] * 8),
+                NS(column=0, sceneMode=False,
+                   sceneBypass=[NS(bypass=value) for value in self.flags])])],
+            SerializeToString=lambda: b'preset')
+        self.adapter.qc.get_current_preset.return_value = self.preset
+        self.scene = NS(selected_scene=5)
+        self.adapter.qc.read_state.side_effect = lambda name: {
+            'SetlistPosition': NS(folder_key='My Presets', position=16, is_factory=False),
+            'Scene': self.scene, 'PresetDirty': NS(is_dirty=False),
+        }[name]
+
+    def test_bypass_uses_array_positions_and_each_scenes_flag(self):
+        for scene_mode in (False, True):
+            self.preset.bypass[1].colBypass[1].sceneMode = scene_mode
+            for active_scene in (5, 6):
+                self.scene.selected_scene = active_scene
+                snapshot = self.adapter.snapshot()
+                block, = snapshot['blocks']
+                self.assertEqual(block['id'], '1:1')
+                for index, expected in enumerate(self.flags):
+                    self.assertIs(block['scenes'][chr(65 + index)]['bypass'], expected)
+                self.assertIs(block['scenes'][snapshot['scene']]['bypass'], self.flags[active_scene])
+
+    def test_missing_active_bypass_never_becomes_enabled(self):
+        bypass = self.preset.bypass
+        for incomplete in ([], [bypass[0]],
+                           [bypass[0], NS(colBypass=[])],
+                           [bypass[0], NS(colBypass=[bypass[1].colBypass[0],
+                                                   NS(sceneBypass=[NS(bypass=False)])])]):
+            with self.subTest(bypass=incomplete):
+                self.preset.bypass = incomplete
+                with self.assertRaisesRegex(RuntimeError, 'Active-scene bypass state is missing'):
+                    self.adapter.snapshot()
+
+    def test_missing_inactive_scene_is_not_copied_from_another_scene(self):
+        self.scene.selected_scene = 0
+        self.preset.bypass[1].colBypass[1].sceneBypass = [NS(bypass=True)]
+        block, = self.adapter.snapshot()['blocks']
+        self.assertIs(block['scenes']['A']['bypass'], True)
+        self.assertNotIn('bypass', block['scenes']['B'])
 
 
 class ConnectionTests(unittest.TestCase):

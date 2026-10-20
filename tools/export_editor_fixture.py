@@ -21,6 +21,10 @@ for row, chain in enumerate(spec['chains']):
         if not block['hash']:
             continue
         scenes = {chr(65+s): {'parameters': {}} for s in range(8)}
+        # Captured reads address bypass by array position, just like live reads.
+        bypass = spec['bypass'][row]['cols'][column]['scene_bypass']
+        for scene, value in enumerate(bypass[:8]):
+            scenes[chr(65+scene)]['bypass'] = value
         editable = []
         definitions = models.get(str(block['hash']), {}).get('parameters', {})
         for index, param in enumerate(block['params']):
