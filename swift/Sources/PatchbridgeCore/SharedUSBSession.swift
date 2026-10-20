@@ -26,7 +26,7 @@ public final class TrustRegistry {
 /// that missed a reconnect is detected before its stale session reaches the helper.
 /// Dispatch serially on the transport queue, like the devices that use it.
 public final class SharedUSBSession {
-    public static let deviceLimit = 4
+    public let deviceLimit: Int
     public let macName: String
     public let trust = TrustRegistry()
     /// Called only for forwarded or refused mutations, with the sending device's name.
@@ -47,16 +47,16 @@ public final class SharedUSBSession {
     private var retryAt: TimeInterval = 0
     private var retryDelay: TimeInterval = 1
     public init(helper: HelperClient, requestTimeout: TimeInterval = 5, allowsRecovery: Bool = false,
-                macName: String = DeviceIdentity.macName,
+                deviceLimit: Int = 4, macName: String = DeviceIdentity.macName,
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
         self.helper = helper; self.requestTimeout = requestTimeout
-        self.allowsRecovery = allowsRecovery; self.now = now
+        self.allowsRecovery = allowsRecovery; self.now = now; self.deviceLimit = deviceLimit
         self.macName = DeviceIdentity.name(macName, fallback: "Mac")
     }
 
     /// A new device session, or nil when `deviceLimit` devices are already admitted.
     public func admit() -> DeviceSession? {
-        guard devices.count < Self.deviceLimit else { return nil }
+        guard devices.count < deviceLimit else { return nil }
         let device = DeviceSession(shared: self); register(device)
         return device
     }
@@ -65,9 +65,10 @@ public final class SharedUSBSession {
     public func remove(_ device: DeviceSession) {
         device.revoke(); admitted.removeAll { $0.device == nil || $0.device === device }
     }
-    public static func bridgeFullReply(_ message: [String: Any]) -> [String: Any] {
-        ["version": 1, "id": message["id"] as? String ?? "", "status": "error",
-         "error": ["code": "bridge_full", "message": "This Mac is already connected to \(deviceLimit) devices."]]
+    public func bridgeFullReply(_ message: [String: Any]) -> [String: Any] {
+        let devices = deviceLimit == 1 ? "another device" : "\(deviceLimit) devices"
+        return ["version": 1, "id": message["id"] as? String ?? "", "status": "error",
+                "error": ["code": "bridge_full", "message": "This Mac is already connected to \(devices)."]]
     }
 
     func isJoined(_ device: DeviceSession) -> Bool { joined.contains(ObjectIdentifier(device)) }

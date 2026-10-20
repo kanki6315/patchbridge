@@ -21,7 +21,9 @@ public struct ChunkReceiver {
     private var next = 0
     private var bytes = Data()
     private var expires = Date.distantPast
-    public init() {}
+    /// Largest message accepted, in bytes. The Mac lowers it for devices it hasn't admitted.
+    public var limit: Int
+    public init(limit: Int = 1_048_576) { self.limit = limit }
     public mutating func reset() { transfer = nil; next = 0; bytes.removeAll() }
     public mutating func receive(_ data: Data, now: Date = Date()) throws -> Data? {
         if now >= expires { reset() }
@@ -31,7 +33,7 @@ public struct ChunkReceiver {
         let seq = Int(b[5]) * 256 + Int(b[6])
         if transfer == nil { guard seq == 0 else { throw ChunkFailure.outOfOrder }; transfer = id; expires = now.addingTimeInterval(5) }
         guard transfer == id, seq == next else { reset(); throw ChunkFailure.outOfOrder }
-        guard bytes.count + b.count - 8 <= 1_048_576 else { reset(); throw ChunkFailure.overflow }
+        guard bytes.count + b.count - 8 <= limit else { reset(); throw ChunkFailure.overflow }
         bytes.append(contentsOf: b.dropFirst(8)); next += 1
         expires = now.addingTimeInterval(5) // Inactivity deadline, not a total cap on large BLE snapshots.
         if b[7] == 1 { let result = bytes; reset(); return result }

@@ -46,8 +46,9 @@ keeping one device's slow USB request from stalling the others.
    device must explicitly adopt each new helper session; none is moved onto it
    silently.
 7. **Bluetooth never waits on USB.** Writes are acknowledged and framed on the
-   Bluetooth queue; helper calls run on a separate USB queue. A request that would
-   miss its client's deadline is refused before it reaches USB, never run late.
+   Bluetooth queue; session state and helper calls run on the host's worker queue.
+   A request that would miss its client's deadline is refused before it reaches USB,
+   never run late.
 
 ## Phase 1: split shared and per-device state (Mac core)
 
@@ -117,29 +118,31 @@ routed through recovery.
   Revoke Trust for A, reconnect, and require a code. Trust entries survive a full
   device limit but don't take a slot.
 
-## Phase 2: Bluetooth peripheral, threading and admission
+## Phase 2: Bluetooth peripheral, threading and admission (done)
 
 ### Per-central state
 
-In `BLEPeripheral`:
+`CentralRouter` (new, no CoreBluetooth dependency, so it is unit-tested directly)
+owns every central's transport state; `BLEPeripheral` is a thin CoreBluetooth
+adapter around it.
 
-- Replace `central`, `receiver`, `outgoing`, `outgoingIndex` with a dictionary keyed
-  by `CBCentral.identifier`, each entry holding its own receiver, outgoing chunks,
-  `maximumUpdateValueLength` and transfer counter.
+- Each central, keyed by `CBCentral.identifier`, has its own receiver, outgoing
+  chunks, `maximumUpdateValueLength`, transfer counter and an epoch, so a reply that
+  arrives after the device left and came back is dropped.
 - `didUnsubscribeFrom` clears only that central's entry and reports which device left.
-- Make the "outgoing must be empty" write guard per central, and `drain()` loop over
+- The "outgoing must be empty" write guard is per central, and `drain()` loops over
   all centrals with pending chunks when `peripheralManagerIsReady` fires.
-- Change the `BridgePeripheral` callbacks to carry a device identifier, and make
-  message handling asynchronous:
-  `onMessage(deviceID, message, reply: ([String: Any]) -> Void)`,
-  `onDisconnect(deviceID)`.
+- `BridgePeripheral` callbacks carry a device identifier:
+  `onMessage(deviceID, message) -> PeripheralReply` and `onDisconnect(deviceID)`.
+  `PeripheralReply` also tells the router whether the device is now admitted or
+  should be released.
 - **Per-device revoke without dropping everyone.** CoreBluetooth has no call to
-  disconnect one central from the peripheral side, and `resetConnection()`'s
-  remove-and-re-add drops all of them. Instead: invalidate that device's
-  `DeviceSession` (its next request gets a new `revoked` error code), discard its
-  receiver state, and let the app disconnect itself. Keep the service reset for
-  protocol errors only when no other device is connected; otherwise reset just the
-  offending central's state.
+  disconnect one central from the peripheral side, and the old `resetConnection()`
+  (remove and re-add the service) dropped all of them. Revoke now ends that device's
+  `DeviceSession`, and its next request gets a `revoked` error, so the app
+  disconnects itself. A fresh `hello` from that device starts over. An invalid
+  transfer resets only the offending central's state; the service is reset only
+  when no other device is connected.
 
 ### Admission
 
@@ -147,58 +150,69 @@ Every subscribing central gets a transport entry, in one of two states:
 
 - **Unadmitted** (no `DeviceSession`): may only send `hello`. Its receiver accepts a
   message of at most 4 KB (instead of the admitted 1 MB). Any other operation gets
-  `invalid_request`. At most 4 unadmitted entries exist at once; beyond that, writes
-  get `.insufficientResources` at the Bluetooth level. An unadmitted entry is
-  discarded after replying `bridge_full`, on unsubscribe, or after 10 s without a
-  `hello`.
+  `invalid_request`. At most 4 unadmitted entries exist at once; a device beyond
+  that gets no entry, so its writes get `.writeNotPermitted`. An unadmitted entry is
+  discarded after replying `bridge_full`, on unsubscribe, or after 10 s without
+  being admitted.
 - **Admitted**: has a `DeviceSession` (created by `hello` when there is room).
 
 This gives a device over the limit a real request/response path for `hello`, so it
 receives `bridge_full` instead of a bare Bluetooth write failure, without
 allocating a device session or a large buffer.
 
+**Interim limit:** `LiveBridgeBackend.deviceLimit` is 1 until phase 3, because the
+Mac shell still presents and approves one device. A second device gets
+`bridge_full` end to end. For the same reason the shell keeps one trusted phone:
+trusting a new phone replaces the previous one, as before.
+
 ### Threading: separate Bluetooth acknowledgement from USB execution
 
-Today `didReceiveWrite` calls `onMessage`, which calls `helper.request`
+Previously `didReceiveWrite` called `onMessage`, which called `helper.request`
 synchronously on the Bluetooth worker queue. With one device that was harmless,
 because the editor never has more than one request in flight. With several, a
-slow USB request from A (up to the 40 s helper timeout) blocks CoreBluetooth from
-delivering B's writes at all. B's write isn't answered within the 30 s Bluetooth
-(ATT) transaction timeout, which can break B's link. And when B's request does run,
-two back-to-back 40 s requests put it at about 80 s, past the editor's 60 s timeout.
+slow USB request from A (up to the 40 s helper timeout) would block CoreBluetooth
+from delivering B's writes at all. B's write wouldn't be answered within the 30 s
+Bluetooth (ATT) transaction timeout, which can break B's link. And when B's request
+did run, two back-to-back 40 s requests put it at about 80 s, past the editor's
+60 s timeout.
 
-New structure:
+Structure as built:
 
-- **Bluetooth worker queue** (existing): CoreBluetooth callbacks, chunk framing,
-  write acknowledgements, admission, and all `DeviceSession` / `SharedUSBSession` /
-  `TrustRegistry` state. Nothing on this queue blocks on USB. Operations that need
-  no helper call (`hello`, rejections, outdated-device replies, `busy`) are answered
-  here immediately.
-- **USB queue** (new, serial): only `helper.request`. The Bluetooth queue enqueues a
-  job with the request and its enqueue time; the result hops back to the Bluetooth
-  queue, which updates revision, session and generation state and then sends the
-  reply chunks.
+- **Bluetooth queue** (new, private to `BLEPeripheral`): CoreBluetooth callbacks,
+  chunk framing, write acknowledgements, admission and per-device in-flight
+  tracking. It never waits on the host's queue. Replies it can give without the
+  session (`invalid_request` before `hello`, a second request in flight) are
+  answered here immediately.
+- **Host worker queue** (existing, `MacBridgeModel`'s): `LiveBridgeBackend`,
+  `DeviceSession`, `SharedUSBSession`, `TrustRegistry` and `helper.request`. The
+  Bluetooth queue hands each complete message over with its arrival time and gets
+  the reply back asynchronously.
+  This differs from the earlier draft (session state on the Bluetooth queue, a
+  separate USB queue): keeping session state with the helper calls avoids splitting
+  every operation, including multi-request joins, across two queues. `hello` can
+  wait behind a slow USB request, but it doesn't hold up any Bluetooth write.
 - **Bounded admission:** at most one request per device is queued or executing
-  (the editor already sends one at a time; a second one gets `busy`). So the USB
-  queue never holds more than 4 jobs.
-- **Deadline check before execution:** when the USB queue reaches a job, it is
+  (the editor already sends one at a time; a second one gets `busy`). So the host
+  queue never holds more than one request per connected device.
+- **Deadline check before execution:** when the host queue reaches a request, it is
   refused if it has waited longer than 15 s (60 s editor timeout, minus the 40 s
   helper timeout, minus margin for Bluetooth transfer). It's answered `busy` with
-  `retry_after` and, for mutations, `applied: false`. A refused job never reaches
-  the helper, so the outcome is certain. A job that has started always runs to
-  completion; it is never cancelled mid-request.
-- Ordering stays strict: the USB queue is serial, and mutations from different
+  `retry_after` and, for mutations, `applied: false`. A refused request never
+  reaches the helper, so the outcome is certain. `hello` is exempt, since it needs
+  no USB. A request that has started always runs to completion.
+- Ordering stays strict: the host queue is serial, and mutations from different
   devices are executed in arrival order.
-
-`LiveBridgeBackend`'s doc comment ("Owns USB/session state on the same worker
-queue as the Bluetooth peripheral") changes to describe this split: state stays on
-the Bluetooth queue, helper I/O moves off it.
+- Locally generated replies echo the request's `connection_id`, so the editor
+  matches them to its connection.
 
 ## Phase 3: Mac backend and UI
 
 `LiveBridgeBackend`:
 
+- Raise `deviceLimit` from the interim 1 to 4, and drop the shell's one-trusted-phone
+  rule in favour of the per-device trust list.
 - Track connected devices as a list (name, approval state, trusted, last activity).
+  Routing by device identifier already exists (`devices`, `current`, `revoked`).
 - Approval queue: one approval card at a time; a second device's `hello` waits
   (its app stays on "Approve on Mac") until the first card is answered.
 - `phoneLeft(deviceID)` and `revoke(deviceID)` affect only that device. The

@@ -59,10 +59,10 @@ final class MultiDeviceTests: XCTestCase {
     func testDeviceLimitAndBridgeFullReply() throws {
         let helper = try launch(); defer { helper.stop() }
         let shared = SharedUSBSession(helper: helper)
-        let admitted = (0..<SharedUSBSession.deviceLimit).compactMap { _ in shared.admit() }
+        let admitted = (0..<shared.deviceLimit).compactMap { _ in shared.admit() }
         XCTAssertEqual(admitted.count, 4)
         XCTAssertNil(shared.admit())
-        let full = SharedUSBSession.bridgeFullReply(["id": "h", "operation": "hello"])
+        let full = shared.bridgeFullReply(["id": "h", "operation": "hello"])
         XCTAssertEqual(code(full), "bridge_full"); XCTAssertEqual(full["id"] as? String, "h")
         shared.remove(admitted[0])
         XCTAssertNotNil(shared.admit())
@@ -148,7 +148,7 @@ final class MultiDeviceTests: XCTestCase {
         shared.remove(pad)
         XCTAssertEqual(shared.trust.names, ["iPad"])
 
-        let fillers = (0..<SharedUSBSession.deviceLimit).compactMap { _ in shared.admit() }
+        let fillers = (0..<shared.deviceLimit).compactMap { _ in shared.admit() }
         XCTAssertEqual(fillers.count, 4) // The trust entry reserves no slot.
         XCTAssertNil(shared.admit())
         fillers.forEach(shared.remove)

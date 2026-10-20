@@ -2,20 +2,23 @@ import XCTest
 @testable import PatchbridgeCore
 
 final class TestPeripheral: BridgePeripheral {
-    var onMessage: (([String: Any]) -> [String: Any])?
-    var onDisconnect: (() -> Void)?
+    var onMessage: ((UUID, [String: Any]) -> PeripheralReply)?
+    var onDisconnect: ((UUID) -> Void)?
     var onStatus: ((String) -> Void)?
     var starts = 0
-    var resets = 0
+    let device = UUID()
+    private(set) var lastAdmission = PeripheralReply.Admission.unchanged
     func start(name: String) { starts += 1 }
-    func resetConnection() { resets += 1 }
     func stop() {}
-    func send(_ operation: String, token: String? = nil, session: String? = nil, fields: [String: Any] = [:]) -> [String: Any] {
+    func send(_ operation: String, from id: UUID? = nil, token: String? = nil, session: String? = nil, fields: [String: Any] = [:]) -> [String: Any] {
         var request: [String: Any] = ["version": 1, "id": UUID().uuidString, "operation": operation]
         request["connection_id"] = token; request["session_id"] = session
         request.merge(fields) { _, new in new }
-        return onMessage?(request) ?? [:]
+        guard let reply = onMessage?(id ?? device, request) else { return [:] }
+        lastAdmission = reply.admission
+        return reply.message
     }
+    func leave(_ id: UUID? = nil) { onDisconnect?(id ?? device) }
 }
 
 final class LiveBridgeBackendTests: XCTestCase {
@@ -62,7 +65,7 @@ final class LiveBridgeBackendTests: XCTestCase {
         XCTAssertNotEqual(recovered["session_id"] as? String, session)
         XCTAssertEqual(host.state?.0, .connected)
         XCTAssertEqual(host.presentation.recentEdits.count, 2) // No mutation replay.
-        phone.onDisconnect?()
+        phone.leave()
         XCTAssertEqual(host.state?.0, .running)
         XCTAssertNil(host.presentation.preset)
         let next = phone.send("hello")
@@ -92,11 +95,14 @@ final class LiveBridgeBackendTests: XCTestCase {
         defer { host.stop() }
         try host.start(); phone.onStatus?("Bluetooth is off")
         XCTAssertEqual(host.state?.1, "Bluetooth is off")
-        _ = phone.send("hello")
+        let token = try XCTUnwrap(phone.send("hello")["connection_id"] as? String)
         host.revoke()
-        XCTAssertEqual(phone.resets, 1)
         XCTAssertEqual(host.state?.0, .running)
         XCTAssertTrue(host.presentation.approvalCode.isEmpty)
+        // CoreBluetooth can't drop one central, so its requests are refused until it starts over.
+        XCTAssertEqual((phone.send("connect", token: token)["error"] as? [String: Any])?["code"] as? String, "revoked")
+        XCTAssertNotNil(phone.send("hello")["connection_id"] as? String)
+        XCTAssertEqual(host.state?.0, .awaitingApproval)
     }
     func testLargeTransferUsesInactivityDeadline() throws {
         var receiver = ChunkReceiver()
@@ -107,5 +113,24 @@ final class LiveBridgeBackendTests: XCTestCase {
             result = try receiver.receive(chunk, now: Date(timeIntervalSince1970: Double(i * 3)))
         }
         XCTAssertEqual(result, bytes)
+    }
+    func testSecondDeviceIsToldTheBridgeIsFullAndTheFirstKeepsWorking() throws {
+        let helper = try helper(), phone = TestPeripheral(), pad = UUID()
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper })
+        defer { host.stop() }
+        try host.start()
+        let token = try XCTUnwrap(phone.send("hello", fields: ["device_name": "iPhone"])["connection_id"] as? String)
+        XCTAssertEqual(phone.lastAdmission, .admit)
+        try host.approve()
+        let session = try XCTUnwrap(phone.send("connect", token: token)["session_id"] as? String)
+        let full = phone.send("hello", from: pad, fields: ["device_name": "iPad"])
+        XCTAssertEqual((full["error"] as? [String: Any])?["code"] as? String, "bridge_full")
+        XCTAssertEqual(phone.lastAdmission, .release)
+        XCTAssertEqual(host.presentation.phoneName, "iPhone")
+        phone.leave(pad) // The refused device leaving never touches the admitted one.
+        XCTAssertEqual(phone.send("snapshot", token: token, session: session)["status"] as? String, "confirmed")
+        phone.leave()
+        XCTAssertNotNil(phone.send("hello", from: pad)["connection_id"] as? String)
+        XCTAssertEqual(phone.lastAdmission, .admit)
     }
 }
