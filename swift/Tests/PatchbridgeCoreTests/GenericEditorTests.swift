@@ -26,6 +26,11 @@ final class GenericEditorTests: XCTestCase {
         let f = try fixture(); let model = try editor(f)
         XCTAssertEqual(model.snapshot?.blocks.count, 16)
         XCTAssertEqual(model.snapshot?.scene, "F")
+        XCTAssertEqual(model.snapshot?.scene_labels?[5], "RHYTHM")
+        XCTAssertEqual(model.snapshot?.scene_colors?[5], 4294930432)
+        XCTAssertEqual(model.catalog?.models[f.snapshot.blocks.first { $0.id == "0:1" }!.model_id]?.category, "Compressor")
+        XCTAssertTrue(model.supports("save"))
+        XCTAssertFalse(model.supports("select_scene"))
         XCTAssertEqual(model.control(blockID: "0:1", parameterID: "0")?.name, "THRESHOLD")
         XCTAssertNil(model.readOnlyReason(blockID: "0:1", parameterID: "0"))
         XCTAssertNotNil(model.readOnlyReason(blockID: "0:3", parameterID: "0")) // Myth gain has no declared skew.

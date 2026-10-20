@@ -15,6 +15,14 @@
       "name": "iPhone PoC"
     },
     {
+      "id": "ipad",
+      "name": "iPad PoC"
+    },
+    {
+      "id": "mac",
+      "name": "Mac bridge"
+    },
+    {
       "id": "duo",
       "name": "iPhone Duo"
     },
@@ -436,6 +444,496 @@
       "x": 964,
       "y": 0
     },
+    "mac/m-firstrun.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Bluetooth permission",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-noqc.dc.html": {
+      "x": 560,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Waiting for the QC",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-cortex.dc.html": {
+      "x": 1120,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Cortex Control has the QC",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-btoff.dc.html": {
+      "x": 1680,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Bluetooth off",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-ready.dc.html": {
+      "x": 2240,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Ready for an iPhone",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-request.dc.html": {
+      "x": 0,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "Approve an iPhone",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-connected.dc.html": {
+      "x": 560,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "Connected · recent edits",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-unplugged.dc.html": {
+      "x": 1120,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "QC unplugged mid-session",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-helper.dc.html": {
+      "x": 1680,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "Bridge stopped",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-firmware.dc.html": {
+      "x": 2240,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "Untested CorOS",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-closing.dc.html": {
+      "x": 0,
+      "y": 2280,
+      "w": 480,
+      "h": 700,
+      "title": "Closing the window",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/mb-icons.dc.html": {
+      "x": 560,
+      "y": 2280,
+      "w": 760,
+      "h": 220,
+      "title": "Menu bar icon states",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/mb-notify-request.dc.html": {
+      "x": 560,
+      "y": 2620,
+      "w": 380,
+      "h": 122,
+      "title": "Notification · approval",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-notify-lost.dc.html": {
+      "x": 1020,
+      "y": 2620,
+      "w": 380,
+      "h": 78,
+      "title": "Notification · QC lost",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-ready.dc.html": {
+      "x": 1480,
+      "y": 2280,
+      "w": 340,
+      "h": 322,
+      "title": "Menu bar · ready",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-connected.dc.html": {
+      "x": 1900,
+      "y": 2280,
+      "w": 340,
+      "h": 322,
+      "title": "Menu bar · connected",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-request.dc.html": {
+      "x": 2320,
+      "y": 2280,
+      "w": 340,
+      "h": 516,
+      "title": "Menu bar · approve",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-lost.dc.html": {
+      "x": 2740,
+      "y": 2280,
+      "w": 340,
+      "h": 441,
+      "title": "Menu bar · QC lost",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-stopped.dc.html": {
+      "x": 3160,
+      "y": 2280,
+      "w": 340,
+      "h": 460,
+      "title": "Menu bar · bridge stopped",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/m-settings.dc.html": {
+      "x": 0,
+      "y": 3420,
+      "w": 560,
+      "h": 660,
+      "title": "Settings",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/d-ready.dc.html": {
+      "x": 640,
+      "y": 3420,
+      "w": 480,
+      "h": 700,
+      "title": "Daylight · ready",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/d-request.dc.html": {
+      "x": 1200,
+      "y": 3420,
+      "w": 480,
+      "h": 700,
+      "title": "Daylight · approve",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/d-connected.dc.html": {
+      "x": 1760,
+      "y": 3420,
+      "w": 480,
+      "h": 700,
+      "title": "Daylight · connected",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/d-mb-connected.dc.html": {
+      "x": 2320,
+      "y": 3420,
+      "w": 340,
+      "h": 322,
+      "title": "Daylight · menu bar",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/d-mb-request.dc.html": {
+      "x": 2740,
+      "y": 3420,
+      "w": 340,
+      "h": 516,
+      "title": "Daylight · menu bar approve",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/Bridge.dc.html": {
+      "x": 2882,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Mac bridge (Tweaks: screen, theme)",
+      "page": "components",
+      "radius": 18
+    },
+    "ipad/Workspace.dc.html": {
+      "x": 0,
+      "y": 1200,
+      "w": 1180,
+      "h": 820,
+      "title": "Workspace (Tweaks: orientation, block, state, overlay)",
+      "page": "components"
+    },
+    "ipad/Connect.dc.html": {
+      "x": 1300,
+      "y": 1200,
+      "w": 1180,
+      "h": 820,
+      "title": "Connect (Tweaks: step)",
+      "page": "components"
+    },
+    "ipad/c-welcome.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Welcome",
+      "page": "ipad"
+    },
+    "ipad/c-getmac.dc.html": {
+      "x": 1300,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Get the Mac app",
+      "page": "ipad"
+    },
+    "ipad/c-linksent.dc.html": {
+      "x": 2600,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Link sent to Mac",
+      "page": "ipad"
+    },
+    "ipad/c-found.dc.html": {
+      "x": 3900,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Choose your Mac",
+      "page": "ipad"
+    },
+    "ipad/c-approve.dc.html": {
+      "x": 5200,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Approve on Mac",
+      "page": "ipad"
+    },
+    "ipad/c-loading.dc.html": {
+      "x": 6500,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Loading the QC",
+      "page": "ipad"
+    },
+    "ipad/c-lost.dc.html": {
+      "x": 7800,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Error: connection ended",
+      "page": "ipad"
+    },
+    "ipad/c-timeout.dc.html": {
+      "x": 9100,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Error: no reply",
+      "page": "ipad"
+    },
+    "ipad/c-bluetooth.dc.html": {
+      "x": 10400,
+      "y": 0,
+      "w": 1180,
+      "h": 820,
+      "title": "Error: Bluetooth off",
+      "page": "ipad"
+    },
+    "ipad/o-overview.dc.html": {
+      "x": 0,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Overview · Opto Comp",
+      "page": "ipad"
+    },
+    "ipad/o-row3.dc.html": {
+      "x": 1300,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Overview · row 3 block",
+      "page": "ipad"
+    },
+    "ipad/o-demo.dc.html": {
+      "x": 2600,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Overview · demo mode",
+      "page": "ipad"
+    },
+    "ipad/o-save.dc.html": {
+      "x": 3900,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Save confirmation",
+      "page": "ipad"
+    },
+    "ipad/o-saving.dc.html": {
+      "x": 5200,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Saving",
+      "page": "ipad"
+    },
+    "ipad/o-saved.dc.html": {
+      "x": 6500,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Saved",
+      "page": "ipad"
+    },
+    "ipad/o-changed.dc.html": {
+      "x": 7800,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Changed on the QC",
+      "page": "ipad"
+    },
+    "ipad/o-details.dc.html": {
+      "x": 9100,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Connection details",
+      "page": "ipad"
+    },
+    "ipad/t-appearance.dc.html": {
+      "x": 10400,
+      "y": 1060,
+      "w": 1180,
+      "h": 820,
+      "title": "Appearance",
+      "page": "ipad"
+    },
+    "ipad/e-fine.dc.html": {
+      "x": 0,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · fine steps (hold, slide out)",
+      "page": "ipad"
+    },
+    "ipad/e-pending.dc.html": {
+      "x": 1300,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · sending",
+      "page": "ipad"
+    },
+    "ipad/e-confirmed.dc.html": {
+      "x": 2600,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · confirmed",
+      "page": "ipad"
+    },
+    "ipad/e-adjusted.dc.html": {
+      "x": 3900,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · adjusted by the QC",
+      "page": "ipad"
+    },
+    "ipad/e-rejected.dc.html": {
+      "x": 5200,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · not applied",
+      "page": "ipad"
+    },
+    "ipad/e-typing.dc.html": {
+      "x": 6500,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · typing",
+      "page": "ipad"
+    },
+    "ipad/e-invalid.dc.html": {
+      "x": 7800,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · out of range",
+      "page": "ipad"
+    },
+    "ipad/e-capture.dc.html": {
+      "x": 9100,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · read-only capture",
+      "page": "ipad"
+    },
+    "ipad/e-chorus.dc.html": {
+      "x": 10400,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Editor · option parameter",
+      "page": "ipad"
+    },
+    "ipad/p-overview.dc.html": {
+      "x": 0,
+      "y": 3180,
+      "w": 820,
+      "h": 1180,
+      "title": "Portrait · overview",
+      "page": "ipad"
+    },
+    "ipad/p-pending.dc.html": {
+      "x": 940,
+      "y": 3180,
+      "w": 820,
+      "h": 1180,
+      "title": "Portrait · sending",
+      "page": "ipad"
+    },
+    "ipad/p-typing.dc.html": {
+      "x": 1880,
+      "y": 3180,
+      "w": 820,
+      "h": 1180,
+      "title": "Portrait · typing",
+      "page": "ipad"
+    },
     "duo/u-row.dc.html": {
       "x": 0,
       "y": 0,
@@ -592,6 +1090,7 @@
     "poc/Editor.dc.html",
     "poc/Appearance.dc.html",
     "poc/Landscape.dc.html",
+    "mac/Bridge.dc.html",
     "Main.dc.html",
     "A-Editor.dc.html",
     "B-Overview.dc.html",
@@ -602,6 +1101,63 @@
     "D-Editor.dc.html",
     "D-Landscape.dc.html",
     "D-iPad.dc.html",
+    "mac/m-firstrun.dc.html",
+    "mac/m-noqc.dc.html",
+    "mac/m-cortex.dc.html",
+    "mac/m-btoff.dc.html",
+    "mac/m-ready.dc.html",
+    "mac/m-request.dc.html",
+    "mac/m-connected.dc.html",
+    "mac/m-unplugged.dc.html",
+    "mac/m-helper.dc.html",
+    "mac/m-firmware.dc.html",
+    "mac/m-closing.dc.html",
+    "mac/mb-icons.dc.html",
+    "mac/mb-notify-request.dc.html",
+    "mac/mb-notify-lost.dc.html",
+    "mac/mb-ready.dc.html",
+    "mac/mb-connected.dc.html",
+    "mac/mb-request.dc.html",
+    "mac/mb-lost.dc.html",
+    "mac/mb-stopped.dc.html",
+    "mac/m-settings.dc.html",
+    "mac/d-ready.dc.html",
+    "mac/d-request.dc.html",
+    "mac/d-connected.dc.html",
+    "mac/d-mb-connected.dc.html",
+    "mac/d-mb-request.dc.html",
+    "ipad/Workspace.dc.html",
+    "ipad/Connect.dc.html",
+    "ipad/c-welcome.dc.html",
+    "ipad/c-getmac.dc.html",
+    "ipad/c-linksent.dc.html",
+    "ipad/c-found.dc.html",
+    "ipad/c-approve.dc.html",
+    "ipad/c-loading.dc.html",
+    "ipad/c-lost.dc.html",
+    "ipad/c-timeout.dc.html",
+    "ipad/c-bluetooth.dc.html",
+    "ipad/o-overview.dc.html",
+    "ipad/o-row3.dc.html",
+    "ipad/o-demo.dc.html",
+    "ipad/o-save.dc.html",
+    "ipad/o-saving.dc.html",
+    "ipad/o-saved.dc.html",
+    "ipad/o-changed.dc.html",
+    "ipad/o-details.dc.html",
+    "ipad/t-appearance.dc.html",
+    "ipad/e-fine.dc.html",
+    "ipad/e-pending.dc.html",
+    "ipad/e-confirmed.dc.html",
+    "ipad/e-adjusted.dc.html",
+    "ipad/e-rejected.dc.html",
+    "ipad/e-typing.dc.html",
+    "ipad/e-invalid.dc.html",
+    "ipad/e-capture.dc.html",
+    "ipad/e-chorus.dc.html",
+    "ipad/p-overview.dc.html",
+    "ipad/p-pending.dc.html",
+    "ipad/p-typing.dc.html",
     "duo/u-row.dc.html",
     "duo/u-idle.dc.html",
     "duo/u-pending.dc.html",
@@ -681,6 +1237,70 @@
       "kind": "title1",
       "maxW": 3044,
       "page": "concepts"
+    },
+    "macSetup": {
+      "x": 0,
+      "y": -280,
+      "text": "Mac window: Bluetooth, the QC, then ready",
+      "kind": "title1",
+      "maxW": 2720,
+      "page": "mac"
+    },
+    "macSession": {
+      "x": 0,
+      "y": 860,
+      "text": "Mac window: approve an iPhone, stay connected, recover",
+      "kind": "title1",
+      "maxW": 2720,
+      "page": "mac"
+    },
+    "macMenubar": {
+      "x": 0,
+      "y": 2000,
+      "text": "Runs in the menu bar: close the window, keep the bridge going",
+      "kind": "title1",
+      "maxW": 3500,
+      "page": "mac"
+    },
+    "macThemes": {
+      "x": 0,
+      "y": 3140,
+      "text": "Settings and Daylight",
+      "kind": "title1",
+      "maxW": 3080,
+      "page": "mac"
+    },
+    "ipad0": {
+      "x": 0,
+      "y": -280,
+      "text": "Connect: a centred column, same steps as iPhone",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "ipad"
+    },
+    "ipad1": {
+      "x": 0,
+      "y": 780,
+      "text": "Overview: grid, row list and editor on one screen; popovers for save and connection",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "ipad"
+    },
+    "ipad2": {
+      "x": 0,
+      "y": 1840,
+      "text": "Editor panel: every edit state, number pad as a popover",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "ipad"
+    },
+    "ipad3": {
+      "x": 0,
+      "y": 2900,
+      "text": "Portrait: grid on top, row list beside the editor",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "ipad"
     }
   },
   "designSystems": []

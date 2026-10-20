@@ -117,6 +117,8 @@ class USBAdapter:
                                'model_id': str(model.hash), 'scenes': scenes,
                                'editable_parameters': editable})
         state = {'preset_id': json.dumps(self.position, separators=(',', ':')),
+                 'scene_labels': list(getattr(bp, 'scene_labels', [])),
+                 'scene_colors': list(getattr(bp, 'scene_colors', [])),
                  'name': bp.name, 'scene': chr(65+scene.selected_scene),
                  'dirty': dirty.is_dirty, 'blocks': blocks, 'value_encoding': 'qc_normalized',
                  'catalog_id': self.metadata.get('id'),

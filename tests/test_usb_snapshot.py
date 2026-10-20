@@ -138,3 +138,20 @@ class ConnectionTests(unittest.TestCase):
         self.assertEqual(parameter['min'], 'MIN')
         self.assertIn(-536850432, qc.io.BENIGN_WRITE_CODES)
         adapter.disconnect()
+
+class SceneMetadataTests(unittest.TestCase):
+    def test_scene_names_and_argb_colors_are_carried_without_recoloring(self):
+        adapter = USBAdapter()
+        adapter.qc = Mock()
+        adapter.metadata = {'id': 'catalog', 'models': {}}
+        adapter.qc.get_current_preset.return_value = NS(
+            name='Preset', chains=[], scene_labels=['', 'RHYTHM'],
+            scene_colors=[0xff0071ce, 0xffff7000], SerializeToString=lambda: b'preset')
+        position = NS(folder_key='My Presets', position=16, is_factory=False)
+        adapter.qc.read_state.side_effect = lambda name: {
+            'SetlistPosition': position, 'Scene': NS(selected_scene=1),
+            'PresetDirty': NS(is_dirty=False),
+        }[name]
+        snapshot = adapter.snapshot()
+        self.assertEqual(snapshot['scene_labels'], ['', 'RHYTHM'])
+        self.assertEqual(snapshot['scene_colors'], [0xff0071ce, 0xffff7000])

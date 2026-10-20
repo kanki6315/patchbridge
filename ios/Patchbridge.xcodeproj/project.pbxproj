@@ -8,24 +8,49 @@
 
 /* Begin PBXBuildFile section */
 		0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */; };
+		184795C273F446AC30468366 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */; };
+		444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EB72B83CCED483250AEC0C /* Theme.swift */; };
+		47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */; };
+		4952635A4A21096EBD705705 /* PhoneFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2544FE9FA36EA4F67327F5B0 /* PhoneFlowTests.swift */; };
 		5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */; };
 		5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */; };
 		65F0DF151692770297348421 /* Chunks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F75207A678F28257EA105F3 /* Chunks.swift */; };
 		8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */; };
+		A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */; };
 		AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E68459E6EE63B03631133E9 /* EditorView.swift */; };
+		B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 025A144248FD7B2C1307731E /* AppIcon.icon */; };
 		B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42253D1C8C450F010DE25BCD /* GenericEditor.swift */; };
 		B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E125DD1594C135E050EF4E8 /* BLECentral.swift */; };
 		B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59B2D058255097DC58ED315 /* EditorCoordinator.swift */; };
+		CFDBC47AD10CC294B4320C98 /* qc-editor.json in Resources */ = {isa = PBXBuildFile; fileRef = D1060EC516FC395E41ABB898 /* qc-editor.json */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		2C2457A7ACC0CB12399CEC24 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EDD58D6361D28AE773072F40 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9D7F003699778C10868C83F;
+			remoteInfo = Patchbridge;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		025A144248FD7B2C1307731E /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchbridgeApp.swift; sourceTree = "<group>"; };
+		2544FE9FA36EA4F67327F5B0 /* PhoneFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneFlowTests.swift; sourceTree = "<group>"; };
 		3E125DD1594C135E050EF4E8 /* BLECentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLECentral.swift; sourceTree = "<group>"; };
 		3E68459E6EE63B03631133E9 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		42253D1C8C450F010DE25BCD /* GenericEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericEditor.swift; sourceTree = "<group>"; };
 		4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExchange.swift; sourceTree = "<group>"; };
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
+		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		D1060EC516FC395E41ABB898 /* qc-editor.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "qc-editor.json"; sourceTree = "<group>"; };
+		D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneModel.swift; sourceTree = "<group>"; };
+		D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
+		D6BA326B4AFA35FBB2DD6298 /* PatchbridgeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PatchbridgeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorModel.swift; sourceTree = "<group>"; };
 		EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Patchbridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F59B2D058255097DC58ED315 /* EditorCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorCoordinator.swift; sourceTree = "<group>"; };
@@ -36,15 +61,30 @@
 			isa = PBXGroup;
 			children = (
 				EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */,
+				D6BA326B4AFA35FBB2DD6298 /* PatchbridgeUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		2DC3422CA05E44CC9F85EECB /* fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				D1060EC516FC395E41ABB898 /* qc-editor.json */,
+			);
+			name = fixtures;
+			path = ../tests/fixtures;
 			sourceTree = "<group>";
 		};
 		519E584C2E77AE9092522B22 /* Patchbridge */ = {
 			isa = PBXGroup;
 			children = (
+				025A144248FD7B2C1307731E /* AppIcon.icon */,
+				D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */,
 				3E68459E6EE63B03631133E9 /* EditorView.swift */,
 				17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */,
+				D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */,
+				9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */,
+				81EB72B83CCED483250AEC0C /* Theme.swift */,
 			);
 			path = Patchbridge;
 			sourceTree = "<group>";
@@ -52,10 +92,20 @@
 		65FAEFFF143E1ACA0D0BF3B1 = {
 			isa = PBXGroup;
 			children = (
+				2DC3422CA05E44CC9F85EECB /* fixtures */,
 				519E584C2E77AE9092522B22 /* Patchbridge */,
 				D8A3E97632801B8CA74207B1 /* PatchbridgeCore */,
+				67A61EF166DAFAD9688B634C /* PatchbridgeUITests */,
 				15AA50A8907B9C40FB7801A2 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		67A61EF166DAFAD9688B634C /* PatchbridgeUITests */ = {
+			isa = PBXGroup;
+			children = (
+				2544FE9FA36EA4F67327F5B0 /* PhoneFlowTests.swift */,
+			);
+			path = PatchbridgeUITests;
 			sourceTree = "<group>";
 		};
 		D8A3E97632801B8CA74207B1 /* PatchbridgeCore */ = {
@@ -76,11 +126,30 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		95ADE0FFBE74754A2F2DEA62 /* PatchbridgeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 171B1716F27349FFBEEF451A /* Build configuration list for PBXNativeTarget "PatchbridgeUITests" */;
+			buildPhases = (
+				21D941FEB1D1E76688E26E7F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				180CE61D84D3F492C9120895 /* PBXTargetDependency */,
+			);
+			name = PatchbridgeUITests;
+			packageProductDependencies = (
+			);
+			productName = PatchbridgeUITests;
+			productReference = D6BA326B4AFA35FBB2DD6298 /* PatchbridgeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		C9D7F003699778C10868C83F /* Patchbridge */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 83E37A547F52747DEF5C4A99 /* Build configuration list for PBXNativeTarget "Patchbridge" */;
 			buildPhases = (
 				5C1E38DB46950966E903BCDC /* Sources */,
+				BDE22C222DD16F1212B5F8CB /* Resources */,
 			);
 			buildRules = (
 			);
@@ -102,6 +171,11 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					95ADE0FFBE74754A2F2DEA62 = {
+						DevelopmentTeam = TDBAHN96B3;
+						ProvisioningStyle = Automatic;
+						TestTargetID = C9D7F003699778C10868C83F;
+					};
 					C9D7F003699778C10868C83F = {
 						DevelopmentTeam = TDBAHN96B3;
 						ProvisioningStyle = Automatic;
@@ -123,16 +197,39 @@
 			projectRoot = "";
 			targets = (
 				C9D7F003699778C10868C83F /* Patchbridge */,
+				95ADE0FFBE74754A2F2DEA62 /* PatchbridgeUITests */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		BDE22C222DD16F1212B5F8CB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */,
+				A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */,
+				CFDBC47AD10CC294B4320C98 /* qc-editor.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		21D941FEB1D1E76688E26E7F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4952635A4A21096EBD705705 /* PhoneFlowTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5C1E38DB46950966E903BCDC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */,
+				184795C273F446AC30468366 /* BlockEditorView.swift in Sources */,
 				65F0DF151692770297348421 /* Chunks.swift in Sources */,
 				0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */,
 				5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */,
@@ -141,10 +238,20 @@
 				AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */,
 				B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */,
 				8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */,
+				47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */,
+				444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		180CE61D84D3F492C9120895 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9D7F003699778C10868C83F /* Patchbridge */;
+			targetProxy = 2C2457A7ACC0CB12399CEC24 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		15C78A0F6D396BE4F195EB11 /* Release */ = {
@@ -214,17 +321,34 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Patchbridge;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to your Mac to edit a simulated guitar preset over Bluetooth.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to your Mac to view and edit your Quad Cortex preset over Bluetooth.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.patchbridge.phone;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arjunakankipati.patchbridge;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		8EABDFC8BC53C9FE73942AC8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.arjunakankipati.PatchbridgeUITests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Patchbridge;
 			};
 			name = Release;
 		};
@@ -236,17 +360,17 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Patchbridge;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to your Mac to edit a simulated guitar preset over Bluetooth.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to your Mac to view and edit your Quad Cortex preset over Bluetooth.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.patchbridge.phone;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arjunakankipati.patchbridge;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -316,9 +440,35 @@
 			};
 			name = Debug;
 		};
+		E66CE17A04DB5AC66E37C615 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.arjunakankipati.PatchbridgeUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Patchbridge;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		171B1716F27349FFBEEF451A /* Build configuration list for PBXNativeTarget "PatchbridgeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E66CE17A04DB5AC66E37C615 /* Debug */,
+				8EABDFC8BC53C9FE73942AC8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		83E37A547F52747DEF5C4A99 /* Build configuration list for PBXNativeTarget "Patchbridge" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
