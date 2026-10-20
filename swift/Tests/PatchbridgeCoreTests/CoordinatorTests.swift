@@ -74,18 +74,26 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(c.phase, .connecting)
         XCTAssertNil(c.error)
     }
-    func testBluetoothFailureIncludesStageAndSystemError() {
-        let error = NSError(domain: CBErrorDomain, code: CBError.Code.connectionFailed.rawValue,
-                            userInfo: [NSLocalizedDescriptionKey: "Connection failed"])
-        let message = BLECentral.failureMessage("Could not connect to your Mac", error: error)
-        XCTAssertTrue(message.contains("Could not connect to your Mac"))
-        XCTAssertTrue(message.contains("Connection failed"))
-        XCTAssertTrue(message.contains("CBErrorDomain 10"))
-        XCTAssertFalse(message.contains("Forget"))
-        XCTAssertEqual(BLECentral.failureMessage("Connection ended", error: nil), "Connection ended")
-        for code in [CBError.Code.peerRemovedPairingInformation, .encryptionTimedOut] {
-            let pairing = NSError(domain: CBErrorDomain, code: code.rawValue)
-            XCTAssertTrue(BLECentral.failureMessage("Connection ended", error: pairing).contains("pairing needs to be renewed"))
+    func testBluetoothFailuresUseRecoveryCopyWithoutSystemDetails() {
+        let fallback = "Your Mac couldn’t respond. Restart Patchbridge on your Mac, then reconnect."
+        for code in [CBError.Code.connectionFailed, .connectionTimeout, .peripheralDisconnected,
+                     .peerRemovedPairingInformation, .encryptionTimedOut] {
+            let error = NSError(domain: CBErrorDomain, code: code.rawValue,
+                                userInfo: [NSLocalizedDescriptionKey: "INTERNAL SYSTEM DETAIL"])
+            let message = BLECentral.failureMessage(fallback, error: error)
+            XCTAssertFalse(message.contains("CBErrorDomain"))
+            XCTAssertFalse(message.contains("INTERNAL SYSTEM DETAIL"))
+            XCTAssertTrue(message.contains("reconnect"))
+            if code == .encryptionTimedOut {
+                XCTAssertTrue(message.contains("pairing needs to be reset"))
+                XCTAssertTrue(message.contains("phone and Mac"))
+                XCTAssertTrue(message.contains("forget the pairing"))
+            }
+            if code == .peerRemovedPairingInformation { XCTAssertTrue(message.contains("forget the old pairing")) }
+        }
+        for error in [nil, NSError(domain: CBErrorDomain, code: 999),
+                      NSError(domain: "PrivateDomain", code: 15)] {
+            XCTAssertEqual(BLECentral.failureMessage(fallback, error: error), fallback)
         }
     }
     func testDiscoveryRequiresSelectionAndExpiresWhenNothingIsFound() {

@@ -43,8 +43,8 @@ from a live connection.
 Bluetooth pairing and Patchbridge approval are separate. Patchbridge requires
 fresh approval for each app session; the operating systems may retain a Bluetooth
 bond from earlier testing. A Mac that appears in discovery but disconnects before
-the approval code can have a pairing/encryption failure. The phone preserves the
-connection stage and Core Bluetooth error in its failure message.
+the approval code can have a pairing/encryption failure. The phone shows a short recovery message. The connection stage and Core Bluetooth
+error code are recorded in system logs under the Patchbridge Bluetooth category.
 
 Turn Bluetooth off and back on in Settings on both devices, restart the Mac
 bridge, and reconnect. If the failure persists and the other device is listed in

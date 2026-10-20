@@ -1,5 +1,6 @@
 import Foundation
 import CoreBluetooth
+import OSLog
 
 /// Foreground iPhone/macOS development transport. All callbacks occur on main queue.
 /// Only one command may be outstanding; the caller coalesces slider movement until completion.
@@ -73,8 +74,8 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         guard self.peripheral === peripheral else { central.cancelPeripheralConnection(peripheral); return }
         peripheral.delegate = self; peripheral.discoverServices([Self.service])
     }
-    public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) { guard self.peripheral === peripheral else { return }; fail("Could not connect to your Mac", error: error) }
-    public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) { guard self.peripheral?.identifier == peripheral.identifier else { return }; fail("The Bluetooth connection to your Mac ended", error: error) }
+    public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) { guard self.peripheral === peripheral else { return }; fail("Your Mac didn’t connect. Keep it nearby with Patchbridge open, then reconnect.", error: error) }
+    public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) { guard self.peripheral?.identifier == peripheral.identifier else { return }; fail("Your Mac disconnected. Open Patchbridge on your Mac, then reconnect.", error: error) }
     public func reconnect() {
         guard peripheral == nil, manager.state == .poweredOn else { return }
         disconnectionReason = nil
@@ -83,19 +84,34 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     public func disconnect() { manager.stopScan(); if let peripheral { manager.cancelPeripheralConnection(peripheral) }; clear() }
     // Publish the reason before teardown: onDisconnected may release this transport immediately.
     private func fail(_ message: String, error: Error? = nil) {
+        // System diagnostics retain the failure stage and code, never device names or payloads.
+        let logger = Logger(subsystem: "com.arjunakankipati.patchbridge", category: "Bluetooth")
+        if let error = error as NSError? {
+            let domain = error.domain == CBErrorDomain ? "CBErrorDomain" : error.domain == CBATTErrorDomain ? "CBATTErrorDomain" : "Other"
+            logger.error("\(message, privacy: .public) [\(domain, privacy: .public) \(error.code)]")
+        } else {
+            logger.error("\(message, privacy: .public)")
+        }
         disconnectionReason = Self.failureMessage(message, error: error)
         onStatus?(disconnectionReason!)
         disconnect()
     }
     static func failureMessage(_ message: String, error: Error?) -> String {
-        guard let error = error as NSError? else { return message }
-        let detail = "\(message): \(error.localizedDescription) (\(error.domain) \(error.code))."
-        if error.domain == CBErrorDomain,
-           [CBError.Code.peerRemovedPairingInformation.rawValue, CBError.Code.encryptionTimedOut.rawValue].contains(error.code) {
-            return detail + " Bluetooth pairing needs to be renewed. Forget the existing pairing in Bluetooth Settings if listed, then reconnect and accept the pairing prompt."
+        guard let error = error as NSError?, error.domain == CBErrorDomain else { return message }
+        switch error.code {
+        case CBError.Code.peerRemovedPairingInformation.rawValue:
+            return "Bluetooth pairing needs to be set up again. In Bluetooth Settings, forget the old pairing if listed, then reconnect."
+        case CBError.Code.encryptionTimedOut.rawValue:
+            return "Bluetooth pairing needs to be reset. Open Bluetooth Settings on your phone and Mac, forget the pairing wherever listed, then reconnect."
+        case CBError.Code.connectionTimeout.rawValue, CBError.Code.connectionFailed.rawValue:
+            return "Your Mac didn’t connect. Keep it nearby with Patchbridge open, then reconnect."
+        case CBError.Code.peripheralDisconnected.rawValue:
+            return "Your Mac disconnected. Keep it nearby with Patchbridge open, then reconnect."
+        default:
+            return message
         }
-        return detail
     }
+
     private func clear() {
         timer?.invalidate(); timer = nil; peripheral?.delegate = nil; peripheral = nil; command = nil; results = nil
         exchange.reset(); receiver.reset(); discovered.removeAll()
@@ -107,21 +123,21 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     }
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard self.peripheral === peripheral else { return }
-        guard error == nil else { fail("Could not discover the Mac’s Bluetooth service", error: error); return }
-        guard let service = peripheral.services?.first(where: { $0.uuid == Self.service }) else { fail("Patchbridge’s Bluetooth service is missing. Restart the Mac bridge and reconnect."); return }
+        guard error == nil else { fail("Couldn’t connect to Patchbridge. Restart the app on your Mac, then reconnect.", error: error); return }
+        guard let service = peripheral.services?.first(where: { $0.uuid == Self.service }) else { fail("Couldn’t find Patchbridge on your Mac. Restart the Mac app, then reconnect."); return }
         peripheral.discoverCharacteristics(nil, for: service)
     }
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard self.peripheral === peripheral else { return }
-        guard error == nil else { fail("Could not discover the Mac’s Bluetooth characteristics", error: error); return }
+        guard error == nil else { fail("Couldn’t connect to Patchbridge. Restart the app on your Mac, then reconnect.", error: error); return }
         command = service.characteristics?.first { $0.uuid == CBUUID(string: "79A90002-6E15-4C9F-AC53-147F7E639B01") }
         results = service.characteristics?.first { $0.uuid == CBUUID(string: "79A90003-6E15-4C9F-AC53-147F7E639B01") }
-        guard command != nil, let results else { fail("The Mac’s Bluetooth service is incomplete. Restart the Mac bridge and reconnect."); return }
+        guard command != nil, let results else { fail("Couldn’t connect to Patchbridge. Restart the app on your Mac, then reconnect."); return }
         peripheral.setNotifyValue(true, for: results)
     }
     public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         guard self.peripheral === peripheral, characteristic === results else { return }
-        guard error == nil, characteristic.isNotifying else { fail("Could not enable Bluetooth responses from your Mac", error: error); return }
+        guard error == nil, characteristic.isNotifying else { fail("Your Mac couldn’t respond. Restart Patchbridge on your Mac, then reconnect.", error: error); return }
         onStatus?("Connected; send hello, then approve on the Mac")
         onReady?()
     }
@@ -130,19 +146,19 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         transfer &+= 1
         let first = try exchange.begin(message, limit: min(peripheral.maximumWriteValueLength(for: .withResponse), 512), transfer: transfer)
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: false) { [weak self] _ in
-            self?.fail("Command timed out; no automatic retry. Reconnect to your Mac.")
+            self?.fail("Your Mac didn’t respond in time. Reconnect to check the QC before editing again.")
         }
         peripheral.writeValue(first, for: command, type: .withResponse)
     }
     public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
         guard self.peripheral === peripheral, characteristic === command else { return }
-        guard error == nil else { fail("Bluetooth write failed; reconnect required", error: error); return }
+        guard error == nil else { fail("Couldn’t send your request. Reconnect to check the QC before editing again.", error: error); return }
         do {
             if let next = try exchange.acknowledge(), let command {
                 peripheral.writeValue(next, for: command, type: .withResponse)
             }
             completeExchange()
-        } catch { fail("Unexpected write acknowledgment; reconnect required", error: error) }
+        } catch { fail("Couldn’t confirm your request. Reconnect to check the QC before editing again.", error: error) }
     }
     private func completeExchange() {
         if let response = exchange.completed() {
@@ -152,13 +168,13 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     }
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard self.peripheral === peripheral, characteristic === results else { return }
-        guard error == nil, let data = characteristic.value else { fail("Could not read a Bluetooth response from your Mac", error: error); return }
+        guard error == nil, let data = characteristic.value else { fail("Couldn’t read your Mac’s response. Reconnect to check the QC before editing again.", error: error); return }
         do {
             if let complete = try receiver.receive(data) {
                 guard let response = try JSONSerialization.jsonObject(with: complete) as? [String: Any] else { throw ChunkFailure.malformed }
                 try exchange.accept(response)
                 completeExchange()
             }
-        } catch { fail("Invalid transfer; reconnect required", error: error) }
+        } catch { fail("Couldn’t read your Mac’s response. Reconnect to check the QC before editing again.", error: error) }
     }
 }
