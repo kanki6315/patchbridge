@@ -458,5 +458,305 @@
     "h": 820,
     "png": "concepts/D-iPad.png",
     "html": "html/concepts/D-iPad.html"
+  },
+  {
+    "key": "ipad/c-welcome.dc.html",
+    "slug": "c-welcome",
+    "page": "iPad PoC",
+    "title": "Welcome",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-welcome.png",
+    "html": "html/ipad/c-welcome.html"
+  },
+  {
+    "key": "ipad/c-getmac.dc.html",
+    "slug": "c-getmac",
+    "page": "iPad PoC",
+    "title": "Get the Mac app",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-getmac.png",
+    "html": "html/ipad/c-getmac.html"
+  },
+  {
+    "key": "ipad/c-linksent.dc.html",
+    "slug": "c-linksent",
+    "page": "iPad PoC",
+    "title": "Link sent to Mac",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-linksent.png",
+    "html": "html/ipad/c-linksent.html"
+  },
+  {
+    "key": "ipad/c-found.dc.html",
+    "slug": "c-found",
+    "page": "iPad PoC",
+    "title": "Choose your Mac",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-found.png",
+    "html": "html/ipad/c-found.html"
+  },
+  {
+    "key": "ipad/c-approve.dc.html",
+    "slug": "c-approve",
+    "page": "iPad PoC",
+    "title": "Approve on Mac",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-approve.png",
+    "html": "html/ipad/c-approve.html"
+  },
+  {
+    "key": "ipad/c-loading.dc.html",
+    "slug": "c-loading",
+    "page": "iPad PoC",
+    "title": "Loading the QC",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-loading.png",
+    "html": "html/ipad/c-loading.html"
+  },
+  {
+    "key": "ipad/c-lost.dc.html",
+    "slug": "c-lost",
+    "page": "iPad PoC",
+    "title": "Error: connection ended",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-lost.png",
+    "html": "html/ipad/c-lost.html"
+  },
+  {
+    "key": "ipad/c-timeout.dc.html",
+    "slug": "c-timeout",
+    "page": "iPad PoC",
+    "title": "Error: no reply",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-timeout.png",
+    "html": "html/ipad/c-timeout.html"
+  },
+  {
+    "key": "ipad/c-bluetooth.dc.html",
+    "slug": "c-bluetooth",
+    "page": "iPad PoC",
+    "title": "Error: Bluetooth off",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/c-bluetooth.png",
+    "html": "html/ipad/c-bluetooth.html"
+  },
+  {
+    "key": "ipad/o-overview.dc.html",
+    "slug": "o-overview",
+    "page": "iPad PoC",
+    "title": "Overview · Opto Comp",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/o-overview.png",
+    "html": "html/ipad/o-overview.html"
+  },
+  {
+    "key": "ipad/o-row3.dc.html",
+    "slug": "o-row3",
+    "page": "iPad PoC",
+    "title": "Overview · row 3 block",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/o-row3.png",
+    "html": "html/ipad/o-row3.html"
+  },
+  {
+    "key": "ipad/o-demo.dc.html",
+    "slug": "o-demo",
+    "page": "iPad PoC",
+    "title": "Overview · demo mode",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/o-demo.png",
+    "html": "html/ipad/o-demo.html"
+  },
+  {
+    "key": "ipad/o-save.dc.html",
+    "slug": "o-save",
+    "page": "iPad PoC",
+    "title": "Save confirmation",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/o-save.png",
+    "html": "html/ipad/o-save.html"
+  },
+  {
+    "key": "ipad/o-saving.dc.html",
+    "slug": "o-saving",
+    "page": "iPad PoC",
+    "title": "Saving",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/o-saving.png",
+    "html": "html/ipad/o-saving.html"
+  },
+  {
+    "key": "ipad/o-saved.dc.html",
+    "slug": "o-saved",
+    "page": "iPad PoC",
+    "title": "Saved",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/o-saved.png",
+    "html": "html/ipad/o-saved.html"
+  },
+  {
+    "key": "ipad/o-changed.dc.html",
+    "slug": "o-changed",
+    "page": "iPad PoC",
+    "title": "Changed on the QC",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/o-changed.png",
+    "html": "html/ipad/o-changed.html"
+  },
+  {
+    "key": "ipad/o-details.dc.html",
+    "slug": "o-details",
+    "page": "iPad PoC",
+    "title": "Connection details",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/o-details.png",
+    "html": "html/ipad/o-details.html"
+  },
+  {
+    "key": "ipad/t-appearance.dc.html",
+    "slug": "t-appearance",
+    "page": "iPad PoC",
+    "title": "Appearance",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/t-appearance.png",
+    "html": "html/ipad/t-appearance.html"
+  },
+  {
+    "key": "ipad/e-fine.dc.html",
+    "slug": "e-fine",
+    "page": "iPad PoC",
+    "title": "Editor · fine steps (hold, slide out)",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-fine.png",
+    "html": "html/ipad/e-fine.html"
+  },
+  {
+    "key": "ipad/e-pending.dc.html",
+    "slug": "e-pending",
+    "page": "iPad PoC",
+    "title": "Editor · sending",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-pending.png",
+    "html": "html/ipad/e-pending.html"
+  },
+  {
+    "key": "ipad/e-confirmed.dc.html",
+    "slug": "e-confirmed",
+    "page": "iPad PoC",
+    "title": "Editor · confirmed",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-confirmed.png",
+    "html": "html/ipad/e-confirmed.html"
+  },
+  {
+    "key": "ipad/e-adjusted.dc.html",
+    "slug": "e-adjusted",
+    "page": "iPad PoC",
+    "title": "Editor · adjusted by the QC",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-adjusted.png",
+    "html": "html/ipad/e-adjusted.html"
+  },
+  {
+    "key": "ipad/e-rejected.dc.html",
+    "slug": "e-rejected",
+    "page": "iPad PoC",
+    "title": "Editor · not applied",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-rejected.png",
+    "html": "html/ipad/e-rejected.html"
+  },
+  {
+    "key": "ipad/e-typing.dc.html",
+    "slug": "e-typing",
+    "page": "iPad PoC",
+    "title": "Editor · typing",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-typing.png",
+    "html": "html/ipad/e-typing.html"
+  },
+  {
+    "key": "ipad/e-invalid.dc.html",
+    "slug": "e-invalid",
+    "page": "iPad PoC",
+    "title": "Editor · out of range",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-invalid.png",
+    "html": "html/ipad/e-invalid.html"
+  },
+  {
+    "key": "ipad/e-capture.dc.html",
+    "slug": "e-capture",
+    "page": "iPad PoC",
+    "title": "Editor · read-only capture",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-capture.png",
+    "html": "html/ipad/e-capture.html"
+  },
+  {
+    "key": "ipad/e-chorus.dc.html",
+    "slug": "e-chorus",
+    "page": "iPad PoC",
+    "title": "Editor · option parameter",
+    "w": 1180,
+    "h": 820,
+    "png": "ipad/e-chorus.png",
+    "html": "html/ipad/e-chorus.html"
+  },
+  {
+    "key": "ipad/p-overview.dc.html",
+    "slug": "p-overview",
+    "page": "iPad PoC",
+    "title": "Portrait · overview",
+    "w": 820,
+    "h": 1180,
+    "png": "ipad/p-overview.png",
+    "html": "html/ipad/p-overview.html"
+  },
+  {
+    "key": "ipad/p-pending.dc.html",
+    "slug": "p-pending",
+    "page": "iPad PoC",
+    "title": "Portrait · sending",
+    "w": 820,
+    "h": 1180,
+    "png": "ipad/p-pending.png",
+    "html": "html/ipad/p-pending.html"
+  },
+  {
+    "key": "ipad/p-typing.dc.html",
+    "slug": "p-typing",
+    "page": "iPad PoC",
+    "title": "Portrait · typing",
+    "w": 820,
+    "h": 1180,
+    "png": "ipad/p-typing.png",
+    "html": "html/ipad/p-typing.html"
   }
 ]

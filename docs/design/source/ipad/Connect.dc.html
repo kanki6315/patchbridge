@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iPad PoC · Connect flow component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1180px; height: 820px; position: relative; overflow: hidden; box-sizing: border-box; padding: 32px 20px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: {{t.ground}}; color: {{t.ink}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif;">
+
+  <sc-if value="{{hasBack}}" hint-placeholder-val="{{false}}">
+    <a href="#" style="position: absolute; top: 32px; left: 20px; height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+      Back
+    </a>
+  </sc-if>
+
+  <sc-if value="{{is.welcome}}" hint-placeholder-val="{{true}}">
+    <div style="width: 460px; display: flex; flex-direction: column;">
+      <h1 style="margin: 0; text-align: center; font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Patchbridge</h1>
+
+      <div role="img" aria-label="iPad connects to your Mac over Bluetooth; your Mac connects to the Quad Cortex over USB" style="margin-top: 44px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="{{nodeColStyle}}">
+          <span style="{{nodeStyle}}"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="2.5" width="17" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg></span>
+          <span style="font-size: 14px; color: {{t.muted}};">iPad</span>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 28px;">
+          <span style="font-size: 12px; font-weight: 600; color: {{t.muted}};">Bluetooth</span>
+          <span style="width: 100%; height: 0; border-top: 2px dashed {{t.signal}};"></span>
+        </div>
+        <div style="{{nodeColStyle}}">
+          <span style="{{nodeStyle}}"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M1.5 19.5h21"></path></svg></span>
+          <span style="font-size: 14px; color: {{t.muted}};">Mac</span>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 28px;">
+          <span style="font-size: 12px; font-weight: 600; color: {{t.muted}};">USB</span>
+          <span style="width: 100%; height: 2px; background: {{t.ink}}; opacity: 0.5;"></span>
+        </div>
+        <div style="{{nodeColStyle}}">
+          <span style="{{nodeStyle}}"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="7.8" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="17.4" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="3" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="7.8" y="11.4" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="17.4" y="11.4" width="3.6" height="3.6" rx="1"></rect></svg></span>
+          <span style="font-size: 14px; color: {{t.muted}};">QC</span>
+        </div>
+      </div>
+
+      <ol aria-label="Before you connect" style="margin: 40px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 16px;">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="2">
+          <li style="display: flex; align-items: flex-start; gap: 14px;">
+            <span style="{{numStyle}}">{{s.n}}</span>
+            <span style="padding-top: 3px; font-size: 17px; line-height: 1.4; text-wrap: pretty;">{{s.text}}</span>
+          </li>
+        </sc-for>
+      </ol>
+
+      <a href="c-getmac.dc.html" style="margin-top: 24px; min-height: 60px; box-sizing: border-box; padding: 10px 12px 10px 14px; display: flex; align-items: center; gap: 12px; border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; color: inherit; text-decoration: none;">
+        <span style="width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: {{t.fill}};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10"></path><path d="M8 9l4 4 4-4"></path><rect x="3" y="15" width="18" height="5" rx="1.5"></rect></svg></span>
+        <span style="flex: 1; font-size: 16px; font-weight: 600;">Get Patchbridge for Mac</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+      </a>
+
+      <div style="margin-top: 32px; display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" style="{{primaryStyle}}">Find my Mac</button>
+        <button type="button" style="{{secondaryStyle}}">Try the demo preset</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{is.getMac}}" hint-placeholder-val="{{false}}">
+    <div style="width: 460px; display: flex; flex-direction: column; align-items: center; text-align: center;">
+      <h1 style="margin: 0 0 10px; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; text-wrap: balance;">Get Patchbridge for Mac</h1>
+      <p style="margin: 0; font-size: 17px; line-height: 1.45; color: {{t.muted}};">It installs on your Mac, not this iPad.</p>
+
+      <div role="img" aria-label="Send the link from this iPad to your Mac" style="margin-top: 40px; display: flex; align-items: center; justify-content: center; gap: 18px;">
+        <span style="{{nodeStyle}}"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="2.5" width="17" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg></span>
+        <svg width="104" height="24" viewBox="0 0 104 24" fill="none" stroke="{{t.signal}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h92" stroke-dasharray="2 6"></path><path d="M90 6l7 6-7 6"></path></svg>
+        <span style="{{nodeStyle}}"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M1.5 19.5h21"></path><path d="M12 7v5"></path><path d="M9.5 9.5L12 12l2.5-2.5"></path></svg></span>
+      </div>
+
+      <div style="margin-top: 40px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" style="{{primaryStyle}}">
+          <span style="display: inline-flex; align-items: center; gap: 8px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"></path><path d="M8 7l4-4 4 4"></path><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg>Send to my Mac</span>
+        </button>
+        <button type="button" style="{{secondaryStyle}}">Copy link</button>
+      </div>
+
+      <div style="margin-top: 24px; width: 100%; box-sizing: border-box; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; text-align: left;">
+        <span style="font-size: 14px; color: {{t.muted}};">Or type on your Mac</span>
+        <span style="font-size: 20px; font-weight: 600; letter-spacing: 0.01em;">[short link]/mac</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{is.linkSent}}" hint-placeholder-val="{{false}}">
+    <div style="width: 460px; display: flex; flex-direction: column;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;">
+        <span style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: {{t.signal}}; color: {{t.signalInk}};"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg></span>
+        <h1 style="margin: 6px 0 0; font-size: 30px; font-weight: 700; letter-spacing: -0.015em;">Link sent to your Mac</h1>
+      </div>
+      <ol aria-label="On your Mac" style="margin: 36px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 16px;">
+        <sc-for list="{{macSteps}}" as="s" hint-placeholder-count="2">
+          <li style="display: flex; align-items: flex-start; gap: 14px;">
+            <span style="{{numStyle}}">{{s.n}}</span>
+            <span style="padding-top: 3px; font-size: 17px; line-height: 1.4; text-wrap: pretty;">{{s.text}}</span>
+          </li>
+        </sc-for>
+      </ol>
+      <div style="margin-top: 36px; display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" style="{{primaryStyle}}">Find my Mac</button>
+        <button type="button" style="{{secondaryStyle}}">Send the link again</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{is.found}}" hint-placeholder-val="{{false}}">
+    <div style="width: 460px; display: flex; flex-direction: column;">
+      <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em;">Choose your Mac</h1>
+      <div style="margin-top: 24px; border-radius: 20px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; overflow: hidden;">
+        <button type="button" aria-label="Studio Mac, Quad Cortex connected, CorOS 4.1.1" style="width: 100%; min-height: 76px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; gap: 14px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;">
+          <span style="width: 48px; height: 48px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: {{t.fill}};"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M1.5 19.5h21"></path></svg></span>
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 17px; font-weight: 600;">Studio Mac</span>
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}};"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>Quad Cortex connected · CorOS 4.1.1</span>
+          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+        </button>
+      </div>
+      <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+        <span role="status" style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: {{t.muted}};">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>
+          Searching…
+        </span>
+        <a href="c-getmac.dc.html" style="min-height: 44px; display: flex; align-items: center; gap: 4px; color: {{t.signal}}; text-decoration: none; font-size: 15px; font-weight: 600;">
+          Get the Mac app
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+        </a>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{is.approve}}" hint-placeholder-val="{{false}}">
+    <div style="width: 460px; display: flex; flex-direction: column; align-items: center; text-align: center;">
+      <h1 style="margin: 0 0 10px; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; text-wrap: balance;">Approve this iPad on your Mac</h1>
+      <p style="margin: 0; font-size: 17px; line-height: 1.45; color: {{t.muted}};">If Studio Mac shows the same code, click Approve there.</p>
+      <div role="img" aria-label="Code 4 F 7 K 2 Q" style="margin-top: 32px; width: 100%; height: 128px; display: flex; align-items: center; justify-content: center; gap: 12px; border-radius: 20px; background: {{t.glass}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); box-shadow: {{t.glassEdge}};">
+        <sc-for list="{{code}}" as="ch" hint-placeholder-count="7">
+          <span style="{{ch.style}}">{{ch.c}}</span>
+        </sc-for>
+      </div>
+      <div role="status" style="margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; color: {{t.muted}};">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>
+        Waiting for Studio Mac…
+      </div>
+      <div style="margin-top: 36px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" style="{{primaryStyle}}">I’ve approved it</button>
+        <button type="button" style="{{secondaryStyle}}">Cancel</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{is.loading}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; inset: 32px 20px 20px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="height: 52px; display: flex; align-items: center; gap: 12px;">
+        <span style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+          <span style="width: 240px; height: 28px; border-radius: 12px; background: {{t.skeleton}};"></span>
+          <span style="width: 150px; height: 13px; border-radius: 999px; background: {{t.skeleton}};"></span>
+        </span>
+        <span style="width: 150px; height: 44px; border-radius: 999px; background: {{t.skeleton}};"></span>
+        <span style="width: 228px; height: 50px; border-radius: 999px; background: {{t.skeleton}};"></span>
+      </div>
+      <div style="flex: 1; display: grid; gap: 14px 16px; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: 52px 332px minmax(0, 1fr);">
+        <span style="border-radius: 15px; background: {{t.skeleton}};"></span>
+        <span style="grid-row: span 3; border-radius: 28px; background: {{t.skeleton}};"></span>
+        <span style="border-radius: 20px; background: {{t.skeleton}};"></span>
+        <span style="display: flex; flex-direction: column; gap: 10px;">
+          <span style="height: 52px; border-radius: 15px; background: {{t.skeleton}};"></span>
+          <span style="height: 52px; border-radius: 15px; background: {{t.skeleton}}; opacity: 0.7;"></span>
+          <span style="height: 52px; border-radius: 15px; background: {{t.skeleton}}; opacity: 0.45;"></span>
+        </span>
+      </div>
+    </div>
+    <div role="status" style="position: absolute; top: 400px; right: 20px; width: 400px; display: flex; justify-content: center; font-size: 17px; font-weight: 600;">Reading the QC…</div>
+  </sc-if>
+
+  <sc-if value="{{is.error}}" hint-placeholder-val="{{false}}">
+    <div style="width: 400px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;">
+      <span style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: {{t.fill}}; color: {{errIconColor}};">
+        <sc-if value="{{err.bt}}" hint-placeholder-val="{{false}}">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7l10 10-5 5V2l5 5L7 17"></path><path d="M3 3l18 18"></path></svg>
+        </sc-if>
+        <sc-if value="{{err.lost}}" hint-placeholder-val="{{true}}">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15l-3 3a3 3 0 0 1-4-4l3-3"></path><path d="M15 9l3-3a3 3 0 0 1 4 4l-3 3"></path><path d="M8 4V2M4 8H2M16 20v2M20 16h2"></path></svg>
+        </sc-if>
+        <sc-if value="{{err.timeout}}" hint-placeholder-val="{{false}}">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 2.5"></path><path d="M9 2h6"></path></svg>
+        </sc-if>
+      </span>
+      <h1 style="margin: 6px 0 0; font-size: 30px; font-weight: 700; letter-spacing: -0.015em;">{{err.title}}</h1>
+      <p style="margin: 0; max-width: 340px; font-size: 17px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;">{{err.body}}</p>
+      <div style="margin-top: 22px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" style="{{primaryStyle}}">{{err.primary}}</button>
+        <button type="button" style="{{secondaryStyle}}">{{err.secondary}}</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"enum","options":["welcome","getMac","linkSent","found","approve","loading","lost","timeout","bluetooth"],"default":"welcome","section":"Screen"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const step = this.props.step ?? 'welcome';
+    // Stage only, same values as the iPhone connect flow.
+    const t = { ground: 'oklch(0.16 0.008 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', fill: 'oklch(1 0 0 / 0.1)', group: 'oklch(0.22 0.01 110)', skeleton: 'oklch(1 0 0 / 0.07)',
+      glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
+      signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', caution: 'oklch(0.86 0.13 75)' };
+    const isErr = ['lost', 'timeout', 'bluetooth'].includes(step);
+    const ERR = {
+      lost: { title: 'Connection ended', body: 'Nothing was sent after it dropped.', primary: 'Reconnect', secondary: 'Back to start' },
+      timeout: { title: 'No reply from your Mac', body: 'Your last edit may not have reached the QC. Reconnect to check.', primary: 'Reconnect', secondary: 'Back to start' },
+      bluetooth: { title: 'Bluetooth is off', body: 'Turn it on in Control Center.', primary: 'Open Settings', secondary: 'Try the demo preset' }
+    };
+    const err = isErr ? { ...ERR[step], bt: step === 'bluetooth', lost: step === 'lost', timeout: step === 'timeout' } : { title: '', body: '', primary: '', secondary: '', bt: false, lost: false, timeout: false };
+    const btn = { width: '100%', height: '54px', border: '0', borderRadius: '999px', font: 'inherit', fontSize: '17px', cursor: 'pointer' };
+    const code = '4F7K2Q'.split('');
+    code.splice(3, 0, '·');
+    return {
+      t, err,
+      hasBack: step === 'getMac' || step === 'found',
+      is: { welcome: step === 'welcome', getMac: step === 'getMac', linkSent: step === 'linkSent', found: step === 'found', approve: step === 'approve', loading: step === 'loading', error: isErr },
+      steps: [
+        { n: '1', text: 'Open Patchbridge on your Mac.' },
+        { n: '2', text: 'Plug in the QC. Close Cortex Control.' }
+      ],
+      macSteps: [
+        { n: '1', text: 'Install Patchbridge on your Mac.' },
+        { n: '2', text: 'Open it and plug in the QC.' }
+      ],
+      code: code.map((c) => ({ c, style: c === '·'
+        ? { fontSize: '32px', color: t.muted }
+        : { fontSize: '52px', fontWeight: 700, letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums', fontFamily: "ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif" } })),
+      nodeColStyle: { width: '88px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' },
+      nodeStyle: { width: '76px', height: '76px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: t.glass, boxShadow: t.glassEdge, color: t.ink },
+      numStyle: { width: '28px', height: '28px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: t.fill, fontSize: '14px', fontWeight: 700 },
+      primaryStyle: { ...btn, background: t.signal, color: t.signalInk, fontWeight: 600, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' },
+      secondaryStyle: { ...btn, background: t.fill, color: t.ink },
+      errIconColor: step === 'timeout' ? t.caution : t.ink
+    };
+  }
+}
+</script>
+</body>
+</html>
