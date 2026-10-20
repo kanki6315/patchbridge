@@ -38,6 +38,20 @@ edits and saves are local to that session and never reach Bluetooth or USB.
 Leaving the demo discards them. The demo badge and save wording distinguish it
 from a live connection.
 
+## Bluetooth disconnects before approval
+
+Bluetooth pairing and Patchbridge approval are separate. Patchbridge requires
+fresh approval for each app session; the operating systems may retain a Bluetooth
+bond from earlier testing. A Mac that appears in discovery but disconnects before
+the approval code can have a pairing/encryption failure. The phone preserves the
+connection stage and Core Bluetooth error in its failure message.
+
+Turn Bluetooth off and back on in Settings on both devices, restart the Mac
+bridge, and reconnect. If the failure persists and the other device is listed in
+Bluetooth Settings, forget that pairing and reconnect, accepting any system
+pairing prompts before approving in Patchbridge. Do not disable the bridge's
+required encryption to work around a pairing failure.
+
 ## Editing
 
 - The portrait overview shows scene indicators, the four-by-eight grid map,

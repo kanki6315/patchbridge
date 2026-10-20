@@ -75,7 +75,7 @@ public final class EditorCoordinator {
         }
         transport.onDisconnected = { [weak self] in
             guard let self, self.generation == epoch else { return }
-            self.fail(self.status.hasPrefix("Bluetooth") ? self.status : "Connection ended. Reconnect to reload confirmed state.")
+            self.fail(self.transport?.disconnectionReason ?? (self.status.hasPrefix("Bluetooth") ? self.status : "Connection ended. Reconnect to reload confirmed state."))
         }
         transport.onStatus = { [weak self] status in
             guard let self, self.generation == epoch else { return }

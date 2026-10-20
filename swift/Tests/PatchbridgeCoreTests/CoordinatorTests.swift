@@ -1,7 +1,9 @@
 import XCTest
+import CoreBluetooth
 @testable import PatchbridgeCore
 
 private final class OfflineTransport: DiscoverableEditorTransport {
+    var disconnectionReason: String?
     var onDiscovered: ((String, String) -> Void)?
     var autoReady = true
     var selectedPeripheral: String?
@@ -55,6 +57,36 @@ final class CoordinatorTests: XCTestCase {
         t.onDisconnected?()
         XCTAssertEqual(c.phase, .failed)
         XCTAssertTrue(c.error?.hasPrefix("Bluetooth is off") == true)
+    }
+    func testTransportFailureSurvivesTeardownAndClearsOnReconnect() {
+        let t = OfflineTransport(); t.autoReady = false
+        let c = coordinator(t); c.start()
+        t.onStatus?("Connecting to Mac…")
+        t.disconnectionReason = "Could not enable Bluetooth responses: Insufficient authentication."
+        let staleDisconnect = t.onDisconnected
+        t.onDisconnected?()
+        XCTAssertEqual(c.phase, .failed)
+        XCTAssertEqual(c.error, t.disconnectionReason)
+        XCTAssertFalse(c.busy)
+        XCTAssertTrue(t.messages.isEmpty)
+        t.disconnectionReason = nil; c.start()
+        staleDisconnect?()
+        XCTAssertEqual(c.phase, .connecting)
+        XCTAssertNil(c.error)
+    }
+    func testBluetoothFailureIncludesStageAndSystemError() {
+        let error = NSError(domain: CBErrorDomain, code: CBError.Code.connectionFailed.rawValue,
+                            userInfo: [NSLocalizedDescriptionKey: "Connection failed"])
+        let message = BLECentral.failureMessage("Could not connect to your Mac", error: error)
+        XCTAssertTrue(message.contains("Could not connect to your Mac"))
+        XCTAssertTrue(message.contains("Connection failed"))
+        XCTAssertTrue(message.contains("CBErrorDomain 10"))
+        XCTAssertFalse(message.contains("Forget"))
+        XCTAssertEqual(BLECentral.failureMessage("Connection ended", error: nil), "Connection ended")
+        for code in [CBError.Code.peerRemovedPairingInformation, .encryptionTimedOut] {
+            let pairing = NSError(domain: CBErrorDomain, code: code.rawValue)
+            XCTAssertTrue(BLECentral.failureMessage("Connection ended", error: pairing).contains("pairing needs to be renewed"))
+        }
     }
     func testDiscoveryRequiresSelectionAndExpiresWhenNothingIsFound() {
         let t = OfflineTransport(); t.autoReady = false
