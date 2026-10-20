@@ -171,12 +171,12 @@ final class MacDesktopServices: ObservableObject {
         if let id = notificationID { notifications.remove(ids: [id]) }
         notificationID = nil
     }
-    var loginDescription: String {
+    /// Only states that need the user's attention have a description.
+    var loginDescription: String? {
         switch loginState {
-        case .enabled: return "Patchbridge opens at login. The bridge starts stopped."
         case .needsApproval: return "Allow Patchbridge in System Settings → Login Items."
         case .unavailable: return "Login registration is unavailable for this copy of the app."
-        case .disabled: return "Patchbridge won’t open automatically."
+        case .enabled, .disabled: return nil
         }
     }
 }

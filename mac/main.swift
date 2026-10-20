@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import ServiceManagement
+import CoreBluetooth
 
 private struct BridgePalette {
     let dark: Bool
@@ -17,8 +18,12 @@ struct BridgeWindow: View {
     var compact = false
     var menuActions: [(String, () -> Void)] = []
     @AppStorage("bridge.appearance") private var appearance = "Match Mac"
+    @AppStorage("bridge.setupComplete") private var setupComplete = false
+    @State private var setupStep = SetupStep.welcome
+    @StateObject private var bluetooth = BluetoothAccess()
     @Environment(\.colorScheme) private var scheme
     private var colors: BridgePalette { BridgePalette(dark: appearance == "Stage" || (appearance == "Match Mac" && scheme == .dark)) }
+    private var settingUp: Bool { !compact && !setupComplete }
     private var phone: Bool { [.awaitingApproval, .approving, .connected, .recovering].contains(model.phase) }
     private var active: Bool { ![.stopped, .failed, .stopping].contains(model.phase) }
     var body: some View {
@@ -31,6 +36,7 @@ struct BridgeWindow: View {
                 Label(model.isSimulation ? "Simulation" : "USB + Bluetooth", systemImage: model.isSimulation ? "testtube.2" : "cable.connector").font(.caption).foregroundStyle(colors.muted)
             }
             if !compact { diagram }
+            if settingUp { setup } else {
             VStack(alignment: .leading, spacing: 8) {
                 Text(model.title).font(.system(size: compact ? 21 : 27, weight: .bold)).fixedSize(horizontal: false, vertical: true)
                 Text(model.detail).font(.system(size: 14)).foregroundStyle(colors.muted).fixedSize(horizontal: false, vertical: true)
@@ -62,8 +68,10 @@ struct BridgeWindow: View {
                 Text(model.isSimulation ? "Bluetooth and USB are off. This mode uses the bundled simulator." : "CorOS 4.1.1 · Supported parameters only. Keep Cortex Control closed while connected.")
                     .font(.callout).foregroundStyle(colors.muted)
             }
+            }
             }.frame(maxWidth: .infinity, alignment: .leading)
             }
+            if settingUp { setupActions } else {
             actions
             Divider()
             HStack {
@@ -90,12 +98,18 @@ struct BridgeWindow: View {
                     }
                 }.frame(maxWidth: .infinity)
             }
+            }
         }
         .padding(compact ? 20 : 28)
         .foregroundStyle(colors.ink).tint(colors.signal)
         .frame(minWidth: compact ? 320 : 480, maxWidth: .infinity, minHeight: compact ? 560 : 630, maxHeight: compact ? 560 : .infinity, alignment: .topLeading)
         .background(colors.ground)
         .preferredColorScheme(appearance == "Match Mac" ? nil : appearance == "Stage" ? .dark : .light)
+        .onChange(of: setupComplete) { _, complete in if !complete { setupStep = .welcome } }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            bluetooth.refresh()
+            if setupStep == .bluetooth && bluetooth.authorization == .allowedAlways { setupStep = .ready }
+        }
     }
     private var recentEdits: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -169,6 +183,63 @@ struct BridgeWindow: View {
             Path { path in path.move(to: .zero); path.addLine(to: CGPoint(x: 52, y: 0)) }.stroke(live ? colors.muted : colors.signal, style: StrokeStyle(lineWidth: 2, dash: live ? [] : [5, 4])).frame(height: 2)
         }.frame(width: 52).padding(.top, 18)
     }
+    private enum SetupStep { case welcome, bluetooth, ready }
+    @ViewBuilder private var setup: some View {
+        let denied = bluetooth.authorization == .denied || bluetooth.authorization == .restricted
+        let (title, detail): (String, String) = switch setupStep {
+        case .welcome: ("Edit your QC from your iPhone", "This Mac connects to the Quad Cortex over USB and passes edits to your iPhone over Bluetooth.")
+        case .bluetooth where denied: ("Bluetooth access is off", "Allow Patchbridge in System Settings → Privacy & Security → Bluetooth to connect your iPhone.")
+        case .bluetooth: ("Patchbridge needs Bluetooth", "Your iPhone reaches the QC through this Mac. Continue to request Bluetooth access.")
+        case .ready: ("Ready when you are", "Start the bridge whenever you want to use your iPhone. Patchbridge stays in the menu bar.")
+        }
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.system(size: 27, weight: .bold)).fixedSize(horizontal: false, vertical: true)
+            Text(detail).font(.system(size: 14)).foregroundStyle(colors.muted).fixedSize(horizontal: false, vertical: true)
+        }
+        switch setupStep {
+        case .welcome:
+            VStack(spacing: 0) {
+                let steps = ["Connect the QC to this Mac with USB", "Keep Cortex Control closed", "Open Patchbridge on your iPhone"]
+                ForEach(steps.indices, id: \.self) { index in
+                    if index > 0 { Divider() }
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text("\(index + 1)").foregroundStyle(colors.muted).monospacedDigit()
+                        Text(steps[index]).frame(maxWidth: .infinity, alignment: .leading)
+                    }.font(.system(size: 14)).padding(14)
+                }
+            }.background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        case .bluetooth:
+            EmptyView()
+        case .ready:
+            VStack(spacing: 0) { fact("Visible as", model.presentation.macName) }.background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        }
+    }
+    @ViewBuilder private var setupActions: some View {
+        HStack {
+            switch setupStep {
+            case .welcome:
+                Button("Try the simulation") { model.setSimulation(true); setupComplete = true }
+                Spacer()
+                Button("Continue") { setupStep = bluetooth.authorization == .allowedAlways ? .ready : .bluetooth }.buttonStyle(.borderedProminent)
+            case .bluetooth where bluetooth.authorization == .denied || bluetooth.authorization == .restricted:
+                Button("Set up later") { setupComplete = true }
+                Spacer()
+                Button("Open System Settings") {
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Bluetooth")!)
+                }.buttonStyle(.borderedProminent)
+            case .bluetooth:
+                Button("Back") { setupStep = .welcome }
+                Spacer()
+                Button("Continue") {
+                    bluetooth.request { if bluetooth.authorization == .allowedAlways { setupStep = .ready } }
+                }.buttonStyle(.borderedProminent).disabled(bluetooth.requesting)
+            case .ready:
+                Button("Not now") { setupComplete = true }
+                Spacer()
+                Button("Start bridge") { setupComplete = true; model.start() }.buttonStyle(.borderedProminent)
+            }
+        }.controlSize(.large)
+    }
     @ViewBuilder private var actions: some View {
         HStack {
             if model.phase == .awaitingApproval || model.phase == .approving {
@@ -189,45 +260,84 @@ struct BridgeWindow: View {
     }
 }
 
+/// Asks macOS for Bluetooth access during setup, before the bridge first advertises.
+final class BluetoothAccess: NSObject, ObservableObject, CBPeripheralManagerDelegate {
+    @Published private(set) var authorization = CBManager.authorization
+    @Published private(set) var requesting = false
+    private var manager: CBPeripheralManager?
+    private var completion: (() -> Void)?
+    func refresh() { authorization = CBManager.authorization }
+    func request(_ completion: @escaping () -> Void) {
+        refresh()
+        guard authorization == .notDetermined else { completion(); return }
+        self.completion = completion; requesting = true
+        manager = CBPeripheralManager(delegate: self, queue: .main, options: [CBPeripheralManagerOptionShowPowerAlertKey: false])
+    }
+    func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
+        refresh()
+        guard authorization != .notDetermined else { return }
+        manager?.delegate = nil; manager = nil; requesting = false
+        completion?(); completion = nil
+    }
+}
+
 struct BridgeSettings: View {
     @ObservedObject var desktop: MacDesktopServices
+    @ObservedObject var model: MacBridgeModel
+    let exportReport: () -> Void
+    let runSetup: () -> Void
     @AppStorage("bridge.appearance") private var appearance = "Match Mac"
     @AppStorage("bridge.keepRunning") private var keepRunning = true
     @Environment(\.colorScheme) private var scheme
     private var colors: BridgePalette { BridgePalette(dark: appearance == "Stage" || (appearance == "Match Mac" && scheme == .dark)) }
+    private var version: String {
+        let info = Bundle.main.infoDictionary
+        return "\(info?["CFBundleShortVersionString"] as? String ?? "–") (\(info?["CFBundleVersion"] as? String ?? "–"))"
+    }
     var body: some View {
         Form {
             Section("General") {
-            Toggle("Open at login", isOn: Binding(get: { desktop.loginState == .enabled || desktop.loginState == .needsApproval }, set: desktop.setLoginEnabled))
-            Text(desktop.loginDescription).foregroundStyle(.secondary)
-            if let error = desktop.loginError { Text(error).foregroundStyle(.red) }
-            if desktop.loginState == .needsApproval || desktop.loginError != nil || desktop.loginState == .unavailable {
-                Button("Open Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
-            }
-            Toggle("Show in Dock", isOn: Binding(get: { desktop.showInDock }, set: desktop.setShowInDock))
-            Text("The menu bar always provides Open, Settings and Quit.").foregroundStyle(.secondary)
-            Toggle("Keep running when the window closes", isOn: $keepRunning)
-            Text("Patchbridge stays in the menu bar. Quit ends the session.").foregroundStyle(.secondary)
-            Picker("Appearance", selection: $appearance) {
-                ForEach(["Match Mac", "Stage", "Daylight"], id: \.self) { Text($0) }
-            }.pickerStyle(.segmented)
+                Toggle("Open at login", isOn: Binding(get: { desktop.loginState == .enabled || desktop.loginState == .needsApproval }, set: desktop.setLoginEnabled))
+                if let status = desktop.loginDescription { Text(status).foregroundStyle(.secondary) }
+                if let error = desktop.loginError { Text(error).foregroundStyle(.red) }
+                if desktop.loginState == .needsApproval || desktop.loginError != nil || desktop.loginState == .unavailable {
+                    Button("Open Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
+                }
+                Toggle(isOn: $keepRunning) {
+                    Text("Keep running when the window closes")
+                    Text("Patchbridge stays in the menu bar.")
+                }
+                Toggle("Show in Dock", isOn: Binding(get: { desktop.showInDock }, set: desktop.setShowInDock))
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(["Match Mac", "Stage", "Daylight"], id: \.self) { Text($0) }
+                }.pickerStyle(.segmented)
+                Button("Run setup again…", action: runSetup)
+                    .disabled(![.stopped, .failed].contains(model.phase)).help("Stop the bridge to run setup again.")
             }
             Section("Notifications") {
                 Toggle("Approval requests and connection problems", isOn: Binding(get: { desktop.notificationsEnabled }, set: desktop.setNotificationsEnabled))
                 if desktop.requestingPermission { ProgressView("Waiting for macOS permission…").controlSize(.small) }
                 if desktop.permission == .denied {
-                    Text("Notifications are blocked by macOS. The window and menu bar still show every state.").foregroundStyle(.secondary)
+                    Text("Blocked in System Settings.").foregroundStyle(.secondary)
                     Button("Open System Settings") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/System Settings.app")) }
-                } else {
-                    Text(desktop.notificationsEnabled ? "Alerts open the current state. They never approve a phone." : "Off. No notification permission is requested until you enable alerts.").foregroundStyle(.secondary)
                 }
                 if let error = desktop.notificationError { Text(error).foregroundStyle(.red) }
             }
-            Section("About") {
-            LabeledContent("Mac name", value: DeviceIdentity.macName)
-            Text("Reports exclude preset names, values and device identifiers. Nothing is sent automatically.").foregroundStyle(.secondary)
+            Section("Bluetooth") {
+                LabeledContent("iPhones see this Mac as", value: DeviceIdentity.macName)
             }
-        }.formStyle(.grouped).tint(colors.signal).frame(width: 500, height: 620)
+            Section("Diagnostics") {
+                LabeledContent {
+                    Button("Export report…", action: exportReport)
+                } label: {
+                    Text("Reports leave out preset names, values and device IDs. Nothing is sent automatically.").foregroundStyle(.secondary)
+                }
+            }
+            Section("About") {
+                LabeledContent("Patchbridge", value: version)
+                LabeledContent("Tested with", value: "CorOS 4.1.1")
+            }
+        }.formStyle(.grouped).tint(colors.signal).frame(width: 500, height: 690)
             .preferredColorScheme(appearance == "Match Mac" ? nil : appearance == "Stage" ? .dark : .light)
             .onAppear { desktop.refresh() }
     }
@@ -294,7 +404,9 @@ final class Host: NSObject, NSApplicationDelegate {
         if settings == nil {
             let panel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 280), styleMask: [.titled, .closable], backing: .buffered, defer: false)
             panel.title = "Settings"; panel.isReleasedWhenClosed = false
-            panel.contentView = NSHostingView(rootView: BridgeSettings(desktop: desktop)); settings = panel; panel.center()
+            panel.contentView = NSHostingView(rootView: BridgeSettings(
+                desktop: desktop, model: model, exportReport: { [weak self] in self?.exportReport() },
+                runSetup: { [weak self] in UserDefaults.standard.set(false, forKey: "bridge.setupComplete"); self?.showWindow() })); settings = panel; panel.center()
         }
         settings?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
