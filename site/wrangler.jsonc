@@ -2,6 +2,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "patchbridge-site",
   "compatibility_date": "2026-10-01",
+  // Needs arjunakankipati.com as a zone in the same Cloudflare account.
+  "routes": [{ "pattern": "patchbridge.arjunakankipati.com", "custom_domain": true }],
   // Static site only: no Worker script, just the built Astro output.
   "assets": {
     "directory": "./dist",
