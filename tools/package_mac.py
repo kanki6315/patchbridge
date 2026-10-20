@@ -70,6 +70,22 @@ def output(*args):
     return subprocess.check_output([str(arg) for arg in args], text=True)
 
 
+def build_helper(launcher, runtime, minimum, symbols):
+    """Keep the object alive until dsymutil has collected its DWARF."""
+    symbols.mkdir(parents=True, exist_ok=True)
+    obj = symbols / 'patchbridge-helper.o'
+    dsym = symbols / 'patchbridge-helper.dSYM'
+    if dsym.exists():
+        shutil.rmtree(dsym)
+    run('xcrun', 'clang', '-g', '-arch', 'arm64', f'-mmacosx-version-min={minimum}',
+        '-I' + sysconfig.get_path('include'), '-c', ROOT / 'mac/helper_launcher.c',
+        '-o', obj)
+    run('xcrun', 'clang', '-arch', 'arm64', f'-mmacosx-version-min={minimum}',
+        obj, runtime, '-o', launcher)
+    run('xcrun', 'dsymutil', launcher, '-o', dsym)
+    obj.unlink()
+
+
 def main():
     if sys.platform != 'darwin' or platform.machine() != 'arm64' or sys.version_info[:2] != (3, 14):
         raise SystemExit('This offline recipe requires local arm64 CPython 3.14 on macOS.')
@@ -108,9 +124,7 @@ def main():
     shutil.copy2(stdlib / 'LICENSE.txt', resources / 'Licenses' / 'Python-LICENSE.txt')
     bundle_usb(resources)
     launcher = executables / 'patchbridge-helper'
-    run('xcrun', 'clang', '-arch', 'arm64', f'-mmacosx-version-min={minimum}',
-        '-I' + sysconfig.get_path('include'), ROOT / 'mac' / 'helper_launcher.c', runtime,
-        '-o', launcher)
+    build_helper(launcher, runtime, minimum, ROOT / 'dist/dSYMs')
     run('install_name_tool', '-change', str(runtime), '@loader_path/../Frameworks/Python', launcher)
     # The linker may use the framework's LC_ID_DYLIB rather than its supplied path.
     original_id = output('otool', '-D', runtime).splitlines()[1].strip()

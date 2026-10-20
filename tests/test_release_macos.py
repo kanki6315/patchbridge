@@ -1,5 +1,6 @@
 """Release gates exercised without signing, credentials, Apple services, or uploads."""
 import importlib.util
+import json
 import os
 from pathlib import Path
 import plistlib
@@ -23,6 +24,7 @@ class MacReleaseTests(unittest.TestCase):
         (self.root / 'ios').mkdir()
         shutil.copy(ROOT / 'ios/project.yml', self.root / 'ios/project.yml')
         (self.root / 'dist/Patchbridge.app').mkdir(parents=True)
+        (self.root / 'dist/dSYMs/patchbridge-helper.dSYM').mkdir(parents=True)
         self.calls = []
         self.dirty = False
         self.fail = None
@@ -31,7 +33,8 @@ class MacReleaseTests(unittest.TestCase):
         self.env = patch.dict(os.environ, {'DEVELOPER_DIR': str(self.root), 'MAC_ASC_USERNAME': 'test@example.invalid',
                                           'MAC_ASC_PASSWORD_KEYCHAIN': 'test-reference'}, clear=True)
         self.env.start(); self.addCleanup(self.env.stop)
-        for target, value in [('ROOT', self.root), ('run', self.run_tool), ('verify_app', self.verify)]:
+        for target, value in [('ROOT', self.root), ('run', self.run_tool), ('verify_app', self.verify),
+                              ('archive_helper_symbols', self.symbols)]:
             mock = patch.object(release, target, value); mock.start(); self.addCleanup(mock.stop)
         process = patch.object(release.subprocess, 'run', side_effect=lambda *a, **kw: self.calls.append(('tests',)))
         process.start(); self.addCleanup(process.stop)
@@ -39,6 +42,10 @@ class MacReleaseTests(unittest.TestCase):
     def verify(self, *args):
         self.calls.append(('verify',))
         if self.fail == 'verify': raise ValueError('bad signature')
+
+    def symbols(self, *args):
+        self.calls.append(('symbols',))
+        if self.fail == 'symbols': raise ValueError('bad symbols')
 
     def run_tool(self, *args, capture=False):
         args = tuple(map(str, args)); self.calls.append(args)
@@ -73,8 +80,13 @@ class MacReleaseTests(unittest.TestCase):
         tag = next(i for i,c in enumerate(self.calls) if c[:3] == ('git','tag','-a'))
         self.assertLess(verified, upload); self.assertLess(upload, tag)
         self.assertIn('macos/v0.1-42', self.calls[tag])
+        self.assertIn('abc123', self.calls[tag])
         options = plistlib.loads((self.root / 'build/release-macos/0.1-42/ExportOptions.plist').read_bytes())
         self.assertEqual(options['destination'], 'export') # Upload only the inspected package.
+        self.assertFalse(options['uploadSymbols'])
+        source = json.loads((self.root / 'build/release-macos/0.1-42/release-source.json').read_text())
+        self.assertEqual(source, dict(commit='abc123', dirty=False, version='0.1', build='42'))
+        self.assertLess(self.calls.index(('symbols',)), verified)
 
     def test_no_upload_exports_without_credentials_or_tag(self):
         os.environ.pop('MAC_ASC_USERNAME'); os.environ.pop('MAC_ASC_PASSWORD_KEYCHAIN')
@@ -88,7 +100,7 @@ class MacReleaseTests(unittest.TestCase):
         self.assertTrue(self.uploaded()); self.assertFalse(self.tagged())
 
     def test_failures_never_upload_or_tag(self):
-        for stage in ['tools/package_mac.py', 'archive', '-exportArchive', '--check-signature', 'verify']:
+        for stage in ['tools/package_mac.py', 'archive', 'symbols', '-exportArchive', '--check-signature', 'verify']:
             with self.subTest(stage=stage):
                 shutil.rmtree(self.root / 'build', ignore_errors=True)
                 self.calls.clear(); self.fail = stage
@@ -132,6 +144,8 @@ class MacReleaseTests(unittest.TestCase):
         os.environ.pop('MAC_ASC_USERNAME'); os.environ.pop('MAC_ASC_PASSWORD_KEYCHAIN')
         self.invoke()
         upload, = self.xcode_uploads
+        options = plistlib.loads(Path(upload[upload.index('-exportOptionsPlist') + 1]).read_bytes())
+        self.assertFalse(options['uploadSymbols'])
         self.assertIn('-allowProvisioningUpdates', upload)
         self.assertLess(self.calls.index(('verify',)), self.calls.index(upload))
         tag = next(c for c in self.calls if c[:3] == ('git', 'tag', '-a'))
@@ -151,6 +165,27 @@ class MacReleaseTests(unittest.TestCase):
         self.fail = 'verify'
         with self.assertRaises(ValueError): self.invoke()
         self.assertFalse(self.uploaded()); self.assertFalse(self.tagged())
+
+
+class HelperSymbolTests(unittest.TestCase):
+    def test_archive_requires_matching_uuids_and_real_debug_info(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            symbols = root / 'patchbridge-helper.dSYM'
+            dwarf = symbols / 'Contents/Resources/DWARF/patchbridge-helper'
+            dwarf.parent.mkdir(parents=True)
+            dwarf.write_bytes(b'test')
+            archive = root / 'App.xcarchive'
+            uuid = 'UUID: 70DF4C1E-ACCB-3E36-AC7F-0D4AFE9FE1B7 (arm64) binary'
+            with patch.object(release, 'run', side_effect=[uuid, uuid, 'DW_TAG_compile_unit']):
+                release.archive_helper_symbols(archive, symbols)
+            self.assertEqual((archive / 'dSYMs' / symbols.name /
+                              'Contents/Resources/DWARF/patchbridge-helper').read_bytes(), b'test')
+            for outputs in ([uuid, ''], [uuid, uuid, ''], ['', '']):
+                with patch.object(release, 'run', side_effect=outputs):
+                    with self.assertRaises(ValueError):
+                        release.archive_helper_symbols(root / 'Rejected.xcarchive', symbols)
+                self.assertFalse((root / 'Rejected.xcarchive').exists())
 
 
 class ExportVerificationTests(unittest.TestCase):
