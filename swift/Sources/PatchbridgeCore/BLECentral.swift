@@ -13,7 +13,15 @@ public protocol EditorTransport: AnyObject {
     func send(_ message: [String: Any]) throws
 }
 
-public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, EditorTransport {
+public protocol DiscoverableEditorTransport: EditorTransport {
+    var onDiscovered: ((String, String) -> Void)? { get set }
+    func selectPeripheral(_ id: String)
+}
+
+public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, DiscoverableEditorTransport {
+    public var onDiscovered: ((String, String) -> Void)?
+    private var discovered = [String: CBPeripheral]()
+    private var automaticallyConnect = true
     public var onReady: (() -> Void)?
     public var onDisconnected: (() -> Void)?
     public var onStatus: ((String) -> Void)?
@@ -31,15 +39,29 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         super.init()
         manager = CBCentralManager(delegate: self, queue: .main)
     }
+    public convenience init(automaticallyConnect: Bool) {
+        self.init(); self.automaticallyConnect = automaticallyConnect
+    }
+    public func selectPeripheral(_ id: String) {
+        guard peripheral == nil, let selected = discovered[id] else { return }
+        peripheral = selected; manager.stopScan(); onStatus?("Connecting to \(selected.name ?? "Mac")…"); manager.connect(selected)
+    }
     public func centralManagerDidUpdateState(_ central: CBCentralManager) {
         if central.state == .poweredOn {
             central.scanForPeripherals(withServices: [Self.service], options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
             onStatus?("Scanning for Patchbridge")
-        } else { clear(); onStatus?("Bluetooth unavailable") }
+        } else {
+            let message = central.state == .poweredOff ? "Bluetooth is off. Turn it on in Settings, then reconnect."
+                : central.state == .unauthorized ? "Bluetooth access is disabled. Allow Patchbridge in Settings, then reconnect."
+                : "Bluetooth is unavailable. Check Settings, then reconnect."
+            onStatus?(message); clear()
+        }
     }
     public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         guard self.peripheral == nil else { return }
-        self.peripheral = peripheral; central.stopScan(); onStatus?("Connecting to \(peripheral.name ?? "Mac")…"); central.connect(peripheral)
+        discovered[peripheral.identifier.uuidString] = peripheral
+        if automaticallyConnect { selectPeripheral(peripheral.identifier.uuidString) }
+        else { onDiscovered?(peripheral.identifier.uuidString, peripheral.name ?? "Mac") }
     }
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         guard self.peripheral === peripheral else { central.cancelPeripheralConnection(peripheral); return }
@@ -54,7 +76,7 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     public func disconnect() { manager.stopScan(); if let peripheral { manager.cancelPeripheralConnection(peripheral) }; clear() }
     private func clear() {
         timer?.invalidate(); timer = nil; peripheral?.delegate = nil; peripheral = nil; command = nil; results = nil
-        exchange.reset(); receiver.reset()
+        exchange.reset(); receiver.reset(); discovered.removeAll()
         onDisconnected?()
     }
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {

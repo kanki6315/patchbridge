@@ -2853,6 +2853,26 @@
         },
         "editable_parameters": []
       }
+    ],
+    "scene_labels": [
+      "CLEAN",
+      "CRONCH",
+      "",
+      "",
+      "RHYTHM",
+      "RHYTHM",
+      "OCTAVE FUN",
+      "LEAD"
+    ],
+    "scene_colors": [
+      4294911783,
+      4278875360,
+      4294955574,
+      4294902466,
+      4282775650,
+      4294930432,
+      4278875360,
+      4294902466
     ]
   }
 }

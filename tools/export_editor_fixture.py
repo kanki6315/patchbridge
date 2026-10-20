@@ -38,6 +38,7 @@ used = {b['model_id'] for b in blocks}
 fixture = {'catalog': {'id': catalog_id, 'metadata_version': 1,
                        'models': normalize_models({key: value for key, value in models.items() if key in used})},
            'snapshot': {'preset_id': 'captured:My Presets:16', 'catalog_id': catalog_id,
-                        'name': spec['name'], 'scene': 'F', 'dirty': True, 'blocks': blocks}}
+                        'name': spec['name'], 'scene_labels': spec.get('scene_labels', []),
+                        'scene_colors': spec.get('scene_colors', []), 'scene': 'F', 'dirty': True, 'blocks': blocks}}
 (root / 'tests/fixtures/qc-editor.json').write_text(json.dumps(fixture, indent=2) + '\n')
 print(f'Exported {len(blocks)} blocks and {len(used)} model definitions from captured evidence.')
