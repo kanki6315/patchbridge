@@ -28,7 +28,11 @@ xcuserdata/
 .env.*
 !.env.example
 *.p12
+*.p8
+*.pem
+*.key
 *.mobileprovision
+*.provisionprofile
 .impeccable/
 .idea/
 .vscode/
