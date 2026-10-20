@@ -73,8 +73,9 @@ fold. The outer screen leads with the grid: in landscape a one-line header
 holds status, name, scenes and Save, and tapping a block opens the block menu
 (first four controls with − value + and Open editor) as a side panel; in
 portrait the grid uses codes, scenes are a 4 × 2 set and the menu rises from
-the bottom without dimming. The row, selected block and open editor carry
-across folding and rotating. iOS doesn't report hinge posture to apps, so the
+the bottom without dimming. The row, selected block and open block menu or
+deck editor carry across folding and rotating; a full editor opened from the
+outer screen closes on unfolding, and the deck shows that block instead. iOS doesn't report hinge posture to apps, so the
 half-folded view (scenes fold into the header strip, the grid grows, the
 crease shadow fades in) isn't triggered yet and the inner screen stays flat;
 Debug builds accept `--half-folded` to inspect it. The inner screen on its

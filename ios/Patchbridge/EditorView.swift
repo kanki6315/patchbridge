@@ -68,7 +68,7 @@ struct EditorView: View {
                 Button(model.demo ? "Save demo preset" : "Save preset") { confirmCurrentSave() }
             } message: { Text(model.demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
             .onChange(of: model.ready) { _, ready in if !ready { selectedBlock = nil } }
-            .onChange(of: pad) { _, pad in if pad { selectedBlock = nil } }
+            .onChange(of: pad) { _, pad in if pad, duo == nil { selectedBlock = nil } }
             // Folding or unfolding pops a pushed editor; the Duo deck or block menu keeps the block open.
             .onChange(of: duo == .inner) { _, _ in selectedBlock = nil }
             .onAppear {

@@ -72,6 +72,7 @@ struct DuoWorkspaceView: View {
             }
             .onChange(of: snapshot) { _, value in
                 if editing, !value.blocks.contains(where: { $0.id == selected }) { editing = false }
+                if let target = typingTarget, !value.blocks.contains(where: { $0.id == target.block }) { typingTarget = nil }
             }
             .confirmationDialog(model.demo ? "Save this demo preset?" : "Save on the Quad Cortex?", isPresented: $confirmSave, titleVisibility: .visible) {
                 Button(model.demo ? "Save demo preset" : "Save preset") {
