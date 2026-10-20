@@ -16,8 +16,9 @@ private final class OfflineTransport: DiscoverableEditorTransport {
     var handler: (([String: Any]) throws -> [String: Any])?
     var held: [String: Any]?
     var hold = false
+    var disconnectCount = 0
     func reconnect() { if autoReady { onReady?() } }
-    func disconnect() {}
+    func disconnect() { disconnectCount += 1 }
     func send(_ message: [String: Any]) throws {
         messages.append(message)
         if let handler {
@@ -150,6 +151,58 @@ final class CoordinatorTests: XCTestCase {
         var catalog = f["catalog"] as! [String: Any]; catalog["id"] = "new"
         reply(t, result: catalog, revision: 1)
         XCTAssertEqual(c.editor.catalog?.id, "new"); XCTAssertEqual(c.phase, .ready)
+    }
+    func testAppSwitchPreservesSessionAndRefreshesOnReturn() throws {
+        let t = OfflineTransport(); let c = coordinator(t); let f = try fixture()
+        connect(c, t, fixture: f)
+        let count = t.messages.count
+        c.setBackgrounded(true)
+        clock = 300; c.tick()
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertNotNil(c.editor.snapshot)
+        XCTAssertEqual(t.disconnectCount, 0)
+        XCTAssertEqual(t.messages.count, count)
+        c.setBackgrounded(false)
+        XCTAssertEqual(t.messages.count, count + 1)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        XCTAssertEqual(t.messages.last?["connection_id"] as? String, "c")
+        XCTAssertEqual(t.messages.last?["session_id"] as? String, "s")
+        XCTAssertThrowsError(try c.save())
+        c.setBackgrounded(false); c.tick()
+        XCTAssertEqual(t.messages.count, count + 1)
+        reply(t, result: ["state": f["snapshot"]!])
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertFalse(c.busy)
+    }
+    func testBackgroundRequestCanFinishWithoutStartingMorePolls() throws {
+        let t = OfflineTransport(); let c = coordinator(t); let f = try fixture()
+        connect(c, t, fixture: f)
+        try c.save()
+        c.setBackgrounded(true)
+        var state = f["snapshot"] as! [String: Any]; state["dirty"] = false
+        reply(t, result: ["state": state], revision: 1)
+        let count = t.messages.count
+        clock = 300; c.tick()
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.outcome, "Saved on the QC")
+        XCTAssertEqual(t.messages.count, count)
+        c.setBackgrounded(false)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+    }
+    func testAppSwitchDoesNotReplayTimedOutSaveOrReconnectAfterDisconnect() throws {
+        let t = OfflineTransport(); let c = coordinator(t); let f = try fixture()
+        connect(c, t, fixture: f)
+        try c.save()
+        c.setBackgrounded(true)
+        clock = 300
+        c.setBackgrounded(false)
+        XCTAssertEqual(c.phase, .failed)
+        XCTAssertTrue(c.error?.contains("outcome is unknown") == true)
+        XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "save" }.count, 1)
+        let count = t.messages.count
+        c.setBackgrounded(true); c.disconnect(); c.setBackgrounded(false)
+        XCTAssertEqual(c.phase, .disconnected)
+        XCTAssertEqual(t.messages.count, count)
     }
     func testUncertainEditTimeoutAndOldCallbackNeverReplay() throws {
         let t = OfflineTransport(); let c = coordinator(t); let f = try fixture()

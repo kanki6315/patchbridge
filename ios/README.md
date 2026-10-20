@@ -26,8 +26,17 @@ Start the Mac BLE bridge as described in `docs/SWIFT_BLE_DEMO.md` from the repo
 root. Choose Find my Mac, select the discovered bridge, approve the connection
 on the Mac, then tap I've approved it. The phone and bridge terminal display the
 same six-character code; the terminal approval command still takes the full
-connection token. New connections require fresh approval. The app disconnects
-its live session when backgrounded and does not replay writes.
+connection token. New connections require fresh approval. Switching apps keeps
+the live Bluetooth session and approval, pauses preset polling, and requests a
+fresh snapshot on return. Bluetooth background mode allows pending responses to
+complete while away. Writes are never replayed; unanswered requests still time
+out. Force-quitting, system termination, Bluetooth loss, or ending the Mac bridge
+can require reconnecting and approving again.
+
+On physical hardware, verify switching to Safari for several minutes and returning
+without another approval, including changing the preset on the QC while away.
+Also check a pending edit/save during an app switch and Bluetooth loss while away:
+the app must report an uncertain outcome or disconnect without replaying a write.
 
 The Get Patchbridge for Mac button, Share action and Copy action use
 `https://patchbridge.arjunakankipati.com/appstorelink` without displaying the full

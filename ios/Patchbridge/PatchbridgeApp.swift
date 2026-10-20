@@ -9,6 +9,7 @@ struct PatchbridgeApp: App {
             EditorView(model: editor)
                 .onChange(of: phase) { _, value in
                     if value == .background { editor.background() }
+                    else if value == .active { editor.foreground() }
                 }
         }
     }

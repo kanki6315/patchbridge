@@ -51,6 +51,7 @@
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AA318B3E68E63CA3046061E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		D1060EC516FC395E41ABB898 /* qc-editor.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "qc-editor.json"; sourceTree = "<group>"; };
 		D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneModel.swift; sourceTree = "<group>"; };
@@ -88,6 +89,7 @@
 				D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */,
 				EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */,
 				3E68459E6EE63B03631133E9 /* EditorView.swift */,
+				AA318B3E68E63CA3046061E9 /* Info.plist */,
 				67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */,
 				17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */,
 				D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */,
@@ -332,6 +334,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Patchbridge/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Patchbridge;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to your Mac to view and edit your Quad Cortex preset over Bluetooth.";
@@ -373,6 +376,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Patchbridge/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Patchbridge;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to your Mac to view and edit your Quad Cortex preset over Bluetooth.";
