@@ -97,6 +97,17 @@ class USBAdapter:
                 if not model.hash:
                     continue
                 scenes = {chr(65+s): {'parameters': {}} for s in range(8)}
+                # Like chains/models, bypass reads use array positions; the
+                # embedded row/column fields may all be zero. Preserve each
+                # scene's flag even when sceneMode is false: recorded reads
+                # still carry distinct flags in that case.
+                try:
+                    bypass = bp.bypass[row].colBypass[column].sceneBypass
+                    bypass[scene.selected_scene]
+                except (AttributeError, IndexError):
+                    raise RuntimeError('Active-scene bypass state is missing; reconnect required.')
+                for s, flag in enumerate(bypass[:8]):
+                    scenes[chr(65+s)]['bypass'] = flag.bypass
                 editable = []
                 definitions = self.metadata['models'].get(str(model.hash), {}).get('parameters', {})
                 for index, param in enumerate(model.params):
