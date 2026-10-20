@@ -3,6 +3,17 @@
 Open `dist/Patchbridge.app`. It starts stopped, with live USB/Bluetooth selected.
 The bundle ID is `com.arjunakankipati.patchbridge`; both apps share the Patch Cable icon.
 
+## First run
+
+The window opens on a short setup instead of the bridge controls, until it's finished once
+(`bridge.setupComplete`). **Welcome** lists the three real steps (USB, close Cortex
+Control, open the iPhone app) and offers **Try the simulation**. **Bluetooth** requests
+access before the bridge first advertises; it's skipped when access is already granted, and
+a denial offers System Settings and rechecks when the app is reactivated. **Ready** shows
+the name iPhones will see and offers **Start bridge** or **Not now**. The bridge never
+starts without that tap, and the menu-bar popover is unaffected. **Run setup again…** in
+Settings shows it from the start; it's available while the bridge is stopped.
+
 ## Live connection
 
 1. Connect a QC running verified CorOS 4.1.1 over USB and close Cortex Control.
