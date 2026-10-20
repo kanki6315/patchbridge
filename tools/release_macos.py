@@ -49,20 +49,28 @@ def verify_app(app, team, bundle, version, build):
         raise ValueError('Exported app is missing its distribution provisioning profile.')
 
 
-def archive_helper_symbols(archive, symbols):
-    binary = archive / 'Products/Applications/Patchbridge.app/Contents/MacOS/patchbridge-helper'
-    dwarf = symbols / 'Contents/Resources/DWARF/patchbridge-helper'
+def archive_symbols(archive, symbols):
+    """Require a dSYM with DWARF for every archived binary, then add the helper and runtime dSYMs."""
     def uuids(path):
         return set(re.findall(r'UUID: ([0-9A-Fa-f-]+) \(([^)]+)\)',
                               run('xcrun', 'dwarfdump', '--uuid', path, capture=True)))
-    expected = uuids(binary)
-    if not expected or uuids(dwarf) != expected:
-        raise ValueError('Helper dSYM UUIDs do not match the archived helper.')
-    if 'DW_TAG_compile_unit' not in run('xcrun', 'dwarfdump', '--debug-info', dwarf, capture=True):
-        raise ValueError('Helper dSYM contains no debug information.')
-    destination = archive / 'dSYMs' / symbols.name
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(symbols, destination)
+    destination = archive / 'dSYMs'  # Xcode has already put the host app's dSYM here.
+    covered = set()
+    for dsym in [*destination.glob('*.dSYM'), *symbols.glob('*.dSYM')]:
+        for dwarf in (dsym / 'Contents/Resources/DWARF').iterdir():
+            if 'DW_TAG_compile_unit' not in run('xcrun', 'dwarfdump', '--debug-info', dwarf, capture=True):
+                raise ValueError(f'{dsym.name} contains no debug information.')
+            covered |= uuids(dwarf)
+    contents = archive / 'Products/Applications/Patchbridge.app/Contents'
+    binaries = [contents / 'MacOS/Patchbridge', contents / 'MacOS/patchbridge-helper',
+                contents / 'Frameworks/Python', *sorted((contents / 'Resources').rglob('*.so'))]
+    for binary in binaries:
+        found = uuids(binary)
+        if not found or not found <= covered:
+            raise ValueError(f'No matching dSYM for archived {binary.relative_to(contents)}.')
+    destination.mkdir(parents=True, exist_ok=True)
+    for dsym in sorted(symbols.glob('*.dSYM')):
+        shutil.copytree(dsym, destination / dsym.name)
 
 
 def main(argv=None):
@@ -123,8 +131,8 @@ def main(argv=None):
     run(sys.executable, 'tools/package_mac.py')
     payload = out / 'Payload.app'
     shutil.copytree(ROOT / 'dist/Patchbridge.app', payload)
-    symbols = out / 'patchbridge-helper.dSYM'
-    shutil.copytree(ROOT / 'dist/dSYMs/patchbridge-helper.dSYM', symbols)
+    symbols = out / 'dSYMs'
+    shutil.copytree(ROOT / 'dist/dSYMs', symbols)
     if not args.skip_tests:
         run(sys.executable, 'tools/check_mac_package.py')
         env = dict(os.environ, PATCHBRIDGE_TEST_BUNDLE='1', PYTHON_BIN=sys.executable)
@@ -140,11 +148,9 @@ def main(argv=None):
         f'PATCHBRIDGE_ROOT={ROOT}', f'PATCHBRIDGE_PAYLOAD={payload}', f'DEVELOPMENT_TEAM={team}',
         f'PRODUCT_BUNDLE_IDENTIFIER={bundle}', f'MARKETING_VERSION={version}', f'CURRENT_PROJECT_VERSION={build}',
         f'CODE_SIGN_ENTITLEMENTS={ROOT / "mac/Patchbridge.entitlements"}')
-    archive_helper_symbols(archive, symbols)
-    # The prebuilt Python framework and protobuf wheel have no recoverable DWARF.
-    # Preserve our real dSYMs locally; don't request an incomplete symbol upload.
+    archive_symbols(archive, symbols)
     options = dict(method='app-store-connect', destination='export', teamID=team, signingStyle='automatic',
-                   uploadSymbols=False, manageAppVersionAndBuildNumber=False)
+                   uploadSymbols=True, manageAppVersionAndBuildNumber=False)
     if key:
         profile = run(sys.executable, 'asc_profile.py', '--platform', 'mac', '--key-id', key_id,
                       '--issuer-id', issuer, '--key-path', key, '--team', team, '--bundle-id', bundle,

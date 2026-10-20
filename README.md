@@ -1,33 +1,44 @@
 # Patchbridge
 
-Native iPhone-to-Mac QC editor PoC. See [the implementation plan](IMPLEMENTATION_PLAN.md).
+Edit a Neural DSP Quad Cortex from an iPhone or iPad. A Mac bridge app talks to the
+QC over USB and serves it to the phone over Bluetooth, with no Wi-Fi network or
+local server. See [the implementation plan](IMPLEMENTATION_PLAN.md) for milestones,
+[the product brief](PRODUCT.md) and [the marketing site](site/README.md)
+(patchbridge.arjunakankipati.com).
 
-The implementation includes a Python helper, deterministic simulator, and a
-direct USB adapter pinned to the tested qc-mcp revision. CorOS 4.1.1 has partial
-hardware validation; see [results](docs/USB_RESULTS_2026-10-20.md).
-The designed SwiftUI iPhone app and native Mac USB/Bluetooth bridge are implemented.
-The generic editor coordinator loads relevant metadata, polls confirmed state,
-and handles edits/reconnects with offline fixture and process coverage; see
-[the data-layer API](docs/METADATA_AND_EDITOR_MODEL.md).
-The Mac app bundles an isolated Python runtime and the pinned USB/protobuf dependencies;
-see [Mac packaging](docs/MAC_PACKAGING.md). It starts stopped and offers live Bluetooth-to-USB
-operation with explicit phone approval, recovery and device-name fallbacks. Simulation
-remains selectable. Both apps use `com.arjunakankipati.patchbridge` and the Patch Cable icon.
-Physical end-to-end phone/QC validation and production Mac distribution remain pending.
-[Read-only QC policy and recovery](docs/READ_ONLY_QC.md) now have captured-fixture
-coverage through the packaged helper, Swift bridge, and generic coordinator.
+## Status
 
-Bounded in-memory diagnostics and an exportable JSON report are available from the
-Mac app menu. Reports exclude preset contents and identifiers; see
-[diagnostics and export](docs/DIAGNOSTICS.md).
+All the software is implemented and wired for live use. The first full
+phone-to-Mac-to-QC run on hardware hasn't happened yet; see
+[the next hardware session](docs/NEXT_HARDWARE_SESSION.md) and
+[hardware validation](docs/HARDWARE_VALIDATION.md).
 
-Before a hardware session, run the [offline preflight](docs/PREFLIGHT.md) to check
-package freshness, signatures, fixtures, and recovery. Passing does not enable USB
-or claim physical hardware compatibility.
+- **iPhone and iPad app.** SwiftUI editor for iPhone (portrait and landscape), the
+  iPhone Duo's inner and outer screens, and iPad. It shows the signal chain,
+  active scene and confirmed values, and generates controls from QC metadata.
+  Parameters with a declared linear or power conversion are editable. Anything with
+  missing or unsupported metadata is shown read-only rather than guessed. It also
+  has a demo mode with a captured preset, a Live Activity for the bridge session,
+  and trusted reconnect. See [the data-layer contract](docs/METADATA_AND_EDITOR_MODEL.md)
+  and [iOS setup](ios/README.md).
+- **Mac bridge.** Native app that bundles its own Python runtime and the pinned USB
+  dependencies. It opens stopped. Start bridge advertises over Bluetooth, and USB
+  opens only after you approve a phone on the Mac. Up to four phones or iPads can
+  share one bridge. It shows recent edits, recovery state and diagnostics export.
+  See [the bridge shell](docs/MAC_BRIDGE_SHELL.md),
+  [multi-device support](docs/MULTI_DEVICE_PLAN.md) and [packaging](docs/MAC_PACKAGING.md).
+- **Python helper.** Versioned process protocol with serialized, confirmed writes and
+  explicit save. Adapters: simulated, captured read-only, and direct USB pinned to
+  qc-mcp and verified on CorOS 4.1.1. See [USB results](docs/USB_RESULTS_2026-10-20.md)
+  and [the process protocol](docs/PROCESS_PROTOCOL.md).
+- **Safety.** Read-only policy is enforced at the helper and bridge boundaries.
+  Diagnostics reports leave out preset contents and identifiers. An offline
+  preflight checks the package before any hardware session. See
+  [read-only mode](docs/READ_ONLY_QC.md), [diagnostics](docs/DIAGNOSTICS.md) and
+  [preflight](docs/PREFLIGHT.md).
 
-The [compact Mac bridge shell](docs/MAC_BRIDGE_SHELL.md) now provides start/stop,
-phone approval, connection status, recovery, recent edits and report export.
-It opens stopped; Start bridge begins live Bluetooth, with USB opened after phone approval.
+Not yet supported from the phone: Save As, bypass, scene and preset selection, and
+scene-specific values. The real adapter doesn't expose them yet.
 
 ## Run locally
 
@@ -67,11 +78,11 @@ It supports snapshots, live catalog reads, non-scene-assigned numeric/option
 parameter writes, and saving an existing named My Presets slot using File CREATE.
 RecallPreset SAVE is unsupported following two observed device restarts.
 
-USB parameter values currently use the QC's normalized 0–1 representation.
-Metadata retains raw device definitions, including symbolic ranges, skew, option
-names, and dependencies. Display conversion is not yet implemented; do not feed
-this metadata directly into the simulator's control renderer. Unknown,
-scene-assigned, and expression-controlled parameters are not writable.
+The helper exchanges parameter values in the QC's normalized 0–1 representation.
+Its metadata keeps the raw device definitions, including symbolic ranges, skew,
+option names and dependencies. Display conversion happens in the Swift editor model,
+not in the helper. Unknown, scene-assigned and expression-controlled parameters are
+not writable.
 Capabilities advertise only implemented operations. Save As, bypass writes,
 scene selection, and preset selection are not yet exposed by the real adapter.
 
@@ -84,13 +95,25 @@ Errors invalidate the helper session and never trigger automatic write retries.
 
 ## Swift and BLE development
 
-The `swift/` package contains the native helper process client, shared chunk
-protocol, a Core Bluetooth central transport, and a Mac peripheral demo using
-simulated state. See [Swift/BLE demo instructions](docs/SWIFT_BLE_DEMO.md).
-The native iPhone test host is in `ios/Patchbridge.xcodeproj`; see [installation instructions](ios/README.md). Wireless installation is verified; BLE testing is in progress.
+The `swift/` package holds the shared code: the helper process client, chunked
+BLE protocol, Core Bluetooth central and peripheral, the Mac bridge backend, and the
+editor coordinator and model. See [Swift/BLE demo instructions](docs/SWIFT_BLE_DEMO.md).
+The iPhone and iPad app is in `ios/Patchbridge.xcodeproj` (see [iOS setup](ios/README.md)).
+The Mac app's release project is generated from `mac/project.yml`.
+Pairing, approval, snapshot transfer, and a simulated edit and save have passed
+between the Mac and a physical iPhone.
 
-Next: iPhone host and over-the-air BLE testing, additional USB hardware
-coverage, and display-value conversion.
+## Build the Mac app
+
+The bundled Python runtime is built once from pinned, hash-checked CPython and
+protobuf sources, so every bundled binary has a dSYM for crash symbolication:
+
+```sh
+/opt/homebrew/bin/python3 tools/build_runtime.py
+/opt/homebrew/bin/python3 tools/package_mac.py
+```
+
+See [Mac packaging](docs/MAC_PACKAGING.md) for local inputs and checks.
 
 ## Offline verification and next hardware session
 

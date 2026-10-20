@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Bundle the local Python/USB dependency closure; startup stays stopped. No downloads."""
+"""Bundle the source-built Python/USB dependency closure; startup stays stopped. No downloads."""
 import base64
 import csv
 import hashlib
 import json
+import os
 from pathlib import Path
 import platform
 import plistlib
@@ -18,7 +19,11 @@ APP = ROOT / 'dist' / 'Patchbridge.app'
 QC_COMMIT = 'f634ecd3dcf426090b90bc4cc176e4b500494b9e'
 QC_SOURCE = Path('/private/tmp/patchbridge-qc-mcp')
 PROTOBUF_VERSION = '7.36.2'
-SITE = ROOT / '.venv-hardware/lib/python3.14/site-packages'
+# Built by tools/build_runtime.py with debug information and matching dSYMs.
+RUNTIME = ROOT / 'build/runtime'
+PREFIX = RUNTIME / 'Library/Frameworks/Python.framework/Versions/3.14'
+SITE = PREFIX / 'lib/python3.14/site-packages'
+PROTOBUF_EXTENSION = 'google/_upb/_message.cpython-314-darwin.so'
 
 
 def bundle_usb(resources):
@@ -53,12 +58,13 @@ def bundle_usb(resources):
             target = resources / 'Helper' / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
-    native = resources / 'Helper/google/_upb/_message.abi3.so'
-    thin = native.with_suffix('.arm64')
-    run('lipo', native, '-thin', 'arm64', '-output', thin)
-    thin.replace(native)
-    run('install_name_tool', '-id', '@rpath/_message.abi3.so', native)
-    shutil.copy2(dist / 'LICENSE', resources / 'Licenses/protobuf-LICENSE.txt')
+    native = resources / 'Helper' / PROTOBUF_EXTENSION
+    if output('lipo', '-archs', native).split() != ['arm64']:
+        thin = native.with_suffix('.arm64')
+        run('lipo', native, '-thin', 'arm64', '-output', thin)
+        thin.replace(native)
+    run('install_name_tool', '-id', '@rpath/' + native.name, native)
+    shutil.copy2(dist / 'licenses/LICENSE', resources / 'Licenses/protobuf-LICENSE.txt')
 
 
 
@@ -68,6 +74,16 @@ def run(*args):
 
 def output(*args):
     return subprocess.check_output([str(arg) for arg in args], text=True)
+
+
+def copy_symbols(binary, original, symbols):
+    """Pair a bundled runtime binary with the dSYM made when it was built."""
+    source = RUNTIME / 'dSYMs' / (original.name + '.dSYM')
+    def uuids(path):
+        return set(re.findall(r'UUID: (\S+) \((\S+)\)', output('xcrun', 'dwarfdump', '--uuid', path)))
+    if not source.is_dir() or uuids(source / 'Contents/Resources/DWARF' / original.name) != uuids(binary):
+        raise SystemExit(f'No matching dSYM for {binary.name}; rebuild with tools/build_runtime.py.')
+    shutil.copytree(source, symbols / source.name)
 
 
 def build_helper(launcher, runtime, minimum, symbols):
@@ -87,15 +103,23 @@ def build_helper(launcher, runtime, minimum, symbols):
 
 
 def main():
-    if sys.platform != 'darwin' or platform.machine() != 'arm64' or sys.version_info[:2] != (3, 14):
-        raise SystemExit('This offline recipe requires local arm64 CPython 3.14 on macOS.')
-    runtime = Path(sys.base_prefix) / 'Python'
+    if sys.platform != 'darwin' or platform.machine() != 'arm64':
+        raise SystemExit('This offline recipe requires Apple silicon macOS.')
+    if Path(sys.base_prefix).resolve() != PREFIX.resolve():
+        python = PREFIX / 'bin/python3.14'
+        if not python.is_file():
+            raise SystemExit('Build the runtime first: /opt/homebrew/bin/python3 tools/build_runtime.py')
+        os.execv(python, [str(python), '-I', __file__, *sys.argv[1:]])
+    runtime = PREFIX / 'Python'
     stdlib = Path(sysconfig.get_path('stdlib'))
     if not runtime.is_file():
         raise SystemExit('Expected a local framework CPython build; no runtime will be downloaded.')
     minimum = re.search(r'\bminos\s+(\S+)', output('otool', '-l', runtime)).group(1)
-    if APP.exists():
-        shutil.rmtree(APP)  # Only the fixed generated output, never caller-supplied paths.
+    symbols = ROOT / 'dist/dSYMs'
+    for generated in (APP, symbols):
+        if generated.exists():
+            shutil.rmtree(generated)  # Only the fixed generated outputs, never caller-supplied paths.
+    symbols.mkdir(parents=True)
     contents = APP / 'Contents'
     executables = contents / 'MacOS'
     resources = contents / 'Resources'
@@ -124,7 +148,7 @@ def main():
     shutil.copy2(stdlib / 'LICENSE.txt', resources / 'Licenses' / 'Python-LICENSE.txt')
     bundle_usb(resources)
     launcher = executables / 'patchbridge-helper'
-    build_helper(launcher, runtime, minimum, ROOT / 'dist/dSYMs')
+    build_helper(launcher, runtime, minimum, symbols)
     run('install_name_tool', '-change', str(runtime), '@loader_path/../Frameworks/Python', launcher)
     # The linker may use the framework's LC_ID_DYLIB rather than its supplied path.
     original_id = output('otool', '-D', runtime).splitlines()[1].strip()
@@ -157,23 +181,29 @@ def main():
     plist.update(plistlib.loads(icon_plist.read_bytes()))
     icon_plist.unlink()
     (contents / 'Info.plist').write_bytes(plistlib.dumps(plist))
-    binaries = [frameworks / 'Python', *extensions.glob('*.so'), *resources.glob('Helper/google/_upb/*.so'), launcher, executables / 'Patchbridge']
+    copy_symbols(frameworks / 'Python', runtime, symbols)
+    for extension in extensions.glob('*.so'):
+        copy_symbols(extension, stdlib / 'lib-dynload' / extension.name, symbols)
+    native = resources / 'Helper' / PROTOBUF_EXTENSION
+    copy_symbols(native, SITE / PROTOBUF_EXTENSION, symbols)
+    binaries = [frameworks / 'Python', *extensions.glob('*.so'), native, launcher, executables / 'Patchbridge']
     for binary in binaries:
         for line in output('otool', '-L', binary).splitlines()[1:]:
             dependency = line.strip().split(' (')[0]
             system = dependency.startswith(('/System/Library/', '/usr/lib/'))
             bundled_python = (binary == frameworks / 'Python' and dependency == '@rpath/Python') or (
                 binary == launcher and dependency == '@loader_path/../Frameworks/Python')
-            protobuf_id = binary == resources / 'Helper/google/_upb/_message.abi3.so' and dependency == '@rpath/_message.abi3.so'
+            protobuf_id = binary == native and dependency == '@rpath/' + native.name
             if not (system or bundled_python or protobuf_id):
                 raise SystemExit(f'External or unresolved runtime dependency: {binary}: {dependency}')
         run('codesign', '--force', '--sign', '-', binary)
-    build_inputs = [ROOT / 'tools/package_mac.py', *sorted((ROOT / 'mac').glob('*')),
+    build_inputs = [ROOT / 'tools/package_mac.py', ROOT / 'tools/build_runtime.py', *sorted((ROOT / 'mac').glob('*')),
                     *sorted((ROOT / 'src/patchbridge').glob('*.py')),
                     *sorted((ROOT / 'swift/Sources/PatchbridgeCore').glob('*.swift')),
                     *sorted((ROOT / 'ios/Patchbridge/AppIcon.icon').rglob('*'))]
     manifest = {'build_inputs': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-                                 for p in build_inputs if p.is_file()}, 'python': sys.version, 'architecture': 'arm64', 'minimum_macos': minimum,
+                                 for p in build_inputs if p.is_file()}, 'python': sys.version, 'runtime': json.loads((RUNTIME / 'runtime-manifest.json').read_text()),
+                'architecture': 'arm64', 'minimum_macos': minimum,
                 'adapter': 'usb; simulation selectable; startup stopped', 'bundled_usb': {'qc_mcp_commit': QC_COMMIT, 'protobuf': PROTOBUF_VERSION, 'hardware_enabled': True}, 'signing': 'ad-hoc; not notarized',
                 'files': {str(p.relative_to(contents)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(contents.rglob('*')) if p.is_file()}}
@@ -188,7 +218,7 @@ def main():
     if checked.returncode:
         raise SystemExit(checked.stderr)
     print(checked.stdout)
-    print(f'Built {APP}\nLocal arm64 macOS {minimum}+ bridge package. Starts stopped; live USB/Bluetooth requires Start bridge and phone approval.')
+    print(f'Built {APP} with dSYMs in {symbols}\nLocal arm64 macOS {minimum}+ bridge package. Starts stopped; live USB/Bluetooth requires Start bridge and phone approval.')
 
 
 if __name__ == '__main__':
