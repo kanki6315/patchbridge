@@ -147,8 +147,9 @@ with the relevant macOS permissions.
 
 ## Live-host integration validation
 
-Main was merged with the iPhone designs, release configuration and shared icon.
-47 Python tests and 72 Swift tests passed, including bundled helper tests. Both Mac and
+Main was merged with the iPhone designs, release configuration and shared icon, including
+the subsequent posture-design and release fixes. 51 Python tests and 72 Swift tests
+passed, including bundled helper tests. Both Mac and
 unsigned iOS simulator builds passed. The relocated package checker passed with the new
 bundle ID and icon. Live backend tests inject a simulated helper and peripheral to verify
 approval gating, display-name fallbacks, edit outcomes, backoff/recovery without replay,
