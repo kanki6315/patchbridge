@@ -38,3 +38,6 @@ xcuserdata/
 /hardware-results/
 Patchbridge-Troubleshooting*.json
 *.log
+
+# Local release signing configuration
+.release.env

@@ -36,7 +36,7 @@ final class Peripheral: NSObject, CBPeripheralManagerDelegate {
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
         guard self.central == nil else { return }
         self.central = central
-        print("Phone \(central.identifier) subscribed. Type approve \(session.token) to authorize.")
+        print("Phone \(central.identifier) subscribed. Code \(session.token.replacingOccurrences(of: "-", with: "").prefix(6).uppercased()). Type approve \(session.token) to authorize.")
     }
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
         if self.central?.identifier == central.identifier { reset() }
