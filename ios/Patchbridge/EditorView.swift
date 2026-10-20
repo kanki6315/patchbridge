@@ -11,6 +11,11 @@ struct EditorView: View {
     @State private var row = 0
     @State private var selectedBlock: String?
     @State private var inspectedBlock: String?
+    // The inner screen temporarily uses the standard layout when rotated sideways.
+    // Keep Duo navigation here so removing its workspace does not reset it.
+    @State private var duoRow = 0
+    @State private var duoSelected: String?
+    @State private var duoEditing = false
     @State private var sheet: Sheet?
     @State private var confirmSave = false
     @State private var saveContext: PresetSnapshot?
@@ -30,6 +35,7 @@ struct EditorView: View {
             Group {
                 if model.ready, model.snapshot != nil, let duo {
                     DuoWorkspaceView(model: model, theme: theme, screen: duo, size: geometry.size, insets: geometry.safeAreaInsets,
+                                     row: $duoRow, selected: $duoSelected, editing: $duoEditing,
                                      showConnection: { sheet = .connection }, openEditor: { selectedBlock = $0 })
                 } else if model.ready, model.snapshot != nil, pad {
                     PadWorkspaceView(model: model, theme: theme)
@@ -67,7 +73,9 @@ struct EditorView: View {
             .confirmationDialog(model.demo ? "Save this demo preset?" : "Save on the Quad Cortex?", isPresented: $confirmSave, titleVisibility: .visible) {
                 Button(model.demo ? "Save demo preset" : "Save preset") { confirmCurrentSave() }
             } message: { Text(model.demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
-            .onChange(of: model.ready) { _, ready in if !ready { selectedBlock = nil } }
+            .onChange(of: model.ready) { _, ready in
+                if !ready { selectedBlock = nil; duoRow = 0; duoSelected = nil; duoEditing = false }
+            }
             .onChange(of: pad) { _, pad in if pad, duo == nil { selectedBlock = nil } }
             // Folding or unfolding pops a pushed editor; the Duo deck or block menu keeps the block open.
             .onChange(of: duo == .inner) { _, _ in selectedBlock = nil }
