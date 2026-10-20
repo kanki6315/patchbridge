@@ -43,7 +43,7 @@ public final class EditorCoordinator {
     private struct Request { let id: String; let operation: String; let deadline: TimeInterval }
     private var request: Request?
 
-    public init(pollInterval: TimeInterval = 2, timeout: TimeInterval = 15,
+    public init(pollInterval: TimeInterval = 2, timeout: TimeInterval = 60,
                 automaticPolling: Bool = true, phoneName: String = DeviceIdentity.phoneName, diagnostics: Diagnostics = .shared,
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
                 makeTransport: @escaping () -> EditorTransport = { BLECentral(automaticallyConnect: false) }) {

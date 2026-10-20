@@ -60,8 +60,11 @@ public final class BridgeSession {
             helper.diagnostics.record(.writeBlocked, operation: operation, code: "read_only")
             throw BridgeFailure.readOnly
         }
-        guard !requestIDs.contains(id), requestIDs.count < 4096 else { throw BridgeFailure.protocolError }
-        requestIDs.insert(id) // Consume before forwarding, including uncertain failures.
+        let mutation = ["set_parameter", "save", "set_bypass", "select_scene", "select_preset", "save_as"].contains(operation)
+        if mutation {
+            guard !requestIDs.contains(id), requestIDs.count < 4096 else { throw BridgeFailure.protocolError }
+            requestIDs.insert(id) // Consume before forwarding, including uncertain failures.
+        }
         if recovering && operation != "recover" { return recoveryReply(message) }
         if operation == "recover" && (!recovering || now() < retryAt) {
             guard recovering else { throw BridgeFailure.protocolError }
@@ -69,7 +72,6 @@ public final class BridgeSession {
         }
         var forwarded = message
         if operation == "recover" { forwarded["operation"] = "connect"; forwarded.removeValue(forKey: "session_id") }
-        let mutation = ["set_parameter", "save"].contains(operation)
         var response: [String: Any]
         do { response = try helper.request(forwarded, timeout: requestTimeout) }
         catch { if mutation { onMutation?(message, nil) }; revoke(); throw error }

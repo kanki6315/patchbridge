@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bundle the local Python/USB dependency closure; startup stays simulated. No downloads."""
+"""Bundle the local Python/USB dependency closure; startup stays stopped. No downloads."""
 import base64
 import csv
 import hashlib
@@ -14,7 +14,7 @@ import sys
 import sysconfig
 
 ROOT = Path(__file__).resolve().parents[1]
-APP = ROOT / 'dist' / 'Patchbridge Offline.app'
+APP = ROOT / 'dist' / 'Patchbridge.app'
 QC_COMMIT = 'f634ecd3dcf426090b90bc4cc176e4b500494b9e'
 QC_SOURCE = Path('/private/tmp/patchbridge-qc-mcp')
 PROTOBUF_VERSION = '7.36.2'
@@ -125,11 +125,21 @@ def main():
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'MacBridgeModel.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'RecentBridgeEdit.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'MacDesktopServices.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'Chunks.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'BLEPeripheral.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'LiveBridgeBackend.swift',
         ROOT / 'mac' / 'main.swift', '-o', executables / 'Patchbridge')
-    plist = {'CFBundleExecutable': 'Patchbridge', 'CFBundleIdentifier': 'dev.patchbridge.offline',
-             'CFBundleName': 'Patchbridge Offline', 'CFBundlePackageType': 'APPL',
+    plist = {'CFBundleExecutable': 'Patchbridge', 'CFBundleIdentifier': 'com.arjunakankipati.patchbridge',
+             'CFBundleName': 'Patchbridge', 'CFBundlePackageType': 'APPL',
              'CFBundleVersion': '1', 'CFBundleShortVersionString': '0.1.0',
-             'LSMinimumSystemVersion': minimum, 'NSHighResolutionCapable': True}
+             'LSMinimumSystemVersion': minimum, 'NSHighResolutionCapable': True,
+             'NSBluetoothAlwaysUsageDescription': 'Connect your iPhone to this Mac to view and edit your Quad Cortex over USB.'}
+    icon_plist = resources / 'icon-info.plist'
+    run('xcrun', 'actool', ROOT / 'ios/Patchbridge/AppIcon.icon', '--compile', resources,
+        '--platform', 'macosx', '--minimum-deployment-target', minimum, '--app-icon', 'AppIcon',
+        '--output-partial-info-plist', icon_plist)
+    plist.update(plistlib.loads(icon_plist.read_bytes()))
+    icon_plist.unlink()
     (contents / 'Info.plist').write_bytes(plistlib.dumps(plist))
     binaries = [frameworks / 'Python', *extensions.glob('*.so'), *resources.glob('Helper/google/_upb/*.so'), launcher, executables / 'Patchbridge']
     for binary in binaries:
@@ -144,10 +154,11 @@ def main():
         run('codesign', '--force', '--sign', '-', binary)
     build_inputs = [ROOT / 'tools/package_mac.py', *sorted((ROOT / 'mac').glob('*')),
                     *sorted((ROOT / 'src/patchbridge').glob('*.py')),
-                    *sorted((ROOT / 'swift/Sources/PatchbridgeCore').glob('*.swift'))]
+                    *sorted((ROOT / 'swift/Sources/PatchbridgeCore').glob('*.swift')),
+                    *sorted((ROOT / 'ios/Patchbridge/AppIcon.icon').rglob('*'))]
     manifest = {'build_inputs': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                                  for p in build_inputs if p.is_file()}, 'python': sys.version, 'architecture': 'arm64', 'minimum_macos': minimum,
-                'adapter': 'simulated', 'bundled_usb': {'qc_mcp_commit': QC_COMMIT, 'protobuf': PROTOBUF_VERSION, 'hardware_enabled': False}, 'signing': 'ad-hoc; not notarized',
+                'adapter': 'usb; simulation selectable; startup stopped', 'bundled_usb': {'qc_mcp_commit': QC_COMMIT, 'protobuf': PROTOBUF_VERSION, 'hardware_enabled': True}, 'signing': 'ad-hoc; not notarized',
                 'files': {str(p.relative_to(contents)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(contents.rglob('*')) if p.is_file()}}
     (resources / 'build-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
@@ -161,7 +172,7 @@ def main():
     if checked.returncode:
         raise SystemExit(checked.stderr)
     print(checked.stdout)
-    print(f'Built {APP}\nLocal arm64 macOS {minimum}+ simulation package. No radio or USB startup.')
+    print(f'Built {APP}\nLocal arm64 macOS {minimum}+ bridge package. Starts stopped; live USB/Bluetooth requires Start bridge and phone approval.')
 
 
 if __name__ == '__main__':

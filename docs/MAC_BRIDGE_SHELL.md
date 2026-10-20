@@ -1,10 +1,29 @@
-# Offline Mac bridge shell
+# Mac bridge shell
 
-Open `dist/Patchbridge Offline.app` for the compact native status window.
-The bridge starts stopped. Bluetooth and USB stay off throughout this workflow;
-no iPhone or QC is required. The iOS design work is unchanged.
+Open `dist/Patchbridge.app`. It starts stopped, with live USB/Bluetooth selected.
+The bundle ID is `com.arjunakankipati.patchbridge`; both apps share the Patch Cable icon.
 
-## Local walkthrough
+## Live connection
+
+1. Connect a QC running verified CorOS 4.1.1 over USB and close Cortex Control.
+2. Choose **Start bridge** and allow Bluetooth when macOS requests it.
+3. On the iPhone, choose **Find my Mac**, select this Mac and compare the approval code.
+4. Choose **Approve** on the Mac, then **I’ve approved it** on the phone.
+5. The phone loads the QC snapshot and relevant catalog before allowing supported edits.
+   Mac status and recent edits reflect the actual phone commands and confirmed readback.
+6. USB loss pauses editing and preserves approval only while the same phone and helper
+   stay alive. The phone retries connect with capped backoff and reloads capabilities
+   and state. Edits/saves are never replayed. Bluetooth loss, denial, Stop, Quit or helper
+   death clears approval. Device and phone names retain bounded Mac/iPhone fallbacks.
+
+Bluetooth denial/off/service errors and unsupported firmware appear in the existing
+status layout. The Mac does not claim to detect Cortex Control itself: USB failure asks
+users to check the cable and close it. No dedicated firmware or second-phone design was
+provided; firmware uses explanatory status text, and a second central cannot issue commands.
+
+## Offline walkthrough
+
+Enable **Use simulation** while stopped. This mode never opens USB or Bluetooth.
 
 1. Choose **Start bridge** to launch the bundled simulation helper.
 2. Choose **Simulate phone connection** to create a local approval request.
@@ -46,8 +65,8 @@ was inspected and contained the expected structured events without preset data.
 The app was left stopped.
 
 This verifies local shell behavior, not physical BLE/USB compatibility.
-The artifact remains ad-hoc signed for this Mac; live transport integration and
-distribution signing are separate work.
+The artifact remains ad-hoc signed for this Mac; physical end-to-end validation and
+distribution signing remain separate work.
 
 ## Design implementation and recovery
 
@@ -71,8 +90,8 @@ Hello exchanges bounded display names and a shared short code derived from the f
 UUID. Names are not authorization credentials. The iPhone app offers an optional display
 name; an empty name uses “iPhone”. Names are excluded from diagnostic events.
 
-Not implemented: live BLE/USB hosting in the packaged app and live firmware/connection error UI.
-The designs remain targets for those features, not claims about the offline package.
+The packaged app now hosts live BLE/USB. Its actual connection and firmware errors use
+the shared status layout; physical end-to-end behavior still needs hardware verification.
 
 ### Validation of this slice
 
@@ -125,3 +144,18 @@ services verified notification permission races, deduplication, obsolete-alert r
 delivery errors and actual login-status handling without changing OS permissions.
 Real notification delivery and login launch remain to be tested on an installed build
 with the relevant macOS permissions.
+
+## Live-host integration validation
+
+Main was merged with the iPhone designs, release configuration and shared icon.
+47 Python tests and 72 Swift tests passed, including bundled helper tests. Both Mac and
+unsigned iOS simulator builds passed. The relocated package checker passed with the new
+bundle ID and icon. Live backend tests inject a simulated helper and peripheral to verify
+approval gating, display-name fallbacks, edit outcomes, backoff/recovery without replay,
+phone disconnect and helper death. Chunk deadlines now measure inactivity so a progressing
+large snapshot can transfer for longer than five seconds. Helper I/O is bounded at 40 seconds
+in the live host; the phone allows 60 seconds including Bluetooth transfer.
+
+These are not physical BLE/USB tests. Native UI automation for the new bundle ID is blocked
+by organization policy. The artifact is locally ad-hoc signed; distribution signing,
+notarization and installed login/notification validation remain pending.

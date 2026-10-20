@@ -16,7 +16,7 @@ exposing the destination path in diagnostics. No upload or network request occur
 For automated offline verification:
 
 ```sh
-"dist/Patchbridge Offline.app/Contents/MacOS/Patchbridge" --export-report /tmp/Patchbridge-Troubleshooting.json
+"dist/Patchbridge.app/Contents/MacOS/Patchbridge" --export-report /tmp/Patchbridge-Troubleshooting.json
 ```
 
 This starts a fresh simulation self-test, stops its helper, and exports that run's

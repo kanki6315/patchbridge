@@ -138,9 +138,9 @@ final class MacDesktopServices: ObservableObject {
         }
     }
     func stateChanged(_ model: MacBridgeModel) {
-        stateChanged(phase: model.phase, approvalCode: model.presentation.approvalCode)
+        stateChanged(phase: model.phase, approvalCode: model.presentation.approvalCode, simulated: model.isSimulation)
     }
-    func stateChanged(phase next: MacBridgeModel.Phase, approvalCode: String = "") {
+    func stateChanged(phase next: MacBridgeModel.Phase, approvalCode: String = "", simulated: Bool = true) {
         guard next != phase || (next == .awaitingApproval && approvalCode != requestCode) else { return }
         phase = next; requestCode = approvalCode
         clearNotification()
@@ -148,10 +148,10 @@ final class MacDesktopServices: ObservableObject {
         let title: String, body: String
         switch next {
         case .awaitingApproval:
-            title = "Simulated iPhone approval requested"
+            title = simulated ? "Simulated iPhone approval requested" : "iPhone approval requested"
             body = "Open Patchbridge to compare the current approval code."
         case .recovering:
-            title = "Simulated QC connection interrupted"
+            title = simulated ? "Simulated QC connection interrupted" : "QC connection interrupted"
             body = "Editing is paused while the bridge reloads state."
         case .failed:
             title = "Patchbridge needs attention"

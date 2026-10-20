@@ -27,7 +27,7 @@ struct BridgeWindow: View {
             HStack {
                 Text(compact ? "Patchbridge" : "Mac bridge").font(.headline)
                 Spacer()
-                Label("Simulation", systemImage: "testtube.2").font(.caption).foregroundStyle(colors.muted)
+                Label(model.isSimulation ? "Simulation" : "USB + Bluetooth", systemImage: model.isSimulation ? "testtube.2" : "cable.connector").font(.caption).foregroundStyle(colors.muted)
             }
             if !compact { diagram }
             VStack(alignment: .leading, spacing: 8) {
@@ -54,8 +54,11 @@ struct BridgeWindow: View {
             if model.phase == .connected || model.phase == .recovering || !model.presentation.recentEdits.isEmpty {
                 recentEdits
             }
+            if !compact && model.phase == .stopped {
+                Toggle("Use simulation", isOn: Binding(get: { model.isSimulation }, set: model.setSimulation)).toggleStyle(.switch)
+            }
             if !compact {
-                Text("Bluetooth and USB are off. This build uses the bundled simulator.")
+                Text(model.isSimulation ? "Bluetooth and USB are off. This mode uses the bundled simulator." : "CorOS 4.1.1 · Supported parameters only. Keep Cortex Control closed while connected.")
                     .font(.callout).foregroundStyle(colors.muted)
             }
             }.frame(maxWidth: .infinity, alignment: .leading)
@@ -68,7 +71,7 @@ struct BridgeWindow: View {
                 if active {
                     Menu {
                         Button("Stop bridge") { model.stop() }
-                        if model.phase == .connected {
+                        if model.phase == .connected && model.isSimulation {
                             Button("Simulate gain edit") { model.simulateEdit() }
                             Button("Simulate rejected edit") { model.simulateEdit(rejected: true) }
                             Button("Check connection") { model.refresh() }
@@ -138,10 +141,10 @@ struct BridgeWindow: View {
     private var diagram: some View {
         HStack(alignment: .top, spacing: 10) {
             node("iphone", phone ? model.presentation.phoneName : "iPhone", live: model.phase == .connected)
-            link("Simulated", live: model.phase == .connected)
+            link(model.isSimulation ? "Simulated" : "Bluetooth", live: model.phase == .connected)
             node("laptopcomputer", model.presentation.macName, live: active)
-            link(model.phase == .recovering ? "Paused" : "Simulated", live: model.phase == .connected)
-            node("square.grid.3x3.fill", "QC simulator", live: model.phase == .connected)
+            link(model.phase == .recovering ? "Paused" : model.isSimulation ? "Simulated" : "USB", live: model.phase == .connected)
+            node("square.grid.3x3.fill", model.isSimulation ? "QC simulator" : "Quad Cortex", live: model.phase == .connected)
         }.padding(.vertical, 10).accessibilityElement(children: .combine)
     }
     private func node(_ symbol: String, _ name: String, live: Bool) -> some View {
@@ -161,13 +164,13 @@ struct BridgeWindow: View {
     @ViewBuilder private var actions: some View {
         HStack {
             if model.phase == .awaitingApproval || model.phase == .approving {
-                Button("Deny") { model.disconnectPhone() }
+                Button(model.phase == .approving ? "Disconnect" : "Deny") { model.disconnectPhone() }
                 Spacer()
-                Button("Approve") { model.approve() }.buttonStyle(.borderedProminent)
+                Button(model.phase == .approving ? "Approved" : "Approve") { model.approve() }.buttonStyle(.borderedProminent).disabled(model.phase == .approving)
             } else if model.phase == .connected || model.phase == .recovering {
                 Spacer()
                 Button("Disconnect iPhone", role: .destructive) { model.disconnectPhone() }
-            } else if model.phase == .running {
+            } else if model.phase == .running && model.isSimulation {
                 Spacer()
                 Button("Simulate phone connection") { model.requestPhone() }.buttonStyle(.borderedProminent)
             } else if model.phase == .stopped || model.phase == .failed {

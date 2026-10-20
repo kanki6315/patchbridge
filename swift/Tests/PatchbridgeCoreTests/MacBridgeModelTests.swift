@@ -57,7 +57,7 @@ extension MacBridgeModelTests {
     func testPackagedHelperWorksThroughShellApproval() throws {
         guard ProcessInfo.processInfo.environment["PATCHBRIDGE_TEST_BUNDLE"] == "1" else { throw XCTSkip("Build the package and set PATCHBRIDGE_TEST_BUNDLE=1") }
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let bundle = try XCTUnwrap(Bundle(url: root.appendingPathComponent("dist/Patchbridge Offline.app")))
+        let bundle = try XCTUnwrap(Bundle(url: root.appendingPathComponent("dist/Patchbridge.app")))
         let model = MacBridgeModel(backend: BundledOfflineBackend(makeHelper: { try HelperClient(bundle: bundle) }))
         defer { model.shutdown() }
         waitFor(model, .running) { model.start() }

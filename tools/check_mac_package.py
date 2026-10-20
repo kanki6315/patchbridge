@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline relocation, isolation, lifecycle and missing-helper checks. Never starts the UI/radio."""
 import json
+import plistlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -10,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
-    source = ROOT / 'dist' / 'Patchbridge Offline.app'
+    source = ROOT / 'dist' / 'Patchbridge.app'
     if not source.is_dir():
         raise SystemExit('Build first: /opt/homebrew/bin/python3 tools/package_mac.py')
     with tempfile.TemporaryDirectory(prefix='patchbridge moved ') as directory:
@@ -26,6 +27,16 @@ def main():
                'PYTHONUSERBASE': str(temporary)}
         host = app / 'Contents' / 'MacOS' / 'Patchbridge'
         helper = host.with_name('patchbridge-helper')
+        info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
+        assert info['CFBundleIdentifier'] == 'com.arjunakankipati.patchbridge'
+        assert info['CFBundleIconName'] == 'AppIcon'
+        assert info['NSBluetoothAlwaysUsageDescription']
+        assert (app / 'Contents/Resources/AppIcon.icns').is_file()
+        assert (app / 'Contents/Resources/Assets.car').is_file()
+        # Starting the USB helper alone must not open a device; only a connect request does.
+        idle_usb = subprocess.run([str(helper), '--usb'], input='', env=env, cwd=temporary,
+                                  text=True, capture_output=True, timeout=10)
+        assert idle_usb.returncode == 0 and not idle_usb.stdout
         subprocess.run(['/usr/bin/codesign', '--verify', '--deep', '--strict', str(app)], check=True)
         subprocess.run([str(host), '--self-test'], env=env, cwd=temporary, check=True, timeout=20)
         fixtures = temporary / 'captured inputs'
@@ -44,7 +55,7 @@ def main():
         print('PASS: bundled USB/protobuf closure; 9 captured-fixture checks through in-memory HID')
         rejected = subprocess.run([str(helper), '--adapter', 'usb'], env=env, cwd=temporary,
                                   capture_output=True, text=True, timeout=10)
-        assert rejected.returncode == 64 and 'Live USB is disabled' in rejected.stderr
+        assert rejected.returncode == 64 and 'Expected --usb' in rejected.stderr
         descriptors = app / 'Contents/Resources/Helper/qc_mcp/descriptors/qc_descriptors-4.1.pb'
         original = descriptors.read_bytes()
         descriptors.unlink()

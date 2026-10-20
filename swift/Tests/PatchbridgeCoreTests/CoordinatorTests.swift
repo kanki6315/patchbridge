@@ -251,7 +251,7 @@ extension CoordinatorTests {
         try write(original)
         func launch() throws -> HelperClient {
             if bundled {
-                let app = try XCTUnwrap(Bundle(url: root.appendingPathComponent("dist/Patchbridge Offline.app")))
+                let app = try XCTUnwrap(Bundle(url: root.appendingPathComponent("dist/Patchbridge.app")))
                 return try HelperClient(bundle: app, capturedFixture: fixtureURL)
             }
             return try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path, capturedFixture: fixtureURL)

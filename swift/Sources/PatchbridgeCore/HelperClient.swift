@@ -16,14 +16,15 @@ public final class HelperClient {
     public private(set) var events: [[String: Any]] = []
 
     /// Production launch resolves only inside the owning app bundle; never falls back to system Python.
-    public convenience init(bundle: Bundle = .main, capturedFixture: URL? = nil, diagnostics: Diagnostics = .shared) throws {
+    public convenience init(bundle: Bundle = .main, capturedFixture: URL? = nil, liveUSB: Bool = false, diagnostics: Diagnostics = .shared) throws {
+        guard !(liveUSB && capturedFixture != nil) else { throw BridgeFailure.protocolError }
         guard let executable = bundle.executableURL?.deletingLastPathComponent()
             .appendingPathComponent("patchbridge-helper"),
               FileManager.default.isExecutableFile(atPath: executable.path) else {
             diagnostics.record(.helperStartFailed, code: "disconnected")
             throw BridgeFailure.disconnected
         }
-        try self.init(executable: executable, arguments: capturedFixture.map { ["--captured-read-only", $0.path] } ?? [], readOnly: capturedFixture != nil, diagnostics: diagnostics, environment: ["PATH": "/usr/bin:/bin", "LANG": "en_US.UTF-8"])
+        try self.init(executable: executable, arguments: capturedFixture.map { ["--captured-read-only", $0.path] } ?? (liveUSB ? ["--usb"] : []), readOnly: capturedFixture != nil, diagnostics: diagnostics, environment: ["PATH": "/usr/bin:/bin", "LANG": "en_US.UTF-8"])
     }
 
     /// Development-only explicit interpreter/source paths.

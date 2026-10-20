@@ -169,8 +169,8 @@ These designs assume changes that aren't built yet:
 
 ## Mac implementation contract (2026-10-20)
 
-The boards describe the intended live product. The current Mac package remains visibly
-simulation-only; it does not advertise Bluetooth or open USB. It implements the window,
+The current Mac package starts stopped and offers live USB/Bluetooth and a visibly labelled
+simulation mode. It uses the shared Patch Cable icon and implements the window,
 approval code, snapshot facts, menu bar, appearance, close-window preference, Dock
 visibility, optional notifications, login registration and bounded recent-edit history.
 Notifications and login launch default off; Dock visibility defaults on. The login
