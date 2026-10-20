@@ -27,6 +27,10 @@
       "name": "iPhone Duo"
     },
     {
+      "id": "live",
+      "name": "Live Activity"
+    },
+    {
       "id": "components",
       "name": "Components"
     },
@@ -1046,6 +1050,170 @@
       "h": 678,
       "title": "Outer portrait · block menu, sending",
       "page": "duo"
+    },
+    "live/ls-connected.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Lock Screen · connected",
+      "page": "live"
+    },
+    "live/ls-lost.dc.html": {
+      "x": 482,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Lock Screen · connection lost",
+      "page": "live"
+    },
+    "live/ls-reconnecting.dc.html": {
+      "x": 964,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Lock Screen · reconnecting (trusted)",
+      "page": "live"
+    },
+    "live/ls-approval.dc.html": {
+      "x": 1446,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Lock Screen · approval needed",
+      "page": "live"
+    },
+    "live/ls-ended.dc.html": {
+      "x": 1928,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Lock Screen · ended after Disconnect",
+      "page": "live"
+    },
+    "live/ls-alert.dc.html": {
+      "x": 2410,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Alert only · Live Activity off",
+      "page": "live"
+    },
+    "live/ls-daylight.dc.html": {
+      "x": 2892,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Daylight · connected",
+      "page": "live"
+    },
+    "live/di-compact.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 402,
+      "h": 240,
+      "title": "Island · compact",
+      "page": "live"
+    },
+    "live/di-compact-lost.dc.html": {
+      "x": 482,
+      "y": 1320,
+      "w": 402,
+      "h": 240,
+      "title": "Island · compact, lost",
+      "page": "live"
+    },
+    "live/di-compact-approval.dc.html": {
+      "x": 964,
+      "y": 1320,
+      "w": 402,
+      "h": 240,
+      "title": "Island · compact, approval",
+      "page": "live"
+    },
+    "live/di-minimal.dc.html": {
+      "x": 1446,
+      "y": 1320,
+      "w": 402,
+      "h": 240,
+      "title": "Island · minimal, beside another app",
+      "page": "live"
+    },
+    "live/di-expanded.dc.html": {
+      "x": 1928,
+      "y": 1320,
+      "w": 402,
+      "h": 240,
+      "title": "Island · expanded",
+      "page": "live"
+    },
+    "live/di-expanded-lost.dc.html": {
+      "x": 2410,
+      "y": 1320,
+      "w": 402,
+      "h": 240,
+      "title": "Island · expanded, lost",
+      "page": "live"
+    },
+    "live/di-expanded-approval.dc.html": {
+      "x": 2892,
+      "y": 1320,
+      "w": 402,
+      "h": 240,
+      "title": "Island · expanded, approval",
+      "page": "live"
+    },
+    "live/st-connection.dc.html": {
+      "x": 0,
+      "y": 1960,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone · Connection settings",
+      "page": "live"
+    },
+    "live/mac-approve-trust.dc.html": {
+      "x": 482,
+      "y": 1960,
+      "w": 340,
+      "h": 544,
+      "title": "Mac menu bar · approve and trust",
+      "page": "live",
+      "radius": 15
+    },
+    "live/mac-trusted.dc.html": {
+      "x": 902,
+      "y": 1960,
+      "w": 340,
+      "h": 331,
+      "title": "Mac menu bar · trusted, connected",
+      "page": "live",
+      "radius": 15
+    },
+    "live/mac-trusted-away.dc.html": {
+      "x": 1322,
+      "y": 1960,
+      "w": 340,
+      "h": 290,
+      "title": "Mac menu bar · trusted, not connected",
+      "page": "live",
+      "radius": 15
+    },
+    "live/Activity.dc.html": {
+      "x": 0,
+      "y": 3410,
+      "w": 402,
+      "h": 874,
+      "title": "Live Activity (Tweaks: screen, theme)",
+      "page": "components"
+    },
+    "live/Trust.dc.html": {
+      "x": 482,
+      "y": 3410,
+      "w": 340,
+      "h": 331,
+      "title": "Mac trust menu (Tweaks: screen)",
+      "page": "components",
+      "radius": 15
     }
   },
   "order": [
@@ -1171,7 +1339,27 @@
     "duo/xl-pending.dc.html",
     "duo/x-grid.dc.html",
     "duo/x-sheet.dc.html",
-    "duo/x-pending.dc.html"
+    "duo/x-pending.dc.html",
+    "live/Activity.dc.html",
+    "live/Trust.dc.html",
+    "live/ls-connected.dc.html",
+    "live/ls-lost.dc.html",
+    "live/ls-reconnecting.dc.html",
+    "live/ls-approval.dc.html",
+    "live/ls-ended.dc.html",
+    "live/ls-alert.dc.html",
+    "live/ls-daylight.dc.html",
+    "live/di-compact.dc.html",
+    "live/di-compact-lost.dc.html",
+    "live/di-compact-approval.dc.html",
+    "live/di-minimal.dc.html",
+    "live/di-expanded.dc.html",
+    "live/di-expanded-lost.dc.html",
+    "live/di-expanded-approval.dc.html",
+    "live/st-connection.dc.html",
+    "live/mac-approve-trust.dc.html",
+    "live/mac-trusted.dc.html",
+    "live/mac-trusted-away.dc.html"
   ],
   "notes": {
     "pocConnect": {
@@ -1301,6 +1489,30 @@
       "kind": "title1",
       "maxW": 4000,
       "page": "ipad"
+    },
+    "liveLock": {
+      "x": 0,
+      "y": -280,
+      "text": "Lock Screen: one button per state, line style tells the connection",
+      "kind": "title1",
+      "maxW": 3296,
+      "page": "live"
+    },
+    "liveIsland": {
+      "x": 0,
+      "y": 1040,
+      "text": "Dynamic Island: compact, minimal and expanded",
+      "kind": "title1",
+      "maxW": 3296,
+      "page": "live"
+    },
+    "liveTrust": {
+      "x": 0,
+      "y": 1680,
+      "text": "The setting, and trust that makes one-tap Reconnect work",
+      "kind": "title1",
+      "maxW": 1742,
+      "page": "live"
     }
   },
   "designSystems": []

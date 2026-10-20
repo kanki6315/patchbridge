@@ -1148,5 +1148,185 @@
     "h": 678,
     "png": "screens/duo-x-pending.png",
     "html": "html/screens/duo-x-pending.html"
+  },
+  {
+    "key": "live/ls-connected.dc.html",
+    "slug": "ls-connected",
+    "page": "Live Activity",
+    "title": "Lock Screen · connected",
+    "w": 402,
+    "h": 874,
+    "png": "live/ls-connected.png",
+    "html": "html/live/ls-connected.html"
+  },
+  {
+    "key": "live/ls-lost.dc.html",
+    "slug": "ls-lost",
+    "page": "Live Activity",
+    "title": "Lock Screen · connection lost",
+    "w": 402,
+    "h": 874,
+    "png": "live/ls-lost.png",
+    "html": "html/live/ls-lost.html"
+  },
+  {
+    "key": "live/ls-reconnecting.dc.html",
+    "slug": "ls-reconnecting",
+    "page": "Live Activity",
+    "title": "Lock Screen · reconnecting (trusted)",
+    "w": 402,
+    "h": 874,
+    "png": "live/ls-reconnecting.png",
+    "html": "html/live/ls-reconnecting.html"
+  },
+  {
+    "key": "live/ls-approval.dc.html",
+    "slug": "ls-approval",
+    "page": "Live Activity",
+    "title": "Lock Screen · approval needed",
+    "w": 402,
+    "h": 874,
+    "png": "live/ls-approval.png",
+    "html": "html/live/ls-approval.html"
+  },
+  {
+    "key": "live/ls-ended.dc.html",
+    "slug": "ls-ended",
+    "page": "Live Activity",
+    "title": "Lock Screen · ended after Disconnect",
+    "w": 402,
+    "h": 874,
+    "png": "live/ls-ended.png",
+    "html": "html/live/ls-ended.html"
+  },
+  {
+    "key": "live/ls-alert.dc.html",
+    "slug": "ls-alert",
+    "page": "Live Activity",
+    "title": "Alert only · Live Activity off",
+    "w": 402,
+    "h": 874,
+    "png": "live/ls-alert.png",
+    "html": "html/live/ls-alert.html"
+  },
+  {
+    "key": "live/ls-daylight.dc.html",
+    "slug": "ls-daylight",
+    "page": "Live Activity",
+    "title": "Daylight · connected",
+    "w": 402,
+    "h": 874,
+    "png": "live/ls-daylight.png",
+    "html": "html/live/ls-daylight.html"
+  },
+  {
+    "key": "live/di-compact.dc.html",
+    "slug": "di-compact",
+    "page": "Live Activity",
+    "title": "Island · compact",
+    "w": 402,
+    "h": 240,
+    "png": "live/di-compact.png",
+    "html": "html/live/di-compact.html"
+  },
+  {
+    "key": "live/di-compact-lost.dc.html",
+    "slug": "di-compact-lost",
+    "page": "Live Activity",
+    "title": "Island · compact, lost",
+    "w": 402,
+    "h": 240,
+    "png": "live/di-compact-lost.png",
+    "html": "html/live/di-compact-lost.html"
+  },
+  {
+    "key": "live/di-compact-approval.dc.html",
+    "slug": "di-compact-approval",
+    "page": "Live Activity",
+    "title": "Island · compact, approval",
+    "w": 402,
+    "h": 240,
+    "png": "live/di-compact-approval.png",
+    "html": "html/live/di-compact-approval.html"
+  },
+  {
+    "key": "live/di-minimal.dc.html",
+    "slug": "di-minimal",
+    "page": "Live Activity",
+    "title": "Island · minimal, beside another app",
+    "w": 402,
+    "h": 240,
+    "png": "live/di-minimal.png",
+    "html": "html/live/di-minimal.html"
+  },
+  {
+    "key": "live/di-expanded.dc.html",
+    "slug": "di-expanded",
+    "page": "Live Activity",
+    "title": "Island · expanded",
+    "w": 402,
+    "h": 240,
+    "png": "live/di-expanded.png",
+    "html": "html/live/di-expanded.html"
+  },
+  {
+    "key": "live/di-expanded-lost.dc.html",
+    "slug": "di-expanded-lost",
+    "page": "Live Activity",
+    "title": "Island · expanded, lost",
+    "w": 402,
+    "h": 240,
+    "png": "live/di-expanded-lost.png",
+    "html": "html/live/di-expanded-lost.html"
+  },
+  {
+    "key": "live/di-expanded-approval.dc.html",
+    "slug": "di-expanded-approval",
+    "page": "Live Activity",
+    "title": "Island · expanded, approval",
+    "w": 402,
+    "h": 240,
+    "png": "live/di-expanded-approval.png",
+    "html": "html/live/di-expanded-approval.html"
+  },
+  {
+    "key": "live/st-connection.dc.html",
+    "slug": "st-connection",
+    "page": "Live Activity",
+    "title": "iPhone · Connection settings",
+    "w": 402,
+    "h": 874,
+    "png": "live/st-connection.png",
+    "html": "html/live/st-connection.html"
+  },
+  {
+    "key": "live/mac-approve-trust.dc.html",
+    "slug": "mac-approve-trust",
+    "page": "Live Activity",
+    "title": "Mac menu bar · approve and trust",
+    "w": 340,
+    "h": 544,
+    "png": "live/mac-approve-trust.png",
+    "html": "html/live/mac-approve-trust.html"
+  },
+  {
+    "key": "live/mac-trusted.dc.html",
+    "slug": "mac-trusted",
+    "page": "Live Activity",
+    "title": "Mac menu bar · trusted, connected",
+    "w": 340,
+    "h": 331,
+    "png": "live/mac-trusted.png",
+    "html": "html/live/mac-trusted.html"
+  },
+  {
+    "key": "live/mac-trusted-away.dc.html",
+    "slug": "mac-trusted-away",
+    "page": "Live Activity",
+    "title": "Mac menu bar · trusted, not connected",
+    "w": 340,
+    "h": 290,
+    "png": "live/mac-trusted-away.png",
+    "html": "html/live/mac-trusted-away.html"
   }
 ]

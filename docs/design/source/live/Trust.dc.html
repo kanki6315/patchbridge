@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mac bridge trust component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <div style="box-sizing: border-box; padding: 14px 8px 8px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="padding: 0 8px; display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 15px; font-weight: 700;">Patchbridge</span>
+      <span role="status" style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;">
+        <sc-if value="{{s.dot}}" hint-placeholder-val="{{true}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.signal}};"></span></sc-if>
+        <sc-if value="{{s.ring}}" hint-placeholder-val="{{false}}"><span style="width: 8px; height: 8px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.muted}};"></span></sc-if>
+        {{s.status}}
+      </span>
+    </div>
+
+    <sc-if value="{{s.request}}" hint-placeholder-val="{{false}}">
+      <div style="margin: 0 2px; padding: 14px; display: flex; flex-direction: column; gap: 10px; border-radius: 12px; background: {{t.group}}; box-shadow: {{t.panelEdge}}, 0 0 0 1.5px {{t.signal}};">
+        <span style="font-size: 14px; font-weight: 600; text-wrap: balance;">Jamie’s iPhone wants to edit the QC</span>
+        <div role="img" aria-label="Code 4 F 7 K 2 Q" style="height: 62px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; background: {{t.glass}}; box-shadow: {{t.glassEdge}};">
+          <sc-for list="{{code}}" as="ch" hint-placeholder-count="7">
+            <span style="{{ch.style}}">{{ch.c}}</span>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: {{t.muted}};">Approve only if the iPhone shows the same code.</span>
+        <label style="padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; border-radius: 9px; background: {{t.fill}};">
+          <input type="checkbox" checked style="width: 16px; height: 16px; margin: 1px 0 0; flex: none; accent-color: {{t.signal}};">
+          <span style="font-size: 13px; font-weight: 600;">Trust this iPhone until Patchbridge quits</span>
+        </label>
+        <span style="display: flex; gap: 8px;">
+          <button type="button" style="{{mbGlass}}">Deny</button>
+          <button type="button" style="{{mbPrimary}}">Approve</button>
+        </span>
+      </div>
+    </sc-if>
+
+    <div style="margin: 0 2px; border-radius: 12px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+      <div style="min-height: 56px; box-sizing: border-box; padding: 8px 12px; display: flex; align-items: center; gap: 12px;">
+        <span style="{{tileOn}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="7.8" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="17.4" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="3" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="7.8" y="11.4" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="17.4" y="11.4" width="3.6" height="3.6" rx="1"></rect></svg></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; font-weight: 600;">Tremonti w Mic</span>
+          <span style="font-size: 12px; color: {{t.muted}};">My Presets 3B · CorOS 4.1.1</span>
+        </span>
+      </div>
+      <div style="min-height: 56px; box-sizing: border-box; padding: 8px 12px; display: flex; align-items: center; gap: 12px; border-top: 1px solid {{t.hairline}};">
+        <span style="{{s.phoneTile}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; font-weight: 600; white-space: nowrap;">Jamie’s iPhone</span>
+          <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden;">
+            <sc-if value="{{s.trusted}}" hint-placeholder-val="{{true}}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"></path></svg></sc-if>
+            {{s.phoneSub}}
+          </span>
+        </span>
+        <sc-if value="{{s.rowBtn}}" hint-placeholder-val="{{true}}">
+          <button type="button" style="{{smallDanger}}">{{s.rowBtnLabel}}</button>
+        </sc-if>
+      </div>
+    </div>
+
+    <div role="menu" aria-label="Patchbridge" style="display: flex; flex-direction: column;">
+      <sc-for list="{{menu}}" as="m" hint-placeholder-count="4">
+        <sc-if value="{{m.sep}}" hint-placeholder-val="{{false}}"><span role="separator" style="height: 1px; margin: 4px 10px; background: {{t.hairline}};"></span></sc-if>
+        <button type="button" role="menuitem" style="{{m.style}}">
+          <span style="display: flex; flex-direction: column; gap: 1px;">
+            <span>{{m.label}}</span>
+            <sc-if value="{{m.hasNote}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; color: {{t.muted}};">{{m.note}}</span></sc-if>
+          </span>
+          <span style="font-size: 13px; color: {{t.muted}}; font-variant-numeric: tabular-nums;">{{m.key}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["approve","trusted","away"],"default":"trusted","section":"Screen"},"$preview":{"width":340,"height":331}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const screen = this.props.screen ?? 'trusted';
+    const t = { ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', fill: 'oklch(1 0 0 / 0.1)', group: 'oklch(0.2 0.009 110)',
+      hairline: 'oklch(1 0 0 / 0.08)', hairlineStrong: 'oklch(1 0 0 / 0.28)',
+      glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
+      popover: 'oklch(0.22 0.01 110 / 0.92)', popoverEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.1)',
+      signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', danger: 'oklch(0.8 0.12 35)' };
+    const S = {
+      approve: { status: 'Approval needed', dot: true, request: true, phoneSub: 'Waiting for your approval', h: 544 },
+      trusted: { status: 'Connected', dot: true, trusted: true, phoneSub: 'Trusted · connected', rowBtn: 'Disconnect', revoke: true, h: 331 },
+      away: { status: 'Ready', ring: true, trusted: true, away: true, phoneSub: 'Trusted · not connected', rowBtn: 'Revoke', h: 290 }
+    };
+    const s0 = S[screen] || S.trusted;
+    const tile = (wait) => ({ width: '36px', height: '36px', flex: 'none', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px',
+      background: wait ? 'transparent' : t.fill, border: wait ? '1.5px dashed ' + t.hairlineStrong : '0', color: wait ? t.muted : t.ink });
+    const btnBase = { height: '32px', padding: '0 16px', border: '0', borderRadius: '999px', font: 'inherit', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' };
+    const menuItem = { width: '100%', minHeight: '32px', boxSizing: 'border-box', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', border: '0', borderRadius: '9px', background: 'transparent', color: t.ink, font: 'inherit', fontSize: '14px', textAlign: 'left', cursor: 'pointer' };
+    const items = [];
+    if (s0.revoke) items.push({ label: 'Revoke Trust for Jamie’s iPhone', key: '', danger: true });
+    items.push({ label: 'Open Patchbridge', key: '', sep: !!s0.revoke }, { label: 'Settings…', key: '⌘,' },
+      { label: 'Quit Patchbridge', key: '⌘Q', sep: true, note: s0.trusted ? 'Releases the QC and ends trust' : 'Releases the QC and disconnects the iPhone' });
+    const code = '4F7K2Q'.split('');
+    code.splice(3, 0, '·');
+    return {
+      t,
+      s: { status: s0.status, dot: !!s0.dot, ring: !!s0.ring, request: !!s0.request, trusted: !!s0.trusted, phoneSub: s0.phoneSub,
+        rowBtn: !!s0.rowBtn, rowBtnLabel: s0.rowBtn || '', phoneTile: tile(!!s0.away) },
+      rootStyle: { width: '340px', height: s0.h + 'px', position: 'relative', overflow: 'hidden', boxSizing: 'border-box', display: 'flex', flexDirection: 'column',
+        borderRadius: '15px', background: t.popover, boxShadow: t.popoverEdge, backdropFilter: 'blur(30px) saturate(1.7)', WebkitBackdropFilter: 'blur(30px) saturate(1.7)',
+        color: t.ink, fontFamily: "-apple-system, 'SF Pro Text', Inter, system-ui, sans-serif" },
+      tileOn: tile(false),
+      code: code.map((c) => ({ c, style: c === '·'
+        ? { fontSize: '20px', color: t.muted }
+        : { fontSize: '28px', fontWeight: 700, letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums', fontFamily: "ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif" } })),
+      mbPrimary: { ...btnBase, flex: '1', background: t.signal, color: t.signalInk, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' },
+      mbGlass: { ...btnBase, flex: '1', background: t.glass, color: t.ink, boxShadow: t.glassEdge, fontWeight: 500 },
+      smallDanger: { ...btnBase, height: '28px', padding: '0 12px', fontSize: '12px', background: t.fill, color: t.danger },
+      menu: items.map((m) => ({ ...m, sep: !!m.sep, hasNote: !!m.note, note: m.note || '', style: { ...menuItem, color: m.danger ? t.danger : t.ink } }))
+    };
+  }
+}
+</script>
+</body>
+</html>

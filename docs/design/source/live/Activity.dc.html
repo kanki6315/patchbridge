@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live Activity component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+
+  <sc-if value="{{is.lock}}" hint-placeholder-val="{{true}}">
+    <span aria-hidden="true" style="position: absolute; left: 138px; top: 11px; width: 126px; height: 37px; border-radius: 999px; background: #000;"></span>
+    <div style="position: absolute; left: 0; right: 0; top: 74px; display: flex; flex-direction: column; align-items: center; gap: 0; color: {{lock.clockInk}};">
+      <span style="font-size: 19px; font-weight: 600; letter-spacing: 0.01em; opacity: 0.85;">Tuesday 20 October</span>
+      <span style="font-size: 96px; line-height: 1.02; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; font-family: ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif;">{{lock.time}}</span>
+    </div>
+
+    <sc-if value="{{is.card}}" hint-placeholder-val="{{true}}">
+      <div role="group" aria-label="{{a.aria}}" style="{{cardStyle}}">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="{{a.tileStyle}}">
+            <span role="img" aria-label="{{a.glyphLabel}}" style="position: relative; display: flex;">
+              <sc-if value="{{a.g.filled}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><rect x="1.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="7" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="1.5" y="10" width="4" height="4.5" rx="1"></rect><rect x="7" y="10" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="10" width="4" height="4.5" rx="1"></rect></svg></sc-if>
+              <sc-if value="{{a.g.outline}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="2" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="2" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="10.4" width="3.2" height="3.6" rx="0.8"></rect></svg></sc-if>
+              <sc-if value="{{a.g.dot}}" hint-placeholder-val="{{false}}"><span style="{{a.dotBadge}}"></span></sc-if>
+              <sc-if value="{{a.g.warn}}" hint-placeholder-val="{{false}}"><svg style="position: absolute; right: -6px; bottom: -4px;" width="11" height="11" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.6 9.2H0.4z" fill="currentColor" stroke="{{a.tileBg}}" stroke-width="1.2" stroke-linejoin="round"></path></svg></sc-if>
+            </span>
+          </span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.title}}</span>
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; overflow: hidden; font-variant-numeric: tabular-nums;">
+              <sc-for list="{{a.sub}}" as="p" hint-placeholder-count="3">
+                <sc-if value="{{p.dot}}" hint-placeholder-val="{{false}}"><span style="{{p.dotStyle}}"></span></sc-if>
+                <span style="{{p.textStyle}}">{{p.text}}</span>
+              </sc-for>
+            </span>
+          </span>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 16px;">
+          <div role="img" aria-label="{{a.railLabel}}" style="flex: 1; min-width: 0; display: flex; align-items: flex-start;">
+            <sc-for list="{{a.rail}}" as="r" hint-placeholder-count="5">
+              <sc-if value="{{r.node}}" hint-placeholder-val="{{true}}">
+                <span style="width: 40px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <span style="{{r.style}}">
+                    <sc-if value="{{r.phone}}" hint-placeholder-val="{{true}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg></sc-if>
+                    <sc-if value="{{r.mac}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="1.5"></rect><path d="M2 19.5h20"></path></svg></sc-if>
+                    <sc-if value="{{r.qc}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><rect x="1.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="7" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="1.5" y="10" width="4" height="4.5" rx="1"></rect><rect x="7" y="10" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="10" width="4" height="4.5" rx="1"></rect></svg></sc-if>
+                  </span>
+                  <span style="{{r.labelStyle}}">{{r.label}}</span>
+                </span>
+              </sc-if>
+              <sc-if value="{{r.link}}" hint-placeholder-val="{{false}}">
+                <span style="flex: 1; min-width: 8px; height: 28px; display: flex; align-items: center;"><span style="{{r.lineStyle}}"></span></span>
+              </sc-if>
+            </sc-for>
+          </div>
+          <sc-if value="{{a.hasButton}}" hint-placeholder-val="{{true}}">
+            <button type="button" aria-disabled="{{a.btnDisabled}}" style="{{a.btnStyle}}">
+              <sc-if value="{{a.btnSpin}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>
+              <sc-if value="{{a.btnReturn}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"></path><path d="M20 4v4.5h-4.5"></path></svg></sc-if>
+              {{a.btn}}
+            </button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{is.notify}}" hint-placeholder-val="{{false}}">
+      <div role="group" aria-label="Notification from Patchbridge" style="{{notifyStyle}}">
+        <span style="{{appIcon}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="7.8" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="17.4" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="3" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="7.8" y="11.4" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="17.4" y="11.4" width="3.6" height="3.6" rx="1"></rect></svg></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+          <span style="display: flex; justify-content: space-between; gap: 8px;"><span style="font-size: 15px; font-weight: 600;">Connection to Studio Mac lost</span><span style="font-size: 13px; color: {{t.muted}};">now</span></span>
+          <span style="font-size: 14px; line-height: 1.35; color: {{t.ink}}; text-wrap: pretty;">Editing is paused. Tap to reconnect.</span>
+        </span>
+      </div>
+    </sc-if>
+
+    <span aria-hidden="true" style="{{lock.leftKey}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l-1 5H9z"></path><path d="M9 8l1 13h4l1-13"></path><path d="M12 12v3"></path></svg></span>
+    <span aria-hidden="true" style="{{lock.rightKey}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg></span>
+    <span aria-hidden="true" style="{{lock.homeBar}}"></span>
+  </sc-if>
+
+  <sc-if value="{{is.island}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; left: 16px; right: 16px; top: 96px; display: flex; flex-direction: column; gap: 12px;">
+      <span style="width: 46%; height: 14px; border-radius: 999px; background: oklch(1 0 0 / 0.14);"></span>
+      <span style="width: 78%; height: 10px; border-radius: 999px; background: oklch(1 0 0 / 0.08);"></span>
+      <span style="width: 64%; height: 10px; border-radius: 999px; background: oklch(1 0 0 / 0.08);"></span>
+    </div>
+
+    <sc-if value="{{isl.compact}}" hint-placeholder-val="{{true}}">
+      <div role="group" aria-label="{{a.aria}}" style="{{isl.compactStyle}}">
+        <span style="{{isl.leadStyle}}">
+          <span role="img" aria-label="{{a.glyphLabel}}" style="position: relative; display: flex;">
+            <sc-if value="{{a.g.filled}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><rect x="1.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="7" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="1.5" y="10" width="4" height="4.5" rx="1"></rect><rect x="7" y="10" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="10" width="4" height="4.5" rx="1"></rect></svg></sc-if>
+            <sc-if value="{{a.g.outline}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="2" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="10.4" width="3.2" height="3.6" rx="0.8"></rect></svg></sc-if>
+            <sc-if value="{{a.g.dot}}" hint-placeholder-val="{{false}}"><span style="position: absolute; right: -4px; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1.5px #000;"></span></sc-if>
+            <sc-if value="{{a.g.warn}}" hint-placeholder-val="{{false}}"><svg style="position: absolute; right: -6px; bottom: -4px;" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.6 9.2H0.4z" fill="currentColor" stroke="#000" stroke-width="1.2" stroke-linejoin="round"></path></svg></sc-if>
+          </span>
+        </span>
+        <sc-if value="{{isl.hasTrail}}" hint-placeholder-val="{{true}}">
+          <span style="{{isl.trailStyle}}">
+            <sc-if value="{{isl.trailDot}}" hint-placeholder-val="{{true}}"><span style="{{sceneDot}}"></span></sc-if>
+            {{isl.trail}}
+          </span>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isl.minimal}}" hint-placeholder-val="{{false}}">
+      <span aria-hidden="true" style="position: absolute; left: 105px; top: 11px; width: 150px; height: 37px; border-radius: 999px; background: #000;"></span>
+      <span role="img" aria-label="Patchbridge: connected to Studio Mac" style="position: absolute; left: 262px; top: 11px; width: 37px; height: 37px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #000; color: {{t.signal}};">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><rect x="1.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="7" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="1.5" y="10" width="4" height="4.5" rx="1"></rect><rect x="7" y="10" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="10" width="4" height="4.5" rx="1"></rect></svg>
+      </span>
+    </sc-if>
+
+    <sc-if value="{{isl.expanded}}" hint-placeholder-val="{{false}}">
+      <div role="group" aria-label="{{a.aria}}" style="{{isl.expStyle}}">
+        <div style="height: 30px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <span style="display: flex; align-items: center; gap: 8px; color: {{a.glyphColor}};">
+            <span role="img" aria-label="{{a.glyphLabel}}" style="position: relative; display: flex;">
+              <sc-if value="{{a.g.filled}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><rect x="1.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="7" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="1.5" y="10" width="4" height="4.5" rx="1"></rect><rect x="7" y="10" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="10" width="4" height="4.5" rx="1"></rect></svg></sc-if>
+              <sc-if value="{{a.g.outline}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="2" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="10.4" width="3.2" height="3.6" rx="0.8"></rect></svg></sc-if>
+              <sc-if value="{{a.g.dot}}" hint-placeholder-val="{{false}}"><span style="position: absolute; right: -4px; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1.5px #000;"></span></sc-if>
+              <sc-if value="{{a.g.warn}}" hint-placeholder-val="{{false}}"><svg style="position: absolute; right: -6px; bottom: -4px;" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.6 9.2H0.4z" fill="currentColor" stroke="#000" stroke-width="1.2" stroke-linejoin="round"></path></svg></sc-if>
+            </span>
+            <span style="font-size: 14px; font-weight: 600; color: {{t.ink}};">Studio Mac</span>
+          </span>
+          <span style="{{isl.trailStyle}}">
+            <sc-if value="{{isl.trailDot}}" hint-placeholder-val="{{true}}"><span style="{{sceneDot}}"></span></sc-if>
+            {{isl.expTrail}}
+          </span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">{{isl.title}}</span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-variant-numeric: tabular-nums;">
+            <sc-if value="{{isl.subDot}}" hint-placeholder-val="{{false}}"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{t.signal}};"></span></sc-if>
+            <span style="color: {{t.muted}};">{{isl.sub}}</span>
+          </span>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 16px;">
+          <div role="img" aria-label="{{a.railLabel}}" style="flex: 1; min-width: 0; display: flex; align-items: flex-start;">
+            <sc-for list="{{a.rail}}" as="r" hint-placeholder-count="5">
+              <sc-if value="{{r.node}}" hint-placeholder-val="{{true}}">
+                <span style="width: 40px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <span style="{{r.style}}">
+                    <sc-if value="{{r.phone}}" hint-placeholder-val="{{true}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg></sc-if>
+                    <sc-if value="{{r.mac}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="1.5"></rect><path d="M2 19.5h20"></path></svg></sc-if>
+                    <sc-if value="{{r.qc}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><rect x="1.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="7" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="1.5" y="10" width="4" height="4.5" rx="1"></rect><rect x="7" y="10" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="10" width="4" height="4.5" rx="1"></rect></svg></sc-if>
+                  </span>
+                  <span style="{{r.labelStyle}}">{{r.label}}</span>
+                </span>
+              </sc-if>
+              <sc-if value="{{r.link}}" hint-placeholder-val="{{false}}">
+                <span style="flex: 1; min-width: 8px; height: 28px; display: flex; align-items: center;"><span style="{{r.lineStyle}}"></span></span>
+              </sc-if>
+            </sc-for>
+          </div>
+          <button type="button" style="{{a.btnStyle}}">
+            <sc-if value="{{a.btnReturn}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"></path><path d="M20 4v4.5h-4.5"></path></svg></sc-if>
+            {{a.btn}}
+          </button>
+        </div>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{is.settings}}" hint-placeholder-val="{{false}}">
+    <div style="height: 100%; box-sizing: border-box; padding: 62px 16px 34px; display: flex; flex-direction: column; gap: 18px;">
+      <a href="#" style="align-self: flex-start; height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        Tremonti w Mic
+      </a>
+      <h1 style="margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em;">Connection</h1>
+
+      <section aria-label="Studio Mac" style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+          <div style="min-height: 68px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; gap: 14px;">
+            <span style="{{tile}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="1.5"></rect><path d="M2 19.5h20"></path></svg></span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+              <span style="font-size: 17px; font-weight: 600;">Studio Mac</span>
+              <span style="font-size: 13px; color: {{t.muted}};">Quad Cortex · CorOS 4.1.1</span>
+            </span>
+            <span role="status" style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.signal}};"></span>Connected</span>
+          </div>
+          <div style="min-height: 52px; box-sizing: border-box; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid {{t.hairline}};">
+            <span style="font-size: 16px;">Trusted</span>
+            <span style="font-size: 15px; color: {{t.muted}};">Until the Mac app quits</span>
+          </div>
+          <button type="button" style="{{rowDanger}}">Disconnect</button>
+        </div>
+      </section>
+
+      <section aria-label="Lock Screen" style="display: flex; flex-direction: column; gap: 8px;">
+        <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Lock Screen</span>
+        <div style="border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+          <div style="min-height: 56px; box-sizing: border-box; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <span style="font-size: 16px;">Show connection status</span>
+            <button type="button" role="switch" aria-checked="true" aria-label="Show connection status" style="{{switchOn}}"><span style="{{knob}}"></span></button>
+          </div>
+          <div style="min-height: 56px; box-sizing: border-box; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid {{t.hairline}};">
+            <span style="font-size: 16px;">Alert if the connection drops</span>
+            <button type="button" role="switch" aria-checked="true" aria-label="Alert if the connection drops" style="{{switchOn}}"><span style="{{knob}}"></span></button>
+          </div>
+        </div>
+      </section>
+
+      <a href="#" style="min-height: 52px; box-sizing: border-box; padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 12px; border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; color: inherit; text-decoration: none;">
+        <span style="flex: 1; font-size: 16px;">Appearance</span>
+        <span style="font-size: 15px; color: {{t.muted}};">Stage</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+      </a>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["ls-connected","ls-lost","ls-reconnecting","ls-approval","ls-ended","ls-alert","di-compact","di-compact-lost","di-compact-approval","di-minimal","di-expanded","di-expanded-lost","di-expanded-approval","settings"],"default":"ls-connected","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const screen = this.props.screen ?? 'ls-connected';
+    const isIsland = screen.indexOf('di-') === 0;
+    // The Dynamic Island is always black, so its content always uses Stage colors.
+    const themeName = isIsland ? 'stage' : (this.props.theme ?? 'stage');
+    const THEMES = {
+      stage: { ground: 'oklch(0.16 0.008 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', group: 'oklch(0.22 0.01 110)', fill: 'oklch(1 0 0 / 0.12)',
+        hairline: 'oklch(1 0 0 / 0.08)', hairlineStrong: 'oklch(1 0 0 / 0.32)', switchOff: 'oklch(1 0 0 / 0.18)',
+        glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
+        activity: 'oklch(0.16 0.008 110 / 0.88)', activityEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.12), inset 0 0 0 1px oklch(1 0 0 / 0.08)',
+        signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', caution: 'oklch(0.86 0.13 75)', danger: 'oklch(0.8 0.12 35)',
+        wallpaper: 'oklch(0.3 0.035 255)', clockInk: '#ffffff', keyBg: 'oklch(0 0 0 / 0.32)', keyInk: '#ffffff' },
+      daylight: { ground: 'oklch(0.975 0.003 110)', ink: 'oklch(0.2 0.01 110)', muted: 'oklch(0.45 0.01 110)', group: 'oklch(1 0 0)', fill: 'oklch(0.2 0.01 110 / 0.07)',
+        hairline: 'oklch(0.2 0.01 110 / 0.08)', hairlineStrong: 'oklch(0.2 0.01 110 / 0.34)', switchOff: 'oklch(0.2 0.01 110 / 0.16)',
+        glass: 'oklch(1 0 0 / 0.66)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 2px 8px oklch(0.2 0.01 110 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(0.2 0.01 110 / 0.07), 0 1px 3px oklch(0.2 0.01 110 / 0.06)',
+        activity: 'oklch(0.985 0.002 110 / 0.9)', activityEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 6px 18px oklch(0.2 0.02 255 / 0.12)',
+        signal: 'oklch(0.48 0.12 115)', signalInk: '#ffffff', caution: 'oklch(0.52 0.13 60)', danger: '#ba2c25',
+        wallpaper: 'oklch(0.84 0.045 240)', clockInk: 'oklch(0.24 0.04 255)', keyBg: 'oklch(1 0 0 / 0.45)', keyInk: 'oklch(0.24 0.04 255)' }
+    };
+    const t = THEMES[themeName];
+    const SCENE = '#ff7000';
+
+    // Rail: iPhone, Bluetooth, Mac, USB, QC. Line style carries state, like the Mac window.
+    const NODE_WORD = { ok: 'connected', wait: 'unknown', ask: 'waiting for approval', off: 'not connected' };
+    const LINK_WORD = { live: 'connected', seek: 'reconnecting', down: 'lost', none: 'off' };
+    const node = (kind, label, state) => {
+      const style = { width: '28px', height: '28px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' };
+      if (state === 'wait' || state === 'off') Object.assign(style, { border: '1.5px dashed ' + t.hairlineStrong, color: t.muted });
+      else Object.assign(style, { background: t.fill, color: t.ink, boxShadow: state === 'ask' ? '0 0 0 2px ' + t.signal : 'none' });
+      return { node: true, link: false, phone: kind === 'phone', mac: kind === 'mac', qc: kind === 'qc', label, state, style,
+        labelStyle: { fontSize: '11px', lineHeight: '13px', fontWeight: 600, color: state === 'wait' || state === 'off' ? t.muted : t.ink } };
+    };
+    const link = (kind) => ({ node: false, link: true, kind, lineStyle: { width: '100%', height: '0', opacity: kind === 'live' ? 0.55 : 1,
+      borderTop: kind === 'live' ? '2px solid ' + t.ink : kind === 'seek' ? '2px dashed ' + t.signal : kind === 'down' ? '2px dashed ' + t.caution : '2px dotted ' + t.hairlineStrong } });
+    const rail = (p, bt, m, usb, q) => {
+      const r = [node('phone', 'iPhone', p), link(bt), node('mac', 'Mac', m), link(usb), node('qc', 'QC', q)];
+      const label = 'iPhone ' + NODE_WORD[p] + ', Bluetooth ' + LINK_WORD[bt] + ', Studio Mac ' + NODE_WORD[m] + ', USB ' + LINK_WORD[usb] + ', Quad Cortex ' + NODE_WORD[q];
+      return { r, label };
+    };
+
+    const btnBase = { height: '44px', flex: 'none', padding: '0 18px', display: 'flex', alignItems: 'center', gap: '7px', border: '0', borderRadius: '999px', font: 'inherit', fontSize: '15px', fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' };
+    const BTN = {
+      primary: { ...btnBase, background: t.signal, color: t.signalInk, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)' },
+      danger: { ...btnBase, background: t.fill, color: t.danger },
+      busy: { ...btnBase, background: t.fill, color: t.muted, cursor: 'default' }
+    };
+
+    const txt = (text, tone) => ({ text, dot: false, dotStyle: {}, textStyle: { color: tone === 'ink' ? t.ink : tone === 'caution' ? t.caution : t.muted, fontWeight: tone === 'ink' ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis' } });
+    const dotTxt = (text, color, tone) => ({ ...txt(text, tone), dot: true, dotStyle: { width: '8px', height: '8px', flex: 'none', borderRadius: '50%', background: color, boxShadow: themeName === 'daylight' && color === SCENE ? 'inset 0 0 0 1.5px oklch(0.2 0.01 110 / 0.55)' : 'none' } });
+    const sep = () => txt('·', 'muted');
+
+    const A = {
+      connected: { title: 'Connected to Studio Mac', glyph: 'filled', tone: 'signal', glyphLabel: 'Connected',
+        sub: [txt('Tremonti w Mic', 'ink'), sep(), dotTxt('F', SCENE, 'muted'), sep(), dotTxt('2 unsaved', t.signal, 'muted')],
+        rail: rail('ok', 'live', 'ok', 'live', 'ok'), btn: 'Disconnect', kind: 'danger' },
+      lost: { title: 'Connection lost', glyph: 'warn', tone: 'caution', glyphLabel: 'Needs attention',
+        sub: [txt('Studio Mac', 'ink'), sep(), txt('21:32', 'muted')],
+        rail: rail('ok', 'down', 'wait', 'none', 'wait'), btn: 'Reconnect', kind: 'primary', ret: true },
+      reconnecting: { title: 'Reconnecting to Studio Mac…', glyph: 'outline', tone: 'ink', glyphLabel: 'Reconnecting',
+        sub: [txt('Studio Mac', 'ink'), sep(), txt('trusted', 'muted')],
+        rail: rail('ok', 'seek', 'wait', 'none', 'wait'), btn: 'Reconnecting', kind: 'busy', spin: true },
+      approval: { title: 'Approval needed', glyph: 'dot', tone: 'signal', glyphLabel: 'Approval needed',
+        sub: [txt('Studio Mac', 'ink')],
+        rail: rail('ask', 'seek', 'ok', 'live', 'ok'), btn: 'Open Patchbridge', kind: 'primary' },
+      ended: { title: 'Disconnected from Studio Mac', glyph: 'outline', tone: 'muted', glyphLabel: 'Disconnected',
+        sub: [dotTxt('2 unsaved edits', t.signal, 'muted')],
+        rail: rail('ok', 'none', 'off', 'none', 'off'), btn: '', kind: 'none' }
+    };
+    const KEY = { 'ls-connected': 'connected', 'ls-lost': 'lost', 'ls-reconnecting': 'reconnecting', 'ls-approval': 'approval', 'ls-ended': 'ended', 'ls-alert': 'lost',
+      'di-compact': 'connected', 'di-compact-lost': 'lost', 'di-compact-approval': 'approval', 'di-minimal': 'connected',
+      'di-expanded': 'connected', 'di-expanded-lost': 'lost', 'di-expanded-approval': 'approval' };
+    const a0 = A[KEY[screen]] || A.connected;
+    const toneColor = { signal: t.signal, caution: t.caution, ink: t.ink, muted: t.muted }[a0.tone];
+    const tileBg = t.fill;
+    const a = {
+      title: a0.title, sub: a0.sub, rail: a0.rail.r, railLabel: a0.rail.label, glyphLabel: a0.glyphLabel, glyphColor: toneColor,
+      aria: 'Patchbridge: ' + a0.title,
+      g: { filled: a0.glyph === 'filled' || a0.glyph === 'dot', outline: a0.glyph === 'outline' || a0.glyph === 'warn', dot: a0.glyph === 'dot', warn: a0.glyph === 'warn' },
+      tileBg: themeName === 'stage' ? 'oklch(0.27 0.01 110)' : 'oklch(0.93 0.004 110)',
+      tileStyle: { width: '40px', height: '40px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px',
+        background: themeName === 'stage' ? 'oklch(0.27 0.01 110)' : 'oklch(0.93 0.004 110)', color: toneColor },
+      dotBadge: { position: 'absolute', right: '-4px', top: '-3px', width: '7px', height: '7px', borderRadius: '50%', background: 'currentColor', boxShadow: '0 0 0 1.5px ' + (themeName === 'stage' ? 'oklch(0.27 0.01 110)' : 'oklch(0.93 0.004 110)') },
+      hasButton: a0.kind !== 'none', btn: a0.btn, btnStyle: BTN[a0.kind] || BTN.primary, btnSpin: !!a0.spin, btnReturn: !!a0.ret, btnDisabled: a0.kind === 'busy' ? 'true' : 'false'
+    };
+
+    const isLock = screen.indexOf('ls-') === 0;
+    const isSettings = screen === 'settings';
+    const h = isIsland ? 240 : 874;
+    const rootStyle = { width: '402px', height: h + 'px', position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
+      background: isLock ? t.wallpaper : isIsland ? 'oklch(0.24 0.012 250)' : t.ground, color: t.ink,
+      fontFamily: "-apple-system, 'SF Pro Text', Inter, system-ui, sans-serif" };
+
+    const floating = { position: 'absolute', left: '12px', right: '12px', bottom: '128px', boxSizing: 'border-box', borderRadius: '26px',
+      background: t.activity, boxShadow: t.activityEdge, backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)' };
+    const cardStyle = { ...floating, padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: '14px' };
+    const notifyStyle = { ...floating, padding: '14px', display: 'flex', alignItems: 'flex-start', gap: '12px' };
+    const key = (side) => ({ position: 'absolute', [side]: '44px', bottom: '46px', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      borderRadius: '50%', background: t.keyBg, color: t.keyInk, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' });
+    const lock = { time: screen === 'ls-connected' ? '21:14' : screen === 'ls-ended' ? '21:40' : '21:32', clockInk: t.clockInk,
+      leftKey: key('left'), rightKey: key('right'),
+      homeBar: { position: 'absolute', left: '134px', bottom: '8px', width: '134px', height: '5px', borderRadius: '999px', background: t.clockInk, opacity: 0.85 } };
+
+    // Island: compact sits around the camera; expanded fills the top of the screen.
+    const COMPACT = {
+      connected: { trail: 'F', dot: true, color: t.ink },
+      lost: { trail: 'Lost', dot: false, color: t.caution },
+      approval: { trail: 'Approve', dot: false, color: t.signal }
+    };
+    const EXP = {
+      connected: { title: 'Tremonti w Mic', sub: '2 unsaved edits', subDot: true, trail: 'F · RHYTHM', dot: true, color: t.ink },
+      lost: { title: 'Connection lost', sub: 'At 21:32', subDot: false, trail: 'Lost', dot: false, color: t.caution },
+      approval: { title: 'Approval needed', sub: 'Approve on Studio Mac', subDot: false, trail: 'Waiting', dot: false, color: t.signal }
+    };
+    const c0 = COMPACT[KEY[screen]] || COMPACT.connected;
+    const e0 = EXP[KEY[screen]] || EXP.connected;
+    const isExp = screen.indexOf('di-expanded') === 0;
+    const isl = {
+      compact: isIsland && !isExp && screen !== 'di-minimal', minimal: screen === 'di-minimal', expanded: isExp,
+      hasTrail: true, trail: c0.trail, trailDot: isExp ? e0.dot : c0.dot, expTrail: e0.trail, title: e0.title, sub: e0.sub, subDot: e0.subDot,
+      compactStyle: { position: 'absolute', left: '76px', top: '11px', width: '250px', height: '37px', boxSizing: 'border-box', padding: '0 14px 0 12px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '999px', background: '#000' },
+      leadStyle: { display: 'flex', color: toneColor },
+      trailStyle: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: isExp ? e0.color : c0.color },
+      expStyle: { position: 'absolute', left: '8px', right: '8px', top: '8px', boxSizing: 'border-box', padding: '14px 20px 18px', display: 'flex', flexDirection: 'column', gap: '12px',
+        borderRadius: '44px', background: '#000', color: t.ink }
+    };
+
+    return {
+      t, a, isl, lock, rootStyle, cardStyle, notifyStyle,
+      is: { lock: isLock, card: isLock && screen !== 'ls-alert', notify: screen === 'ls-alert', island: isIsland, settings: isSettings },
+      sceneDot: { width: '8px', height: '8px', borderRadius: '50%', background: SCENE },
+      appIcon: { width: '38px', height: '38px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', background: 'oklch(0.16 0.008 110)', color: 'oklch(0.87 0.17 115)', boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.1)' },
+      tile: { width: '44px', height: '44px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '13px', background: t.fill, color: t.ink },
+      rowDanger: { width: '100%', minHeight: '52px', padding: '0 14px', border: '0', borderTop: '1px solid ' + t.hairline, borderRadius: '0 0 18px 18px', background: 'transparent', color: t.danger, font: 'inherit', fontSize: '16px', textAlign: 'left', cursor: 'pointer' },
+      switchOn: { width: '51px', height: '31px', flex: 'none', padding: '2px', border: '0', borderRadius: '999px', background: t.signal, display: 'flex', justifyContent: 'flex-end', cursor: 'pointer' },
+      knob: { width: '27px', height: '27px', borderRadius: '50%', background: '#fff', boxShadow: '0 2px 4px oklch(0 0 0 / 0.25)' }
+    };
+  }
+}
+</script>
+</body>
+</html>
