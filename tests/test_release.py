@@ -16,7 +16,7 @@ class ReleaseTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        shutil.copy(ROOT / 'release.sh', self.root)
+        shutil.copy(ROOT / 'release_ios', self.root)
         (self.root / 'tools').mkdir()
         shutil.copy(ROOT / 'tools/test_destination.py', self.root / 'tools')
         (self.root / 'ios').mkdir()
@@ -66,7 +66,7 @@ if name == 'xcodebuild' and args[0] == '-showdestinations':
         )
 
     def run_release(self, *args):
-        return subprocess.run(['bash', str(self.root / 'release.sh'), '--build', '42', *args], env=self.env, text=True, capture_output=True)
+        return subprocess.run(['bash', str(self.root / 'release_ios'), '--build', '42', *args], env=self.env, text=True, capture_output=True)
 
     def calls(self):
         return [json.loads(line) for line in self.events.read_text().splitlines()] if self.events.exists() else []

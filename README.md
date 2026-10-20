@@ -116,3 +116,9 @@ fixture in `tests/fixtures/` is included. Raw-capture snapshot tests skip when
 their local input is missing. Full USB fixture checks, packaging, and preflight
 require the local captured inputs and dependencies described in
 [Mac packaging](docs/MAC_PACKAGING.md); a fresh clone alone cannot run those gates.
+
+## Release scripts
+
+Use `./release_ios` for iPhone TestFlight and `./release_macos` for Mac TestFlight.
+Both upload by default and accept `--no-upload`, `--skip-tests`, `--build`, and
+`--allow-dirty`. See [iOS release setup](ios/README.md) and [Mac release setup](docs/MAC_PACKAGING.md).

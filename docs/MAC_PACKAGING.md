@@ -117,3 +117,41 @@ adapter; only supported, confirmed operations are exposed by the phone.
 
 The host also offers **Export Troubleshooting Report…** (Command-E). See
 [diagnostics](DIAGNOSTICS.md) for excluded data, retention, and offline export checks.
+
+## Mac App Store / TestFlight release
+
+Use `./release_macos` from the repository root. It accepts exactly the same flags as
+`./release_ios` (the renamed iPhone release script):
+
+```sh
+./release_macos                           # test, archive, verify, upload, local tag
+./release_macos --no-upload               # signed local installer; no upload or tag
+./release_macos --skip-tests --build 42    # use previously completed tests
+./release_macos --allow-dirty --no-upload  # local working changes; never tag
+```
+
+Upload is the default; there is no `--upload` option. Team, version and bundle ID come
+from `ios/project.yml`, with the existing `DEVELOPMENT_TEAM` environment override.
+Build numbering and validation match iOS. Output is retained under
+`build/release-macos/<version>-<build>/`; an existing output directory is never replaced.
+A successful clean upload creates `macos/v<version>-<build>` locally, without pushing.
+Dirty releases require `--allow-dirty` and never create a tag.
+
+The Mac pipeline first builds the isolated runtime using the local dependencies above,
+then generates `mac/PatchbridgeMac.xcodeproj` from `mac/project.yml` and archives a native
+Release app with dSYMs. Its helper inherits the host sandbox; the host requests USB,
+Bluetooth and user-selected file access. Nested runtime binaries are signed with the
+archive identity. The exported installer is signature-checked and expanded; bundle ID,
+version/build, host/helper entitlements, provisioning-profile presence, and distribution
+signatures for all bundled binaries are checked before that exact package is uploaded.
+`--skip-tests` skips regression tests, not package construction or distribution verification.
+
+Use the same `.release.env` API key as iOS, with local Apple Distribution and Mac Installer
+Distribution certificates/private keys. The shared `asc_profile.py --platform mac` manages
+Mac App Store profiles. Without an API key, Xcode handles automatic signing; upload needs
+`MAC_ASC_USERNAME` and `MAC_ASC_PASSWORD_KEYCHAIN`, referencing an app-specific password
+already in Keychain. `--no-upload` does not require upload credentials. Add the macOS
+platform to the app’s App Store Connect record before uploading.
+
+Validation here uses stubbed signing/upload tools and a real unsigned archive. It does
+not create profiles, sign with production credentials, upload, or prove App Store acceptance.

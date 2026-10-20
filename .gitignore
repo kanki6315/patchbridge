@@ -41,3 +41,6 @@ Patchbridge-Troubleshooting*.json
 
 # Local release signing configuration
 .release.env
+
+# Generated from mac/project.yml for release archives
+/mac/PatchbridgeMac.xcodeproj/
