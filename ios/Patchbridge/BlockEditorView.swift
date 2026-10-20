@@ -13,6 +13,7 @@ struct BlockEditorView: View {
     @State private var lastStep: Double?
     @State private var editingContext: PresetSnapshot?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @ScaledMetric(relativeTo: .body) private var unitSize: CGFloat = 18
     @ScaledMetric(relativeTo: .largeTitle) private var valueSize: CGFloat = 48
     private var control: ParameterControl? { model.editor.control(blockID: block.id, parameterID: parameter) }
@@ -25,6 +26,13 @@ struct BlockEditorView: View {
     private var shown: Double? { draft ?? pending?.proposedValue.flatMap { control?.displayValue($0) } ?? display }
     private var category: BlockCategory { model.category(block) }
     private var arcColor: Color { category.arc(daylight: theme.daylight) }
+    /// Regular width (iPad) shows the number pad as a popover and types into the dial itself.
+    private var regular: Bool { sizeClass == .regular }
+    private var subtitle: String {
+        let kind = model.editor.catalog?.models[block.model_id]?.category ?? "Block"
+        let slot = regular && block.position.count == 2 ? " · Row \(block.position[0] + 1), slot \(block.position[1] + 1)" : ""
+        return kind + slot + " · Scene \(model.snapshot?.scene ?? "")"
+    }
 
     var body: some View {
         ScrollView {
@@ -33,7 +41,7 @@ struct BlockEditorView: View {
                     Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.4).foregroundStyle(category.darkInk ? Color.black : .white).frame(width: 44, height: 44).background(category.color, in: RoundedRectangle(cornerRadius: 12))
                     VStack(alignment: .leading, spacing: 3) {
                         Text(model.name(block)).font(.title.bold())
-                        Text((model.editor.catalog?.models[block.model_id]?.category ?? "Block") + " · Scene \(model.snapshot?.scene ?? "")").font(.subheadline).foregroundStyle(theme.muted)
+                        Text(subtitle).font(.subheadline).foregroundStyle(theme.muted)
                     }
                 }
                 Text(control?.name.capitalized ?? "Parameter").font(.title2.bold()).frame(maxWidth: .infinity)
@@ -62,7 +70,7 @@ struct BlockEditorView: View {
         .onAppear { selectInitial() }
         .onChange(of: block.id) { _, _ in selectInitial() }
         .onChange(of: model.snapshot) { _, _ in draft = nil; fine = false }
-        .sheet(isPresented: $typing) { numberPad.presentationDetents([.height(dynamicTypeSize.isAccessibilitySize ? 550 : 355)]).presentationDragIndicator(.visible) }
+        .sheet(isPresented: Binding(get: { typing && !regular }, set: { typing = $0 })) { numberPad.presentationDetents([.height(dynamicTypeSize.isAccessibilitySize ? 550 : 355)]).presentationDragIndicator(.visible) }
     }
     private func selectInitial() {
         parameter = model.parameters(block).first(where: { model.editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }) ?? model.parameters(block).first ?? ""
@@ -105,11 +113,20 @@ struct BlockEditorView: View {
                     } label: {
                         HStack(alignment: .firstTextBaseline, spacing: 5) {
                             if readOnly { Image(systemName: "lock").font(.title3) }
-                            Text(shown.map { String(format: fine ? "%.2f" : "%.1f", $0) } ?? model.valueText(block.id, parameter))
+                            Text(typingInDial ? (entry.isEmpty ? "0" : entry) : shown.map { String(format: fine ? "%.2f" : "%.1f", $0) } ?? model.valueText(block.id, parameter))
                                 .font(.system(size: min(valueSize, fine ? 40 : 48), weight: .bold)).monospacedDigit().minimumScaleFactor(0.65).lineLimit(1)
                             if shown != nil { Text(control?.unit ?? "").font(.system(size: min(unitSize, 22), weight: .semibold)).foregroundStyle(theme.muted) }
-                        }.padding(5).overlay(RoundedRectangle(cornerRadius: 12).stroke(pending != nil ? theme.signal : .clear, style: StrokeStyle(lineWidth: 1.5, dash: [4, 4])))
+                        }.padding(5).overlay {
+                            if typingInDial {
+                                RoundedRectangle(cornerRadius: 12).stroke(enteredValue == nil ? theme.caution : theme.signal, lineWidth: 2)
+                            } else {
+                                RoundedRectangle(cornerRadius: 12).stroke(pending != nil ? theme.signal : .clear, style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                            }
+                        }
                     }.buttonStyle(.plain).disabled(readOnly || model.busy || display == nil)
+                        .popover(isPresented: Binding(get: { typing && regular }, set: { typing = $0 }), arrowEdge: .top) {
+                            numberPad.frame(width: 340).presentationBackground(theme.surface.opacity(0.95))
+                        }
                         .accessibilityLabel("\(control?.name ?? "Value"), \(model.valueText(block.id, parameter)). Enter exact value")
                     if fine { Text("Fine · 0.05 steps").font(.footnote).foregroundStyle(theme.signal) }
                 }.padding(.horizontal, 20)
@@ -191,6 +208,7 @@ struct BlockEditorView: View {
             }
         }
     }
+    private var typingInDial: Bool { typing && regular }
     private var enteredValue: Double? {
         guard let n = Double(entry), n.isFinite, control?.wireValue(display: n) != nil else { return nil }; return n
     }
@@ -201,8 +219,10 @@ struct BlockEditorView: View {
                 Spacer()
                 Text("\(control?.minimum.map { String(format: "%g", $0) } ?? "") to \(control?.maximum.map { String(format: "%g", $0) } ?? "") \(control?.unit ?? "")").font(.footnote).foregroundStyle(enteredValue == nil ? theme.caution : theme.muted)
             }
-            Text(entry.isEmpty ? "0" : entry).font(.largeTitle.bold()).monospacedDigit().frame(maxWidth: .infinity).padding(8)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(enteredValue == nil ? theme.caution : theme.signal, lineWidth: 2)).accessibilityLabel("Entered value \(entry)")
+            if !regular {
+                Text(entry.isEmpty ? "0" : entry).font(.largeTitle.bold()).monospacedDigit().frame(maxWidth: .infinity).padding(8)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(enteredValue == nil ? theme.caution : theme.signal, lineWidth: 2)).accessibilityLabel("Entered value \(entry)")
+            }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 8) {
                 ForEach(["1", "2", "3", "⌫", "4", "5", "6", "±", "7", "8", "9", ".", "0", "Clear", "Set"], id: \.self) { key in
                     Button { press(key) } label: { Text(key).font(.title3.weight(.semibold)).frame(maxWidth: .infinity).frame(minHeight: 44).background(key == "Set" ? theme.signal : theme.raised, in: RoundedRectangle(cornerRadius: 10)).foregroundStyle(key == "Set" ? theme.signalInk : theme.ink) }
@@ -211,7 +231,7 @@ struct BlockEditorView: View {
                         .accessibilityLabel(key == "⌫" ? "Delete" : key == "±" ? "Change sign" : key)
                 }
             }
-        }.padding(20).background(theme.surface).foregroundStyle(theme.ink).tint(theme.signal)
+        }.padding(20).background(regular ? Color.clear : theme.surface).foregroundStyle(theme.ink).tint(theme.signal)
     }
     private func press(_ key: String) {
         switch key {

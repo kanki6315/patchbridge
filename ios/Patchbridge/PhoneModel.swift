@@ -67,6 +67,27 @@ final class PhoneModel: ObservableObject {
     func parameters(_ block: PresetSnapshot.Block) -> [String] {
         (block.scenes[snapshot?.scene ?? ""]?.parameters.keys.map { $0 } ?? []).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
+    func location(_ snapshot: PresetSnapshot) -> String {
+        if snapshot.preset_id.hasPrefix("captured:") { return snapshot.preset_id.replacingOccurrences(of: "captured:", with: "").replacingOccurrences(of: ":", with: " · ") }
+        return "Current preset"
+    }
+    func sceneColor(_ theme: PhoneTheme, _ index: Int) -> Color {
+        guard let colors = snapshot?.scene_colors, colors.indices.contains(index) else { return theme.muted }
+        return Color(hex: colors[index])
+    }
+    func sceneName(_ index: Int) -> String {
+        guard let labels = snapshot?.scene_labels, labels.indices.contains(index) else { return "" }
+        return labels[index]
+    }
+    func editable(_ block: PresetSnapshot.Block) -> Bool {
+        parameters(block).contains { editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }
+    }
+    func summary(_ block: PresetSnapshot.Block) -> String {
+        if block.scenes[snapshot?.scene ?? ""]?.bypass == true { return "Bypassed" }
+        let editable = parameters(block).filter { editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }
+        if editable.isEmpty { return "Read-only" }
+        return editable.prefix(2).map { (editor.control(blockID: block.id, parameterID: $0)?.name.capitalized ?? "Value") + " " + valueText(block.id, $0) }.joined(separator: " · ")
+    }
     func valueText(_ block: String, _ parameter: String) -> String {
         guard let value = editor.value(blockID: block, parameterID: parameter) else { return "Unavailable" }
         let control = editor.control(blockID: block, parameterID: parameter)

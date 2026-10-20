@@ -7,6 +7,7 @@ struct EditorView: View {
     @AppStorage("matchSystem") private var matchSystem = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var systemScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var row = 0
     @State private var selectedBlock: String?
     @State private var inspectedBlock: String?
@@ -17,6 +18,8 @@ struct EditorView: View {
     @State private var linkCopied = false
     enum Sheet: String, Identifiable { case connection, appearance, getMac; var id: String { rawValue } }
     private var theme: PhoneTheme { PhoneTheme(daylight: matchSystem ? systemScheme == .light : appearance == "Daylight") }
+    /// Regular width uses the iPad workspace; accessibility text sizes keep the roomier iPhone layout.
+    private var pad: Bool { sizeClass == .regular && !dynamicTypeSize.isAccessibilitySize }
     private let macURL = URL(string: "https://patchbridge.arjunakankipati.com/appstorelink")!
 
     var body: some View {
@@ -24,7 +27,9 @@ struct EditorView: View {
         GeometryReader { geometry in
             let landscape = geometry.size.width > geometry.size.height && !dynamicTypeSize.isAccessibilitySize
             Group {
-                if model.ready, let snapshot = model.snapshot {
+                if model.ready, model.snapshot != nil, pad {
+                    PadWorkspaceView(model: model, theme: theme)
+                } else if model.ready, let snapshot = model.snapshot {
                     VStack(spacing: 0) {
                         if landscape {
                             landscapeOverview(snapshot)
@@ -40,6 +45,8 @@ struct EditorView: View {
                         }
                         if !landscape { saveBar(snapshot) }
                     }
+                } else if pad && model.coordinator.phase == .loading {
+                    PadLoadingView(theme: theme) { model.disconnect() }
                 } else { connection }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -57,6 +64,7 @@ struct EditorView: View {
                 Button(model.demo ? "Save demo preset" : "Save preset") { confirmCurrentSave() }
             } message: { Text(model.demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
             .onChange(of: model.ready) { _, ready in if !ready { selectedBlock = nil } }
+            .onChange(of: pad) { _, pad in if pad { selectedBlock = nil } }
             .onAppear {
                 #if DEBUG
                 guard !didConfigurePreview else { return }
@@ -64,7 +72,7 @@ struct EditorView: View {
                 if ProcessInfo.processInfo.arguments.contains("--stage") { appearance = "Stage"; matchSystem = false }
                 if ProcessInfo.processInfo.arguments.contains("--demo") {
                     model.loadDemo()
-                    if ProcessInfo.processInfo.arguments.contains("--editor") { selectedBlock = "0:1" }
+                    if ProcessInfo.processInfo.arguments.contains("--editor") && !pad { selectedBlock = "0:1" }
                     if ProcessInfo.processInfo.arguments.contains("--daylight") { appearance = "Daylight" }
                 }
                 #endif
@@ -107,41 +115,29 @@ struct EditorView: View {
             }
             Text(snapshot.name).font(.largeTitle.bold())
             HStack(spacing: 10) {
-                Text(location(snapshot)).foregroundStyle(theme.muted)
+                Text(model.location(snapshot)).foregroundStyle(theme.muted)
                 if snapshot.dirty { Label("Unsaved", systemImage: "circle.fill").foregroundStyle(theme.signal) }
             }.font(.subheadline)
         }
-    }
-    private func location(_ snapshot: PresetSnapshot) -> String {
-        if snapshot.preset_id.hasPrefix("captured:") { return snapshot.preset_id.replacingOccurrences(of: "captured:", with: "").replacingOccurrences(of: ":", with: " · ") }
-        return "Current preset"
-    }
-    private func sceneColor(_ snapshot: PresetSnapshot, _ index: Int) -> Color {
-        guard let colors = snapshot.scene_colors, colors.indices.contains(index) else { return theme.muted }
-        return Color(hex: colors[index])
-    }
-    private func sceneName(_ snapshot: PresetSnapshot, _ index: Int) -> String {
-        guard let labels = snapshot.scene_labels, labels.indices.contains(index) else { return "" }
-        return labels[index]
     }
     private func scenes(_ snapshot: PresetSnapshot) -> some View {
         let active = Array("ABCDEFGH").firstIndex(of: snapshot.scene.first ?? "A") ?? 0
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Circle().fill(sceneColor(snapshot, active)).frame(width: 10, height: 10)
-                Text("Scene \(snapshot.scene)" + (sceneName(snapshot, active).isEmpty ? "" : " · \(sceneName(snapshot, active))")).font(.headline)
+                Circle().fill(model.sceneColor(theme, active)).frame(width: 10, height: 10)
+                Text("Scene \(snapshot.scene)" + (model.sceneName(active).isEmpty ? "" : " · \(model.sceneName(active))")).font(.headline)
             }
             HStack(spacing: 4) {
                 ForEach(0..<8) { index in
                     VStack(spacing: 3) {
-                        Circle().fill(sceneColor(snapshot, index)).frame(width: index == active ? 12 : 9, height: index == active ? 12 : 9)
+                        Circle().fill(model.sceneColor(theme, index)).frame(width: index == active ? 12 : 9, height: index == active ? 12 : 9)
                             .overlay(Circle().stroke(theme.daylight ? theme.ink : .clear, lineWidth: 1))
                         Text(String(Array("ABCDEFGH")[index])).font(.caption.weight(.semibold))
                     }.frame(maxWidth: .infinity).frame(height: 40)
                         .background(index == active ? theme.raised : .clear, in: RoundedRectangle(cornerRadius: 13))
-                        .overlay(RoundedRectangle(cornerRadius: 13).stroke(index == active ? sceneColor(snapshot, index) : .clear, lineWidth: 1.5))
+                        .overlay(RoundedRectangle(cornerRadius: 13).stroke(index == active ? model.sceneColor(theme, index) : .clear, lineWidth: 1.5))
                         .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("Scene \(String(Array("ABCDEFGH")[index])) \(sceneName(snapshot, index))\(index == active ? ", active" : "")")
+                        .accessibilityLabel("Scene \(String(Array("ABCDEFGH")[index])) \(model.sceneName(index))\(index == active ? ", active" : "")")
                 }
             }
         }
@@ -165,7 +161,7 @@ struct EditorView: View {
         }.padding(8).background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
             .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line, lineWidth: 1))
     }
-    private func swatch(_ block: PresetSnapshot.Block, height: CGFloat) -> some View {
+    func swatch(_ block: PresetSnapshot.Block, height: CGFloat) -> some View {
         let category = model.category(block)
         let bypass = block.scenes[model.snapshot?.scene ?? ""]?.bypass == true
         return Text(category.code).font(.system(.caption2, weight: .bold)).lineLimit(1).minimumScaleFactor(0.4).strikethrough(bypass)
@@ -185,22 +181,16 @@ struct EditorView: View {
                         swatch(block, height: 42).frame(width: 42)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(model.name(block)).font(.headline)
-                            Text(summary(block)).font(.footnote).foregroundStyle(theme.muted).lineLimit(1)
+                            Text(model.summary(block)).font(.footnote).foregroundStyle(theme.muted).lineLimit(1)
                         }
                         Spacer(minLength: 0)
-                        if !model.parameters(block).contains(where: { model.editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }) { Image(systemName: "lock").foregroundStyle(theme.muted) }
+                        if !model.editable(block) { Image(systemName: "lock").foregroundStyle(theme.muted) }
                         Image(systemName: "chevron.right").foregroundStyle(theme.muted)
                     }.padding(.vertical, 9).contentShape(Rectangle())
                 }.buttonStyle(.plain)
                 Rectangle().fill(theme.line).frame(height: 0.5)
             }
         }
-    }
-    private func summary(_ block: PresetSnapshot.Block) -> String {
-        if block.scenes[model.snapshot?.scene ?? ""]?.bypass == true { return "Bypassed" }
-        let editable = model.parameters(block).filter { model.editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }
-        if editable.isEmpty { return "Read-only" }
-        return editable.prefix(2).map { (model.editor.control(blockID: block.id, parameterID: $0)?.name.capitalized ?? "Value") + " " + model.valueText(block.id, $0) }.joined(separator: " · ")
     }
     private func landscapeOverview(_ snapshot: PresetSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -213,13 +203,13 @@ struct EditorView: View {
                     ForEach(0..<8) { index in
                         let letter = String(Array("ABCDEFGH")[index])
                         VStack(spacing: 2) {
-                            Circle().fill(sceneColor(snapshot, index)).frame(width: 8, height: 8)
+                            Circle().fill(model.sceneColor(theme, index)).frame(width: 8, height: 8)
                                 .overlay(Circle().stroke(theme.daylight ? theme.ink : .clear, lineWidth: 1))
                             Text(letter).font(.caption2)
                         }.frame(width: 25, height: 36)
                             .background(snapshot.scene == letter ? theme.raised : .clear, in: RoundedRectangle(cornerRadius: 9))
-                            .overlay(RoundedRectangle(cornerRadius: 9).stroke(snapshot.scene == letter ? sceneColor(snapshot, index) : .clear))
-                            .accessibilityLabel("Scene \(letter) \(sceneName(snapshot, index))\(snapshot.scene == letter ? ", active" : "")")
+                            .overlay(RoundedRectangle(cornerRadius: 9).stroke(snapshot.scene == letter ? model.sceneColor(theme, index) : .clear))
+                            .accessibilityLabel("Scene \(letter) \(model.sceneName(index))\(snapshot.scene == letter ? ", active" : "")")
                     }
                 }
                 if model.editor.supports("save") {
@@ -246,7 +236,7 @@ struct EditorView: View {
                     if let block = snapshot.blocks.first(where: { $0.id == inspectedBlock }) ?? snapshot.blocks.first {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(model.name(block)).font(.headline)
-                            Text(summary(block)).font(.footnote).foregroundStyle(theme.muted)
+                            Text(model.summary(block)).font(.footnote).foregroundStyle(theme.muted)
                             Button("Edit block") { selectedBlock = block.id }.font(.headline).frame(minHeight: 44)
                         }.frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -272,16 +262,17 @@ struct EditorView: View {
     private var connection: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 26) {
-                Text(connectionTitle).font(.largeTitle.bold()).padding(.top, 32)
+                Text(connectionTitle).font(.largeTitle.bold()).padding(.top, pad ? 72 : 32)
+                    .frame(maxWidth: .infinity, alignment: pad ? .center : .leading)
                 HStack {
-                    connectionNode("iphone", "iPhone")
+                    connectionNode(deviceName == "iPad" ? "ipad" : "iphone", deviceName)
                     Text("Bluetooth").font(.caption).foregroundStyle(theme.muted)
                     connectionNode("laptopcomputer", "Mac")
                     Text("USB").font(.caption).foregroundStyle(theme.muted)
                     connectionNode("square.grid.3x2.fill", "QC")
                 }.padding(.vertical, 16)
                 if model.coordinator.phase == .awaitingApproval {
-                    Text("Approve this iPhone in Patchbridge on your Mac.").foregroundStyle(theme.muted)
+                    Text("Approve this \(deviceName) in Patchbridge on your Mac.").foregroundStyle(theme.muted)
                     if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
                     if let code = model.coordinator.approvalCode { Text(code.prefix(3) + " · " + code.suffix(3)).font(.largeTitle.bold().monospacedDigit()).frame(maxWidth: .infinity).padding(24).phoneGlass(theme) }
                     PrimaryButton(title: "I’ve approved it", theme: theme) { model.coordinator.authorize() }.disabled(model.busy)
@@ -308,13 +299,18 @@ struct EditorView: View {
                 }
                 Button { sheet = .getMac } label: { Label("Get Patchbridge for Mac", systemImage: "square.and.arrow.down").font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(20) }.phoneGlass(theme, radius: 20)
                 if let notice = model.notice { Text(notice).foregroundStyle(theme.caution) }
+                if pad { connectActions.padding(.top, 8) }
             }.padding(20)
+                .frame(maxWidth: pad ? 520 : .infinity).frame(maxWidth: .infinity)
         }.safeAreaInset(edge: .bottom) {
-            if model.coordinator.phase == .disconnected || model.coordinator.phase == .failed {
-                VStack(spacing: 10) {
-                    PrimaryButton(title: "Find my Mac", theme: theme) { model.start() }
-                    Button("Try the demo preset") { model.loadDemo() }.font(.headline).frame(maxWidth: .infinity).padding(17).background(theme.raised, in: Capsule())
-                }.padding(20)
+            if !pad { connectActions.padding(20) }
+        }
+    }
+    @ViewBuilder private var connectActions: some View {
+        if model.coordinator.phase == .disconnected || model.coordinator.phase == .failed {
+            VStack(spacing: 10) {
+                PrimaryButton(title: "Find my Mac", theme: theme) { model.start() }
+                Button("Try the demo preset") { model.loadDemo() }.font(.headline).frame(maxWidth: .infinity).padding(17).background(theme.raised, in: Capsule())
             }
         }
     }
@@ -356,31 +352,7 @@ struct EditorView: View {
                 Button(model.demo ? "Leave demo" : "Disconnect", role: .destructive) { model.disconnect(); self.sheet = nil }.foregroundStyle(theme.danger).frame(minHeight: 44)
             }
         case .appearance:
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("Appearance").font(.largeTitle.bold())
-                    ForEach(["Stage", "Daylight"], id: \.self) { name in
-                        let preview = PhoneTheme(daylight: name == "Daylight")
-                        Button { appearance = name; matchSystem = false } label: {
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack { Text(name).font(.headline); Spacer(); if appearance == name && !matchSystem { Image(systemName: "checkmark.circle.fill") } }
-                                HStack(spacing: 6) { ForEach(["Compressor", "Amp", "Cab", "Delay", "Reverb"], id: \.self) { category in
-                                    Text(BlockCategory(category).code).font(.caption2.bold()).frame(maxWidth: .infinity).frame(height: 32).background(BlockCategory(category).color, in: RoundedRectangle(cornerRadius: 7)).foregroundStyle(BlockCategory(category).darkInk ? Color.black : Color.white)
-                                } }
-                            }.padding(20).foregroundStyle(preview.ink).background(preview.surface, in: RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(appearance == name && !matchSystem ? theme.signal : theme.line, lineWidth: 1.5))
-                        }.buttonStyle(.plain).accessibilityIdentifier("theme-\(name)")
-                            .accessibilityValue(appearance == name && !matchSystem ? "Selected" : "Not selected")
-                    }
-                    Toggle("Match iPhone appearance", isOn: $matchSystem)
-                    Text("Block colors").font(.headline)
-                    LazyVGrid(columns: dynamicTypeSize.isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 12) {
-                        ForEach(["Dynamics", "Overdrive", "Amp", "Cab", "Modulation", "Delay", "Reverb", "Wah", "Capture", "Pitch", "Utility"], id: \.self) { name in
-                            HStack { Circle().fill(BlockCategory(name).color).frame(width: 12, height: 12); Text(name).font(.footnote) }.frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                    Text("Scene colors always come from your QC.").font(.footnote).foregroundStyle(theme.muted)
-                }
-            }
+            AppearanceSettings(theme: theme)
         }
     }
 }

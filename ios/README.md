@@ -1,8 +1,9 @@
-# Patchbridge iPhone app
+# Patchbridge iPhone and iPad app
 
 Native SwiftUI implementation of the regular-iPhone PoC boards in
-`docs/design/screens`. The app supports iPhone portrait and landscape; Duo and
-iPad layouts are outside this build.
+`docs/design/screens` and the iPad boards in `docs/design/ipad`. The app
+supports iPhone portrait and landscape and iPad in all orientations; Duo
+layouts are outside this build.
 
 ## Run
 
@@ -53,6 +54,14 @@ from a live connection.
 - Connection details includes Stage/Daylight appearance and Match iPhone
   appearance. Scene colors remain the QC's reported ARGB values.
 
+On iPad at regular width (`PadWorkspaceView.swift`), the grid, the selected
+row's list and a persistent editor panel share one screen: tapping a block in
+the grid or list retargets the panel. Grid cells show the block name, scenes
+show their QC names, and the number pad, Save confirmation and Connection
+details (with Appearance inside) are popovers. Notices sit in the top bar.
+Portrait puts the row list beside the panel. Split View, Slide Over, windowed
+apps at compact width and accessibility text sizes use the iPhone layout.
+
 Native navigation preserves swipe-back. Layout uses scrollable content and
 Dynamic Type; numeric values use tabular figures. Buttons and the dial expose
 VoiceOver labels and adjustment actions.
@@ -68,7 +77,10 @@ PYTHONPATH=src python3 -m pytest -q
 
 `PatchbridgeUITests` exercises demo navigation, exact-value validation, editing,
 save confirmation, appearance, Mac-link UI, read-only blocks and landscape on
-an iPhone Simulator. Its result bundle retains screenshots. Run it through
+an iPhone Simulator. On an iPad Simulator it runs `testPadWorkspace` instead of
+the iPhone navigation test, covering the panel, popovers and both orientations.
+iPadOS windowed mode can open the app at compact width; use full-screen apps to
+see the iPad layout. Its result bundle retains screenshots. Run it through
 Xcode's Test action or `xcodebuild test` with an available iPhone destination.
 Debug builds accept `--demo`, `--editor`, `--stage` and `--daylight` launch
 arguments for reproducible visual inspection; these do not enable live writes.
