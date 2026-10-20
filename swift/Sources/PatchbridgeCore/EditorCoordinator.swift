@@ -4,6 +4,8 @@ import Foundation
 /// confirmed state. start/reconnect requires fresh authorization; mutations are never replayed.
 public final class EditorCoordinator {
     public enum Phase: Equatable { case disconnected, connecting, awaitingApproval, loading, recovering, ready, failed }
+    /// Why a failure happened, when the screen should say more than "Connection ended".
+    public enum Failure: Equatable { case bridgeFull, revoked }
     public let editor = GenericEditor()
     public private(set) var nearbyMacs = [String: String]()
     public private(set) var macName: String?
@@ -24,6 +26,7 @@ public final class EditorCoordinator {
     public private(set) var approvalCode: String?
     private var phoneName: String
     public private(set) var error: String?
+    public private(set) var failure: Failure?
     public private(set) var outcome: String?
     public private(set) var status = "Disconnected"
     public var onChange: (() -> Void)?
@@ -48,6 +51,8 @@ public final class EditorCoordinator {
     private var requestedModels = Set<String>()
     private var nextPoll = TimeInterval.infinity
     private var discoveryDeadline = TimeInterval.infinity
+    /// A loading step the bridge was too busy to run, retried once it says to.
+    private var deferred: (operation: String, at: TimeInterval)?
     private struct Request { let id: String; let operation: String; let deadline: TimeInterval; var trustOffered = false }
     private var request: Request?
 
@@ -103,7 +108,7 @@ public final class EditorCoordinator {
         transport.reconnect(); onChange?()
     }
     public func disconnect() {
-        error = nil; outcome = nil
+        error = nil; failure = nil; outcome = nil; deferred = nil
         diagnostics.record(.editorDisconnected)
         generation = UUID(); timer?.invalidate(); timer = nil
         let old = transport; transport = nil
@@ -135,6 +140,7 @@ public final class EditorCoordinator {
         guard !isInBackground else { return }
         if phase == .ready, !busy, now() >= nextPoll { refresh() }
         if phase == .recovering, !busy, now() >= nextPoll { send("recover") }
+        if phase == .loading, !busy, let step = deferred, now() >= step.at { deferred = nil; send(step.operation) }
     }
     public func edit(blockID: String, parameterID: String, value: ParameterValue) throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
@@ -149,9 +155,12 @@ public final class EditorCoordinator {
         outcome = nil
         let pending = try editor.proposeSave(); send(pending.operation, command: pending.command)
     }
-    private func fail(_ message: String) {
+    private func fail(_ message: String, reason: Failure? = nil) {
         diagnostics.record(.editorFailed, code: "transport_failure")
-        disconnect(); phase = .failed; error = message; status = "Reconnect required"; onChange?()
+        disconnect(); phase = .failed; error = message; failure = reason; status = "Reconnect required"; onChange?()
+    }
+    private static func deviceName(_ response: [String: Any]) -> String? {
+        (response["changed_by"] as? String).map { DeviceIdentity.name($0, fallback: "another device") }
     }
     private func send(_ operation: String, command: [String: Any]? = nil) {
         guard request == nil, let transport else { return }
@@ -184,6 +193,10 @@ public final class EditorCoordinator {
         do {
             guard integer(response["version"]) == 1 else { throw EditorFailure.invalidState }
             if pending.operation == "hello" {
+                if (response["error"] as? [String: Any])?["code"] as? String == "bridge_full" {
+                    let detail = (response["error"] as? [String: Any])?["message"] as? String ?? "This Mac is already connected to the most devices it allows."
+                    fail("\(detail) Disconnect one on the Mac, then try again.", reason: .bridgeFull); return
+                }
                 let offeredTrust = pending.trustOffered
                 guard let token = response["connection_id"] as? String, !token.isEmpty,
                       let required = response["authorization_required"] as? Bool, required || offeredTrust else { throw EditorFailure.invalidState }
@@ -206,11 +219,34 @@ public final class EditorCoordinator {
                 if pending.operation == "connect", code == "unauthorized" {
                     phase = .awaitingApproval; error = message; onChange?(); return
                 }
+                if code == "revoked" {
+                    fail("Disconnected on your Mac. Reconnect to ask for approval again.", reason: .revoked); return
+                }
+                // Refused before reaching the QC, so nothing changed: retry when the bridge says.
+                if code == "busy" {
+                    let retry = response["retry_after"] as? Double ?? 1
+                    let delay = retry.isFinite ? min(8, max(0.5, retry)) : 1
+                    if ["set_parameter", "save"].contains(pending.operation) {
+                        let text = pending.operation == "save" ? "Save not applied. The bridge was busy with another device; try again."
+                            : "Not applied. The bridge was busy with another device; try again."
+                        editor.reject(id: pending.id, message: text); error = text; ready()
+                    } else if phase == .ready || phase == .recovering {
+                        nextPoll = now() + delay
+                    } else if phase == .loading {
+                        deferred = (pending.operation, now() + delay)
+                    } else { fail(message); return }
+                    onChange?(); return
+                }
                 if code == "device_unavailable" {
                     let uncertain = ["set_parameter", "save"].contains(pending.operation)
                     editor.disconnect(); staged = nil; session = nil; operations.removeAll()
                     phase = .recovering; status = "QC unavailable · reconnecting"
-                    if uncertain { error = "Last edit or save outcome unknown. It will not be retried." }
+                    if uncertain {
+                        // The bridge marks an edit it never sent; only then is the outcome certain.
+                        error = response["applied"] as? Bool == false
+                            ? (pending.operation == "save" ? "Save not applied. Editing resumes after the QC reconnects." : "Edit not applied. Editing resumes after the QC reconnects.")
+                            : "Last edit or save outcome unknown. It will not be retried."
+                    }
                     let delay = response["retry_after"] as? Double ?? 1
                     nextPoll = now() + (delay.isFinite ? min(8, max(0.5, delay)) : 1)
                     onChange?(); return
@@ -219,7 +255,8 @@ public final class EditorCoordinator {
                 if ["set_parameter", "save"].contains(pending.operation),
                    ["stale_context", "invalid_value", "unsupported_parameter", "unsupported_operation"].contains(code),
                    response["session_id"] as? String == session {
-                    editor.reject(id: pending.id, message: message); error = message
+                    let text = code == "stale_context" ? Self.deviceName(response).map { "Not applied. \($0) changed it first." } ?? message : message
+                    editor.reject(id: pending.id, message: text); error = text
                     phase = .loading; send("snapshot"); return
                 }
                 fail(message); return
@@ -249,7 +286,9 @@ public final class EditorCoordinator {
                 cachedCatalog = catalog; cachedModels = requestedModels; try installStaged()
             case "snapshot":
                 let state = try decode(PresetSnapshot.self, result["state"])
-                if let previous = editor.snapshot, previous != state { outcome = "Changed on the QC" }
+                if let previous = editor.snapshot, previous != state {
+                    outcome = Self.deviceName(response).map { "Changed on \($0)" } ?? "Changed on the QC"
+                }
                 guard newRevision > revision || state == editor.snapshot else { throw EditorFailure.staleContext }
                 if state.catalog_id != editor.catalog?.id || !Set(state.blocks.map(\.model_id)).isSubset(of: cachedModels) {
                     staged = state; revision = newRevision; phase = .loading

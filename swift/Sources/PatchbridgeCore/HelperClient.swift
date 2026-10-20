@@ -50,15 +50,16 @@ public final class HelperClient {
         diagnostics.record(.helperStarted, code: readOnly ? "read_only" : nil)
     }
 
-    public func request(_ fields: [String: Any], timeout: TimeInterval = 5) throws -> [String: Any] {
+    /// `device` tags this request's diagnostics with the bridge's index for the sending device.
+    public func request(_ fields: [String: Any], timeout: TimeInterval = 5, device: Int? = nil) throws -> [String: Any] {
         lock.lock(); defer { lock.unlock() }
         guard live, process.isRunning else {
-            diagnostics.record(.requestFailed, operation: fields["operation"] as? String, code: "disconnected")
+            diagnostics.record(.requestFailed, operation: fields["operation"] as? String, code: "disconnected", device: device)
             throw BridgeFailure.disconnected
         }
         let started = ProcessInfo.processInfo.systemUptime
         let operation = fields["operation"] as? String
-        diagnostics.record(.requestStarted, operation: operation)
+        diagnostics.record(.requestStarted, operation: operation, device: device)
         let id = UUID().uuidString
         var message = fields
         message["id"] = id; message["version"] = 1; message["type"] = "request"
@@ -81,7 +82,7 @@ public final class HelperClient {
                     guard reply["type"] as? String == "response", reply["id"] as? String == id else { throw BridgeFailure.protocolError }
                     diagnostics.record(reply["status"] as? String == "confirmed" ? .requestConfirmed : .requestRejected,
                         operation: operation, code: (reply["error"] as? [String: Any])?["code"] as? String,
-                        duration: ProcessInfo.processInfo.systemUptime - started)
+                        duration: ProcessInfo.processInfo.systemUptime - started, device: device)
                     return reply
                 }
                 let remaining = deadline.timeIntervalSinceNow
@@ -104,7 +105,7 @@ public final class HelperClient {
             case BridgeFailure.overflow: code = "overflow"
             default: code = "protocol_error"
             }
-            diagnostics.record(.requestFailed, operation: operation, code: code, duration: ProcessInfo.processInfo.systemUptime - started)
+            diagnostics.record(.requestFailed, operation: operation, code: code, duration: ProcessInfo.processInfo.systemUptime - started, device: device)
             stopLocked() // Never replay an uncertain edit.
             throw error
         }

@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -11,6 +12,8 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
+# The release reads the app version from here, so a version bump never changes these tests.
+VERSION = re.search(r'^\s+MARKETING_VERSION:\s*["\']?([A-Za-z0-9.-]+)', (ROOT / 'ios/project.yml').read_text(), re.M).group(1)
 spec = importlib.util.spec_from_file_location('release_macos', ROOT / 'tools/release_macos.py')
 release = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(release)
@@ -79,13 +82,13 @@ class MacReleaseTests(unittest.TestCase):
         upload = next(i for i,c in enumerate(self.calls) if c[:3] == ('xcrun','altool','--upload-app'))
         tag = next(i for i,c in enumerate(self.calls) if c[:3] == ('git','tag','-a'))
         self.assertLess(verified, upload); self.assertLess(upload, tag)
-        self.assertIn('macos/v0.1-42', self.calls[tag])
+        self.assertIn(f'macos/v{VERSION}-42', self.calls[tag])
         self.assertIn('abc123', self.calls[tag])
-        options = plistlib.loads((self.root / 'build/release-macos/0.1-42/ExportOptions.plist').read_bytes())
+        options = plistlib.loads((self.root / f'build/release-macos/{VERSION}-42/ExportOptions.plist').read_bytes())
         self.assertEqual(options['destination'], 'export') # Upload only the inspected package.
         self.assertFalse(options['uploadSymbols'])
-        source = json.loads((self.root / 'build/release-macos/0.1-42/release-source.json').read_text())
-        self.assertEqual(source, dict(commit='abc123', dirty=False, version='0.1', build='42'))
+        source = json.loads((self.root / f'build/release-macos/{VERSION}-42/release-source.json').read_text())
+        self.assertEqual(source, dict(commit='abc123', dirty=False, version=VERSION, build='42'))
         self.assertLess(self.calls.index(('symbols',)), verified)
 
     def test_no_upload_exports_without_credentials_or_tag(self):
@@ -117,7 +120,7 @@ class MacReleaseTests(unittest.TestCase):
         self.duplicate = True
         with self.assertRaises(ValueError): self.invoke()
         self.duplicate = False
-        (self.root / 'build/release-macos/0.1-42').mkdir(parents=True)
+        (self.root / f'build/release-macos/{VERSION}-42').mkdir(parents=True)
         with self.assertRaises(ValueError): self.invoke()
         self.assertFalse(self.uploaded())
 
@@ -127,7 +130,7 @@ class MacReleaseTests(unittest.TestCase):
         self.invoke('--no-upload')
         profile = next(c for c in self.calls if 'asc_profile.py' in c)
         self.assertIn('mac', profile)
-        options = plistlib.loads((self.root / 'build/release-macos/0.1-42/ExportOptions.plist').read_bytes())
+        options = plistlib.loads((self.root / f'build/release-macos/{VERSION}-42/ExportOptions.plist').read_bytes())
         self.assertEqual(options['provisioningProfiles'], {'com.arjunakankipati.patchbridge': 'Patchbridge Mac App Store'})
         self.assertEqual(options['signingStyle'], 'manual')
 

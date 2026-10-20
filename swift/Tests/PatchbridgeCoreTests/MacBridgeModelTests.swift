@@ -34,8 +34,6 @@ final class MacBridgeModelTests: XCTestCase {
             var stops = 0
             func start() throws { Thread.sleep(forTimeInterval: 0.1) }
             func requestPhone() throws {}
-            func approve() throws {}
-            func revoke() {}
             func refresh() throws {}
             func stop() { stops += 1 }
             func interruptHelper() {}
@@ -96,7 +94,7 @@ extension MacBridgeModelTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let backend = BundledOfflineBackend(makeHelper: { try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path) })
         try backend.start(); defer { backend.stop() }
-        try backend.requestPhone(); try backend.approve()
+        try backend.requestPhone(); try backend.approvePending()
         XCTAssertTrue(backend.presentation.recentEdits.isEmpty)
         try backend.editSimulation(value: 7.5, stale: false)
         XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .confirmed)
@@ -126,5 +124,40 @@ extension MacBridgeModelTests {
         XCTAssertEqual(malformed.outcome, .unknown)
         let adjusted = RecentBridgeEdit(request: request, response: ["status": "confirmed", "result": ["state": ["scene": "A", "blocks": [["id": "amp", "scenes": ["A": ["parameters": ["gain": 4]]]]]]]], snapshot: nil, catalog: nil)
         XCTAssertEqual(adjusted.outcome, .adjusted)
+    }
+}
+
+extension MacBridgeModelTests {
+    func testSimulationAddsASecondDeviceWhoseEditMakesTheFirstReload() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let backend = BundledOfflineBackend(makeHelper: { try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path) })
+        try backend.start(); defer { backend.stop() }
+        try backend.requestPhone(); try backend.approvePending(trust: true)
+        try backend.requestSecondDevice()
+        XCTAssertEqual(backend.presentation.phoneName, "Simulated iPad")
+        XCTAssertEqual(backend.presentation.devices.map(\.state), [.connected, .awaitingApproval])
+        try backend.approvePending()
+        XCTAssertEqual(backend.presentation.connected.count, 2)
+        XCTAssertEqual(backend.presentation.trusted.count, 1)
+        try backend.editFromOtherDevice()
+        XCTAssertEqual(backend.presentation.recentEdits.first?.device, "Simulated iPad")
+        XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .confirmed)
+        try backend.editSimulation(value: 7.5, stale: false) // The iPhone hasn't reloaded yet.
+        XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .rejected)
+        XCTAssertEqual(backend.presentation.recentEdits.first?.detail, "Device state changed")
+        try backend.editSimulation(value: 7.5, stale: false) // It has now.
+        XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .confirmed)
+        // USB recovery on one device brings the other along.
+        try backend.interruptDevice()
+        Thread.sleep(forTimeInterval: 2.1)
+        try backend.refresh()
+        XCTAssertFalse(backend.presentation.recovering)
+        XCTAssertEqual(backend.presentation.connected.count, 2)
+        let pad = try XCTUnwrap(backend.presentation.devices.last)
+        backend.disconnect(device: pad.id, connection: pad.connection)
+        XCTAssertEqual(backend.presentation.connected.map(\.state), [.connected])
+        XCTAssertNotNil(backend.presentation.preset)
+        try backend.editSimulation(value: 6, stale: false)
+        XCTAssertEqual(backend.presentation.recentEdits.first?.outcome, .confirmed)
     }
 }

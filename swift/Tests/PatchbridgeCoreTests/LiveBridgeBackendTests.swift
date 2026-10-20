@@ -2,19 +2,34 @@ import XCTest
 @testable import PatchbridgeCore
 
 final class TestPeripheral: BridgePeripheral {
-    var onMessage: (([String: Any]) -> [String: Any])?
-    var onDisconnect: (() -> Void)?
+    var onMessage: ((UUID, [String: Any]) -> PeripheralReply)?
+    var onDisconnect: ((UUID) -> Void)?
     var onStatus: ((String) -> Void)?
     var starts = 0
-    var resets = 0
+    let device = UUID()
+    private(set) var lastAdmission = PeripheralReply.Admission.unchanged
     func start(name: String) { starts += 1 }
-    func resetConnection() { resets += 1 }
     func stop() {}
-    func send(_ operation: String, token: String? = nil, session: String? = nil, fields: [String: Any] = [:]) -> [String: Any] {
+    func send(_ operation: String, from id: UUID? = nil, token: String? = nil, session: String? = nil, fields: [String: Any] = [:]) -> [String: Any] {
         var request: [String: Any] = ["version": 1, "id": UUID().uuidString, "operation": operation]
         request["connection_id"] = token; request["session_id"] = session
         request.merge(fields) { _, new in new }
-        return onMessage?(request) ?? [:]
+        guard let reply = onMessage?(id ?? device, request) else { return [:] }
+        lastAdmission = reply.admission
+        return reply.message
+    }
+    func leave(_ id: UUID? = nil) { onDisconnect?(id ?? device) }
+}
+
+extension OfflineBridgeBackend {
+    /// Acts on the card currently shown, as a click does at that moment.
+    func approvePending(trust: Bool = false) throws {
+        guard let id = presentation.pendingID, let connection = presentation.pendingConnection else { throw BridgeFailure.disconnected }
+        try approve(device: id, connection: connection, trust: trust)
+    }
+    func denyPending() {
+        guard let id = presentation.pendingID, let connection = presentation.pendingConnection else { return }
+        deny(device: id, connection: connection)
     }
 }
 
@@ -36,7 +51,7 @@ final class LiveBridgeBackendTests: XCTestCase {
         XCTAssertEqual(host.presentation.approvalCode, DeviceIdentity.approvalCode(token))
         XCTAssertEqual(host.state?.0, .awaitingApproval)
         XCTAssertEqual((phone.send("connect", token: token)["error"] as? [String: Any])?["code"] as? String, "unauthorized")
-        try host.approve(); XCTAssertEqual(host.state?.0, .approving)
+        try host.approvePending(); XCTAssertEqual(host.state?.0, .approving)
         XCTAssertNil(host.presentation.preset) // Approval alone does not access USB.
         let connected = phone.send("connect", token: token)
         let session = try XCTUnwrap(connected["session_id"] as? String)
@@ -62,7 +77,7 @@ final class LiveBridgeBackendTests: XCTestCase {
         XCTAssertNotEqual(recovered["session_id"] as? String, session)
         XCTAssertEqual(host.state?.0, .connected)
         XCTAssertEqual(host.presentation.recentEdits.count, 2) // No mutation replay.
-        phone.onDisconnect?()
+        phone.leave()
         XCTAssertEqual(host.state?.0, .running)
         XCTAssertNil(host.presentation.preset)
         let next = phone.send("hello")
@@ -76,7 +91,7 @@ final class LiveBridgeBackendTests: XCTestCase {
         defer { host.stop() }
         try host.start()
         let token = try XCTUnwrap(phone.send("hello")["connection_id"] as? String)
-        try host.approve()
+        try host.approvePending()
         let session = try XCTUnwrap(phone.send("connect", token: token)["session_id"] as? String)
         helper.stop()
         _ = phone.send("set_parameter", token: token, session: session,
@@ -92,11 +107,14 @@ final class LiveBridgeBackendTests: XCTestCase {
         defer { host.stop() }
         try host.start(); phone.onStatus?("Bluetooth is off")
         XCTAssertEqual(host.state?.1, "Bluetooth is off")
-        _ = phone.send("hello")
-        host.revoke()
-        XCTAssertEqual(phone.resets, 1)
+        let token = try XCTUnwrap(phone.send("hello")["connection_id"] as? String)
+        host.denyPending()
         XCTAssertEqual(host.state?.0, .running)
         XCTAssertTrue(host.presentation.approvalCode.isEmpty)
+        // CoreBluetooth can't drop one central, so its requests are refused until it starts over.
+        XCTAssertEqual((phone.send("connect", token: token)["error"] as? [String: Any])?["code"] as? String, "revoked")
+        XCTAssertNotNil(phone.send("hello")["connection_id"] as? String)
+        XCTAssertEqual(host.state?.0, .awaitingApproval)
     }
     func testLargeTransferUsesInactivityDeadline() throws {
         var receiver = ChunkReceiver()
@@ -107,5 +125,98 @@ final class LiveBridgeBackendTests: XCTestCase {
             result = try receiver.receive(chunk, now: Date(timeIntervalSince1970: Double(i * 3)))
         }
         XCTAssertEqual(result, bytes)
+    }
+    func testDevicesQueueForApprovalConnectTogetherAndLeaveSeparately() throws {
+        let helper = try helper(), phone = TestPeripheral(), pad = UUID()
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper })
+        defer { host.stop() }
+        try host.start()
+        let phoneToken = try XCTUnwrap(phone.send("hello", fields: ["device_name": "iPhone"])["connection_id"] as? String)
+        let padToken = try XCTUnwrap(phone.send("hello", from: pad, fields: ["device_name": "iPad"])["connection_id"] as? String)
+        XCTAssertEqual(phone.lastAdmission, .admit)
+        // One approval card at a time, earliest first.
+        XCTAssertEqual(host.state?.0, .awaitingApproval)
+        XCTAssertEqual(host.presentation.phoneName, "iPhone"); XCTAssertEqual(host.presentation.waiting, 1)
+        XCTAssertEqual(host.presentation.approvalCode, DeviceIdentity.approvalCode(phoneToken))
+        XCTAssertTrue(host.state?.1.contains("1 more waiting") == true)
+        try host.approvePending(trust: true)
+        XCTAssertEqual(host.presentation.phoneName, "iPad") // The next card.
+        XCTAssertEqual(host.presentation.approvalCode, DeviceIdentity.approvalCode(padToken))
+        let connected = phone.send("connect", token: phoneToken)
+        let session = try XCTUnwrap(connected["session_id"] as? String)
+        let trustToken = try XCTUnwrap(connected["trust_token"] as? String)
+        XCTAssertEqual(host.state?.0, .awaitingApproval) // A waiting device still comes first.
+        try host.approvePending()
+        XCTAssertEqual(phone.send("connect", from: pad, token: padToken)["session_id"] as? String, session)
+        XCTAssertEqual(host.state?.0, .connected)
+        XCTAssertEqual(host.presentation.connected.map(\.name), ["iPhone", "iPad"])
+        XCTAssertEqual(host.presentation.trusted.map(\.name), ["iPhone"])
+        XCTAssertEqual(host.presentation.trusted.first?.connected, true)
+        // Edits record which device sent them.
+        let edit: [String: Any] = ["revision": 0, "preset_id": "1", "scene": "A", "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": 7.5]]
+        _ = phone.send("set_parameter", from: pad, token: padToken, session: session, fields: edit)
+        XCTAssertEqual(host.presentation.recentEdits.first?.device, "iPad")
+
+        // Disconnecting the iPhone on the Mac leaves the iPad editing.
+        let iPhone = try XCTUnwrap(host.presentation.devices.first { $0.name == "iPhone" })
+        host.disconnect(device: iPhone.id, connection: iPhone.connection)
+        XCTAssertEqual(host.state?.0, .connected)
+        XCTAssertEqual((phone.send("snapshot", token: phoneToken, session: session)["error"] as? [String: Any])?["code"] as? String, "revoked")
+        XCTAssertEqual(phone.send("snapshot", from: pad, token: padToken, session: session)["status"] as? String, "confirmed")
+        XCTAssertEqual(host.presentation.trusted.first?.connected, false) // Trust outlives the connection.
+        // A trusted reconnect skips the card; revoking trust on the Mac ends that.
+        let back = phone.send("hello", fields: ["device_name": "iPhone", "trust_token": trustToken])
+        XCTAssertEqual(back["authorization_required"] as? Bool, false)
+        XCTAssertEqual(host.presentation.devices.first { $0.name == "iPhone" }?.state, .approving)
+        XCTAssertEqual(host.state?.0, .connected)
+        let entry = try XCTUnwrap(host.presentation.trusted.first)
+        XCTAssertTrue(entry.connected)
+        host.revokeTrust(id: entry.id)
+        XCTAssertTrue(host.presentation.trusted.isEmpty)
+        let iPhoneAgain = try XCTUnwrap(host.presentation.devices.first { $0.name == "iPhone" })
+        host.disconnect(device: iPhoneAgain.id, connection: iPhoneAgain.connection)
+        XCTAssertEqual(phone.send("hello", fields: ["trust_token": trustToken])["authorization_required"] as? Bool, true)
+
+        // Up to four devices; a fifth is told the bridge is full.
+        for _ in 0..<2 { _ = phone.send("hello", from: UUID()) } // With the iPad and the iPhone again.
+        XCTAssertEqual(host.presentation.devices.count, 4)
+        let full = phone.send("hello", from: UUID())
+        XCTAssertEqual((full["error"] as? [String: Any])?["code"] as? String, "bridge_full")
+        XCTAssertEqual(phone.lastAdmission, .release)
+        phone.leave(pad)
+        XCTAssertEqual(host.presentation.devices.count, 3)
+        XCTAssertEqual(host.state?.0, .awaitingApproval)
+    }
+    func testApprovalAppliesOnlyToTheConnectionOnTheCard() throws {
+        let helper = try helper(), phone = TestPeripheral(), pad = UUID()
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper })
+        defer { host.stop() }
+        try host.start()
+        let phoneToken = try XCTUnwrap(phone.send("hello", fields: ["device_name": "iPhone"])["connection_id"] as? String)
+        let padToken = try XCTUnwrap(phone.send("hello", from: pad, fields: ["device_name": "iPad"])["connection_id"] as? String)
+        // The card shows the iPhone; the click is captured with it.
+        let shown = (id: try XCTUnwrap(host.presentation.pendingID), connection: try XCTUnwrap(host.presentation.pendingConnection))
+        XCTAssertEqual(shown.connection, phoneToken)
+        phone.leave() // The iPhone leaves before the worker runs the click.
+        try host.approve(device: shown.id, connection: shown.connection, trust: true)
+        XCTAssertEqual(host.state?.0, .awaitingApproval)
+        XCTAssertEqual(host.presentation.pendingConnection, padToken) // The iPad's own card, still unanswered.
+        XCTAssertEqual(host.presentation.devices.first?.state, .awaitingApproval)
+        XCTAssertTrue(host.presentation.trusted.isEmpty)
+        XCTAssertEqual((phone.send("connect", from: pad, token: padToken)["error"] as? [String: Any])?["code"] as? String, "unauthorized")
+        host.deny(device: shown.id, connection: shown.connection) // A stale deny leaves the iPad alone too.
+        XCTAssertEqual(host.presentation.devices.count, 1)
+
+        // The same device back on a new connection is a different card.
+        let iPad = try XCTUnwrap(host.presentation.devices.first)
+        host.disconnect(device: iPad.id, connection: iPad.connection)
+        let again = try XCTUnwrap(phone.send("hello", from: pad, fields: ["device_name": "iPad"])["connection_id"] as? String)
+        XCTAssertNotEqual(again, padToken)
+        try host.approve(device: pad, connection: padToken, trust: false)
+        XCTAssertEqual(host.presentation.devices.first?.state, .awaitingApproval)
+        host.disconnect(device: pad, connection: padToken)
+        XCTAssertEqual(host.presentation.devices.count, 1)
+        try host.approve(device: pad, connection: again, trust: false)
+        XCTAssertEqual(host.presentation.devices.first?.state, .approving)
     }
 }

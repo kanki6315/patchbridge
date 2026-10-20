@@ -296,7 +296,7 @@ final class CoordinatorTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         var helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        var bridge = BridgeSession(helper: helper); bridge.approve()
+        var bridge = DeviceSession(helper: helper); bridge.approve()
         func roundTrip(_ object: [String: Any]) throws -> [String: Any] {
             let data = try JSONSerialization.data(withJSONObject: object)
             var receiver = ChunkReceiver(); var complete: Data?
@@ -321,7 +321,7 @@ final class CoordinatorTests: XCTestCase {
         helper.stop(); c.refresh()
         XCTAssertEqual(c.phase, .failed); XCTAssertNil(c.editor.snapshot)
         helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
-        bridge = BridgeSession(helper: helper); bridge.approve()
+        bridge = DeviceSession(helper: helper); bridge.approve()
         c.start(); c.authorize()
         XCTAssertEqual(c.phase, .ready)
         XCTAssertEqual(c.editor.value(blockID: "amp-1", parameterID: "gain"), .number(5))
@@ -350,7 +350,7 @@ extension CoordinatorTests {
             return try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path, capturedFixture: fixtureURL)
         }
         var helper = try launch(); defer { helper.stop() }
-        var bridge = BridgeSession(helper: helper, requestTimeout: 0.5)
+        var bridge = DeviceSession(helper: helper, requestTimeout: 0.5)
         bridge.approve()
         let t = OfflineTransport()
         t.handler = { message in
@@ -390,7 +390,7 @@ extension CoordinatorTests {
             c.refresh()
             XCTAssertEqual(c.phase, .failed, fault); XCTAssertNil(c.editor.snapshot); XCTAssertNil(c.editor.pending)
             helper.stop(); try write(original)
-            helper = try launch(); bridge = BridgeSession(helper: helper, requestTimeout: 0.5); bridge.approve()
+            helper = try launch(); bridge = DeviceSession(helper: helper, requestTimeout: 0.5); bridge.approve()
             c.start(); c.authorize()
             XCTAssertEqual(c.phase, .ready, fault)
             XCTAssertEqual(c.editor.snapshot?.scene, "F")
@@ -414,7 +414,7 @@ extension CoordinatorTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper, allowsRecovery: true, macName: "Studio Mac", now: { self.clock })
+        let bridge = DeviceSession(helper: helper, allowsRecovery: true, macName: "Studio Mac", now: { self.clock })
         let t = OfflineTransport(); t.handler = { try bridge.handle($0) }
         let c = EditorCoordinator(automaticPolling: false, phoneName: "Jamie’s iPhone", now: { self.clock }, makeTransport: { t })
         c.start()
@@ -447,7 +447,7 @@ extension CoordinatorTests {
         try write()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path, capturedFixture: file)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper, allowsRecovery: true, now: { self.clock })
+        let bridge = DeviceSession(helper: helper, allowsRecovery: true, now: { self.clock })
         let t = OfflineTransport(); t.handler = { try bridge.handle($0) }
         let c = coordinator(t); c.start(); bridge.approve(); c.authorize()
         document["offline_fault"] = "disconnect"; try write()
@@ -473,7 +473,7 @@ extension CoordinatorTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper)
+        let bridge = DeviceSession(helper: helper)
         let t = OfflineTransport(); t.autoReady = false; t.handler = { try bridge.handle($0) }
         let c = coordinator(t)
         c.start(); t.onDiscovered?("mac", "Studio Mac"); c.chooseMac("mac")
@@ -503,10 +503,119 @@ extension CoordinatorTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper)
+        let bridge = DeviceSession(helper: helper)
         bridge.approve(trusting: true); bridge.revoke()
         let hello = try bridge.handle(["version": 1, "id": "h", "operation": "hello", "trust_token": "guess"])
         XCTAssertEqual(hello["authorization_required"] as? Bool, true)
         XCTAssertThrowsError(try bridge.handle(["version": 1, "id": "c", "operation": "connect", "connection_id": bridge.token]))
+    }
+}
+
+extension CoordinatorTests {
+    private func simulatorHelper() throws -> HelperClient {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        return try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
+    }
+    /// A coordinator connected through a real device session on a shared bridge.
+    private func joined(_ shared: SharedUSBSession, name: String, intercept: (([String: Any]) -> [String: Any]?)? = nil) throws -> (EditorCoordinator, OfflineTransport) {
+        let device = try XCTUnwrap(shared.admit())
+        let t = OfflineTransport(); t.handler = { message in try intercept?(message) ?? device.handle(message) }
+        let c = EditorCoordinator(automaticPolling: false, phoneName: name, now: { self.clock }, makeTransport: { t })
+        c.start(); device.approve(); c.authorize()
+        XCTAssertEqual(c.phase, .ready)
+        return (c, t)
+    }
+
+    func testBridgeFullAndMacDisconnectExplainThemselves() throws {
+        let t = OfflineTransport(); let c = coordinator(t); c.start()
+        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "status": "error",
+                       "error": ["code": "bridge_full", "message": "This Mac is already connected to 4 devices."]])
+        XCTAssertEqual(c.phase, .failed); XCTAssertEqual(c.failure, .bridgeFull)
+        XCTAssertEqual(c.error, "This Mac is already connected to 4 devices. Disconnect one on the Mac, then try again.")
+
+        connect(c, t, fixture: try fixture())
+        XCTAssertNil(c.failure)
+        c.refresh()
+        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "status": "error",
+                       "error": ["code": "revoked", "message": "This device was disconnected on the Mac."]])
+        XCTAssertEqual(c.phase, .failed); XCTAssertEqual(c.failure, .revoked)
+        XCTAssertNil(c.editor.snapshot)
+    }
+
+    func testBusyBridgeRejectsEditsAndRetriesReadsLater() throws {
+        let helper = try simulatorHelper(); defer { helper.stop() }
+        var busy: Set<String> = []
+        let shared = SharedUSBSession(helper: helper)
+        let intercept: ([String: Any]) -> [String: Any]? = { message in
+            guard let operation = message["operation"] as? String, busy.remove(operation) != nil else { return nil }
+            return CentralRouter.busyReply(message)
+        }
+        let (c, t) = try joined(shared, name: "iPhone", intercept: intercept)
+        // An edit refused for being busy never reached the QC: not applied, value unchanged.
+        busy = ["set_parameter"]
+        try c.edit(blockID: "amp-1", parameterID: "gain", value: .number(7.5))
+        XCTAssertEqual(c.phase, .ready); XCTAssertNil(c.editor.pending)
+        XCTAssertEqual(c.error, "Not applied. The bridge was busy with another device; try again.")
+        XCTAssertEqual(c.editor.value(blockID: "amp-1", parameterID: "gain"), .number(5))
+        // A busy read waits for retry_after instead of failing.
+        busy = ["snapshot"]
+        let sent = t.messages.count
+        c.refresh(); XCTAssertEqual(c.phase, .ready)
+        clock += 0.9; c.tick(); XCTAssertEqual(t.messages.count, sent + 1)
+        clock += 0.2; c.tick(); XCTAssertEqual(t.messages.count, sent + 2)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        // A busy loading step is retried, and loading completes.
+        c.disconnect(); busy = ["capabilities"]
+        let (again, retried) = try { () throws -> (EditorCoordinator, OfflineTransport) in
+            let device = try XCTUnwrap(shared.admit())
+            let t2 = OfflineTransport(); t2.handler = { message in try intercept(message) ?? device.handle(message) }
+            let c2 = EditorCoordinator(automaticPolling: false, phoneName: "iPad", now: { self.clock }, makeTransport: { t2 })
+            c2.start(); device.approve(); c2.authorize()
+            return (c2, t2)
+        }()
+        XCTAssertEqual(again.phase, .loading)
+        clock += 1.1; again.tick()
+        XCTAssertEqual(again.phase, .ready)
+        XCTAssertEqual(retried.messages.filter { $0["operation"] as? String == "capabilities" }.count, 2)
+    }
+
+    func testEditTheBridgeNeverSentSaysNotApplied() throws {
+        let helper = try simulatorHelper(); defer { helper.stop() }
+        let shared = SharedUSBSession(helper: helper)
+        var token = ""
+        let (c, _) = try joined(shared, name: "iPhone") { message in
+            token = message["connection_id"] as? String ?? token
+            guard message["operation"] as? String == "set_parameter" else { return nil }
+            return ["version": 1, "id": message["id"]!, "connection_id": token, "status": "error", "retry_after": 0, "applied": false,
+                    "error": ["code": "device_unavailable", "message": "QC unavailable."]]
+        }
+        try c.edit(blockID: "amp-1", parameterID: "gain", value: .number(7.5))
+        XCTAssertEqual(c.phase, .recovering)
+        XCTAssertEqual(c.error, "Edit not applied. Editing resumes after the QC reconnects.")
+    }
+
+    func testChangesFromAnotherDeviceAreAttributedToIt() throws {
+        let helper = try simulatorHelper(); defer { helper.stop() }
+        let shared = SharedUSBSession(helper: helper)
+        let (phone, _) = try joined(shared, name: "iPhone")
+        let (pad, _) = try joined(shared, name: "Studio iPad")
+        try pad.edit(blockID: "amp-1", parameterID: "gain", value: .number(7.5))
+        XCTAssertEqual(pad.outcome, "Confirmed")
+        phone.refresh()
+        XCTAssertEqual(phone.outcome, "Changed on Studio iPad")
+        XCTAssertEqual(phone.editor.value(blockID: "amp-1", parameterID: "gain"), .number(7.5))
+        // The iPhone edits from state the iPad has since changed.
+        try pad.edit(blockID: "amp-1", parameterID: "gain", value: .number(6))
+        try phone.edit(blockID: "amp-1", parameterID: "gain", value: .number(3))
+        XCTAssertEqual(phone.error, "Not applied. Studio iPad changed it first.")
+        XCTAssertEqual(phone.phase, .ready)
+        XCTAssertEqual(phone.outcome, "Changed on Studio iPad")
+        XCTAssertEqual(phone.editor.value(blockID: "amp-1", parameterID: "gain"), .number(6))
+        // The device's own edits are never attributed to someone else.
+        try phone.edit(blockID: "amp-1", parameterID: "gain", value: .number(4))
+        pad.refresh()
+        XCTAssertEqual(pad.outcome, "Changed on iPhone")
+        phone.refresh()
+        XCTAssertNotEqual(phone.outcome, "Changed on iPhone")
     }
 }

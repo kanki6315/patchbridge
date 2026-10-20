@@ -2,47 +2,59 @@
 import Foundation
 import CoreBluetooth
 
-/// All callbacks and methods run on the host's serial worker queue.
+/// Callbacks run on the owner's queue, and the owner calls these methods from it.
+/// Bluetooth itself runs on the peripheral's own queue, so USB work on the owner's
+/// queue never delays a Bluetooth acknowledgement.
 protocol BridgePeripheral: AnyObject {
-    var onMessage: (([String: Any]) -> [String: Any])? { get set }
-    var onDisconnect: (() -> Void)? { get set }
+    var onMessage: ((UUID, [String: Any]) -> PeripheralReply)? { get set }
+    var onDisconnect: ((UUID) -> Void)? { get set }
     var onStatus: ((String) -> Void)? { get set }
     func start(name: String)
-    func resetConnection()
     func stop()
 }
 
+/// CoreBluetooth adapter around `CentralRouter`, which owns all per-device state.
 final class BLEPeripheral: NSObject, BridgePeripheral, CBPeripheralManagerDelegate {
-    var onMessage: (([String: Any]) -> [String: Any])?
-    var onDisconnect: (() -> Void)?
+    var onMessage: ((UUID, [String: Any]) -> PeripheralReply)? {
+        get { router.onMessage } set { router.onMessage = newValue }
+    }
+    var onDisconnect: ((UUID) -> Void)? {
+        get { router.onDisconnect } set { router.onDisconnect = newValue }
+    }
     var onStatus: ((String) -> Void)?
-    private let queue: DispatchQueue
+    private let owner: DispatchQueue
+    private let radio = DispatchQueue(label: "patchbridge.bluetooth")
+    private let router: CentralRouter
     private var manager: CBPeripheralManager?
     private var name = "Mac"
-    private var central: CBCentral?
-    private var receiver = ChunkReceiver()
-    private var outgoing = [Data]()
-    private var outgoingIndex = 0
-    private var transfer: UInt32 = 0
+    private var centrals = [UUID: CBCentral]()
     private var result: CBMutableCharacteristic?
     private static let serviceID = CBUUID(string: "79A90001-6E15-4C9F-AC53-147F7E639B01")
     private static let commandID = CBUUID(string: "79A90002-6E15-4C9F-AC53-147F7E639B01")
     private static let resultID = CBUUID(string: "79A90003-6E15-4C9F-AC53-147F7E639B01")
-    init(queue: DispatchQueue) { self.queue = queue; super.init() }
-    func start(name: String) {
-        stop(); self.name = name
-        manager = CBPeripheralManager(delegate: self, queue: queue)
+    /// `queue` is the owner's queue, where callbacks are delivered.
+    init(queue: DispatchQueue) {
+        owner = queue; router = CentralRouter(radio: radio, owner: queue)
+        super.init()
+        router.send = { [unowned self] id, data in
+            // A central that left has nothing to receive; discard its chunks.
+            guard let manager, let result, let central = centrals[id] else { return true }
+            return manager.updateValue(data, for: result, onSubscribedCentrals: [central])
+        }
+        router.resetService = { [unowned self] in
+            centrals.removeAll()
+            // Removing the service invalidates the phone's characteristics; fresh discovery is required.
+            if let manager, manager.state == .poweredOn { installService(manager) }
+        }
     }
-    func stop() {
+    // The radio queue never waits on the owner's queue, so these syncs cannot deadlock.
+    func start(name: String) { radio.sync { stopRadio(); self.name = name; manager = CBPeripheralManager(delegate: self, queue: radio) } }
+    func stop() { radio.sync { stopRadio() } }
+    private func stopRadio() {
         manager?.delegate = nil; manager?.stopAdvertising(); manager?.removeAllServices(); manager = nil
-        clear(); result = nil
+        centrals.removeAll(); result = nil; router.removeAll()
     }
-    private func clear() { central = nil; receiver.reset(); outgoing.removeAll(); outgoingIndex = 0 }
-    func resetConnection() {
-        clear()
-        // Removing the service invalidates the phone's characteristics; fresh discovery is required.
-        if let manager, manager.state == .poweredOn { installService(manager) }
-    }
+    private func status(_ text: String) { owner.async { [weak self] in self?.onStatus?(text) } }
     private func installService(_ manager: CBPeripheralManager) {
         manager.stopAdvertising(); manager.removeAllServices()
         let result = CBMutableCharacteristic(type: Self.resultID, properties: [.notifyEncryptionRequired], value: nil, permissions: [.readEncryptionRequired])
@@ -53,67 +65,47 @@ final class BLEPeripheral: NSObject, BridgePeripheral, CBPeripheralManagerDelega
     }
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         guard peripheral === manager else { return }
-        clear(); onDisconnect?()
+        centrals.removeAll(); router.removeAll()
         if peripheral.state == .poweredOn { installService(peripheral) }
         else {
-            onStatus?(peripheral.state == .unauthorized ? "Allow Bluetooth access for Patchbridge in System Settings."
+            status(peripheral.state == .unauthorized ? "Allow Bluetooth access for Patchbridge in System Settings."
                 : peripheral.state == .poweredOff ? "Bluetooth is off. Turn it on to connect your iPhone."
                 : "Bluetooth is unavailable. Check System Settings or restart the bridge.")
         }
     }
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         guard peripheral === manager else { return }
-        guard error == nil else { onStatus?("Bluetooth service couldn’t start. Restart the bridge."); return }
+        guard error == nil else { status("Bluetooth service couldn’t start. Restart the bridge."); return }
         peripheral.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [Self.serviceID], CBAdvertisementDataLocalNameKey: name])
     }
     func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
         guard peripheral === manager else { return }
-        onStatus?(error == nil ? "Open Patchbridge on your iPhone and choose this Mac. Connect the QC over USB and close Cortex Control." : "Bluetooth advertising failed. Restart the bridge.")
+        status(error == nil ? "Open Patchbridge on your iPhone and choose this Mac. Connect the QC over USB and close Cortex Control." : "Bluetooth advertising failed. Restart the bridge.")
     }
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
-        guard peripheral === manager, characteristic === result, self.central == nil else { return }
-        self.central = central
+        guard peripheral === manager, characteristic === result else { return }
+        centrals[central.identifier] = central
+        router.subscribe(central.identifier, limit: central.maximumUpdateValueLength)
     }
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
-        guard peripheral === manager, characteristic === result, self.central?.identifier == central.identifier else { return }
-        clear(); onDisconnect?()
+        guard peripheral === manager, characteristic === result else { return }
+        centrals[central.identifier] = nil
+        router.unsubscribe(central.identifier)
     }
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         guard peripheral === manager, let first = requests.first else { return }
         // A phone sends exactly one chunk per acknowledged write. Reject multi-write batches atomically.
-        guard requests.count == 1, first.characteristic.uuid == Self.commandID, first.offset == 0,
-              first.central.identifier == central?.identifier, let bytes = first.value else {
+        guard requests.count == 1, first.characteristic.uuid == Self.commandID, first.offset == 0, let bytes = first.value else {
             peripheral.respond(to: first, withResult: .writeNotPermitted); return
         }
-        guard outgoing.isEmpty else { peripheral.respond(to: first, withResult: .insufficientResources); return }
-        var acknowledged = false
-        do {
-            let message = try receiver.receive(bytes)
-            guard let message else { peripheral.respond(to: first, withResult: .success); return }
-            guard let object = try JSONSerialization.jsonObject(with: message) as? [String: Any], let onMessage else { throw BridgeFailure.protocolError }
-            // Acknowledge delivery before USB I/O, which may take longer than an ATT write timeout.
-            peripheral.respond(to: first, withResult: .success)
-            acknowledged = true
-            let response = onMessage(object)
-            guard manager === peripheral, central?.identifier == first.central.identifier else { return }
-            let data = try JSONSerialization.data(withJSONObject: response)
-            transfer &+= 1
-            outgoing = try Chunks.split(data, limit: min(first.central.maximumUpdateValueLength, 512), transfer: transfer)
-            outgoingIndex = 0; drain()
-        } catch {
-            if !acknowledged { peripheral.respond(to: first, withResult: .unlikelyError) }
-            // Do not acknowledge a request twice. Invalid transfers require a fresh connection.
-            resetConnection(); onDisconnect?()
+        // Acknowledged here, before any USB I/O, which may take longer than an ATT write timeout.
+        switch router.write(first.central.identifier, bytes) {
+        case .success: peripheral.respond(to: first, withResult: .success)
+        case .busy: peripheral.respond(to: first, withResult: .insufficientResources)
+        case .notPermitted: peripheral.respond(to: first, withResult: .writeNotPermitted)
+        case .failed: peripheral.respond(to: first, withResult: .unlikelyError)
         }
     }
-    private func drain() {
-        guard let manager, let central, let result else { return }
-        while outgoingIndex < outgoing.count {
-            guard manager.updateValue(outgoing[outgoingIndex], for: result, onSubscribedCentrals: [central]) else { return }
-            outgoingIndex += 1
-        }
-        outgoing.removeAll(); outgoingIndex = 0
-    }
-    func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) { if peripheral === manager { drain() } }
+    func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) { if peripheral === manager { router.drain() } }
 }
 #endif

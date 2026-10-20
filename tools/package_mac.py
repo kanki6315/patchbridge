@@ -134,18 +134,20 @@ def main():
         '/private/tmp/patchbridge-package-module-cache', '-framework', 'AppKit',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'HelperClient.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'Diagnostics.swift',
-        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'BridgeSession.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'DeviceSession.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'SharedUSBSession.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'DeviceIdentity.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'MacBridgeModel.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'RecentBridgeEdit.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'MacDesktopServices.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'Chunks.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'BLEPeripheral.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'CentralRouter.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'LiveBridgeBackend.swift',
         ROOT / 'mac' / 'main.swift', '-o', executables / 'Patchbridge')
     plist = {'CFBundleExecutable': 'Patchbridge', 'CFBundleIdentifier': 'com.arjunakankipati.patchbridge',
              'CFBundleName': 'Patchbridge', 'CFBundlePackageType': 'APPL',
-             'CFBundleVersion': '1', 'CFBundleShortVersionString': '0.1.0',
+             'CFBundleVersion': '1', 'CFBundleShortVersionString': '0.2.0',
              'LSMinimumSystemVersion': minimum, 'NSHighResolutionCapable': True,
              'NSBluetoothAlwaysUsageDescription': 'Connect your iPhone to this Mac to view and edit your Quad Cortex over USB.'}
     icon_plist = resources / 'icon-info.plist'

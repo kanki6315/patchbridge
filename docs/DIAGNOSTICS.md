@@ -27,7 +27,7 @@ a successful offline run is at `dist/Patchbridge-Troubleshooting.json`.
 Future screens can inject a shared `Diagnostics` instance into `HelperClient` and
 `EditorCoordinator`, use `reportData()` for a preview, call `export(to:)` following
 an explicit save action, or call `clear()` to discard the retained events.
-`BridgeSession` uses its helper client's instance. No report is written by default.
+`DeviceSession` uses its helper client's instance. No report is written by default.
 
 ## Contents and limits
 
@@ -37,6 +37,14 @@ Events use fixed enum names and allowlisted operation/error codes. Unknown strin
 become `unknown`; raw error descriptions never enter the log. Request durations
 are bounded integer milliseconds. Sequence numbers are local counters, not request
 or session identifiers.
+
+Bridge events that concern one device carry `device`: that device's place in the
+bridge's admission order for this run (1 for the first device admitted, 2 for the
+next, and so on, never reused while the bridge runs). It is a whole number from 1 to
+9999, never a name or identifier, and is omitted for events that aren't specific to
+one device. Helper requests sent on a device's behalf carry the same number. The
+bridge also records refused admissions (`bridge_full`), requests from a device
+disconnected on the Mac (`revoked`), and requests refused as `busy`.
 
 The default buffer holds 256 events; configurable capacity is clamped to 1–1024.
 Oldest events are dropped with a count when full. Writes and report snapshots are

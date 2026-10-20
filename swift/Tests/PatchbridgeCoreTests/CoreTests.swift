@@ -29,7 +29,7 @@ final class CoreTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let session = BridgeSession(helper: helper)
+        let session = DeviceSession(helper: helper)
         XCTAssertThrowsError(try session.handle(["version": 1, "id": UUID().uuidString, "operation": "connect", "connection_id": session.token]))
         session.approve()
         let old = session.token
@@ -63,7 +63,7 @@ extension CoreTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let session = BridgeSession(helper: helper)
+        let session = DeviceSession(helper: helper)
         session.approve()
         let connected = try session.handle(["version": 1, "id": "connect", "operation": "connect", "connection_id": session.token])
         let request: [String: Any] = ["version": 1, "id": "save-once", "operation": "save", "connection_id": session.token,
@@ -79,7 +79,7 @@ extension CoreTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
         defer { helper.stop() }
-        let bridge = BridgeSession(helper: helper)
+        let bridge = DeviceSession(helper: helper)
         bridge.approve()
         var response = try bridge.handle(["version": 1, "id": "connect", "operation": "connect", "connection_id": bridge.token])
         func request(_ operation: String, payload: [String: Any] = [:]) throws -> [String: Any] {

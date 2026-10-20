@@ -41,6 +41,8 @@ final class ConnectionActivityController {
         case .awaitingApproval: status = reconnecting ? .approval : nil
         case .failed:
             guard live || reconnecting, !intentional else { return }
+            // Ended on purpose from the Mac: not a drop to alert about.
+            if coordinator.failure == .revoked { live = false; reconnecting = false; end(ended: true); return }
             if last?.status != .lost { lostAt = Date() }
             status = .lost; reconnecting = false
         case .disconnected:

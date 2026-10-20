@@ -11,8 +11,11 @@ struct RecentBridgeEdit: Identifiable {
     let value: String?
     let outcome: Outcome
     let detail: String
+    /// The device that sent the edit, when the bridge knows it.
+    let device: String?
 
-    init(request: [String: Any], response: [String: Any]?, snapshot: [String: Any]?, catalog: [String: Any]?) {
+    init(request: [String: Any], response: [String: Any]?, snapshot: [String: Any]?, catalog: [String: Any]?, device: String? = nil) {
+        self.device = device
         let operation = request["operation"] as? String ?? ""
         let payload = request["payload"] as? [String: Any] ?? [:]
         let blockID = payload["block_id"] as? String
@@ -43,6 +46,7 @@ struct RecentBridgeEdit: Identifiable {
         } else {
             let code = (response?["error"] as? [String: Any])?["code"] as? String ?? ""
             switch code {
+            case _ where response?["applied"] as? Bool == false: outcome = .rejected; detail = "Not sent to the device"
             case "stale_context": outcome = .rejected; detail = "Device state changed"
             case "invalid_value": outcome = .rejected; detail = "Value is invalid"
             case "unsupported_parameter", "unsupported_operation", "read_only": outcome = .rejected; detail = "Not supported in this session"

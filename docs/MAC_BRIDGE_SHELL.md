@@ -29,8 +29,26 @@ Settings shows it from the start; it's available while the bridge is stopped.
 
 Bluetooth denial/off/service errors and unsupported firmware appear in the existing
 status layout. The Mac does not claim to detect Cortex Control itself: USB failure asks
-users to check the cable and close it. No dedicated firmware or second-phone design was
-provided; firmware uses explanatory status text, and a second central cannot issue commands.
+users to check the cable and close it. No dedicated firmware design was provided;
+firmware uses explanatory status text.
+
+### More than one device
+
+Up to four devices (for example an iPhone and an iPad) can connect at once and share
+the one USB connection. A fifth is told the Mac is already connected to four devices.
+
+- **Approval:** each device compares its own code. The approval card shows one device
+  at a time, earliest first, with a count of devices waiting behind it. Approving one
+  device never approves another.
+- **Devices:** the window lists connected devices with **Disconnect** and, for trusted
+  ones, **Revoke Trust**. Devices trusted to reconnect but not connected now are listed
+  with **Revoke Trust**. Disconnecting one device leaves the others editing; that device
+  is told it was disconnected on the Mac at its next request.
+- **Edits from two devices:** every device can edit. If two edit at once, the first wins
+  and the other's edit is not applied; that device reloads before editing again.
+  Recent edits name the device that sent each one.
+- **Recovery:** USB loss pauses every device. Each one reconnects to the shared session
+  on its own retry, including devices that were in the background meanwhile.
 
 ## Offline walkthrough
 
@@ -41,13 +59,16 @@ Enable **Use simulation** while stopped. This mode never opens USB or Bluetooth.
 3. Choose **Deny** to return to the ready state, or **Approve connection** to
    connect and confirm a snapshot through the helper.
 4. Use **Check connection** to request another confirmed snapshot, or
-   **Disconnect phone** to revoke approval.
+   **Disconnect** in the device list to revoke approval.
+   **Simulate another device** adds a simulated iPad, which goes through the same
+   approval card. With both connected, **Simulate edit from other device** changes the
+   gain from the iPad, so the iPhone's next simulated edit is rejected until it reloads.
 5. **Simulate helper failure** stops the process and exercises failure handling.
    **Restart bridge** starts a new session; another phone request needs approval.
 6. **Stop bridge** clears approval and stops the helper, including when a request
    is awaiting approval. Quitting stops the helper. Closing the window keeps it running by default; Settings can disable that behavior.
 
-The simulated phone uses the production `BridgeSession` approval path, with
+The simulated phone uses the production `DeviceSession` approval path, with
 `HelperClient(bundle:)` executing the packaged process. It does not use a radio.
 Work runs on a serial worker queue; a generation token prevents a delayed
 completion from restoring an obsolete UI state after stop. Failed operations
@@ -87,10 +108,10 @@ Reopen from the menu bar or Command-0. Settings is Command-comma; Quit is Comman
 
 Use Bridge actions → Simulate USB interruption after approval. The phone approval stays
 valid, the last snapshot is marked stale, and the shell automatically reconnects the
-simulator and loads a fresh snapshot. Bridge actions → Simulate helper failure instead
+simulator and loads a fresh snapshot for every connected simulated device. Bridge actions → Simulate helper failure instead
 ends approval and requires a restart. These are offline tests, not hardware validation.
 
-`BridgeSession(allowsRecovery: true)` reports `device_unavailable` for a device/session
+`DeviceSession(allowsRecovery: true)` reports `device_unavailable` for a device/session
 failure returned by a still-running helper. `recover` retries only `connect` with capped
 exponential backoff. Helper I/O failures still revoke authorization. The editor clears
 pending and confirmed state while recovering and reloads capabilities/catalog before
