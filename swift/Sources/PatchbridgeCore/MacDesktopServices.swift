@@ -10,12 +10,14 @@ protocol LoginItemManaging: AnyObject {
     func setEnabled(_ enabled: Bool) throws
 }
 final class SystemLoginItem: LoginItemManaging {
-    var state: LoginItemState {
-        switch SMAppService.mainApp.status {
+    var state: LoginItemState { Self.state(for: SMAppService.mainApp.status) }
+    /// macOS reports .notFound until the app first registers (or after the user removes it), so it means off, not broken.
+    static func state(for status: SMAppService.Status) -> LoginItemState {
+        switch status {
         case .enabled: return .enabled
         case .requiresApproval: return .needsApproval
-        case .notRegistered: return .disabled
-        default: return .unavailable
+        case .notRegistered, .notFound: return .disabled
+        @unknown default: return .unavailable
         }
     }
     func setEnabled(_ enabled: Bool) throws {
