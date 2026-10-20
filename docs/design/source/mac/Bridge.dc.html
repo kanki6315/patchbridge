@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mac bridge component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+
+  <sc-if value="{{is.window}}" hint-placeholder-val="{{true}}">
+    <div style="height: 52px; flex: none; position: relative; display: flex; align-items: center; justify-content: center; background: {{t.titlebar}}; border-bottom: 1px solid {{t.hairline}};">
+      <span aria-hidden="true" style="position: absolute; left: 18px; top: 20px; display: flex; gap: 8px;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; box-shadow: inset 0 0 0 0.5px oklch(0 0 0 / 0.2);"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #febc2e; box-shadow: inset 0 0 0 0.5px oklch(0 0 0 / 0.2);"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #28c840; box-shadow: inset 0 0 0 0.5px oklch(0 0 0 / 0.2);"></span>
+      </span>
+      <span style="font-size: 13px; font-weight: 600;">{{windowTitle}}</span>
+    </div>
+
+    <sc-if value="{{is.main}}" hint-placeholder-val="{{true}}">
+      <div style="flex: 1; min-height: 0; box-sizing: border-box; padding: 20px 28px 0; display: flex; flex-direction: column;">
+
+        <div role="img" aria-label="{{diagramLabel}}" style="display: flex; align-items: flex-start; justify-content: space-between;">
+          <div style="width: 112px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <span style="{{n.phone.style}}">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg>
+              <sc-if value="{{n.phone.check}}" hint-placeholder-val="{{false}}"><span style="{{badgeOk}}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg></span></sc-if>
+              <sc-if value="{{n.phone.warn}}" hint-placeholder-val="{{false}}"><span style="{{badgeWarn}}">!</span></sc-if>
+            </span>
+            <span style="{{n.phone.labelStyle}}">{{n.phone.label}}</span>
+          </div>
+          <div style="flex: 1; min-width: 0; margin-top: 11px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <span style="{{l.bt.labelStyle}}">{{l.bt.label}}</span>
+            <span style="{{l.bt.lineStyle}}"></span>
+          </div>
+          <div style="width: 112px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <span style="{{n.mac.style}}">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M1.5 19.5h21"></path></svg>
+              <sc-if value="{{n.mac.warn}}" hint-placeholder-val="{{false}}"><span style="{{badgeWarn}}">!</span></sc-if>
+            </span>
+            <span style="{{n.mac.labelStyle}}">{{n.mac.label}}</span>
+          </div>
+          <div style="flex: 1; min-width: 0; margin-top: 11px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <span style="{{l.usb.labelStyle}}">{{l.usb.label}}</span>
+            <span style="{{l.usb.lineStyle}}"></span>
+          </div>
+          <div style="width: 112px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <span style="{{n.qc.style}}">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="7.8" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="17.4" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="3" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="7.8" y="11.4" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="17.4" y="11.4" width="3.6" height="3.6" rx="1"></rect></svg>
+              <sc-if value="{{n.qc.check}}" hint-placeholder-val="{{false}}"><span style="{{badgeOk}}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg></span></sc-if>
+              <sc-if value="{{n.qc.warn}}" hint-placeholder-val="{{false}}"><span style="{{badgeWarn}}">!</span></sc-if>
+            </span>
+            <span style="{{n.qc.labelStyle}}">{{n.qc.label}}</span>
+          </div>
+        </div>
+
+        <h1 style="margin: 26px 0 6px; font-size: 22px; line-height: 1.2; font-weight: 700; letter-spacing: -0.015em; text-wrap: balance;">{{s.h}}</h1>
+        <p style="margin: 0; max-width: 60ch; font-size: 14px; line-height: 1.4; color: {{t.muted}}; text-wrap: pretty;">{{s.sub}}</p>
+
+        <sc-if value="{{s.code}}" hint-placeholder-val="{{false}}">
+          <div role="img" aria-label="Code 4 F 7 K 2 Q" style="margin-top: 22px; height: 96px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 18px; background: {{t.glass}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); box-shadow: {{t.glassEdge}};">
+            <sc-for list="{{code}}" as="ch" hint-placeholder-count="7">
+              <span style="{{ch.style}}">{{ch.c}}</span>
+            </sc-for>
+          </div>
+          <p style="margin: 10px 0 0; text-align: center; font-size: 13px; color: {{t.muted}};">Approval lasts until the iPhone disconnects.</p>
+        </sc-if>
+
+        <sc-if value="{{s.hasStatus}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{t.muted}};">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>
+            {{s.status}}
+          </div>
+        </sc-if>
+
+        <sc-if value="{{s.hasRows}}" hint-placeholder-val="{{true}}">
+          <dl style="margin: 20px 0 0; border-radius: 15px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; overflow: hidden;">
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+              <div style="{{r.rowStyle}}">
+                <dt style="width: 96px; flex: none; font-size: 13px; color: {{t.muted}};">{{r.k}}</dt>
+                <dd style="margin: 0; flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                  <sc-if value="{{r.hasDot}}" hint-placeholder-val="{{false}}"><span style="{{r.dotStyle}}"></span></sc-if>
+                  <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.v}}</span>
+                  <sc-if value="{{r.hasTail}}" hint-placeholder-val="{{false}}">
+                    <span style="{{r.tailStyle}}">
+                      <sc-if value="{{r.tailDot}}" hint-placeholder-val="{{false}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.signal}};"></span></sc-if>
+                      {{r.tail}}
+                    </span>
+                  </sc-if>
+                </dd>
+              </div>
+            </sc-for>
+          </dl>
+        </sc-if>
+
+        <sc-if value="{{s.edits}}" hint-placeholder-val="{{false}}">
+          <section aria-label="Recent edits from the iPhone" style="margin-top: 18px; display: flex; flex-direction: column; gap: 8px;">
+            <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Recent edits</span>
+            <ol style="margin: 0; padding: 0; list-style: none; border-radius: 15px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; overflow: hidden;">
+              <sc-for list="{{edits}}" as="e" hint-placeholder-count="3">
+                <li style="{{e.rowStyle}}">
+                  <span style="display: flex; align-items: center; gap: 10px;">
+                    <sc-if value="{{e.ok}}" hint-placeholder-val="{{true}}">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Confirmed by the QC"><path d="M20 6L9 17l-5-5"></path></svg>
+                    </sc-if>
+                    <sc-if value="{{e.warn}}" hint-placeholder-val="{{false}}">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.caution}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Not applied"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    </sc-if>
+                    <span style="flex: 1; min-width: 0; font-size: 14px;">{{e.name}} <span style="color: {{t.muted}};">· {{e.block}}</span></span>
+                    <span style="{{e.valueStyle}}">{{e.value}}</span>
+                  </span>
+                  <sc-if value="{{e.warn}}" hint-placeholder-val="{{false}}">
+                    <span style="padding-left: 25px; font-size: 12px; color: {{t.caution}};">{{e.note}}</span>
+                  </sc-if>
+                </li>
+              </sc-for>
+            </ol>
+          </section>
+        </sc-if>
+      </div>
+
+      <div style="flex: none; box-sizing: border-box; padding: 16px 20px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+        <span style="display: flex; gap: 8px;">
+          <sc-for list="{{s.left}}" as="b" hint-placeholder-count="1">
+            <button type="button" style="{{b.style}}">{{b.label}}</button>
+          </sc-for>
+        </span>
+        <span style="display: flex; gap: 8px;">
+          <sc-for list="{{s.right}}" as="b" hint-placeholder-count="1">
+            <button type="button" style="{{b.style}}">{{b.label}}</button>
+          </sc-for>
+        </span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{is.settings}}" hint-placeholder-val="{{false}}">
+      <div style="flex: 1; box-sizing: border-box; padding: 20px 28px 24px; display: flex; flex-direction: column; gap: 20px;">
+        <section aria-label="General" style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">General</span>
+          <div style="border-radius: 15px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+            <div style="min-height: 46px; box-sizing: border-box; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <span style="font-size: 14px;">Open at login</span>
+              <button type="button" role="switch" aria-checked="true" aria-label="Open at login" style="{{switchOn}}"><span style="{{knob}}"></span></button>
+            </div>
+            <div style="min-height: 46px; box-sizing: border-box; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid {{t.hairline}};">
+              <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px;">Keep running when the window closes</span><span style="font-size: 12px; color: {{t.muted}};">Patchbridge stays in the menu bar.</span></span>
+              <button type="button" role="switch" aria-checked="true" aria-label="Keep running when the window closes" style="{{switchOn}}"><span style="{{knob}}"></span></button>
+            </div>
+            <div style="min-height: 46px; box-sizing: border-box; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid {{t.hairline}};">
+              <span style="font-size: 14px;">Show in Dock</span>
+              <button type="button" role="switch" aria-checked="false" aria-label="Show in Dock" style="{{switchOff}}"><span style="{{knob}}"></span></button>
+            </div>
+            <div style="min-height: 46px; box-sizing: border-box; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid {{t.hairline}};">
+              <span style="font-size: 14px;">Appearance</span>
+              <span role="radiogroup" aria-label="Appearance" style="padding: 2px; display: flex; border-radius: 999px; background: {{t.fill}};">
+                <sc-for list="{{segments}}" as="g" hint-placeholder-count="3">
+                  <button type="button" role="radio" aria-checked="{{g.checked}}" style="{{g.style}}">{{g.label}}</button>
+                </sc-for>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section aria-label="Bluetooth" style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Bluetooth</span>
+          <div style="min-height: 46px; box-sizing: border-box; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 15px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+            <span style="font-size: 14px;">iPhones see this Mac as</span>
+            <span style="font-size: 14px; font-weight: 600;">Studio Mac</span>
+          </div>
+          <a href="#" style="align-self: flex-start; padding: 2px 4px; font-size: 13px; font-weight: 600; color: {{t.signalText}}; text-decoration: none;">Rename in System Settings</a>
+        </section>
+
+        <section aria-label="Diagnostics" style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Diagnostics</span>
+          <div style="padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-radius: 15px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+            <span style="font-size: 13px; line-height: 1.4; color: {{t.muted}}; text-wrap: pretty;">Reports leave out preset names, values and device IDs. Nothing is sent automatically.</span>
+            <button type="button" style="{{glassBtn}}">Export report…</button>
+          </div>
+        </section>
+
+        <section aria-label="About" style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">About</span>
+          <dl style="margin: 0; border-radius: 15px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+            <div style="min-height: 40px; box-sizing: border-box; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between;">
+              <dt style="font-size: 14px;">Patchbridge</dt>
+              <dd style="margin: 0; font-size: 14px; color: {{t.muted}}; font-variant-numeric: tabular-nums;">0.1.0 (12)</dd>
+            </div>
+            <div style="min-height: 40px; box-sizing: border-box; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid {{t.hairline}};">
+              <dt style="font-size: 14px;">Tested with</dt>
+              <dd style="margin: 0; font-size: 14px; color: {{t.muted}};">CorOS 4.1.1</dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{is.sheet}}" hint-placeholder-val="{{false}}">
+      <div style="position: absolute; left: 0; right: 0; top: 52px; bottom: 0; z-index: 30; display: flex; justify-content: center; align-items: flex-start; background: {{t.scrim}};">
+        <div role="alertdialog" aria-label="Keep Patchbridge running?" style="width: 360px; margin-top: 8px; box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; gap: 12px; border-radius: 18px; background: {{t.group}}; box-shadow: {{t.sheetLift}}; z-index: 40;">
+          <span style="{{appIcon}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="7.8" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="17.4" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="3" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="7.8" y="11.4" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="17.4" y="11.4" width="3.6" height="3.6" rx="1"></rect></svg></span>
+          <span style="font-size: 16px; font-weight: 700;">Keep Patchbridge running?</span>
+          <span style="font-size: 13px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;">It stays in the menu bar, so Jamie’s iPhone keeps editing. Quitting releases the QC and disconnects the iPhone.</span>
+          <label style="min-height: 28px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+            <input type="checkbox" style="width: 16px; height: 16px; margin: 0; accent-color: {{t.signal}};">
+            Don’t ask again
+          </label>
+          <span style="margin-top: 4px; display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" style="{{sheetPrimary}}">Keep running</button>
+            <button type="button" style="{{sheetGlass}}">Quit Patchbridge</button>
+          </span>
+        </div>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{is.menubar}}" hint-placeholder-val="{{false}}">
+    <div style="box-sizing: border-box; padding: 14px 8px 8px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="padding: 0 8px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 15px; font-weight: 700;">Patchbridge</span>
+        <span role="status" style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: {{mb.statusColor}};">
+          <sc-if value="{{mb.isDot}}" hint-placeholder-val="{{true}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.signal}};"></span></sc-if>
+          <sc-if value="{{mb.isRing}}" hint-placeholder-val="{{false}}"><span style="width: 8px; height: 8px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.muted}};"></span></sc-if>
+          <sc-if value="{{mb.isWarn}}" hint-placeholder-val="{{false}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></sc-if>
+          {{mb.status}}
+        </span>
+      </div>
+
+      <sc-if value="{{mb.request}}" hint-placeholder-val="{{false}}">
+        <div style="margin: 0 2px; padding: 14px; display: flex; flex-direction: column; gap: 10px; border-radius: 12px; background: {{t.group}}; box-shadow: {{t.panelEdge}}, 0 0 0 1.5px {{t.signal}};">
+          <span style="font-size: 14px; font-weight: 600; text-wrap: balance;">Jamie’s iPhone wants to edit the QC</span>
+          <div role="img" aria-label="Code 4 F 7 K 2 Q" style="height: 62px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; background: {{t.glass}}; box-shadow: {{t.glassEdge}};">
+            <sc-for list="{{codeSmall}}" as="ch" hint-placeholder-count="7">
+              <span style="{{ch.style}}">{{ch.c}}</span>
+            </sc-for>
+          </div>
+          <span style="font-size: 12px; color: {{t.muted}};">Approve only if the iPhone shows the same code.</span>
+          <span style="display: flex; gap: 8px;">
+            <button type="button" style="{{mbGlass}}">Deny</button>
+            <button type="button" style="{{mbPrimary}}">Approve</button>
+          </span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{mb.alert}}" hint-placeholder-val="{{false}}">
+        <div style="margin: 0 2px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; border-radius: 12px; background: {{t.group}}; box-shadow: {{t.panelEdge}}, 0 0 0 1.5px {{t.caution}};">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.caution}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+            {{mb.alertTitle}}
+          </span>
+          <span style="font-size: 13px; line-height: 1.4; color: {{t.muted}}; text-wrap: pretty;">{{mb.alertText}}</span>
+          <sc-if value="{{mb.alertAction}}" hint-placeholder-val="{{false}}">
+            <button type="button" style="{{mbPrimary}}">Restart bridge</button>
+          </sc-if>
+          <sc-if value="{{mb.alertWaiting}}" hint-placeholder-val="{{false}}">
+            <span role="status" style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: {{t.muted}};"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>Waiting for the QC…</span>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <div style="margin: 0 2px; border-radius: 12px; background: {{t.group}}; box-shadow: {{t.panelEdge}};">
+        <div style="min-height: 56px; box-sizing: border-box; padding: 8px 12px; display: flex; align-items: center; gap: 12px;">
+          <span style="{{mb.qcTile}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="7.8" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="17.4" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="3" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="7.8" y="11.4" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="17.4" y="11.4" width="3.6" height="3.6" rx="1"></rect></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 14px; font-weight: 600;">{{mb.qcTitle}}</span>
+            <span style="font-size: 12px; color: {{t.muted}};">{{mb.qcSub}}</span>
+          </span>
+          <sc-if value="{{mb.unsaved}}" hint-placeholder-val="{{false}}">
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.signal}};"></span>Unsaved</span>
+          </sc-if>
+        </div>
+        <div style="min-height: 56px; box-sizing: border-box; padding: 8px 12px; display: flex; align-items: center; gap: 12px; border-top: 1px solid {{t.hairline}};">
+          <span style="{{mb.phoneTile}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 14px; font-weight: 600;">{{mb.phoneTitle}}</span>
+            <span style="font-size: 12px; color: {{t.muted}};">{{mb.phoneSub}}</span>
+          </span>
+          <sc-if value="{{mb.phoneDisconnect}}" hint-placeholder-val="{{false}}">
+            <button type="button" style="{{smallDanger}}">Disconnect</button>
+          </sc-if>
+        </div>
+      </div>
+
+      <div role="menu" aria-label="Patchbridge" style="display: flex; flex-direction: column;">
+        <sc-for list="{{menu}}" as="m" hint-placeholder-count="4">
+          <sc-if value="{{m.sep}}" hint-placeholder-val="{{false}}"><span role="separator" style="height: 1px; margin: 4px 10px; background: {{t.hairline}};"></span></sc-if>
+          <button type="button" role="menuitem" style="{{m.style}}">
+            <span style="display: flex; flex-direction: column; gap: 1px;">
+              <span>{{m.label}}</span>
+              <sc-if value="{{m.hasNote}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; color: {{t.muted}};">{{m.note}}</span></sc-if>
+            </span>
+            <span style="font-size: 13px; color: {{t.muted}}; font-variant-numeric: tabular-nums;">{{m.key}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{is.notify}}" hint-placeholder-val="{{false}}">
+    <div style="box-sizing: border-box; padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px;">
+      <span style="{{appIcon}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="7.8" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="17.4" y="6" width="3.6" height="3.6" rx="1"></rect><rect x="3" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="7.8" y="11.4" width="3.6" height="3.6" rx="1"></rect><rect x="12.6" y="11.4" width="3.6" height="3.6" rx="1" opacity="0.45"></rect><rect x="17.4" y="11.4" width="3.6" height="3.6" rx="1"></rect></svg></span>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <span style="display: flex; justify-content: space-between; font-size: 12px; color: {{t.muted}};"><span>Patchbridge</span><span>now</span></span>
+        <span style="font-size: 14px; font-weight: 600; text-wrap: balance;">{{nt.title}}</span>
+        <span style="font-size: 13px; line-height: 1.35; color: {{t.muted}}; font-variant-numeric: tabular-nums;">{{nt.body}}</span>
+      </span>
+    </div>
+    <sc-if value="{{nt.actions}}" hint-placeholder-val="{{false}}">
+      <div style="padding: 0 14px 12px 64px; display: flex; gap: 8px;">
+        <button type="button" style="{{mbGlass}}">Deny</button>
+        <button type="button" style="{{mbPrimary}}">Approve</button>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{is.icons}}" hint-placeholder-val="{{false}}">
+    <div style="box-sizing: border-box; padding: 28px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px;">
+      <sc-for list="{{glyphs}}" as="g" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <span style="height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: oklch(0.24 0.008 110); color: #ffffff;">
+            <span role="img" aria-label="{{g.label}}" style="position: relative; display: flex;">
+              <sc-if value="{{g.filled}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><rect x="1.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="7" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="1.5" y="10" width="4" height="4.5" rx="1"></rect><rect x="7" y="10" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="10" width="4" height="4.5" rx="1"></rect></svg></sc-if>
+              <sc-if value="{{g.outline}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="2" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="2" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="10.4" width="3.2" height="3.6" rx="0.8"></rect></svg></sc-if>
+              <sc-if value="{{g.dot}}" hint-placeholder-val="{{false}}"><span style="position: absolute; right: -4px; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1.5px oklch(0.24 0.008 110);"></span></sc-if>
+              <sc-if value="{{g.warn}}" hint-placeholder-val="{{false}}"><svg style="position: absolute; right: -6px; bottom: -4px;" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.6 9.2H0.4z" fill="currentColor" stroke="oklch(0.24 0.008 110)" stroke-width="1.2" stroke-linejoin="round"></path></svg></sc-if>
+            </span>
+          </span>
+          <span style="height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: oklch(0.93 0.003 110); color: oklch(0.18 0.01 110);">
+            <span aria-hidden="true" style="position: relative; display: flex;">
+              <sc-if value="{{g.filled}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><rect x="1.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="7" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="3.5" width="4" height="4.5" rx="1"></rect><rect x="1.5" y="10" width="4" height="4.5" rx="1"></rect><rect x="7" y="10" width="4" height="4.5" rx="1"></rect><rect x="12.5" y="10" width="4" height="4.5" rx="1"></rect></svg></sc-if>
+              <sc-if value="{{g.outline}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="4" width="3.2" height="3.6" rx="0.8"></rect><rect x="2" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="7.4" y="10.4" width="3.2" height="3.6" rx="0.8"></rect><rect x="12.8" y="10.4" width="3.2" height="3.6" rx="0.8"></rect></svg></sc-if>
+              <sc-if value="{{g.dot}}" hint-placeholder-val="{{false}}"><span style="position: absolute; right: -4px; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1.5px oklch(0.93 0.003 110);"></span></sc-if>
+              <sc-if value="{{g.warn}}" hint-placeholder-val="{{false}}"><svg style="position: absolute; right: -6px; bottom: -4px;" width="10" height="10" viewBox="0 0 10 10"><path d="M5 0.8L9.6 9.2H0.4z" fill="currentColor" stroke="oklch(0.93 0.003 110)" stroke-width="1.2" stroke-linejoin="round"></path></svg></sc-if>
+            </span>
+          </span>
+          <span style="margin-top: 4px; font-size: 14px; font-weight: 600;">{{g.label}}</span>
+          <span style="font-size: 13px; line-height: 1.4; color: {{t.muted}}; text-wrap: pretty;">{{g.desc}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["firstrun","noqc","cortex","ready","request","connected","unplugged","btoff","helper","firmware","settings","closing","menubar","mb-ready","mb-request","mb-lost","mb-stopped","notify-request","notify-lost","icons"],"default":"ready","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"$preview":{"width":480,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const screen = this.props.screen ?? 'ready';
+    const themeName = this.props.theme ?? 'stage';
+    const THEMES = {
+      stage: { ground: 'oklch(0.16 0.008 110)', titlebar: 'oklch(0.18 0.008 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', fill: 'oklch(1 0 0 / 0.1)', group: 'oklch(0.2 0.009 110)',
+        hairline: 'oklch(1 0 0 / 0.08)', hairlineStrong: 'oklch(1 0 0 / 0.28)', switchOff: 'oklch(1 0 0 / 0.18)', windowEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.12)',
+        glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
+        popover: 'oklch(0.22 0.01 110 / 0.92)', popoverEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.1)',
+        signal: 'oklch(0.87 0.17 115)', signalText: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', signalGlow: 'oklch(0.87 0.17 115 / 0.3)',
+        caution: 'oklch(0.86 0.13 75)', cautionInk: 'oklch(0.22 0.05 75)', danger: 'oklch(0.8 0.12 35)', sceneEdge: 'none',
+        scrim: 'oklch(0 0 0 / 0.45)', sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.16), 0 20px 50px oklch(0 0 0 / 0.45)' },
+      daylight: { ground: 'oklch(0.975 0.003 110)', titlebar: 'oklch(0.96 0.003 110)', ink: 'oklch(0.2 0.01 110)', muted: 'oklch(0.45 0.01 110)', fill: 'oklch(0.2 0.01 110 / 0.06)', group: 'oklch(1 0 0)',
+        hairline: 'oklch(0.2 0.01 110 / 0.08)', hairlineStrong: 'oklch(0.2 0.01 110 / 0.3)', switchOff: 'oklch(0.2 0.01 110 / 0.16)', windowEdge: 'inset 0 0 0 1px oklch(0.2 0.01 110 / 0.14)',
+        glass: 'oklch(1 0 0 / 0.66)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 2px 8px oklch(0.2 0.01 110 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(0.2 0.01 110 / 0.07), 0 1px 3px oklch(0.2 0.01 110 / 0.06)',
+        popover: 'oklch(0.985 0.002 110 / 0.94)', popoverEdge: 'inset 0 0 0 1px oklch(0.2 0.01 110 / 0.12), 0 12px 32px oklch(0.2 0.01 110 / 0.14)',
+        signal: 'oklch(0.48 0.12 115)', signalText: 'oklch(0.48 0.12 115)', signalInk: '#ffffff', signalGlow: 'oklch(0.48 0.12 115 / 0.22)',
+        caution: 'oklch(0.52 0.13 60)', cautionInk: '#ffffff', danger: '#ba2c25', sceneEdge: 'inset 0 0 0 1.5px oklch(0.2 0.01 110 / 0.55)',
+        scrim: 'oklch(0.2 0.01 110 / 0.25)', sheetLift: 'inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 20px 50px oklch(0.2 0.01 110 / 0.2)' }
+    };
+    const t = THEMES[themeName];
+    const PHONE = 'Jamie’s iPhone';
+    const MAC = 'Studio Mac';
+
+    const node = (state, label) => {
+      const style = { position: 'relative', width: '64px', height: '64px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' };
+      if (state === 'wait') Object.assign(style, { background: 'transparent', border: '1.5px dashed ' + t.hairlineStrong, color: t.muted });
+      else Object.assign(style, { background: t.glass, color: t.ink,
+        boxShadow: state === 'ask' ? t.glassEdge + ', 0 0 0 2px ' + t.signal + ', 0 0 28px ' + t.signalGlow
+          : state === 'warn' ? t.glassEdge + ', 0 0 0 2px ' + t.caution : t.glassEdge });
+      return { style, label, check: state === 'ok', warn: state === 'warn', state,
+        labelStyle: { maxWidth: '112px', textAlign: 'center', fontSize: '13px', lineHeight: 1.25, fontWeight: state === 'wait' ? 400 : 600, color: state === 'wait' ? t.muted : t.ink } };
+    };
+    const link = (kind, label) => {
+      const lineStyle = { width: '100%', height: '0', borderTop: kind === 'live' ? '2px solid ' + t.ink : kind === 'seek' ? '2px dashed ' + t.signal : kind === 'down' ? '2px dashed ' + t.caution : '2px dotted ' + t.hairlineStrong };
+      if (kind === 'live') lineStyle.opacity = 0.5;
+      return { kind, label, lineStyle, labelStyle: { fontSize: '11px', lineHeight: '14px', fontWeight: 600, whiteSpace: 'nowrap', color: kind === 'down' ? t.caution : t.muted } };
+    };
+
+    const btnBase = { height: '34px', padding: '0 16px', border: '0', borderRadius: '999px', font: 'inherit', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' };
+    const B = {
+      primary: { ...btnBase, background: t.signal, color: t.signalInk, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' },
+      glass: { ...btnBase, background: t.glass, color: t.ink, boxShadow: t.glassEdge, fontWeight: 500 },
+      danger: { ...btnBase, background: t.fill, color: t.danger }
+    };
+    const btn = (label, kind) => ({ label, style: B[kind] });
+    const exportBtn = btn('Export report…', 'glass');
+
+    const QC_ROW = { k: 'Quad Cortex', v: 'CorOS 4.1.1 · USB' };
+    const PRESET_ROW = { k: 'Preset', v: 'Crunch Lead · My Presets 16' };
+    const S = {
+      firstrun: { nodes: ['wait', 'on', 'ok'], links: [['none', 'Bluetooth · not allowed'], ['live', 'USB']], phone: 'iPhone',
+        h: 'Patchbridge needs Bluetooth', sub: 'Your iPhone reaches the QC through this Mac. macOS will ask once.',
+        rows: [QC_ROW], left: [], right: [btn('Allow Bluetooth', 'primary')] },
+      noqc: { nodes: ['wait', 'on', 'wait'], links: [['seek', 'Bluetooth'], ['none', 'USB']], phone: 'iPhone',
+        h: 'Plug in your Quad Cortex', sub: 'Connect it to this Mac with USB and switch it on.', status: 'Looking for the QC…',
+        rows: [{ k: 'Visible as', v: MAC }], left: [exportBtn], right: [] },
+      cortex: { nodes: ['wait', 'on', 'warn'], links: [['none', 'Bluetooth'], ['down', 'USB · in use']], phone: 'iPhone',
+        h: 'Cortex Control is using the QC', sub: 'Only one app can talk to the QC at a time. Unsaved work in Cortex Control stays there.',
+        rows: [{ k: 'Quad Cortex', v: 'CorOS 4.1.1 · USB', tail: 'In use', tailKind: 'caution' }], left: [exportBtn], right: [btn('Quit Cortex Control', 'primary')] },
+      ready: { nodes: ['wait', 'on', 'ok'], links: [['seek', 'Bluetooth'], ['live', 'USB']], phone: 'iPhone',
+        h: 'Ready for your iPhone', sub: 'Open Patchbridge on your iPhone and choose ' + MAC + '.',
+        rows: [QC_ROW, PRESET_ROW, { k: 'Visible as', v: MAC }], left: [exportBtn], right: [] },
+      request: { nodes: ['ask', 'on', 'ok'], links: [['seek', 'Bluetooth'], ['live', 'USB']], phone: PHONE,
+        h: PHONE + ' wants to edit the QC', sub: 'Approve only if the iPhone shows the same code.', code: true,
+        left: [], right: [btn('Deny', 'glass'), btn('Approve', 'primary')] },
+      connected: { nodes: ['ok', 'on', 'ok'], links: [['live', 'Bluetooth'], ['live', 'USB']], phone: PHONE,
+        h: 'Connected', sub: PHONE + ' is editing Crunch Lead.',
+        rows: [QC_ROW, { ...PRESET_ROW, tail: 'Unsaved', tailKind: 'signal' }, { k: 'Scene', v: 'F · RHYTHM', dot: '#ff7000' }, { k: 'iPhone', v: 'Approved 21:04' }],
+        edits: true, left: [exportBtn], right: [btn('Disconnect iPhone', 'danger')] },
+      unplugged: { nodes: ['ok', 'on', 'warn'], links: [['live', 'Bluetooth'], ['down', 'USB · lost']], phone: PHONE,
+        h: 'The QC was disconnected', sub: 'Editing is paused. Nothing is sent until the QC is back, then Patchbridge reloads it.', status: 'Waiting for the QC…',
+        rows: [{ k: 'Last preset', v: 'Crunch Lead · My Presets 16' }, { k: 'iPhone', v: 'Still connected' }], left: [exportBtn], right: [btn('Disconnect iPhone', 'danger')] },
+      btoff: { nodes: ['wait', 'on', 'ok'], links: [['none', 'Bluetooth · off'], ['live', 'USB']], phone: 'iPhone',
+        h: 'Bluetooth is off', sub: 'Your iPhone can’t reach this Mac. The QC is still connected.',
+        rows: [QC_ROW], left: [exportBtn], right: [btn('Open Bluetooth Settings', 'primary')] },
+      helper: { nodes: ['wait', 'warn', 'ok'], links: [['none', 'Bluetooth'], ['none', 'USB']], phone: 'iPhone',
+        h: 'The bridge stopped', sub: PHONE + ' was disconnected. Restarting reloads the QC, and the iPhone will need approval again.',
+        rows: [{ k: 'Last edit', v: 'Gain · Amp', tail: 'Outcome unknown', tailKind: 'caution' }], left: [exportBtn], right: [btn('Restart bridge', 'primary')] },
+      firmware: { nodes: ['wait', 'on', 'warn'], links: [['none', 'Bluetooth'], ['live', 'USB']], phone: 'iPhone',
+        h: 'This CorOS version isn’t tested yet', sub: 'Patchbridge won’t write to the QC until it supports this version.',
+        rows: [{ k: 'Quad Cortex', v: 'CorOS 4.2.0', tail: 'Not tested', tailKind: 'caution' }, { k: 'Tested with', v: 'CorOS 4.1.1' }], left: [exportBtn], right: [] }
+    };
+
+    const isMenubar = screen === 'menubar' || screen.indexOf('mb-') === 0;
+    const isNotify = screen.indexOf('notify-') === 0;
+    const isIcons = screen === 'icons';
+    const isWindow = !isMenubar && !isNotify && !isIcons;
+    const isSettings = screen === 'settings';
+    const isFloating = isMenubar || isNotify;
+    const s0 = S[screen === 'closing' ? 'connected' : screen] || S.ready;
+    const WORD = { ok: 'connected', wait: 'not connected', ask: 'asking for approval', warn: 'needs attention', on: 'running' };
+    const LWORD = { live: 'connected', seek: 'waiting', down: 'interrupted', none: 'off' };
+    const n = { phone: node(s0.nodes[0], s0.phone), mac: node(s0.nodes[1], MAC), qc: node(s0.nodes[2], 'Quad Cortex') };
+    const l = { bt: link(s0.links[0][0], s0.links[0][1]), usb: link(s0.links[1][0], s0.links[1][1]) };
+    const diagramLabel = s0.phone + ' ' + WORD[s0.nodes[0]] + '; Bluetooth ' + LWORD[s0.links[0][0]] + '; ' + MAC + ' ' + WORD[s0.nodes[1]] + '; USB ' + LWORD[s0.links[1][0]] + '; Quad Cortex ' + WORD[s0.nodes[2]];
+
+    const rows = (s0.rows || []).map((r, i) => ({
+      k: r.k, v: r.v, hasDot: !!r.dot, hasTail: !!r.tail, tail: r.tail || '', tailDot: r.tailKind === 'signal',
+      dotStyle: r.dot ? { width: '10px', height: '10px', flex: 'none', borderRadius: '50%', background: r.dot, boxShadow: t.sceneEdge } : {},
+      tailStyle: { flex: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: r.tailKind === 'caution' ? t.caution : t.ink },
+      rowStyle: { minHeight: '40px', boxSizing: 'border-box', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px', borderTop: i ? '1px solid ' + t.hairline : '0' }
+    }));
+    const edits = [
+      { name: 'Gain', block: 'Amp', value: '6.4' },
+      { name: 'Decay', block: 'Reverb', value: '2.4 s', warn: true, note: 'Not applied · scene changed' },
+      { name: 'Mix', block: 'Delay', value: '32.0 %' }
+    ].map((e, i) => ({ ...e, ok: !e.warn, warn: !!e.warn, note: e.note || '',
+      valueStyle: { fontSize: '14px', fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: e.warn ? t.muted : t.ink, textDecoration: e.warn ? 'line-through' : 'none' },
+      rowStyle: { minHeight: '40px', boxSizing: 'border-box', padding: '9px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '3px', borderTop: i ? '1px solid ' + t.hairline : '0' } }));
+
+    const code = '4F7K2Q'.split('');
+    code.splice(3, 0, '·');
+
+    const DIMS = { menubar: [340, 322], 'mb-ready': [340, 322], 'mb-request': [340, 516], 'mb-lost': [340, 441], 'mb-stopped': [340, 460],
+      'notify-request': [380, 122], 'notify-lost': [380, 78], icons: [760, 220], settings: [560, 660] };
+    const dims = DIMS[screen] || [480, 700];
+    const rootStyle = { width: dims[0] + 'px', height: dims[1] + 'px', position: 'relative', overflow: 'hidden', boxSizing: 'border-box', display: 'flex', flexDirection: 'column',
+      borderRadius: isFloating ? '15px' : '18px', background: isFloating ? t.popover : t.ground, boxShadow: isFloating ? t.popoverEdge : t.windowEdge,
+      color: t.ink, fontFamily: "-apple-system, 'SF Pro Text', Inter, system-ui, sans-serif" };
+    if (isFloating) { rootStyle.backdropFilter = 'blur(30px) saturate(1.7)'; rootStyle.WebkitBackdropFilter = 'blur(30px) saturate(1.7)'; }
+
+    const tile = (wait) => ({ width: '36px', height: '36px', flex: 'none', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px',
+      background: wait ? 'transparent' : t.fill, border: wait ? '1.5px dashed ' + t.hairlineStrong : '0', color: wait ? t.muted : t.ink });
+    const MB = {
+      menubar: { status: 'Connected', dot: true, qcTitle: 'Crunch Lead', qcSub: 'My Presets 16 · CorOS 4.1.1', unsaved: true, phoneTitle: PHONE, phoneSub: 'Approved 21:04', phoneDisconnect: true },
+      'mb-ready': { status: 'Ready', ring: true, qcTitle: 'Crunch Lead', qcSub: 'My Presets 16 · CorOS 4.1.1', phoneTitle: 'No iPhone connected', phoneSub: 'Visible as ' + MAC, phoneWait: true },
+      'mb-request': { status: 'Approval needed', dot: true, request: true, qcTitle: 'Crunch Lead', qcSub: 'My Presets 16 · CorOS 4.1.1', phoneTitle: PHONE, phoneSub: 'Waiting for your approval' },
+      'mb-lost': { status: 'Needs attention', warn: true, alert: true, alertTitle: 'The QC was disconnected', alertText: 'Editing is paused. Nothing is sent until the QC is back.', alertWaiting: true,
+        qcTitle: 'Quad Cortex', qcSub: 'Not connected', qcWait: true, phoneTitle: PHONE, phoneSub: 'Still connected', phoneDisconnect: true },
+      'mb-stopped': { status: 'Needs attention', warn: true, alert: true, alertTitle: 'The bridge stopped', alertText: PHONE + ' was disconnected. Restarting reloads the QC, and the iPhone will need approval again.', alertAction: true,
+        qcTitle: 'Crunch Lead', qcSub: 'My Presets 16 · CorOS 4.1.1', phoneTitle: 'No iPhone connected', phoneSub: 'Bridge stopped', phoneWait: true }
+    };
+    const m0 = MB[screen] || MB.menubar;
+    const mb = { status: m0.status, isDot: !!m0.dot, isRing: !!m0.ring, isWarn: !!m0.warn, statusColor: m0.warn ? t.caution : t.ink,
+      request: !!m0.request, alert: !!m0.alert, alertTitle: m0.alertTitle || '', alertText: m0.alertText || '', alertAction: !!m0.alertAction, alertWaiting: !!m0.alertWaiting,
+      qcTitle: m0.qcTitle, qcSub: m0.qcSub, unsaved: !!m0.unsaved, qcTile: tile(!!m0.qcWait),
+      phoneTitle: m0.phoneTitle, phoneSub: m0.phoneSub, phoneDisconnect: !!m0.phoneDisconnect, phoneTile: tile(!!m0.phoneWait) };
+    const NT = {
+      'notify-request': { title: PHONE + ' wants to edit the QC', body: 'Code 4F7·K2Q', actions: true },
+      'notify-lost': { title: 'The QC was disconnected', body: 'Editing is paused until it’s back.', actions: false }
+    };
+    const nt = NT[screen] || NT['notify-request'];
+    const glyphs = [
+      { label: 'Ready', desc: 'Running, no iPhone connected. Outline grid.', outline: true },
+      { label: 'Connected', desc: 'An iPhone is editing. Filled grid.', filled: true },
+      { label: 'Approval needed', desc: 'An iPhone is asking. Filled grid with a dot.', filled: true, dot: true },
+      { label: 'Needs attention', desc: 'QC lost or the bridge stopped. Outline grid with a triangle.', outline: true, warn: true }
+    ].map((g) => ({ ...g, filled: !!g.filled, outline: !!g.outline, dot: !!g.dot, warn: !!g.warn }));
+
+    const badge = { position: 'absolute', right: '-2px', bottom: '-2px', width: '22px', height: '22px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: '2px solid ' + t.ground };
+    const pick = themeName === 'stage' ? 'Stage' : 'Daylight';
+    const menuItem = { width: '100%', minHeight: '32px', boxSizing: 'border-box', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', border: '0', borderRadius: '9px', background: 'transparent', color: t.ink, font: 'inherit', fontSize: '14px', textAlign: 'left', cursor: 'pointer' };
+
+    return {
+      t, n, l, rows, edits, diagramLabel,
+      is: { window: isWindow, main: isWindow && !isSettings, settings: isSettings, sheet: screen === 'closing', menubar: isMenubar, notify: isNotify, icons: isIcons },
+      mb, nt, glyphs,
+      windowTitle: isSettings ? 'Settings' : 'Patchbridge',
+      s: { h: s0.h || '', sub: s0.sub || '', code: !!s0.code, hasStatus: !!s0.status, status: s0.status || '', hasRows: rows.length > 0, edits: !!s0.edits, left: s0.left || [], right: s0.right || [] },
+      code: code.map((c) => ({ c, style: c === '·'
+        ? { fontSize: '26px', color: t.muted }
+        : { fontSize: '40px', fontWeight: 700, letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums', fontFamily: "ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif" } })),
+      rootStyle,
+      codeSmall: code.map((c) => ({ c, style: c === '·'
+        ? { fontSize: '20px', color: t.muted }
+        : { fontSize: '28px', fontWeight: 700, letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums', fontFamily: "ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif" } })),
+      mbPrimary: { ...B.primary, flex: '1', height: '32px' },
+      mbGlass: { ...B.glass, flex: '1', height: '32px' },
+      sheetPrimary: { ...B.primary, height: '32px' },
+      sheetGlass: { ...B.glass, height: '32px' },
+      appIcon: { width: '40px', height: '40px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'oklch(0.16 0.008 110)', color: 'oklch(0.87 0.17 115)', boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.1)' },
+      switchOff: { width: '38px', height: '22px', flex: 'none', padding: '2px', border: '0', borderRadius: '999px', background: t.switchOff, display: 'flex', justifyContent: 'flex-start', cursor: 'pointer' },
+      badgeOk: { ...badge, background: t.signal, color: t.signalInk },
+      badgeWarn: { ...badge, background: t.caution, color: t.cautionInk, fontSize: '13px', fontWeight: 800, lineHeight: 1 },
+      switchOn: { width: '38px', height: '22px', flex: 'none', padding: '2px', border: '0', borderRadius: '999px', background: t.signal, display: 'flex', justifyContent: 'flex-end', cursor: 'pointer' },
+      knob: { width: '18px', height: '18px', borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px oklch(0 0 0 / 0.3)' },
+      segments: ['Match Mac', 'Stage', 'Daylight'].map((label) => {
+        const on = label === 'Match Mac';
+        return { label, checked: on ? 'true' : 'false', style: { height: '26px', padding: '0 12px', border: '0', borderRadius: '999px', font: 'inherit', fontSize: '12px', fontWeight: on ? 600 : 500, cursor: 'pointer',
+          background: on ? t.group : 'transparent', color: on ? t.ink : t.muted, boxShadow: on ? t.glassEdge : 'none' } };
+      }),
+      glassBtn: { ...B.glass, flex: 'none' },
+      smallDanger: { ...btnBase, height: '28px', padding: '0 12px', fontSize: '12px', background: t.fill, color: t.danger },
+      tileStyle: { width: '36px', height: '36px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: t.fill, color: t.ink },
+      menu: [
+        { label: 'Open Patchbridge', key: '' },
+        { label: 'Settings…', key: '⌘,' },
+        { label: 'Export Report…', key: '⌘E' },
+        { label: 'Quit Patchbridge', key: '⌘Q', sep: true, note: 'Releases the QC and disconnects the iPhone' }
+      ].map((m) => ({ ...m, sep: !!m.sep, hasNote: !!m.note, note: m.note || '', style: menuItem })),
+      themeLabel: pick
+    };
+  }
+}
+</script>
+</body>
+</html>

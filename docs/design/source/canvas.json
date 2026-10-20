@@ -15,6 +15,10 @@
       "name": "iPhone PoC"
     },
     {
+      "id": "mac",
+      "name": "Mac bridge"
+    },
+    {
       "id": "components",
       "name": "Components"
     },
@@ -431,6 +435,240 @@
       "page": "poc",
       "x": 964,
       "y": 0
+    },
+    "mac/m-firstrun.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Bluetooth permission",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-noqc.dc.html": {
+      "x": 560,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Waiting for the QC",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-cortex.dc.html": {
+      "x": 1120,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Cortex Control has the QC",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-btoff.dc.html": {
+      "x": 1680,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Bluetooth off",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-ready.dc.html": {
+      "x": 2240,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Ready for an iPhone",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-request.dc.html": {
+      "x": 0,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "Approve an iPhone",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-connected.dc.html": {
+      "x": 560,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "Connected · recent edits",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-unplugged.dc.html": {
+      "x": 1120,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "QC unplugged mid-session",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-helper.dc.html": {
+      "x": 1680,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "Bridge stopped",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-firmware.dc.html": {
+      "x": 2240,
+      "y": 1140,
+      "w": 480,
+      "h": 700,
+      "title": "Untested CorOS",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/m-closing.dc.html": {
+      "x": 0,
+      "y": 2280,
+      "w": 480,
+      "h": 700,
+      "title": "Closing the window",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/mb-icons.dc.html": {
+      "x": 560,
+      "y": 2280,
+      "w": 760,
+      "h": 220,
+      "title": "Menu bar icon states",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/mb-notify-request.dc.html": {
+      "x": 560,
+      "y": 2620,
+      "w": 380,
+      "h": 122,
+      "title": "Notification · approval",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-notify-lost.dc.html": {
+      "x": 1020,
+      "y": 2620,
+      "w": 380,
+      "h": 78,
+      "title": "Notification · QC lost",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-ready.dc.html": {
+      "x": 1480,
+      "y": 2280,
+      "w": 340,
+      "h": 322,
+      "title": "Menu bar · ready",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-connected.dc.html": {
+      "x": 1900,
+      "y": 2280,
+      "w": 340,
+      "h": 322,
+      "title": "Menu bar · connected",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-request.dc.html": {
+      "x": 2320,
+      "y": 2280,
+      "w": 340,
+      "h": 516,
+      "title": "Menu bar · approve",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-lost.dc.html": {
+      "x": 2740,
+      "y": 2280,
+      "w": 340,
+      "h": 441,
+      "title": "Menu bar · QC lost",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/mb-stopped.dc.html": {
+      "x": 3160,
+      "y": 2280,
+      "w": 340,
+      "h": 460,
+      "title": "Menu bar · bridge stopped",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/m-settings.dc.html": {
+      "x": 0,
+      "y": 3420,
+      "w": 560,
+      "h": 660,
+      "title": "Settings",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/d-ready.dc.html": {
+      "x": 640,
+      "y": 3420,
+      "w": 480,
+      "h": 700,
+      "title": "Daylight · ready",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/d-request.dc.html": {
+      "x": 1200,
+      "y": 3420,
+      "w": 480,
+      "h": 700,
+      "title": "Daylight · approve",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/d-connected.dc.html": {
+      "x": 1760,
+      "y": 3420,
+      "w": 480,
+      "h": 700,
+      "title": "Daylight · connected",
+      "page": "mac",
+      "radius": 18
+    },
+    "mac/d-mb-connected.dc.html": {
+      "x": 2320,
+      "y": 3420,
+      "w": 340,
+      "h": 322,
+      "title": "Daylight · menu bar",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/d-mb-request.dc.html": {
+      "x": 2740,
+      "y": 3420,
+      "w": 340,
+      "h": 516,
+      "title": "Daylight · menu bar approve",
+      "page": "mac",
+      "radius": 15
+    },
+    "mac/Bridge.dc.html": {
+      "x": 2882,
+      "y": 0,
+      "w": 480,
+      "h": 700,
+      "title": "Mac bridge (Tweaks: screen, theme)",
+      "page": "components",
+      "radius": 18
     }
   },
   "order": [
@@ -475,6 +713,7 @@
     "poc/Editor.dc.html",
     "poc/Appearance.dc.html",
     "poc/Landscape.dc.html",
+    "mac/Bridge.dc.html",
     "Main.dc.html",
     "A-Editor.dc.html",
     "B-Overview.dc.html",
@@ -484,7 +723,32 @@
     "D-Overview.dc.html",
     "D-Editor.dc.html",
     "D-Landscape.dc.html",
-    "D-iPad.dc.html"
+    "D-iPad.dc.html",
+    "mac/m-firstrun.dc.html",
+    "mac/m-noqc.dc.html",
+    "mac/m-cortex.dc.html",
+    "mac/m-btoff.dc.html",
+    "mac/m-ready.dc.html",
+    "mac/m-request.dc.html",
+    "mac/m-connected.dc.html",
+    "mac/m-unplugged.dc.html",
+    "mac/m-helper.dc.html",
+    "mac/m-firmware.dc.html",
+    "mac/m-closing.dc.html",
+    "mac/mb-icons.dc.html",
+    "mac/mb-notify-request.dc.html",
+    "mac/mb-notify-lost.dc.html",
+    "mac/mb-ready.dc.html",
+    "mac/mb-connected.dc.html",
+    "mac/mb-request.dc.html",
+    "mac/mb-lost.dc.html",
+    "mac/mb-stopped.dc.html",
+    "mac/m-settings.dc.html",
+    "mac/d-ready.dc.html",
+    "mac/d-request.dc.html",
+    "mac/d-connected.dc.html",
+    "mac/d-mb-connected.dc.html",
+    "mac/d-mb-request.dc.html"
   ],
   "notes": {
     "pocConnect": {
@@ -550,6 +814,38 @@
       "kind": "title1",
       "maxW": 3044,
       "page": "concepts"
+    },
+    "macSetup": {
+      "x": 0,
+      "y": -280,
+      "text": "Mac window: Bluetooth, the QC, then ready",
+      "kind": "title1",
+      "maxW": 2720,
+      "page": "mac"
+    },
+    "macSession": {
+      "x": 0,
+      "y": 860,
+      "text": "Mac window: approve an iPhone, stay connected, recover",
+      "kind": "title1",
+      "maxW": 2720,
+      "page": "mac"
+    },
+    "macMenubar": {
+      "x": 0,
+      "y": 2000,
+      "text": "Runs in the menu bar: close the window, keep the bridge going",
+      "kind": "title1",
+      "maxW": 3500,
+      "page": "mac"
+    },
+    "macThemes": {
+      "x": 0,
+      "y": 3140,
+      "text": "Settings and Daylight",
+      "kind": "title1",
+      "maxW": 3080,
+      "page": "mac"
     }
   },
   "designSystems": []
