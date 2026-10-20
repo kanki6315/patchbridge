@@ -3,12 +3,15 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import re
 import shutil
 import subprocess
 import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+# The release reads the app version from here, so a version bump never changes these tests.
+VERSION = re.search(r'^\s+MARKETING_VERSION:\s*["\']?([A-Za-z0-9.-]+)', (ROOT / 'ios/project.yml').read_text(), re.M).group(1)
 
 
 class ReleaseTests(unittest.TestCase):
@@ -72,7 +75,7 @@ if name == 'xcodebuild' and args[0] == '-showdestinations':
         return [json.loads(line) for line in self.events.read_text().splitlines()] if self.events.exists() else []
 
     def export_options(self):
-        with (self.root / 'build/release/0.1-42/ExportOptions.plist').open('rb') as f:
+        with (self.root / f'build/release/{VERSION}-42/ExportOptions.plist').open('rb') as f:
             return plistlib.load(f)
 
     def test_export_without_upload_or_tag(self):
@@ -93,7 +96,7 @@ if name == 'xcodebuild' and args[0] == '-showdestinations':
         export = next(i for i, c in enumerate(calls) if c[:2] == ['xcodebuild', '-exportArchive'])
         tag = next(i for i, c in enumerate(calls) if c[:2] == ['git', 'tag'])
         self.assertGreater(tag, export)
-        self.assertIn('ios/v0.1-42', calls[tag])
+        self.assertIn(f'ios/v{VERSION}-42', calls[tag])
 
     def test_failed_build_or_test_never_uploads_or_tags(self):
         for stage in ['swift', 'test', 'archive', '-exportArchive']:
