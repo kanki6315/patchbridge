@@ -1,0 +1,131 @@
+---
+// Layout for Markdown pages (support, privacy). Set `title` and `description`
+// in each page's frontmatter; `updated` is optional.
+import Base from './Base.astro';
+
+interface Props {
+  frontmatter: { title: string; description?: string; lede?: string; updated?: string };
+}
+const { title, description, lede, updated } = Astro.props.frontmatter;
+const updatedLabel = updated
+  ? new Date(`${updated}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
+  : null;
+---
+<Base title={title} description={description}>
+  <article class="wrap prose-page">
+    <header class="head">
+      <h1>{title}</h1>
+      {lede && <p class="lede">{lede}</p>}
+      {updatedLabel && <p class="updated">Last updated <time datetime={updated}>{updatedLabel}</time></p>}
+    </header>
+    <div class="prose">
+      <slot />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .prose-page {
+    padding-block: clamp(3rem, 2rem + 5vw, 6rem) var(--section);
+  }
+  .head {
+    display: grid;
+    gap: 1rem;
+    max-width: 44rem;
+    padding-bottom: clamp(2rem, 4vw, 3rem);
+    border-bottom: 1px solid var(--hairline);
+  }
+  h1 {
+    font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem);
+    letter-spacing: -0.035em;
+  }
+  .lede {
+    color: var(--ink-muted);
+    font-size: var(--text-lede);
+    line-height: 1.5;
+  }
+  .updated { color: var(--ink-muted); font-size: var(--text-caption); }
+
+  .prose {
+    max-width: 44rem;
+    padding-top: clamp(1rem, 2vw, 1.5rem);
+    line-height: 1.7;
+  }
+  .prose :global(h2) {
+    margin: 2.75rem 0 0.75rem;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .prose :global(h3) {
+    margin: 2rem 0 0.5rem;
+    font-size: var(--text-h3);
+    letter-spacing: -0.01em;
+  }
+  .prose :global(p),
+  .prose :global(ul),
+  .prose :global(ol) { margin: 0 0 1rem; max-width: 68ch; }
+  .prose :global(ul),
+  .prose :global(ol) { padding-left: 1.25rem; }
+  .prose :global(li) { margin-bottom: 0.4rem; }
+  .prose :global(li::marker) { color: var(--ink-muted); }
+  .prose :global(strong) { font-weight: 600; }
+  .prose :global(a) {
+    color: var(--signal);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .prose :global(a:hover) { text-decoration-thickness: 2px; }
+  .prose :global(hr) {
+    margin: 2.5rem 0;
+    border: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* FAQ disclosure rows on the support page */
+  .prose :global(details) {
+    border-bottom: 1px solid var(--hairline);
+  }
+  .prose :global(details:first-of-type) { border-top: 1px solid var(--hairline); }
+  .prose :global(summary) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3.5rem;
+    padding-block: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+  }
+  .prose :global(summary::-webkit-details-marker) { display: none; }
+  .prose :global(summary::after) {
+    content: '';
+    flex: none;
+    width: 0.6rem; height: 0.6rem;
+    border-right: 2px solid var(--ink-muted);
+    border-bottom: 2px solid var(--ink-muted);
+    transform: translateY(-25%) rotate(45deg);
+    transition: transform 200ms var(--ease-out);
+  }
+  .prose :global(details[open] summary::after) { transform: translateY(25%) rotate(-135deg); }
+  .prose :global(details > :not(summary)) { color: var(--ink-muted); }
+  .prose :global(details > p:last-child) { margin-bottom: 1.25rem; }
+
+  /* The contact block at the top of support */
+  .prose :global(.contact) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    margin: 1rem 0 2.5rem;
+    padding: 1.5rem;
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+  .prose :global(.contact p) { margin: 0; }
+  .prose :global(.contact .btn) { color: var(--signal-ink); text-decoration: none; }
+</style>

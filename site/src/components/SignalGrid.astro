@@ -1,0 +1,328 @@
+---
+// A live HTML rebuild of the app's 4×8 signal-chain grid, using the captured
+// "Tremonti w Mic" preset from the design boards. Decorative: the real
+// information is in the hero copy, so the rig is hidden from assistive tech
+// apart from a one-line description.
+
+type Cat = 'dynamics' | 'drive' | 'cab' | 'modulation' | 'reverb' | 'wah' | 'capture' | 'pitch' | 'utility';
+type Block = { code: string; name: string; cat: Cat } | null;
+
+const W = (name: string): Block => ({ code: 'WAH', name, cat: 'wah' });
+const CMP = (name: string): Block => ({ code: 'CMP', name, cat: 'dynamics' });
+const CAP = (name: string): Block => ({ code: 'CAP', name, cat: 'capture' });
+const DRV = (name: string): Block => ({ code: 'DRV', name, cat: 'drive' });
+const PIT = (name: string): Block => ({ code: 'PIT', name, cat: 'pitch' });
+const UTL = (name: string): Block => ({ code: 'UTL', name, cat: 'utility' });
+const CAB = (name: string): Block => ({ code: 'CAB', name, cat: 'cab' });
+const MOD = (name: string): Block => ({ code: 'MOD', name, cat: 'modulation' });
+const REV = (name: string): Block => ({ code: 'REV', name, cat: 'reverb' });
+const _ = null;
+
+const rows: Block[][] = [
+  [W('Bad Horse'), CMP('Opto Comp (M)'), CAP('Eltron 30'), DRV('Myth Drive'), PIT('Transpose'), PIT('Poly Octaver'), UTL('Adaptive Gate'), _],
+  [_, _, UTL('Volume'), _, _, _, _, _],
+  [_, CAP('Eltron 30'), _, CAP('Eltron 30'), CAB('412 CA Trad'), _, MOD('Dual Chorus'), REV('Plate Tight')],
+  [_, CAP('Eltron 30'), _, CAP('Eltron 30'), CAB('412 CA Trad'), _, _, _],
+];
+
+// Scene names and colors exactly as the QC reported them.
+const scenes = [
+  { id: 'A', name: 'CLEAN', color: '#ff2727' },
+  { id: 'B', name: 'CRONCH', color: '#0a74e0' },
+  { id: 'C', name: '', color: '#ffd236' },
+  { id: 'D', name: '', color: '#ff02c2' },
+  { id: 'E', name: 'RHYTHM', color: '#45f862' },
+  { id: 'F', name: 'RHYTHM', color: '#ff7000' },
+  { id: 'G', name: 'OCTAVE FUN', color: '#0a74e0' },
+  { id: 'H', name: 'LEAD', color: '#ff02c2' },
+];
+const active = 'F';
+---
+<figure class="rig" role="img" aria-label="Patchbridge showing the preset Tremonti w Mic: scene F, a four-row signal chain of colored blocks, and the Opto Comp threshold at −34.2 dB.">
+  <div class="rig-head" aria-hidden="true">
+    <div class="preset">
+      <span class="preset-name">Tremonti w Mic</span>
+      <span class="preset-meta tnum">My Presets · 16 <span class="unsaved"><i></i>Unsaved</span></span>
+    </div>
+    <ol class="scenes">
+      {scenes.map((s) => (
+        <li class:list={['scene', { on: s.id === active }]} style={`--scene:${s.color}`}>
+          <i></i>
+          <b>{s.id}</b>
+          <span data-id={s.id}>{s.name}</span>
+        </li>
+      ))}
+    </ol>
+  </div>
+
+  <div class="panel" aria-hidden="true">
+    {rows.map((row, r) => (
+      <div class:list={['row', { selected: r === 0 }]}>
+        {row.map((b, c) =>
+          b ? (
+            <div
+              class:list={['cell', { picked: r === 0 && c === 1 }]}
+              style={`--fill:var(--cat-${b.cat});--on:var(--cat-${b.cat}-ink);--i:${c + r * 0.5}`}
+            >
+              <span class="code">{b.code}</span>
+              <span class="name">{b.name}</span>
+            </div>
+          ) : (
+            <div class="cell empty" style={`--i:${c + r * 0.5}`}></div>
+          )
+        )}
+        {r === 0 && <span class="pulse"></span>}
+      </div>
+    ))}
+  </div>
+
+  <div class="inspector" aria-hidden="true">
+    <span class="chip">CMP</span>
+    <span class="block">
+      <b>Opto Comp (M)</b>
+      <span>Threshold</span>
+    </span>
+    <span class="value tnum">−34.2<small>dB</small></span>
+  </div>
+</figure>
+
+<style>
+  .rig {
+    container-type: inline-size;
+    position: relative;
+    margin: 0;
+    padding-bottom: 3.25rem;
+  }
+
+  /* Header: preset + scene strip */
+  .rig-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .preset { display: grid; gap: 0.15rem; }
+  .preset-name {
+    font: 700 1.5rem/1.1 var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  .preset-meta { color: var(--ink-muted); font-size: 0.875rem; }
+  .unsaved {
+    margin-left: 0.5rem;
+    color: var(--signal);
+    font-weight: 600;
+  }
+  .unsaved i {
+    display: inline-block;
+    width: 0.5rem; height: 0.5rem;
+    margin-right: 0.35rem;
+    border-radius: 50%;
+    background: var(--signal);
+    vertical-align: 0.05em;
+  }
+
+  .scenes {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    flex: 1 1 22rem;
+    max-width: 30rem;
+  }
+  .scene {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 0.15rem;
+    min-height: 3.25rem;
+    border-radius: var(--r-md);
+    color: var(--ink-muted);
+    font-size: 0.8125rem;
+  }
+  .scene i {
+    width: 0.55rem; height: 0.55rem;
+    border-radius: 50%;
+    background: var(--scene);
+  }
+  .scene b { font-weight: 600; line-height: 1; }
+  .scene span { display: none; }
+  .scene.on {
+    color: var(--ink);
+    background: rgb(255 255 255 / 0.06);
+    box-shadow: inset 0 0 0 1.5px var(--scene), 0 0 18px -4px var(--scene);
+  }
+  .scene.on i { width: 0.8rem; height: 0.8rem; }
+
+  /* Grid panel: flat content layer, never glass */
+  .panel {
+    display: grid;
+    gap: 6px;
+    padding: 8px;
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+  .row {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
+    padding: 4px;
+    border-radius: 14px;
+  }
+  .row.selected {
+    background: rgb(255 255 255 / 0.09);
+    box-shadow: inset 0 0 0 2px var(--signal);
+    overflow: hidden;
+  }
+
+  .cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: 1 / 0.92;
+    min-width: 0;
+    padding: 6px;
+    border-radius: var(--r-cell);
+    background: var(--fill);
+    color: var(--on);
+    box-shadow: var(--block-highlight);
+  }
+  .cell.empty {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--hairline);
+  }
+  :global(html.intro) .cell {
+    animation: plug 700ms var(--ease-out-expo) backwards;
+    animation-delay: calc(250ms + var(--i) * 55ms);
+  }
+  :global(html.intro) .cell.empty { animation-name: fade; }
+  .code {
+    font-size: var(--text-label);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+  .name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.15;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .cell .name { display: none; }
+
+  /* The block open in the inspector: Signal ring, offset like the app. */
+  .cell.picked { outline: 2.5px solid var(--signal); outline-offset: 2px; }
+
+  /* A slow light running along the selected row, like signal down a cable. */
+  .pulse {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.9) 50%, transparent);
+    background-size: 30% 100%;
+    background-repeat: no-repeat;
+    animation: run 7s var(--ease-out) 1.6s infinite backwards;
+    opacity: 0.85;
+    mix-blend-mode: overlay;
+  }
+
+  /* Floating glass inspector: the control layer over the content layer. */
+  .inspector {
+    position: absolute;
+    right: clamp(0.5rem, 3cqi, 1.5rem);
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.7rem 1.1rem 0.7rem 0.7rem;
+    border-radius: var(--r-lg);
+    background: rgb(36 36 31 / 0.55);
+    -webkit-backdrop-filter: blur(26px) saturate(1.7);
+    backdrop-filter: blur(26px) saturate(1.7);
+    box-shadow: var(--panel-float);
+  }
+  :global(html.intro) .inspector { animation: rise 800ms var(--ease-out-expo) 900ms backwards; }
+  .chip {
+    display: grid;
+    place-items: center;
+    width: 2.75rem; height: 2.75rem;
+    border-radius: var(--r-sm);
+    background: var(--cat-dynamics);
+    color: var(--cat-dynamics-ink);
+    font-size: var(--text-label);
+    font-weight: 700;
+    box-shadow: var(--block-highlight);
+  }
+  .block { display: grid; line-height: 1.25; }
+  .block b { font-weight: 600; font-size: 0.9375rem; }
+  .block span { color: var(--ink-muted); font-size: 0.8125rem; }
+  .value {
+    margin-left: 0.5rem;
+    font: 700 1.75rem/1 var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  .value small {
+    margin-left: 0.2rem;
+    color: var(--ink-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .inspector { background: var(--surface-raised); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+
+  /* Wide enough for names, like the iPad grid. */
+  @container (min-width: 600px) {
+    .cell { align-items: flex-start; justify-content: space-between; padding: 8px 9px; border-radius: 12px; }
+    .cell .name { display: -webkit-box; }
+    .scene span {
+      display: block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.625rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .scene b { display: none; }
+    .scene span:empty::before { content: attr(data-id); }
+  }
+  @container (max-width: 420px) {
+    .panel { padding: 6px; gap: 4px; }
+    .row { gap: 4px; padding: 3px; }
+    .code { font-size: 0.625rem; }
+    .cell { padding: 2px; border-radius: 7px; }
+    .preset-name { font-size: 1.25rem; }
+    .inspector { left: 0.5rem; right: 0.5rem; }
+    .rig { padding-bottom: 3.6rem; }
+    .value { margin-left: auto; }
+  }
+
+  @keyframes plug {
+    from { opacity: 0; transform: scale(0.82); filter: blur(4px); }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+  }
+  @keyframes run {
+    0% { background-position: -40% 0; }
+    40%, 100% { background-position: 140% 0; }
+  }
+</style>
