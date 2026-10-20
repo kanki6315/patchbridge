@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Build, verify and upload Patchbridge for Mac to App Store Connect.
+# ./release_macos [--skip-tests] [--no-upload] [--build 42] [--allow-dirty]
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$here"
+release_env="${RELEASE_ENV_FILE:-$here/.release.env}"
+if [ -f "$release_env" ]; then
+    set -a; . "$release_env"; set +a
+fi
+exec "${MAC_RELEASE_PYTHON:-/opt/homebrew/bin/python3}" "$here/tools/release_macos.py" "$@"

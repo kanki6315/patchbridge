@@ -14,7 +14,7 @@ helper supports an explicit `usb-read-only` mode for a later authorized hardware
 session. It was not launched against USB during this work. Existing explicit
 `usb` development mode remains writable; the modes must not be confused.
 
-The packaged launcher still cannot start live USB. It supports a new
+The packaged launcher supports live writable USB through `--usb`. For offline tests it supports
 `--captured-read-only <qc-editor.json>` mode using the same helper protocol and
 captured QC state. This mode never imports the USB transport. The captured files
 remain external test inputs and are not included in the app.
@@ -34,8 +34,7 @@ ReadOnlyAdapter(CapturedAdapter) → captured state`
 
 The generic coordinator loads the real fixture's preset and relevant metadata,
 then polls for changes. It requires fresh connect/authorization handling after a
-failure and never replays mutations. The existing phone screen and Mac window
-remain unchanged while the new designs are being prepared.
+failure and never replays mutations. The designed iPhone and Mac screens now consume the shared coordinator and bridge state.
 
 ## Reproducible checks
 

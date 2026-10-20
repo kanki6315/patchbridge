@@ -2,6 +2,8 @@ import Foundation
 import Combine
 
 final class EditorModel: ObservableObject {
+    @Published var macName = "Mac"
+    @Published var approvalCode = ""
     @Published var status = "Ready to find your Mac"
     @Published var connected = false
     @Published var ready = false
@@ -38,7 +40,7 @@ final class EditorModel: ObservableObject {
             transport.onResponse = { [weak self] response in self?.receive(response) }
             central = transport
         } else { central?.reconnect() }
-        status = "Looking for Patchbridge Demo…"
+        status = "Looking for Patchbridge…"
     }
     func disconnect() {
         central?.disconnect()
@@ -62,6 +64,7 @@ final class EditorModel: ObservableObject {
         guard !busy, let central else { return }
         let id = UUID().uuidString
         var request: [String: Any] = ["version": 1, "id": id, "operation": operation, "payload": payload]
+        if operation == "hello" { request["device_name"] = DeviceIdentity.phoneName }
         if let connectionID { request["connection_id"] = connectionID }
         if let sessionID { request["session_id"] = sessionID }
         request["revision"] = revision; request["preset_id"] = presetID; request["scene"] = scene
@@ -85,6 +88,8 @@ final class EditorModel: ObservableObject {
         else if response["connection_id"] as? String != connectionID { invalidate("Connection changed. Reconnect to your Mac."); return }
         if operation == "hello", response["version"] as? Int == 1,
            response["authorization_required"] as? Bool == true, connectionID != nil {
+            macName = DeviceIdentity.name(response["mac_name"] as? String, fallback: "Mac")
+            approvalCode = DeviceIdentity.approvalCode(connectionID!)
             needsApproval = true; status = "Approve this iPhone on your Mac"
             return
         }

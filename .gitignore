@@ -28,7 +28,11 @@ xcuserdata/
 .env.*
 !.env.example
 *.p12
+*.p8
+*.pem
+*.key
 *.mobileprovision
+*.provisionprofile
 .impeccable/
 .idea/
 .vscode/
@@ -41,3 +45,6 @@ Patchbridge-Troubleshooting*.json
 
 # Local release signing configuration
 .release.env
+
+# Generated from mac/project.yml for release archives
+/mac/PatchbridgeMac.xcodeproj/

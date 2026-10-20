@@ -30,8 +30,8 @@ final class Peripheral: NSObject, CBPeripheralManagerDelegate {
     }
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         guard error == nil else { print("Service error: \(error!)"); return }
-        peripheral.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [serviceID], CBAdvertisementDataLocalNameKey: "Patchbridge Demo"])
-        print("Advertising Patchbridge Demo. Only simulated QC state is exposed.")
+        peripheral.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [serviceID], CBAdvertisementDataLocalNameKey: session.macName])
+        print("Advertising \(session.macName). Only simulated QC state is exposed.")
     }
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
         guard self.central == nil else { return }

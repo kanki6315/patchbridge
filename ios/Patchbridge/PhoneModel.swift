@@ -16,7 +16,7 @@ final class PhoneModel: ObservableObject {
     init() {
         coordinator.onChange = { [weak self] in self?.version += 1 }
     }
-    func start() { demo = false; notice = nil; coordinator.start() }
+    func start() { coordinator.setPhoneName(UserDefaults.standard.string(forKey: "patchbridge.phoneName") ?? ""); demo = false; notice = nil; coordinator.start() }
     func disconnect() { coordinator.disconnect(); demoEditor.disconnect(); demo = false; notice = nil; version += 1 }
     func background() { if !demo { disconnect() } }
     func loadDemo() {

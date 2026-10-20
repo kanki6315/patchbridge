@@ -33,6 +33,7 @@ public struct ChunkReceiver {
         guard transfer == id, seq == next else { reset(); throw ChunkFailure.outOfOrder }
         guard bytes.count + b.count - 8 <= 1_048_576 else { reset(); throw ChunkFailure.overflow }
         bytes.append(contentsOf: b.dropFirst(8)); next += 1
+        expires = now.addingTimeInterval(5) // Inactivity deadline, not a total cap on large BLE snapshots.
         if b[7] == 1 { let result = bytes; reset(); return result }
         return nil
     }

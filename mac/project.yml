@@ -1,0 +1,44 @@
+name: PatchbridgeMac
+options:
+  deploymentTarget:
+    macOS: '26.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    ARCHS: arm64
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    CODE_SIGN_STYLE: Automatic
+targets:
+  Patchbridge:
+    type: application
+    platform: macOS
+    sources:
+      - main.swift
+      - ../swift/Sources/PatchbridgeCore
+      - path: ../ios/Patchbridge/AppIcon.icon
+        buildPhase: resources
+      - path: ../ios/Patchbridge/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.arjunakankipati.patchbridge
+        PRODUCT_NAME: Patchbridge
+        CODE_SIGN_ENTITLEMENTS: Patchbridge.entitlements
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Patchbridge
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.music
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: Connect your iPhone to this Mac to view and edit your Quad Cortex over USB.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+    postBuildScripts:
+      - name: Embed and sign isolated Python helper
+        script: '"$PATCHBRIDGE_ROOT/mac/embed_runtime.sh"'
+        basedOnDependencyAnalysis: false
+schemes:
+  Patchbridge:
+    build:
+      targets:
+        Patchbridge: all
+    archive:
+      config: Release

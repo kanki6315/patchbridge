@@ -98,28 +98,28 @@ no additional app capabilities are required for the current foreground client.
 
 ## Release to TestFlight
 
-A production app icon is still required before uploading to TestFlight. The
-initial upload attempt was rejected for missing icons and orientation metadata;
-the project now explicitly targets iPhone and supplies supported orientations.
+The project includes the Patch Cable icon, explicitly targets iPhone, and supplies
+supported orientations.
 
 
-The repository-root `release.sh` adapts the Harbor/Cuekeeper/Telemetee release
+The repository-root `release_ios` adapts the Harbor/Cuekeeper/Telemetee release
 workflow for the iPhone app. Create the app in App Store Connect with bundle ID
 `com.arjunakankipati.patchbridge`, sign into Xcode with your developer account,
 and have XcodeGen and Python 3 installed. The team and marketing version come
 from `ios/project.yml`.
 
 ```sh
-./release.sh                              # tests, archive, upload, local Git tag
-./release.sh --no-upload                  # tests, archive, export IPA only
-./release.sh --skip-tests --build 42       # use a known build number
-./release.sh --no-upload --allow-dirty     # package uncommitted work; never tag
+./release_ios                              # tests, archive, upload, local Git tag
+./release_ios --no-upload                  # tests, archive, export IPA only
+./release_ios --skip-tests --build 42       # use a known build number
+./release_ios --no-upload --allow-dirty     # package uncommitted work; never tag
 ```
 
 By default the script runs the Swift core tests, offline Python tests and iPhone
 UI tests before signing. Set `TEST_DESTINATION` to an installed simulator if the
-default iPhone 17 Pro is unavailable. `--skip-tests` is for a revision whose tests
-have already passed. No CloudKit, widget or Mac packaging steps are included.
+automatically selected compatible iPhone is unavailable. `--skip-tests` is for a revision whose tests
+have already passed. No CloudKit or widget steps are included. The separate `./release_macos` script
+uses the same flags and uploads the Mac app by default; see [Mac packaging](../docs/MAC_PACKAGING.md).
 
 Copy `.release.env.example` to `.release.env` for optional overrides; it is
 Git-ignored. The default uses your Apple ID in Xcode. The optional `ASC_KEY_ID`,

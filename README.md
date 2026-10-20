@@ -5,14 +5,15 @@ Native iPhone-to-Mac QC editor PoC. See [the implementation plan](IMPLEMENTATION
 The implementation includes a Python helper, deterministic simulator, and a
 direct USB adapter pinned to the tested qc-mcp revision. CorOS 4.1.1 has partial
 hardware validation; see [results](docs/USB_RESULTS_2026-10-20.md).
-The SwiftUI iPhone test app and Mac BLE simulation demo are implemented.
+The designed SwiftUI iPhone app and native Mac USB/Bluetooth bridge are implemented.
 The generic editor coordinator loads relevant metadata, polls confirmed state,
 and handles edits/reconnects with offline fixture and process coverage; see
 [the data-layer API](docs/METADATA_AND_EDITOR_MODEL.md).
-An offline Mac app now bundles an isolated Python simulation runtime; see
-[Mac packaging](docs/MAC_PACKAGING.md). Pinned USB/protobuf dependencies are bundled and verified against captured fixtures
-with an in-memory transport. Live USB startup is still disabled; production
-distribution and a real-device phone editor remain pending.
+The Mac app bundles an isolated Python runtime and the pinned USB/protobuf dependencies;
+see [Mac packaging](docs/MAC_PACKAGING.md). It starts stopped and offers live Bluetooth-to-USB
+operation with explicit phone approval, recovery and device-name fallbacks. Simulation
+remains selectable. Both apps use `com.arjunakankipati.patchbridge` and the Patch Cable icon.
+Physical end-to-end phone/QC validation and production Mac distribution remain pending.
 [Read-only QC policy and recovery](docs/READ_ONLY_QC.md) now have captured-fixture
 coverage through the packaged helper, Swift bridge, and generic coordinator.
 
@@ -25,13 +26,13 @@ package freshness, signatures, fixtures, and recovery. Passing does not enable U
 or claim physical hardware compatibility.
 
 The [compact Mac bridge shell](docs/MAC_BRIDGE_SHELL.md) now provides start/stop,
-simulated phone approval, connection status, recovery, and report export.
-It opens stopped and keeps Bluetooth and USB off.
+phone approval, connection status, recovery, recent edits and report export.
+It opens stopped; Start bridge begins live Bluetooth, with USB opened after phone approval.
 
 ## Run locally
 
-Python 3.11 or newer is needed for development; the eventual Mac app will bundle it.
-There are no runtime dependencies.
+Python 3.11 or newer is needed for source development. The Mac app bundles its runtime.
+The simulator has no external Python dependencies.
 
 ```sh
 PYTHONPATH=src python3 -m patchbridge.helper --adapter simulated
@@ -102,7 +103,7 @@ offline changes, and the remaining gate before real QC edits from the phone.
 The [metadata and editor model contract](docs/METADATA_AND_EDITOR_MODEL.md)
 describes normalized controls, declared conversions, unsupported metadata, and
 the view-independent Swift API. It is tested against captured QC fixtures and
-is ready for the new designs to consume; the current simulation screen is unchanged.
+is consumed by the designed iPhone app.
 
 ## Repository contents and license
 
@@ -115,3 +116,9 @@ fixture in `tests/fixtures/` is included. Raw-capture snapshot tests skip when
 their local input is missing. Full USB fixture checks, packaging, and preflight
 require the local captured inputs and dependencies described in
 [Mac packaging](docs/MAC_PACKAGING.md); a fresh clone alone cannot run those gates.
+
+## Release scripts
+
+Use `./release_ios` for iPhone TestFlight and `./release_macos` for Mac TestFlight.
+Both upload by default and accept `--no-upload`, `--skip-tests`, `--build`, and
+`--allow-dirty`. See [iOS release setup](ios/README.md) and [Mac release setup](docs/MAC_PACKAGING.md).

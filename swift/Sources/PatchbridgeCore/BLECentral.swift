@@ -79,6 +79,10 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         exchange.reset(); receiver.reset(); discovered.removeAll()
         onDisconnected?()
     }
+    public func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
+        guard self.peripheral === peripheral, invalidatedServices.contains(where: { $0.uuid == Self.service }) else { return }
+        onStatus?("Bridge session ended. Reconnect and approve on the Mac again."); disconnect()
+    }
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard self.peripheral === peripheral else { return }
         guard error == nil, let service = peripheral.services?.first(where: { $0.uuid == Self.service }) else { disconnect(); return }
@@ -102,7 +106,7 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         guard let peripheral, let command, results?.isNotifying == true else { throw ExchangeFailure.malformed }
         transfer &+= 1
         let first = try exchange.begin(message, limit: min(peripheral.maximumWriteValueLength(for: .withResponse), 512), transfer: transfer)
-        timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: false) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: false) { [weak self] _ in
             self?.onStatus?("Command timed out; no automatic retry")
             self?.disconnect()
         }
