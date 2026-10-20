@@ -345,7 +345,12 @@ struct EditorView: View {
         case .connecting: return model.coordinator.nearbyMacs.isEmpty ? "Finding your Mac" : "Choose your Mac"
         case .loading: return "Reading the QC"
         case .recovering: return "Waiting for your QC"
-        case .failed: return model.error?.hasPrefix("Bluetooth") == true ? "Check Bluetooth" : "Connection ended"
+        case .failed:
+            switch model.coordinator.failure {
+            case .bridgeFull: return "Too many devices on your Mac"
+            case .revoked: return "Disconnected on your Mac"
+            case nil: return model.error?.hasPrefix("Bluetooth") == true ? "Check Bluetooth" : "Connection ended"
+            }
         default: return "Patchbridge"
         }
     }

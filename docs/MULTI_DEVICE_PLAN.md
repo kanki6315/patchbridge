@@ -244,23 +244,29 @@ edit fail with `stale_context` until it reloads. USB recovery brings both back.
 **Simulate slow USB request** was dropped: `busy` is produced by `CentralRouter`,
 which the simulation doesn't use, and the router's tests cover it directly.
 
-## Phase 4: iOS app
+## Phase 4: iOS app (done)
 
 Small changes; the editing model already copes with shared state.
 
-- Handle `bridge_full` on `hello`: "This Mac is already connected to 4 devices."
-- Handle `revoked` on any request: return to the Mac list with "Disconnected on
-  the Mac."
-- Handle `busy`: for an edit or save, treat it like the existing recoverable
-  rejections (reject the pending edit as not applied, re-read the snapshot); for a
-  read, schedule the next poll after `retry_after`.
-- Honour `applied: false` on `device_unavailable`: show "Edit not applied" instead
-  of "Last edit or save outcome unknown."
-- Conflict copy: when a write fails with `stale_context` or a snapshot shows a
-  change the device did not make, say "Changed on another device" instead of
-  "Changed on the QC" when the bridge reports it. To support this, the bridge adds
-  an optional `changed_by` (device name) to snapshot replies after another device's
-  confirmed write. Old apps ignore the field.
+- `bridge_full` on `hello`: the editor fails with the bridge's message plus
+  "Disconnect one on the Mac, then try again." `EditorCoordinator.failure` is
+  `.bridgeFull`, and the connect screen titles it "Too many devices on your Mac".
+- `revoked` on any request: the editor fails with "Disconnected on your Mac.
+  Reconnect to ask for approval again." (`failure` is `.revoked`; title "Disconnected
+  on your Mac"). The Live Activity ends instead of reporting a lost connection.
+- `busy`: an edit or save is rejected as not applied ("The bridge was busy with
+  another device; try again.") with the confirmed value unchanged; it was never sent,
+  so no reload is needed. A busy poll or recovery retry waits for `retry_after`. A busy
+  loading step (`connect`, `capabilities`, `catalog`, the reload after a rejection) is
+  retried after `retry_after`.
+- `applied: false` on `device_unavailable`: "Edit not applied" / "Save not applied.
+  Editing resumes after the QC reconnects." instead of "outcome unknown".
+- `changed_by`: the bridge records the revision and device of the latest confirmed
+  write. A `snapshot` or `stale_context` reply to a different device carries
+  `changed_by` (the writer's name) while the QC is still at that revision, so a later
+  physical change on the QC is never misattributed. The editor then says "Changed on
+  iPad" instead of "Changed on the QC", and a rejected edit says "Not applied. iPad
+  changed it first." Old apps ignore the field. A new helper session clears the record.
 - No change to trust storage: `TrustStore` is already keyed by Mac, and each device
   holds its own token.
 

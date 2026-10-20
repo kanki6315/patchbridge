@@ -110,6 +110,14 @@ callbacks are invalidated by a connection generation; replies also need the curr
 request ID, connection token, session, and revision. Physical edits appear through
 snapshot polling; this coordinator does not subscribe to asynchronous events.
 
+With several devices on one bridge, a few replies are handled without a reconnect.
+`busy` means the bridge refused the request before it reached the QC: an edit or save
+is shown as not applied, and a read or loading step is retried after `retry_after`.
+`applied: false` on `device_unavailable` marks an edit the bridge never sent, so it is
+shown as not applied rather than unknown. `changed_by` names the device whose edit a
+snapshot or `stale_context` rejection reflects. `bridge_full` and `revoked` fail with
+`failure` set, so the connect screen can explain them.
+
 The simulator now provides metadata version 1 with `encoding: native` and
 `mapping: identity` for its numeric values. Gain stays 0–10, preserving the installed
 simulation screen's behavior. Boolean/string-enum simulation controls remain

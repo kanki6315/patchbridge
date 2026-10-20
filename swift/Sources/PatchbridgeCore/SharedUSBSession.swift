@@ -45,6 +45,9 @@ public final class SharedUSBSession {
     private let now: () -> TimeInterval
     private(set) var helperSession: String?
     private var revision: Any = 0
+    /// The latest confirmed mutation: the revision it produced and who sent it. Lets a
+    /// device learn that a change it didn't make came from another device, not the QC.
+    var lastWrite: (revision: Int, device: ObjectIdentifier, name: String)?
     private var joined = Set<ObjectIdentifier>()
     private struct Admitted { weak var device: DeviceSession? }
     private var admitted: [Admitted] = []
@@ -102,7 +105,7 @@ public final class SharedUSBSession {
     }
     private func adopt(_ response: [String: Any]) {
         let session = response["session_id"] as? String
-        if session != helperSession { helperSession = session; if session != nil { generation += 1 } }
+        if session != helperSession { helperSession = session; lastWrite = nil; if session != nil { generation += 1 } }
         if let value = response["revision"], !(value is NSNull) { revision = value }
     }
 

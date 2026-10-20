@@ -126,6 +126,15 @@ public final class DeviceSession {
         if mutation { shared.onMutation?(phoneName, message, result.response) }
         if result.recovering { return unavailable(message, retryAfter: shared.retryAfter) }
         var response = result.response
+        let revision = (response["revision"] as? NSNumber).flatMap { String(cString: $0.objCType) == "c" ? nil : $0.intValue }
+        let code = (response["error"] as? [String: Any])?["code"] as? String
+        if mutation, response["status"] as? String == "confirmed", let revision {
+            shared.lastWrite = (revision, ObjectIdentifier(self), phoneName)
+        } else if operation == "snapshot" || code == "stale_context", let last = shared.lastWrite,
+                  last.device != ObjectIdentifier(self), last.revision == revision {
+            // Still at another device's write: nothing has changed on the QC since.
+            response["changed_by"] = last.name
+        }
         response["id"] = message["id"] ?? NSNull()
         response["connection_id"] = token
         if operation == "connect", isTrustedConnection, let trustToken { response["trust_token"] = trustToken }
