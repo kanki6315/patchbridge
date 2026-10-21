@@ -27,6 +27,10 @@
       "name": "iPhone Duo"
     },
     {
+      "id": "tuner",
+      "name": "Tuner"
+    },
+    {
       "id": "live",
       "name": "Live Activity"
     },
@@ -1214,6 +1218,118 @@
       "title": "Mac trust menu (Tweaks: screen)",
       "page": "components",
       "radius": 15
+    },
+    "poc/tn-island.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Tuner line · sharp, light rising into the status bar",
+      "page": "tuner"
+    },
+    "poc/tn-island-tuned.dc.html": {
+      "x": 482,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Tuner line · in tune, island ring lit",
+      "page": "tuner"
+    },
+    "poc/tn-island-quiet.dc.html": {
+      "x": 964,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Tuner line · no signal",
+      "page": "tuner"
+    },
+    "poc/tn-island-editor.dc.html": {
+      "x": 1446,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Tuner line · stays on in the block editor",
+      "page": "tuner"
+    },
+    "poc/tn-sheet.dc.html": {
+      "x": 1928,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Full tuner · muted",
+      "page": "tuner"
+    },
+    "poc/tn-sheet-quiet.dc.html": {
+      "x": 2410,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Full tuner · no signal, live on",
+      "page": "tuner"
+    },
+    "ipad/tn-popover.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Popover from the tuner button",
+      "page": "tuner"
+    },
+    "ipad/tn-band.dc.html": {
+      "x": 1260,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Live tuner as a top-bar band",
+      "page": "tuner"
+    },
+    "ipad/tn-band-portrait.dc.html": {
+      "x": 2520,
+      "y": 1320,
+      "w": 820,
+      "h": 1180,
+      "title": "Live tuner band, portrait",
+      "page": "tuner"
+    },
+    "duo/tn-popover.dc.html": {
+      "x": 0,
+      "y": 2900,
+      "w": 626,
+      "h": 890,
+      "title": "Popover from the tuner button",
+      "page": "tuner"
+    },
+    "duo/tn-crease-far.dc.html": {
+      "x": 706,
+      "y": 2900,
+      "w": 626,
+      "h": 890,
+      "title": "Crease · 14¢ flat, light follows the marker",
+      "page": "tuner"
+    },
+    "duo/tn-crease-close.dc.html": {
+      "x": 1412,
+      "y": 2900,
+      "w": 626,
+      "h": 890,
+      "title": "Crease · 6¢ sharp, light widening",
+      "page": "tuner"
+    },
+    "duo/tn-crease-tuned.dc.html": {
+      "x": 2118,
+      "y": 2900,
+      "w": 626,
+      "h": 890,
+      "title": "Crease · in tune, light across the fold",
+      "page": "tuner"
+    },
+    "duo/tn-crease-half.dc.html": {
+      "x": 2824,
+      "y": 2900,
+      "w": 626,
+      "h": 890,
+      "title": "Crease · half-folded, nothing moves",
+      "page": "tuner"
     }
   },
   "order": [
@@ -1359,7 +1475,21 @@
     "live/st-connection.dc.html",
     "live/mac-approve-trust.dc.html",
     "live/mac-trusted.dc.html",
-    "live/mac-trusted-away.dc.html"
+    "live/mac-trusted-away.dc.html",
+    "poc/tn-island.dc.html",
+    "poc/tn-island-tuned.dc.html",
+    "poc/tn-island-quiet.dc.html",
+    "poc/tn-island-editor.dc.html",
+    "poc/tn-sheet.dc.html",
+    "poc/tn-sheet-quiet.dc.html",
+    "ipad/tn-popover.dc.html",
+    "ipad/tn-band.dc.html",
+    "ipad/tn-band-portrait.dc.html",
+    "duo/tn-popover.dc.html",
+    "duo/tn-crease-far.dc.html",
+    "duo/tn-crease-close.dc.html",
+    "duo/tn-crease-tuned.dc.html",
+    "duo/tn-crease-half.dc.html"
   ],
   "notes": {
     "pocConnect": {
@@ -1513,6 +1643,30 @@
       "kind": "title1",
       "maxW": 1742,
       "page": "live"
+    },
+    "tunerPhone": {
+      "x": 0,
+      "y": -280,
+      "kind": "title1",
+      "maxW": 2812,
+      "page": "tuner",
+      "text": "iPhone: the tuner line under the status bar, and the full tuner"
+    },
+    "tunerPad": {
+      "x": 0,
+      "y": 1040,
+      "kind": "title1",
+      "maxW": 3700,
+      "page": "tuner",
+      "text": "iPad: popover from the tuner button, band in the top bar, its own row in portrait"
+    },
+    "tunerDuo": {
+      "x": 0,
+      "y": 2620,
+      "kind": "title1",
+      "maxW": 3450,
+      "page": "tuner",
+      "text": "iPhone Duo inner screen: the tuner is the crease"
     }
   },
   "designSystems": []

@@ -2,7 +2,7 @@
 // Renders design-canvas boards (.dc.html) to standalone HTML and PNG.
 // Usage: node tools/render_design_boards.mjs <canvas project dir> <output dir> [page id]
 // The project dir holds canvas.json; boards on every page except "components" are rendered.
-// With a page id (poc, ipad, mac, live, concepts), only that page is rendered and its manifest entries replaced.
+// With a page id (poc, ipad, mac, live, tuner, concepts), only that page is rendered and its manifest entries replaced.
 // Requires Google Chrome for PNGs; HTML snapshots need nothing.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -123,7 +123,7 @@ for (const key of canvas.order) {
   const b = loadBoard(path.join(srcDir, key));
   const { w, h } = entry;
   const slug = key.replace(/^(poc|ipad|mac|live)\//, '').replace(/\.dc\.html$/, '').replace(/[^\w-]+/g, '-');
-  const sub = page === 'concepts' ? 'concepts' : page === 'ipad' ? 'ipad' : page === 'mac' ? 'mac' : page === 'live' ? 'live' : 'screens';
+  const sub = page === 'concepts' ? 'concepts' : page === 'ipad' ? 'ipad' : page === 'mac' ? 'mac' : page === 'live' ? 'live' : page === 'tuner' ? 'tuner' : 'screens';
   // Mac windows and popovers have rounded corners, so they render on a transparent page.
   const clear = sub === 'mac' || /^live\/mac-/.test(key);
   const bg = clear ? 'transparent' : '#000';
