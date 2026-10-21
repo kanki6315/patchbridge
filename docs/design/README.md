@@ -180,7 +180,7 @@ An optional Live Activity shows the session on the Lock Screen and in the Dynami
 - **Alert if the connection drops** lights the screen for drops you didn't start. With the activity off it sends a regular notification instead.
 - The activity doesn't keep Bluetooth alive; background connection support does that.
 
-**Trust makes Reconnect one tap.** Today approval belongs to one connection. The Mac's approve card adds **Trust this iPhone until Patchbridge quits** (on by default). While trusted, Reconnect skips the code. Quitting Patchbridge, or **Revoke Trust** in the Mac's menu bar, ends it; the next Reconnect then shows **Approval needed**.
+**Trust makes Reconnect one tap.** Today approval belongs to one connection. The Mac's approve card adds **Trust this iPhone** (on by default). While trusted, Reconnect skips the code, even after Patchbridge quits and reopens. **Revoke Trust** in the Mac's menu bar ends it; the next Reconnect then shows **Approval needed**.
 
 ### Lock Screen
 

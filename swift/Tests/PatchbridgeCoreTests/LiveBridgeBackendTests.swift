@@ -101,6 +101,20 @@ final class LiveBridgeBackendTests: XCTestCase {
         XCTAssertNil(phone.onMessage)
         XCTAssertTrue(host.presentation.approvalCode.isEmpty)
     }
+    func testTrustSurvivesStopAndStart() throws {
+        let phone = TestPeripheral()
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { try self.helper() })
+        defer { host.stop() }
+        try host.start()
+        let token = try XCTUnwrap(phone.send("hello", fields: ["device_name": "iPhone"])["connection_id"] as? String)
+        try host.approvePending(trust: true)
+        let trustToken = try XCTUnwrap(phone.send("connect", token: token)["trust_token"] as? String)
+        host.stop()
+        XCTAssertEqual(host.state?.0, .stopped)
+        try host.start()
+        XCTAssertEqual(host.presentation.trusted.map(\.name), ["iPhone"])
+        XCTAssertEqual(phone.send("hello", fields: ["device_name": "iPhone", "trust_token": trustToken])["authorization_required"] as? Bool, false)
+    }
     func testBluetoothStatusAndDenialClearApproval() throws {
         let phone = TestPeripheral()
         let host = LiveBridgeBackend(peripheral: phone, makeHelper: helper)

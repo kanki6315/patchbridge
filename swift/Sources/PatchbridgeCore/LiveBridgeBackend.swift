@@ -26,14 +26,16 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     private var catalog: [String: Any]?
     private var status = "Starting Bluetooth. USB opens after you approve a phone and it requests a connection."
     private let now: () -> TimeInterval
+    /// Outlives each start's shared session, so Stop keeps trusted devices.
+    private let trust: TrustRegistry
     init(peripheral: BridgePeripheral, makeHelper: @escaping () throws -> HelperClient = { try HelperClient(bundle: .main, liveUSB: true) },
-         now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
-        self.peripheral = peripheral; self.makeHelper = makeHelper; self.now = now
+         trust: TrustRegistry = TrustRegistry(), now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+        self.peripheral = peripheral; self.makeHelper = makeHelper; self.trust = trust; self.now = now
     }
     func start() throws {
         stop()
         let helper = try makeHelper(); self.helper = helper
-        let shared = SharedUSBSession(helper: helper, requestTimeout: 40, allowsRecovery: true, deviceLimit: Self.deviceLimit, now: now)
+        let shared = SharedUSBSession(helper: helper, requestTimeout: 40, allowsRecovery: true, deviceLimit: Self.deviceLimit, trust: trust, now: now)
         self.shared = shared
         shared.onMutation = { [weak self] device, request, response in
             guard let self else { return }
@@ -120,7 +122,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         states[id] = nil; order.removeAll { $0 == id }
         shared.remove(device)
         if !states.values.contains(where: { $0 != .awaitingApproval }) { resetQCState() }
-        publish(.running, trusted ? "\(name) disconnected. It can reconnect without a code until Patchbridge quits."
+        publish(.running, trusted ? "\(name) disconnected. It can reconnect without a code until you revoke trust."
                 : "\(name) disconnected. Open Patchbridge on it to connect with fresh approval.")
     }
     func deny(device id: UUID, connection: String) {
@@ -144,7 +146,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         if let shared { shared.devices.forEach(shared.remove) }
         devices.removeAll(); states.removeAll(); order.removeAll(); revoked.removeAll()
         shared = nil; helper?.stop(); helper = nil; resetQCState()
-        state = (.stopped, "Bridge stopped. Device approvals have been cleared.")
+        state = (.stopped, "Bridge stopped. Connections ended; trusted devices reconnect without a code.")
     }
     func interruptHelper() { helper?.stop() }
 
@@ -177,7 +179,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
                     states[id] = device.isTrustedConnection ? .approving : .awaitingApproval
                 }
                 if device.isTrustedConnection {
-                    event = (.approving, "\(device.phoneName) is trusted until Patchbridge quits. Reconnecting without a code.")
+                    event = (.approving, "\(device.phoneName) is trusted. Reconnecting without a code.")
                 }
             } else if reply["status"] as? String == "confirmed" {
                 let result = reply["result"] as? [String: Any]

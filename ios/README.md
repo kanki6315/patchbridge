@@ -60,10 +60,11 @@ button. Disconnect and Reconnect run in the app's process through Live Activity 
 Open Patchbridge opens the app. The activity doesn't keep Bluetooth alive. Drops the user
 didn't start alert through the activity, or as a notification when the activity is off.
 
-On the Mac, approving with **Trust this iPhone until Patchbridge quits** (on by default)
-issues a random trust token with the connect reply. The phone keeps it in the Keychain per
-Mac and offers it in `hello`; a match skips the code, so Reconnect is one tap. Stopping the
-bridge, quitting, or **Revoke Trust** in the Mac window ends it, and the next Reconnect
+On the Mac, approving with **Trust this iPhone** (on by default) issues a random trust
+token with the connect reply. Both sides keep it in the Keychain: the phone per Mac, the
+Mac per device (at most 8; the oldest is dropped). The phone offers it in `hello`; a match
+skips the code, so Reconnect is one tap, including after the bridge stops or Patchbridge
+quits and reopens. Only **Revoke Trust** in the Mac window ends it; the next Reconnect then
 shows Approval needed. Revoking keeps the current connection.
 
 Debug builds take `--activity connected|qcLost|lost|reconnecting|approval|ended` (plus

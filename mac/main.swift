@@ -132,8 +132,8 @@ struct BridgeWindow: View {
                         .font(.callout).foregroundStyle(colors.muted)
                 }
                 if model.phase == .awaitingApproval {
-                    Toggle("Trust this \(model.presentation.phoneName) until Patchbridge quits", isOn: $trustPhone).toggleStyle(.checkbox)
-                    Text(trustPhone ? "Reconnect on the phone skips the code. Quit Patchbridge or revoke trust to end it." : "Approval ends when the phone disconnects or the bridge restarts.")
+                    Toggle("Trust this \(model.presentation.phoneName)", isOn: $trustPhone).toggleStyle(.checkbox)
+                    Text(trustPhone ? "Reconnect skips the code, even after Patchbridge quits. Revoke trust to end it." : "Approval ends when the phone disconnects or the bridge restarts.")
                         .font(.caption).foregroundStyle(colors.muted)
                 }
             }

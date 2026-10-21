@@ -62,7 +62,7 @@ Split `BridgeSession` into three types:
   changes (first connect, recovery, reconnect after the last device left), recovery
   state (`recovering`, `retryAt`, `retryDelay`), the `onMutation` hook, and the set
   of joined devices.
-- **`TrustRegistry`** (one per bridge, cleared on Stop/Quit/helper failure): entries
+- **`TrustRegistry`** (one per app, stored in the Keychain): entries
   of trust token and device name. Bounded (8 entries; oldest evicted). Independent
   of active connections and of the device limit.
 
@@ -89,7 +89,8 @@ routed through recovery.
 - Approving with "Trust" adds a `TrustRegistry` entry and returns its token on the
   device's next `connect`, as today.
 - Bluetooth loss ends the `DeviceSession` only; the trust entry stays, so the device
-  reconnects without a code until Patchbridge quits.
+  reconnects without a code. Entries are kept in the Mac's Keychain, so they also
+  survive Stop, Quit and helper failure; only Revoke Trust (or eviction) ends them.
 - **Revoke Trust** removes one entry. It does not disconnect that device if it is
   connected; its next connection needs a code (today's behaviour).
 - A trust entry never reserves a device slot. A trusted device that reconnects when
@@ -97,8 +98,8 @@ routed through recovery.
 
 ### Failure scope
 
-- Helper transport failure or Stop/Quit ends every device session and clears
-  `TrustRegistry` (as today).
+- Helper transport failure or Stop/Quit ends every device session. `TrustRegistry`
+  is kept.
 - USB loss pauses every device and starts shared recovery.
 - One device's Bluetooth loss, denial or revoke ends only that `DeviceSession`.
 

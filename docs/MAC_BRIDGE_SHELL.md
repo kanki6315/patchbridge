@@ -42,7 +42,8 @@ the one USB connection. A fifth is told the Mac is already connected to four dev
   device never approves another.
 - **Devices:** the window lists connected devices with **Disconnect** and, for trusted
   ones, **Revoke Trust**. Devices trusted to reconnect but not connected now are listed
-  with **Revoke Trust**. Disconnecting one device leaves the others editing; that device
+  with **Revoke Trust**. Trust is kept in the Mac's Keychain, so it survives Stop and
+  Quit; only Revoke Trust ends it. Disconnecting one device leaves the others editing; that device
   is told it was disconnected on the Mac at its next request.
 - **Edits from two devices:** every device can edit. If two edit at once, the first wins
   and the other's edit is not applied; that device reloads before editing again.

@@ -292,7 +292,7 @@ struct PadConnectionDetails: View {
                         row("Mac", model.demo ? "Demo · no QC" : (model.coordinator.macName ?? "Connected"))
                         row("Link", model.demo ? "None" : "Bluetooth", ok: !model.demo)
                         if !model.demo { row("Status", model.coordinator.status) }
-                        if !model.demo && model.coordinator.trusted { row("Trusted", "Until the Mac app quits") }
+                        if !model.demo && model.coordinator.trusted { row("Trusted", "Until revoked on the Mac") }
                     }
                     section("Available right now") {
                         row("Edit parameters", model.editor.supports("set_parameter") ? "Supported ones" : "Not yet", ok: model.editor.supports("set_parameter"))
