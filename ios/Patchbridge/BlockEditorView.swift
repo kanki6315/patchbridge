@@ -56,6 +56,33 @@ struct BlockEditorView: View {
             }
             #endif
         }
+        #if DEBUG
+        .task(id: model.previewStep) {
+            guard model.screenshotFixture, model.previewStep == 1, block.id == "0:1",
+                  ProcessInfo.processInfo.arguments.contains("--preview-story") else { return }
+            // Exercise the native dial's draft/commit path, just like a drag and release.
+            do {
+                try await Task.sleep(for: .milliseconds(450))
+                editingContext = model.snapshot
+                let start = display ?? -34.2
+                for frame in 0...60 {
+                    try Task.checkCancellation()
+                    let progress = Double(frame) / 60
+                    draft = ((start + (-25.8 - start) * sin(progress * .pi / 2)) * 10).rounded() / 10
+                    try await Task.sleep(for: .milliseconds(30))
+                }
+                commitContextual(-25.8)
+                draft = nil
+            } catch { draft = nil }
+        }
+        .onChange(of: model.previewStep) { _, step in
+            guard block.id == "0:1" else { return }
+            if step == 2 { editingContext = model.snapshot; entry = ""; typing = true }
+            if step == 3 { entry = "-3" }
+            if step == 4 { entry = "-30.00" }
+            if step == 5 { commitContextual(-30); typing = false }
+        }
+        #endif
         .onChange(of: block.id) { _, _ in selectInitial(); typing = false }
         .onChange(of: model.snapshot) { _, _ in draft = nil; fine = false }
         .sheet(isPresented: Binding(get: { typing && !regular && !inlinePad }, set: { typing = $0 })) { numberPad.presentationDetents([.height(dynamicTypeSize.isAccessibilitySize ? 550 : 355)]).presentationDragIndicator(.visible) }
