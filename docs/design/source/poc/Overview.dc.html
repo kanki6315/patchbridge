@@ -257,13 +257,16 @@ class Component extends DCLogic {
       [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Bogna Uber 1', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S UKV30 90s (M)', RO, true), null, null, null]
     ];
     const cellBase = { height: '38px', boxSizing: 'border-box', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, letterSpacing: '0.02em' };
+    // Bypassed in this scene, as the app draws it: surface fill, category-colored dashed edge and struck-through code.
+    const off = (b) => b.summary === 'Bypassed';
+    const offStyle = (c) => ({ background: t.surface, color: c.bg, boxShadow: 'none', border: '1.5px dashed ' + c.bg, boxSizing: 'border-box', textDecoration: 'line-through' });
     const grid = rows.map((row, ri) => {
       const count = row.filter(Boolean).length;
       return {
         aria: 'Row ' + (ri + 1) + ', ' + count + (count === 1 ? ' block' : ' blocks') + (ri === sel ? ', selected' : ''),
         bandBg: ri === sel ? t.band : 'transparent', bandRing: ri === sel ? 'inset 0 0 0 1.5px ' + t.signal : 'none',
         cells: row.map((b) => b
-          ? { code: CAT[b.cat].code, style: { ...cellBase, background: CAT[b.cat].bg, color: CAT[b.cat].ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)' } }
+          ? { code: CAT[b.cat].code, style: { ...cellBase, ...(off(b) ? offStyle(CAT[b.cat]) : { background: CAT[b.cat].bg, color: CAT[b.cat].ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)' }) } }
           : { code: '', style: { ...cellBase, border: '1px solid ' + t.hairline } })
       };
     });
@@ -272,7 +275,7 @@ class Component extends DCLogic {
     const lane = laneBlocks.map((b) => ({
       code: CAT[b.cat].code, title: b.title, summary: b.summary, locked: b.locked,
       aria: b.title + ', ' + CAT[b.cat].kind + ', slot ' + b.slot + '. ' + b.summary,
-      swatchStyle: { ...sw, background: CAT[b.cat].bg, color: CAT[b.cat].ink }
+      swatchStyle: { ...sw, ...(off(b) ? offStyle(CAT[b.cat]) : { background: CAT[b.cat].bg, color: CAT[b.cat].ink }) }
     }));
     const empty = 8 - laneBlocks.length;
 

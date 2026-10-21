@@ -96,11 +96,12 @@ class Component extends DCLogic {
       mod: { code: 'MOD', kind: 'Modulation', bg: 'oklch(0.58 0.18 330)', ink: '#ffffff' },
       rev: { code: 'REV', kind: 'Reverb', bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)' }
     };
+    // * marks the selected block, ~ a block bypassed in scene F.
     const layout = [
-      ['wah', 'cmp*', 'cap', 'drv', 'pit', 'pit', 'utl', ''],
+      ['wah~', 'cmp*~', 'cap', 'drv~', 'pit', 'pit~', 'utl', ''],
       ['', '', '', '', '', '', '', ''],
-      ['', 'cap', '', 'cap', 'cab', '', 'mod', 'rev'],
-      ['', 'cap', '', 'cap', 'cab', '', '', '']
+      ['', 'cap~', '', 'cap', 'cab', '', 'mod~', 'rev'],
+      ['', 'cap~', '', 'cap', 'cab', '', '', '']
     ];
     const base = { width: '56px', height: '58px', padding: '0', boxSizing: 'border-box', borderRadius: '12px', border: '0', font: 'inherit', fontSize: '12px', fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer' };
     const grid = layout.map((row, ri) => ({
@@ -109,8 +110,11 @@ class Component extends DCLogic {
       cells: row.map((raw, si) => {
         const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
         if (!raw) return { code: '', aria: slot + ', empty', style: { ...base, background: 'transparent', border: '1px solid ' + t.hairline, cursor: 'default' } };
-        const k = raw.replace('*', ''), c = CAT[k], sel = raw.endsWith('*');
-        return { code: c.code, aria: slot + ', ' + c.kind + (sel ? ', selected' : ''), style: { ...base, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)', outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' } };
+        const k = raw.replace(/[*~]/g, ''), c = CAT[k], sel = raw.includes('*'), off = raw.includes('~');
+        // Bypassed, as the app draws it: surface fill, category-colored dashed edge and struck-through code.
+        const fill = off ? { background: t.surface, color: c.bg, boxShadow: 'none', border: '1.5px dashed ' + c.bg, textDecoration: 'line-through' }
+          : { background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)' };
+        return { code: c.code, aria: slot + ', ' + c.kind + (off ? ', bypassed' : '') + (sel ? ', selected' : ''), style: { ...base, ...fill, outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' } };
       })
     }));
     const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];

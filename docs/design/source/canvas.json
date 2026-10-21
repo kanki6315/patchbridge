@@ -1330,6 +1330,15 @@
       "h": 890,
       "title": "Crease · half-folded, nothing moves",
       "page": "tuner"
+    },
+    "mac/m-devices.dc.html": {
+      "x": 2800,
+      "y": 1140,
+      "w": 480,
+      "h": 860,
+      "title": "Two devices connected",
+      "page": "mac",
+      "radius": 18
     }
   },
   "order": [
@@ -1392,6 +1401,7 @@
     "mac/m-ready.dc.html",
     "mac/m-request.dc.html",
     "mac/m-connected.dc.html",
+    "mac/m-devices.dc.html",
     "mac/m-unplugged.dc.html",
     "mac/m-helper.dc.html",
     "mac/m-firmware.dc.html",

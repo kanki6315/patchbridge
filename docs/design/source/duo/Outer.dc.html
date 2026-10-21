@@ -122,12 +122,12 @@ class Component extends DCLogic {
       mod: { code: 'MOD', kind: 'Modulation', bg: 'oklch(0.58 0.18 330)', ink: '#ffffff' },
       rev: { code: 'REV', kind: 'Reverb', bg: 'oklch(0.82 0.09 210)', ink: 'oklch(0.2 0.03 210)' }
     };
-    // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
+    // Positions and models from the captured preset (tests/fixtures/qc-editor.json); true marks a block bypassed in scene F.
     const rows = [
-      [['wah', 'Bad Horse'], ['cmp', 'Opto Comp (M)'], ['cap', 'OG TS808'], ['drv', 'Myth Drive'], ['pit', 'Transpose'], ['pit', 'Poly Octaver'], ['utl', 'Adaptive Gate'], null],
+      [['wah', 'Bad Horse', true], ['cmp', 'Opto Comp (M)', true], ['cap', 'OG TS808'], ['drv', 'Myth Drive', true], ['pit', 'Transpose'], ['pit', 'Poly Octaver', true], ['utl', 'Adaptive Gate'], null],
       [null, null, null, null, null, null, null, null],
-      [null, ['cap', 'Paul\'s MT16 7'], null, ['cap', 'Paul\'s MT16 6'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, ['mod', 'Dual Chorus'], ['rev', 'Plate Tight']],
-      [null, ['cap', 'Paul\'s MT16 7'], null, ['cap', 'Bogna Uber 1'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, null, null]
+      [null, ['cap', 'Paul\'s MT16 7', true], null, ['cap', 'Paul\'s MT16 6'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, ['mod', 'Dual Chorus', true], ['rev', 'Plate Tight']],
+      [null, ['cap', 'Paul\'s MT16 7', true], null, ['cap', 'Bogna Uber 1'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, null, null]
     ];
     // The outer screen is wider than a Pro, so the whole grid fits at touch size and becomes the way in.
     const cellBase = { height: '70px', minWidth: '0', padding: '0', boxSizing: 'border-box', borderRadius: '11px', border: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', font: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer' };
@@ -135,9 +135,11 @@ class Component extends DCLogic {
       cells: row.map((b, si) => {
         const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
         if (!b) return { code: '', aria: slot + ', empty', style: { ...cellBase, background: 'transparent', border: '1px solid ' + t.hairline, cursor: 'default' } };
-        const c = CAT[b[0]], sel = sheet && ri === 0 && si === 1;
-        return { code: c.code, aria: slot + ', ' + b[1] + ', ' + c.kind + (sel ? ', selected' : ''),
-          style: { ...cellBase, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)', outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' } };
+        const c = CAT[b[0]], sel = sheet && ri === 0 && si === 1, off = !!b[2];
+        // Bypassed in scene F, as the app draws it: surface fill, category-colored dashed edge and struck-through code.
+        const fill = off ? { background: t.surface, color: c.bg, boxShadow: 'none', border: '1.5px dashed ' + c.bg } : { background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)' };
+        return { code: c.code, aria: slot + ', ' + b[1] + ', ' + c.kind + (off ? ', bypassed' : '') + (sel ? ', selected' : ''),
+          style: { ...cellBase, ...fill, textDecoration: off ? 'line-through' : 'none', outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' } };
       })
     }));
 

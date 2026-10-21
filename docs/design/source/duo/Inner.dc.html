@@ -267,10 +267,12 @@ class Component extends DCLogic {
       cells: row.map((b, si) => {
         const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
         if (!b) return { code: '', name: '', aria: slot + ', empty', style: { ...cellBase, background: 'transparent', border: '1px solid ' + t.hairline, cursor: 'default' }, codeStyle: {}, nameStyle: {} };
-        const c = CAT[b.cat], sel = !rowState && ri === 0 && si === 1;
-        return { code: c.code, name: b.title, aria: slot + ', ' + b.title + ', ' + c.kind + (sel ? ', selected' : ''),
-          style: { ...cellBase, background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)', outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' },
-          codeStyle: { fontSize: '11px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: '1' },
+        const c = CAT[b.cat], sel = !rowState && ri === 0 && si === 1, off = b.summary === 'Bypassed';
+        // Bypassed in scene F, as the app draws it: surface fill, category-colored dashed edge and struck-through code.
+        const fill = off ? { background: t.surface, color: c.bg, boxShadow: 'none', border: '1.5px dashed ' + c.bg } : { background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)' };
+        return { code: c.code, name: b.title, aria: slot + ', ' + b.title + ', ' + c.kind + (off ? ', bypassed' : '') + (sel ? ', selected' : ''),
+          style: { ...cellBase, ...fill, outline: sel ? '2.5px solid ' + t.signal : 'none', outlineOffset: '2px' },
+          codeStyle: { fontSize: '11px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: '1', textDecoration: off ? 'line-through' : 'none' },
           nameStyle: { maxWidth: '100%', fontSize: '11px', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: '1.2', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical' } };
       })
     }));

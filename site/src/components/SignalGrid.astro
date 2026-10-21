@@ -5,7 +5,7 @@
 // apart from a one-line description.
 
 type Cat = 'dynamics' | 'drive' | 'cab' | 'modulation' | 'reverb' | 'wah' | 'capture' | 'pitch' | 'utility';
-type Block = { code: string; name: string; cat: Cat } | null;
+type Block = { code: string; name: string; cat: Cat; bypassed?: boolean } | null;
 
 const W = (name: string): Block => ({ code: 'WAH', name, cat: 'wah' });
 const CMP = (name: string): Block => ({ code: 'CMP', name, cat: 'dynamics' });
@@ -17,12 +17,14 @@ const CAB = (name: string): Block => ({ code: 'CAB', name, cat: 'cab' });
 const MOD = (name: string): Block => ({ code: 'MOD', name, cat: 'modulation' });
 const REV = (name: string): Block => ({ code: 'REV', name, cat: 'reverb' });
 const _ = null;
+// Bypassed in scene F: drawn hollow with a dashed edge and struck-through code, as in the app.
+const off = (b: Block): Block => b && { ...b, bypassed: true };
 
 const rows: Block[][] = [
-  [W('Bad Horse'), CMP('Opto Comp (M)'), CAP('OG TS808'), DRV('Myth Drive'), PIT('Transpose'), PIT('Poly Octaver'), UTL('Adaptive Gate'), _],
+  [off(W('Bad Horse')), off(CMP('Opto Comp (M)')), CAP('OG TS808'), off(DRV('Myth Drive')), PIT('Transpose'), off(PIT('Poly Octaver')), UTL('Adaptive Gate'), _],
   [_, _, _, _, _, _, _, _],
-  [_, CAP("Paul's MT16 7"), _, CAP("Paul's MT16 6"), CAB('412 CA Trad'), _, MOD('Dual Chorus'), REV('Plate Tight')],
-  [_, CAP("Paul's MT16 7"), _, CAP('Bogna Uber 1'), CAB('412 CA Trad'), _, _, _],
+  [_, off(CAP("Paul's MT16 7")), _, CAP("Paul's MT16 6"), CAB('412 CA Trad'), _, off(MOD('Dual Chorus')), REV('Plate Tight')],
+  [_, off(CAP("Paul's MT16 7")), _, CAP('Bogna Uber 1'), CAB('412 CA Trad'), _, _, _],
 ];
 
 // Scene names and colors exactly as the QC reported them.
@@ -61,7 +63,7 @@ const active = 'F';
         {row.map((b, c) =>
           b ? (
             <div
-              class:list={['cell', { picked: r === 0 && c === 1 }]}
+              class:list={['cell', { picked: r === 0 && c === 1, bypassed: b.bypassed }]}
               style={`--fill:var(--cat-${b.cat});--on:var(--cat-${b.cat}-ink);--i:${c + r * 0.5}`}
             >
               <span class="code">{b.code}</span>
@@ -219,6 +221,13 @@ const active = 'F';
     -webkit-box-orient: vertical;
   }
   .cell .name { display: none; }
+  .cell.bypassed {
+    background: var(--surface);
+    color: var(--fill);
+    box-shadow: none;
+    border: 1.5px dashed var(--fill);
+  }
+  .cell.bypassed .code { text-decoration: line-through; }
 
   /* The block open in the inspector: Signal ring, offset like the app. */
   .cell.picked { outline: 2.5px solid var(--signal); outline-offset: 2px; }
