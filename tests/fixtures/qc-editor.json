@@ -15,14 +15,17 @@
             "type": "float",
             "units": "",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "GAIN",
               "unit": "",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 10.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "1": {
@@ -33,14 +36,17 @@
             "type": "float",
             "units": "",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "TREBLE",
               "unit": "",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 10.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "2": {
@@ -51,14 +57,17 @@
             "type": "float",
             "units": "",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "LEVEL",
               "unit": "",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 10.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           }
         }
@@ -448,14 +457,17 @@
             "type": "float",
             "units": "%",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "MIX",
               "unit": "%",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "1": {
@@ -467,14 +479,17 @@
             "type": "float",
             "units": "%",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "DECAY",
               "unit": "%",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "2": {
@@ -555,14 +570,17 @@
             "type": "float",
             "units": "%",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "LF DAMPING",
               "unit": "%",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "6": {
@@ -574,14 +592,17 @@
             "type": "float",
             "units": "%",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "HF DAMPING",
               "unit": "%",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "7": {
@@ -593,14 +614,17 @@
             "type": "float",
             "units": "%",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "MOD DEPTH",
               "unit": "%",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "8": {
@@ -645,14 +669,17 @@
             "type": "float",
             "units": "",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "WAH",
               "unit": "",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           }
         }
@@ -715,14 +742,17 @@
             "type": "float",
             "units": "dB",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "GAIN",
               "unit": "dB",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": -24.0,
+              "maximum": 24.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "1": {
@@ -733,14 +763,17 @@
             "type": "float",
             "units": "dB",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "BASS",
               "unit": "dB",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": -6.0,
+              "maximum": 6.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "2": {
@@ -751,14 +784,17 @@
             "type": "float",
             "units": "dB",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "MID",
               "unit": "dB",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": -6.0,
+              "maximum": 6.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "3": {
@@ -769,14 +805,17 @@
             "type": "float",
             "units": "dB",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "TREBLE",
               "unit": "dB",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": -6.0,
+              "maximum": 6.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "4": {
@@ -787,14 +826,17 @@
             "type": "float",
             "units": "dB",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "VOLUME",
               "unit": "dB",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": -24.0,
+              "maximum": 24.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "5": {
@@ -832,14 +874,17 @@
             "type": "float",
             "units": "%",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "NOISE REDUCTION",
               "unit": "%",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           }
         }
@@ -858,14 +903,18 @@
             "type": "float",
             "units": "%",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "LEVEL",
               "unit": "%",
-              "editable": false,
-              "mapping_source": "device_metadata",
+              "editable": true,
+              "mapping_source": "hardware_calibration",
               "verification": "not_hardware_calibrated",
-              "reason": "Missing or unresolved taper; no conversion is assumed."
+              "minimum_label": "OFF",
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "mapping": "power",
+              "exponent": 1.0
             }
           },
           "1": {
@@ -1083,6 +1132,26 @@
     "preset_id": "captured:My Presets:16",
     "catalog_id": "06b878c142ba45b1c5f643f22940816c6b7cbec3b2ae11946ac9c857e022b11b",
     "name": "Tremonti w Mic",
+    "scene_labels": [
+      "CLEAN",
+      "CRONCH",
+      "",
+      "",
+      "RHYTHM",
+      "RHYTHM",
+      "OCTAVE FUN",
+      "LEAD"
+    ],
+    "scene_colors": [
+      4294911783,
+      4278875360,
+      4294955574,
+      4294902466,
+      4282775650,
+      4294930432,
+      4278875360,
+      4294902466
+    ],
     "scene": "F",
     "dirty": true,
     "blocks": [
@@ -2981,26 +3050,6 @@
         },
         "editable_parameters": []
       }
-    ],
-    "scene_labels": [
-      "CLEAN",
-      "CRONCH",
-      "",
-      "",
-      "RHYTHM",
-      "RHYTHM",
-      "OCTAVE FUN",
-      "LEAD"
-    ],
-    "scene_colors": [
-      4294911783,
-      4278875360,
-      4294955574,
-      4294902466,
-      4282775650,
-      4294930432,
-      4278875360,
-      4294902466
     ]
   }
 }

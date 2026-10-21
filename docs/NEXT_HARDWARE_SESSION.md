@@ -75,11 +75,22 @@ With the user present, Cortex Control closed, and the disposable preset
    during an edit; Bluetooth off/on; pull and reconnect the USB cable. Each must
    show a visible state and never replay an edit.
 8. Record edit-to-confirmation latency and reconnection time as first baselines.
+9. **Calibrate display curves.** Quit the Mac bridge first. Add a lookup-table
+   block (Plugin Parametric-4), a LOG_SKEW block (Envelope Filter) and a
+   toggleButton block (Vintage Digital reverb) to the disposable preset, or check
+   `tools/calibrate_qc_controls.py --plan` for alternatives. Run the probe below
+   and type what the QC shows for each value. Reload the preset without saving
+   afterwards.
+
+   ```sh
+   PYTHONPATH=/private/tmp/patchbridge-qc-mcp/src .venv-hardware/bin/python tools/calibrate_qc_controls.py
+   ```
 
 ## Still unverified after that run
 
 - Scene-specific parameter writes and amp-model controls.
-- Display accuracy of nonlinear (skewed) conversions against the QC's own readout.
+- Display accuracy of nonlinear (skewed) conversions against the QC's own readout,
+  until step 9 has run.
 - Switching to another slot and back, preset selection, bypass, and Save As
   (not exposed by the USB adapter).
 - Native asynchronous device events; the phone relies on polling.
