@@ -23,8 +23,8 @@ public enum ParameterValue: Codable, Equatable {
 
 public struct ParameterControl: Codable {
     public struct Option: Codable { public let label: String; public let value: Double }
-    /// A conditional control is active only while another parameter (a two-step switch) holds this value.
-    public struct ActiveWhen: Codable { public let parameter: String; public let value: Double }
+    /// A conditional control is active only while another parameter (a switch) holds one of these values.
+    public struct ActiveWhen: Codable { public let parameter: String; public let values: [Double] }
     public let kind: String
     public let encoding: String
     public let name: String
@@ -187,21 +187,24 @@ public final class GenericEditor {
               let control = control(blockID: blockID, parameterID: parameterID) else { return "Unknown block or metadata." }
         guard operations.contains("set_parameter") else { return "Adapter does not support parameter edits." }
         guard control.editable else { return control.reason ?? "Unsupported control." }
-        if let rule = control.active_when {
-            // The QC greys out a conditional control while its switch is in the other position.
-            let switchControl = self.control(blockID: blockID, parameterID: rule.parameter)
-            let name = switchControl?.name ?? "its switch"
-            guard case .number(let position)? = block.scenes[snapshot.scene]?.parameters[rule.parameter] else {
-                return "Inactive: \(name) has no current value."
-            }
-            if abs(position - rule.value) > 0.000001 {
-                let label = switchControl?.options?.first { abs($0.value - position) < 0.000001 }?.label ?? (position == 0 ? "Off" : "On")
-                return "Inactive while \(name) is \(label)."
-            }
-        }
+        if let reason = inactiveReason(block: block, scene: snapshot.scene, parameterID: parameterID) { return reason }
         guard block.editable_parameters?.contains(parameterID) == true else { return "Device marks this parameter read-only." }
         guard let value = block.scenes[snapshot.scene]?.parameters[parameterID], control.accepts(value) else { return "Missing or unsupported current value." }
         return nil
+    }
+    /// The QC greys out a conditional control while its switch is elsewhere, or while that switch is itself greyed out.
+    private func inactiveReason(block: PresetSnapshot.Block, scene: String, parameterID: String, depth: Int = 0) -> String? {
+        guard let rule = control(blockID: block.id, parameterID: parameterID)?.active_when else { return nil }
+        let switchControl = control(blockID: block.id, parameterID: rule.parameter)
+        let name = switchControl?.name ?? "its switch"
+        guard depth < 8, case .number(let position)? = block.scenes[scene]?.parameters[rule.parameter] else {
+            return "Inactive: \(name) has no current value."
+        }
+        if !rule.values.contains(where: { abs($0 - position) < 0.000001 }) {
+            let label = switchControl?.options?.first { abs($0.value - position) < 0.000001 }?.label ?? String(format: "%g", position)
+            return "Inactive while \(name) is \(label)."
+        }
+        return inactiveReason(block: block, scene: scene, parameterID: rule.parameter, depth: depth + 1).map { _ in "Inactive while \(name) is inactive." }
     }
     @discardableResult
     public func propose(blockID: String, parameterID: String, value: ParameterValue) throws -> Pending {

@@ -5,17 +5,20 @@ Details the firmware leaves implicit use rules measured on CorOS 4.1.1 hardware
 is linear, LOG_SKEW is a power curve with skew 0.3, lookup tables are linear between
 points, comboBox uses the switch encoding, an unlabeled two-step switch is Off/On,
 and the range constants in MEASURED_RANGES have the values shown on the QC. A control
-with toggleOn/toggleOff naming a two-step switch is active while that switch is 1 or 0
-respectively; inactive controls are greyed out on the QC and read-only here.
+with toggleOn/toggleOff naming a switch is active at the switch's toggleStep positions
+(toggleOn) or the other positions (toggleOff); without toggleStep, a two-step switch's
+toggleOn means 1 and toggleOff 0. A control is active only while its switch is too.
+Inactive controls are greyed out on the QC and read-only here. floatWithLed is a float,
+and an empty skew is linear.
 """
 import math
 
 # Measured on CorOS 4.1.1: 7 of 7 untapered floats were linear, and LOG_SKEW
 # controls matched skew 0.3 at every reading.
-CALIBRATED_SKEW = {None: 1.0, 'LOG_SKEW': 0.3}
+CALIBRATED_SKEW = {None: 1.0, '': 1.0, 'LOG_SKEW': 0.3}
 
 OPTION_TYPES = ('switch', 'rotarySwitch', 'toggleButton', 'comboBox')
-NUMBER_TYPES = ('float', 'fader')
+NUMBER_TYPES = ('float', 'fader', 'floatWithLed')
 # Types whose values the USB adapter may write when their control is editable.
 WRITABLE_TYPES = (*NUMBER_TYPES, *OPTION_TYPES)
 # Symbolic range constants read off the QC at normalized 0 and 1; all were linear.
@@ -49,23 +52,51 @@ def _table(raw, low, high):
 
 
 def _controller(raw, parameters):
-    """The two-step switch a toggleOn/toggleOff control depends on, as (index, active value)."""
+    """The switch a toggleOn/toggleOff control depends on, as (index, normalized values where it is active)."""
     ref = raw.get('toggleOn') or raw.get('toggleOff')
     if parameters is None or not ref or not ref.strip().isdigit():
         return None
     switch = parameters.get(ref.strip())
-    if not switch or switch.get('type') != 'switch' or switch.get('steps') != '2':
+    try:
+        count = int(switch.get('steps', '')) if switch else 0
+    except ValueError:
+        count = 0
+    if not switch or switch.get('type') not in OPTION_TYPES or not 2 <= count <= 1024:
         return None
-    return ref.strip(), 1.0 if raw.get('toggleOn') else 0.0
+    listed = raw.get('toggleStep')
+    if listed:
+        try:
+            on = {int(step) for step in listed.split(',')}
+        except ValueError:
+            return None
+        if not on <= set(range(count)):
+            return None
+    elif count == 2:
+        on = {1}
+    else:
+        return None  # A multi-step switch without toggleStep has no measured meaning.
+    active = on if raw.get('toggleOn') else set(range(count)) - on
+    return ref.strip(), [step / (count - 1) for step in sorted(active)]
+
+
+# Displays and placeholders the player never edits.
+DISPLAY_TYPES = ('grMeter', 'meter', 'empty')
 
 
 def normalize_parameter(raw, parameters=None):
     """parameters: the model's raw parameters by index, needed to resolve conditional controls."""
+    control = _normalize(raw, parameters)
+    if raw.get('hidden') == 'true' or raw.get('type') in DISPLAY_TYPES:
+        control['hidden'] = True  # Not a control the player edits; reports leave it out. The editor still lists it.
+    return control
+
+
+def _normalize(raw, parameters):
     controller = _controller(raw, parameters)
     if controller is not None:
-        control = normalize_parameter({k: v for k, v in raw.items() if k not in ('toggleOn', 'toggleOff')})
+        control = _normalize({k: v for k, v in raw.items() if k not in ('toggleOn', 'toggleOff')}, None)
         if control['editable']:
-            control['active_when'] = {'parameter': controller[0], 'value': controller[1]}
+            control['active_when'] = {'parameter': controller[0], 'values': controller[1]}
         return control
     control = {'kind': 'unknown', 'encoding': 'qc_normalized', 'name': raw.get('name', 'Unknown parameter'),
                'unit': raw.get('units') or '', 'editable': False,
@@ -77,6 +108,9 @@ def normalize_parameter(raw, parameters=None):
     if kind == 'int':
         # Every int in CorOS 4.1.1 is a device command, routing or calibration setting, or hidden.
         control['reason'] = 'Device command or internal setting, not a tone control.'
+        return control
+    if kind in DISPLAY_TYPES:
+        control['reason'] = 'Meter or placeholder, not a control.'
         return control
     if kind not in WRITABLE_TYPES:
         control['reason'] = 'Unsupported parameter type.'
