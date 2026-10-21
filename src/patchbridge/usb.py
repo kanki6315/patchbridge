@@ -14,7 +14,7 @@ from .metadata import OPTION_TYPES, WRITABLE_TYPES, normalize_models
 from . import tuner as tuning
 
 OPERATIONS = {'connect', 'disconnect', 'identify', 'capabilities', 'snapshot',
-              'catalog', 'subscribe', 'set_parameter', 'save'} | tuning.OPERATIONS
+              'catalog', 'subscribe', 'set_parameter', 'set_bypass', 'save'} | tuning.OPERATIONS
 # Broadcasts the QC streams on its own while a session is live. The tuner reader drops them
 # so they don't pile up between requests; anything else stays queued for the next request.
 STREAMED = {'KeepAlive', 'CPULoad', 'GlobalTempo', 'IOMeter', 'GridModelMeter', 'ModuleStats'}
@@ -268,7 +268,7 @@ class USBAdapter:
         return state
 
     def execute(self, operation, payload):
-        if operation not in {'set_parameter', 'save'}:
+        if operation not in {'set_parameter', 'set_bypass', 'save'}:
             raise BridgeError('unsupported_operation', 'Operation not yet validated for the USB adapter.')
         expected = deepcopy(self.state)
         current = self.snapshot()
@@ -296,6 +296,23 @@ class USBAdapter:
                     or actual is None or actual['model_id'] != block['model_id']
                     or abs(actual['scenes'][after['scene']]['parameters'][parameter]-value) > 1e-5):
                 raise RuntimeError('Write could not be confirmed; reconnect required.')
+            return after
+        if operation == 'set_bypass':
+            block = next((b for b in current['blocks'] if b['id'] == payload.get('block_id')), None)
+            if block is None:
+                raise BridgeError('invalid_value', 'Unknown block.')
+            value = payload.get('value')
+            if type(value) is not bool:
+                raise BridgeError('invalid_value', 'Bypass must be a boolean.')
+            # Like Cortex Control's bypass button: one flag for the active scene. A block whose
+            # bypass isn't assigned to scenes shares that flag, so other scenes may follow.
+            self.qc.set_block_bypass(*block['position'], value)
+            after = self.snapshot()
+            actual = next((b for b in after['blocks'] if b['id'] == block['id']), None)
+            if (after['preset_id'] != current['preset_id'] or after['scene'] != current['scene']
+                    or actual is None or actual['model_id'] != block['model_id']
+                    or actual['scenes'][after['scene']].get('bypass') is not value):
+                raise RuntimeError('Bypass could not be confirmed; reconnect required.')
             return after
         folder, position, factory, downloads, plugin = self.position
         if factory or downloads or plugin or folder != '/media/p4/Presets/My Presets' or not current['name']:

@@ -323,3 +323,47 @@ extension GenericEditorTests {
         }
     }
 }
+
+extension GenericEditorTests {
+    func bypassed(_ snapshot: PresetSnapshot, _ value: Bool) throws -> PresetSnapshot {
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(snapshot)) as! [String: Any]
+        var blocks = object["blocks"] as! [[String: Any]]
+        let i = blocks.firstIndex { $0["id"] as? String == "0:1" }!
+        var scenes = blocks[i]["scenes"] as! [String: [String: Any]]
+        scenes["F"]!["bypass"] = value
+        blocks[i]["scenes"] = scenes; object["blocks"] = blocks
+        return try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
+    }
+    func testBypassNeedsAdvertisedOperation() throws {
+        let f = try fixture(); let model = try editor(f)
+        XCTAssertNotNil(model.bypassReadOnlyReason(blockID: "0:1"))
+        XCTAssertThrowsError(try model.proposeBypass(blockID: "0:1", bypassed: true))
+    }
+    func testBypassIsPendingUntilReadbackConfirmsIt() throws {
+        let f = try fixture(); let model = GenericEditor()
+        try model.load(snapshot: bypassed(f.snapshot, false), catalog: f.catalog, session: "session", connection: "connection", revision: 3, operations: ["set_bypass"])
+        XCTAssertNil(model.bypassReadOnlyReason(blockID: "0:1"))
+        let edit = try model.proposeBypass(blockID: "0:1", bypassed: true)
+        XCTAssertEqual(edit.command["operation"] as? String, "set_bypass")
+        XCTAssertEqual(edit.command["scene"] as? String, "F")
+        XCTAssertEqual((edit.command["payload"] as? [String: Any])?["value"] as? Bool, true)
+        XCTAssertEqual(model.bypassed(blockID: "0:1"), false)
+        XCTAssertThrowsError(try model.proposeBypass(blockID: "0:1", bypassed: true))
+        try model.confirm(id: edit.id, snapshot: bypassed(f.snapshot, true), session: "session", connection: "connection", revision: 4)
+        XCTAssertEqual(model.bypassed(blockID: "0:1"), true)
+        XCTAssertNil(model.pending)
+    }
+    func testBypassWithoutReportedFlagIsReadOnly() throws {
+        let f = try fixture(); let model = GenericEditor()
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(f.snapshot)) as! [String: Any]
+        var blocks = object["blocks"] as! [[String: Any]]
+        let i = blocks.firstIndex { $0["id"] as? String == "0:1" }!
+        var scenes = blocks[i]["scenes"] as! [String: [String: Any]]
+        scenes["F"]!["bypass"] = nil
+        blocks[i]["scenes"] = scenes; object["blocks"] = blocks
+        let snapshot = try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
+        try model.load(snapshot: snapshot, catalog: f.catalog, session: "s", connection: "c", revision: 0, operations: ["set_bypass"])
+        XCTAssertNotNil(model.bypassReadOnlyReason(blockID: "0:1"))
+        XCTAssertThrowsError(try model.proposeBypass(blockID: "0:1", bypassed: true))
+    }
+}

@@ -104,7 +104,7 @@ final class PhoneModel: ObservableObject {
         do {
             let fixture = try DemoFixture.load()
             tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0
-            try demoEditor.load(snapshot: fixture.snapshot, catalog: fixture.catalog, session: "demo", connection: "demo", revision: 0, operations: ["set_parameter", "save"])
+            try demoEditor.load(snapshot: fixture.snapshot, catalog: fixture.catalog, session: "demo", connection: "demo", revision: 0, operations: ["set_parameter", "set_bypass", "save"])
             demo = true; notice = nil; liveActivity.sync(self); version += 1
         } catch { notice = "The demo preset could not be loaded." }
     }
@@ -115,6 +115,14 @@ final class PhoneModel: ObservableObject {
                 let pending = try editor.propose(blockID: block, parameterID: parameter, value: value)
                 try confirmDemo(pending)
             } else { try coordinator.edit(blockID: block, parameterID: parameter, value: value) }
+        } catch { notice = "Not applied. Refresh the preset and try again." }
+        version += 1
+    }
+    func setBypass(_ block: String, _ bypassed: Bool) {
+        do {
+            notice = nil
+            if usesLocalFixture { try confirmDemo(editor.proposeBypass(blockID: block, bypassed: bypassed)) }
+            else { try coordinator.setBypass(blockID: block, bypassed: bypassed) }
         } catch { notice = "Not applied. Refresh the preset and try again." }
         version += 1
     }
@@ -135,6 +143,12 @@ final class PhoneModel: ObservableObject {
             var scenes = blocks[index]["scenes"] as! [String: [String: Any]]
             var parameters = scenes[snapshot.scene]!["parameters"] as! [String: Any]
             parameters[parameter] = value.json; scenes[snapshot.scene]!["parameters"] = parameters
+            blocks[index]["scenes"] = scenes; object["blocks"] = blocks
+        } else if pending.operation == "set_bypass", let block = pending.blockID, case .boolean(let bypassed)? = pending.proposedValue {
+            var blocks = object["blocks"] as! [[String: Any]]
+            let index = blocks.firstIndex { $0["id"] as? String == block }!
+            var scenes = blocks[index]["scenes"] as! [String: [String: Any]]
+            scenes[snapshot.scene]!["bypass"] = bypassed
             blocks[index]["scenes"] = scenes; object["blocks"] = blocks
         }
         let updated = try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
@@ -163,7 +177,7 @@ final class PhoneModel: ObservableObject {
         return labels[index]
     }
     func editable(_ block: PresetSnapshot.Block) -> Bool {
-        parameters(block).contains { editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }
+        editor.bypassReadOnlyReason(blockID: block.id) == nil || parameters(block).contains { editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }
     }
     func summary(_ block: PresetSnapshot.Block) -> String {
         if block.scenes[snapshot?.scene ?? ""]?.bypass == true { return "Bypassed" }

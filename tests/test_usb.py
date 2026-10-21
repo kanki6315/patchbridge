@@ -61,6 +61,7 @@ class USBWriteTests(TestCase):
             'version': 1, 'type': 'request', 'id': '1', 'operation': 'capabilities',
         })[0]
         self.assertIn('save', response['result']['operations'])
+        self.assertIn('set_bypass', response['result']['operations'])
         self.assertNotIn('save_as', response['result']['operations'])
 
     def test_parameter_write_requires_readback(self):
@@ -93,6 +94,37 @@ class USBWriteTests(TestCase):
         with self.assertRaises(BridgeError):
             self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
         self.adapter.qc.set_param.assert_called_once()
+
+    def bypass_block(self, bypassed):
+        return {'id': '0:3', 'position': [0, 3], 'model_id': '1', 'editable_parameters': [],
+                'scenes': {'F': {'bypass': bypassed, 'parameters': {}}}}
+
+    def test_bypass_writes_active_scene_flag_and_reads_it_back(self):
+        self.state['blocks'] = [self.bypass_block(False)]
+        self.adapter.state = deepcopy(self.state)
+        off = dict(self.state, blocks=[self.bypass_block(True)])
+        self.adapter.snapshot = Mock(side_effect=[self.state, off])
+        self.assertEqual(self.adapter.execute('set_bypass', {'block_id': '0:3', 'value': True}), off)
+        self.adapter.qc.set_block_bypass.assert_called_once_with(0, 3, True)
+
+    def test_bypass_requires_readback(self):
+        self.state['blocks'] = [self.bypass_block(False)]
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.snapshot = Mock(return_value=self.state)
+        with self.assertRaisesRegex(RuntimeError, 'Bypass could not be confirmed'):
+            self.adapter.execute('set_bypass', {'block_id': '0:3', 'value': True})
+        self.adapter.qc.set_block_bypass.assert_called_once()
+
+    def test_bypass_rejects_unknown_block_and_non_boolean(self):
+        self.state['blocks'] = [self.bypass_block(False)]
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.snapshot = Mock(return_value=self.state)
+        for payload in ({'block_id': '1:0', 'value': True}, {'block_id': '0:3', 'value': 1},
+                        {'block_id': '0:3'}):
+            with self.assertRaises(BridgeError) as caught:
+                self.adapter.execute('set_bypass', payload)
+            self.assertEqual(caught.exception.code, 'invalid_value')
+        self.adapter.qc.set_block_bypass.assert_not_called()
 
     def test_failed_preflight_does_not_advance_accepted_state(self):
         original = deepcopy(self.adapter.state)

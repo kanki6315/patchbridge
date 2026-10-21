@@ -104,11 +104,18 @@ struct BlockEditorView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 12) {
-                        Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.4).foregroundStyle(category.darkInk ? Color.black : .white).frame(width: 44, height: 44).background(category.color, in: RoundedRectangle(cornerRadius: 12))
+                        // Bypassed blocks match the grid: dashed outline and struck-through code.
+                        let off = model.editor.bypassed(blockID: block.id) == true
+                        Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.4).strikethrough(off)
+                            .foregroundStyle(off ? category.color : (category.darkInk ? Color.black : .white)).frame(width: 44, height: 44)
+                            .background(off ? theme.surface : category.color, in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(category.color, style: StrokeStyle(lineWidth: off ? 1.5 : 0, dash: [4, 3])))
                         VStack(alignment: .leading, spacing: 3) {
                             Text(model.name(block)).font(.title.bold())
                             Text(subtitle).font(.subheadline).foregroundStyle(theme.muted)
                         }
+                        Spacer(minLength: 8)
+                        BypassButton(model: model, block: block, theme: theme)
                     }
                     parameterControl
                     tiles
@@ -342,5 +349,31 @@ private struct DialArc: Shape {
         var path = Path()
         path.addArc(center: CGPoint(x: rect.midX, y: rect.midY), radius: (min(rect.width, rect.height) - 26) / 2, startAngle: .degrees(135 + start * 270), endAngle: .degrees(135 + end * 270), clockwise: false)
         return path
+    }
+}
+
+/// Turns the block on or off for the active scene, like the QC's footswitch. Shown only when the
+/// bridge advertises bypass writes; the confirmed readback, not the tap, decides what it shows.
+struct BypassButton: View {
+    @ObservedObject var model: PhoneModel
+    let block: PresetSnapshot.Block
+    let theme: PhoneTheme
+    private var bypassed: Bool? { model.editor.bypassed(blockID: block.id) }
+    private var pending: Bool {
+        model.editor.pending.map { $0.operation == "set_bypass" && $0.blockID == block.id } ?? false
+    }
+    var body: some View {
+        if model.editor.bypassReadOnlyReason(blockID: block.id) == nil, let bypassed {
+            let color = model.category(block).color
+            Button { model.setBypass(block.id, !bypassed) } label: {
+                Label(bypassed ? "Off" : "On", systemImage: "power").font(.headline)
+                    .foregroundStyle(bypassed ? theme.muted : color)
+                    .padding(.horizontal, 14).frame(minHeight: 44)
+                    .overlay(Capsule().stroke(bypassed ? theme.line : color, style: StrokeStyle(lineWidth: 1.5, dash: pending ? [4, 3] : [])))
+            }
+            .buttonStyle(.plain).disabled(model.busy)
+            .accessibilityLabel("Block \(bypassed ? "off" : "on")")
+            .accessibilityHint(bypassed ? "Turns the block on for this scene" : "Bypasses the block for this scene")
+        }
     }
 }

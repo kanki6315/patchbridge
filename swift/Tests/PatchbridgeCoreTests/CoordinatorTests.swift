@@ -327,6 +327,27 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(c.editor.value(blockID: "amp-1", parameterID: "gain"), .number(5))
         XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "set_parameter" }.count, 1)
     }
+    func testRealSimulatedProcessBypassesAndReenablesABlock() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
+        defer { helper.stop() }
+        let bridge = DeviceSession(helper: helper); bridge.approve()
+        let t = OfflineTransport(); t.handler = { try bridge.handle($0) }
+        let c = coordinator(t); c.start(); c.authorize()
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.editor.bypassed(blockID: "amp-1"), false)
+        t.hold = true
+        try c.setBypass(blockID: "amp-1", bypassed: true)
+        XCTAssertEqual(c.editor.bypassed(blockID: "amp-1"), false)
+        XCTAssertEqual(c.editor.pending?.operation, "set_bypass")
+        t.hold = false; t.deliver()
+        XCTAssertEqual(c.editor.bypassed(blockID: "amp-1"), true)
+        XCTAssertEqual(c.outcome, "Bypassed")
+        XCTAssertEqual(c.editor.snapshot?.dirty, true)
+        try c.setBypass(blockID: "amp-1", bypassed: false)
+        XCTAssertEqual(c.editor.bypassed(blockID: "amp-1"), false)
+        XCTAssertEqual(c.outcome, "Enabled")
+    }
 }
 
 

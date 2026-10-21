@@ -259,6 +259,29 @@ public final class GenericEditor {
         pending = edit; lastError = nil
         return edit
     }
+    /// The active scene's bypass flag; nil when the device didn't report one.
+    public func bypassed(blockID: String) -> Bool? {
+        guard let snapshot else { return nil }
+        return snapshot.blocks.first { $0.id == blockID }?.scenes[snapshot.scene]?.bypass
+    }
+    public func bypassReadOnlyReason(blockID: String) -> String? {
+        guard operations.contains("set_bypass") else { return "Adapter does not support bypass." }
+        guard bypassed(blockID: blockID) != nil else { return "Device did not report bypass for this scene." }
+        return nil
+    }
+    @discardableResult
+    public func proposeBypass(blockID: String, bypassed: Bool) throws -> Pending {
+        guard let snapshot, let session, let connection else { throw EditorFailure.disconnected }
+        guard pending == nil else { throw EditorFailure.busy }
+        guard bypassReadOnlyReason(blockID: blockID) == nil else { throw EditorFailure.unsupported }
+        let id = UUID().uuidString
+        let command: [String: Any] = ["version": 1, "id": id, "operation": "set_bypass", "connection_id": connection,
+            "session_id": session, "revision": revision, "preset_id": snapshot.preset_id, "scene": snapshot.scene,
+            "payload": ["block_id": blockID, "value": bypassed]]
+        let edit = Pending(id: id, operation: "set_bypass", blockID: blockID, parameterID: nil, proposedValue: .boolean(bypassed), command: command)
+        pending = edit; lastError = nil
+        return edit
+    }
     public func reject(id: String, message: String) {
         guard pending?.id == id else { return }
         pending = nil; lastError = message // confirmed snapshot remains unchanged
@@ -295,6 +318,11 @@ public final class GenericEditor {
                   block.model_id == snapshot?.blocks.first(where: { $0.id == blockID })?.model_id,
                   let value = block.scenes[newState.scene]?.parameters[parameterID],
                   control(blockID: blockID, parameterID: parameterID)?.accepts(value) == true else { throw EditorFailure.invalidState }
+        } else if pending.operation == "set_bypass" {
+            guard let blockID = pending.blockID,
+                  let block = newState.blocks.first(where: { $0.id == blockID }),
+                  block.model_id == snapshot?.blocks.first(where: { $0.id == blockID })?.model_id,
+                  block.scenes[newState.scene]?.bypass != nil else { throw EditorFailure.invalidState }
         } else if pending.operation == "save" {
             guard !newState.dirty, newState.blocks == snapshot?.blocks, newState.name == snapshot?.name else { throw EditorFailure.invalidState }
         }
