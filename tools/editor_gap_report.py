@@ -25,9 +25,10 @@ def classify(xml):
     rows = []
     for category in ET.fromstring(xml).findall('Category'):
         for model in category.findall('Model'):
+            parameters = {str(i): dict(p.attrib) for i, p in enumerate(model.findall('Parameter'))}
             for index, parameter in enumerate(model.findall('Parameter')):
                 raw = dict(parameter.attrib)
-                control = normalize_parameter(raw)
+                control = normalize_parameter(raw, parameters)
                 rows.append({'category': category.get('name'), 'model': model.get('name'),
                              'model_id': model.get('id'), 'index': index, 'name': raw.get('name', ''),
                              'type': raw.get('type', ''), 'hidden': raw.get('hidden') == 'true',

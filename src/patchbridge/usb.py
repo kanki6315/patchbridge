@@ -14,6 +14,15 @@ OPERATIONS = {'connect', 'disconnect', 'identify', 'capabilities', 'snapshot',
               'catalog', 'subscribe', 'set_parameter', 'save'}
 
 
+def active(definition, values):
+    """False while the switch a conditional control depends on is in its other position."""
+    rule = definition.get('control', {}).get('active_when')
+    if not rule:
+        return True
+    value = values.get(rule['parameter'])
+    return type(value) in (int, float) and abs(value - rule['value']) < 1e-6
+
+
 class USBAdapter:
     operations = OPERATIONS
 
@@ -124,6 +133,9 @@ class USBAdapter:
                         v = param.param_values[s if param.scene_mode else 0]
                         field = v.WhichOneof('value')
                         scenes[chr(65+s)]['parameters'][str(index)] = getattr(v, field) if field else None
+                # A conditional control is writable only while its switch makes it active.
+                current = scenes[chr(65+scene.selected_scene)]['parameters']
+                editable = [p for p in editable if active(definitions.get(p, {}), current)]
                 blocks.append({'id': f'{row}:{column}', 'position': [row, column],
                                'model_id': str(model.hash), 'scenes': scenes,
                                'editable_parameters': editable})
@@ -150,7 +162,7 @@ class USBAdapter:
             block = next((b for b in current['blocks'] if b['id'] == payload.get('block_id')), None)
             parameter = payload.get('parameter_id')
             if block is None or not isinstance(parameter, str) or parameter not in block['editable_parameters']:
-                raise BridgeError('unsupported_parameter', 'Parameter is unknown, scene-assigned or expression-controlled.')
+                raise BridgeError('unsupported_parameter', 'Parameter is unknown, scene-assigned, expression-controlled or inactive.')
             value = payload.get('value')
             if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
                 raise BridgeError('invalid_value', 'USB values must be normalized numbers in [0, 1].')

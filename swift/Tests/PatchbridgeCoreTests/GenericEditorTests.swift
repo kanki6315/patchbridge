@@ -112,6 +112,32 @@ extension GenericEditorTests {
             XCTAssertFalse(bad.accepts(.number(0.5)), corrupt)
         }
     }
+    func testConditionalControlIsReadOnlyWhileItsSwitchIsInTheOtherPosition() throws {
+        func editor(sync: Double) throws -> GenericEditor {
+            let json = """
+            {"catalog": {"id": "c", "metadata_version": 1, "models": {"9": {"name": "Simple Delay", "parameters": {
+               "0": {"control": {"kind": "enum", "encoding": "qc_normalized", "name": "SYNC", "unit": "", "editable": true,
+                     "options": [{"label": "Off", "value": 0}, {"label": "On", "value": 1}]}},
+               "1": {"control": {"kind": "number", "encoding": "qc_normalized", "name": "SYNC NOTE", "unit": "", "editable": true,
+                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "0", "value": 1}}},
+               "2": {"control": {"kind": "number", "encoding": "qc_normalized", "name": "DELAY TIME", "unit": "ms", "editable": true,
+                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "0", "value": 0}}}}}}},
+             "snapshot": {"preset_id": "p", "catalog_id": "c", "name": "Test", "scene": "A", "dirty": false,
+               "blocks": [{"id": "0:0", "model_id": "9", "position": [0, 0], "editable_parameters": ["0", "1", "2"],
+                 "scenes": {"A": {"parameters": {"0": \(sync), "1": 0.25, "2": 0.5}}}}]}}
+            """
+            let f = try JSONDecoder().decode(Fixture.self, from: Data(json.utf8))
+            return try self.editor(f)
+        }
+        let free = try editor(sync: 0)
+        XCTAssertEqual(free.readOnlyReason(blockID: "0:0", parameterID: "1"), "Inactive while SYNC is Off.")
+        XCTAssertNil(free.readOnlyReason(blockID: "0:0", parameterID: "2"))
+        XCTAssertThrowsError(try free.propose(blockID: "0:0", parameterID: "1", value: .number(0.5)))
+        let synced = try editor(sync: 1)
+        XCTAssertNil(synced.readOnlyReason(blockID: "0:0", parameterID: "1"))
+        XCTAssertEqual(synced.readOnlyReason(blockID: "0:0", parameterID: "2"), "Inactive while SYNC is On.")
+        XCTAssertNil(synced.readOnlyReason(blockID: "0:0", parameterID: "0"))
+    }
     func testExternalStateCancelsPendingEdit() throws {
         let f = try fixture(); let model = try editor(f)
         let edit = try model.propose(blockID: "0:1", parameterID: "0", value: .number(0.5))

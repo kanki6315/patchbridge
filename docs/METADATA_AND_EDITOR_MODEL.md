@@ -28,7 +28,8 @@ type (number, boolean, string, null).
 | Two-step switch without stepNames | Off/On, from hardware calibration |
 | Empty or unknown skew, symbolic/invalid range | Read-only; no guessed taper/range |
 | Missing or inconsistent option labels | Read-only; never fabricate labels |
-| toggleOn/toggleOff dependency | Read-only until dependency semantics are implemented |
+| toggleOn/toggleOff naming one two-step switch | Editable while active: toggleOn while the switch is 1, toggleOff while it is 0 (`active_when`) |
+| toggleOn/toggleOff naming any other controller, or several | Read-only until those semantics are measured |
 | int | Read-only: in CorOS 4.1.1 every int is a device command (Neural Capture, ZenLink), a calibration setting or hidden |
 | Unknown/meter/string type | Read-only |
 
@@ -45,6 +46,11 @@ the points, midpoints included. `toggleButton` controls (FREEZE, TRIGGER) share 
 switch encoding: 1 is active and the value latches. The QC's button text is the action
 it offers, so it reads FREEZE while released and RELEASE while frozen. A `min_string`
 such as OFF is carried as `minimum_label`: the QC shows it instead of the minimum value.
+
+Conditional controls carry `active_when: {parameter, value}`. While the switch holds
+the other value, the QC greys the control out but keeps its value. The USB adapter
+leaves inactive controls out of `editable_parameters` and refuses writes to them, and
+`readOnlyReason` reports "Inactive while SYNC is Off." so the phone greys them out too.
 
 Calibrated rules carry `mapping_source: hardware_calibration` rather than
 `device_metadata`. Captured Myth Drive gain declares no skew, so it uses the
@@ -144,8 +150,8 @@ read-only in the generic model. QC controls continue to use normalized values.
 these rules and reports what is editable, why the rest is read-only, and which
 categories and models have the largest gaps. Hidden parameters are counted
 separately. `--model NAME` lists one model's parameters and `--json` prints data.
-On the CorOS 4.1.1 capture, 3,118 of 3,888 visible parameters (80%) are editable,
-up from 1,233 (32%) before calibration.
+On the CorOS 4.1.1 capture, 3,319 of 3,888 visible parameters (85%) are editable
+(conditional controls count while active), up from 1,233 (32%) before calibration.
 
 `tools/calibrate_qc_controls.py` answers that question on hardware. It picks
 parameters from the loaded disposable preset in six groups: no declared taper,
@@ -176,6 +182,8 @@ Saved in `hardware-results/2026-10-20/calibration-probe*.json`, all values resto
 | fader | Graphic-9 65, 125, 250 and 500 Hz | Linear, exact |
 | Unlabeled two-step switch | UK C30 BRIGHT, FX Loop 1 TRAILS, Parametric-8 1 and 2 BYPASS | 0 is Off, 1 is On |
 | Range constants | Parametric-8 1 and 2 GAIN, FX Loop 1 SEND and RET LEV | EQ −12…12 dB, loop send −40…0 dB, return −40…12 dB, all linear; OFF shown at the minimum |
+
+| Conditional controls | Simple Delay SYNC, SLO-100 CHANNEL, Dual Chorus SYNC | toggleOff controls active at 0, toggleOn at 1; inactive ones greyed out |
 
 Three readings were mistyped at the prompt and corrected afterwards; each keeps
 `corrected_from` and a note. `MIN_CABSIM_DB` (14 parameters) and `MIN_MIXER_DB` (8)
