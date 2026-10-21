@@ -134,8 +134,9 @@ the Duo's folded screens the full tuner is a sheet; on iPad and the Duo's inner
 screen it is a popover. Mute applies only while the full tuner is open. With
 Live tuner on, pitch stays on screen after it closes: on iPhone a line under
 the status bar, above the navigation stack so it persists into the block editor,
-whose light rises into the status bar and lights a ring around the Dynamic
-Island in tune; on iPad a band in the top bar (its own row in portrait); on the
+with ambient light rising around the Dynamic Island and a short highlight
+that opens across the bar in tune, without a fitted ring. Both fade when quiet
+(stationary feedback with Reduce Motion); on iPad a band in the top bar (its own row in portrait); on the
 Duo's inner screen the crease itself, whose light spills into both halves. The
 readout publishes from its own object, so only the tuner redraws ten times a
 second. Demo mode plays simulated strings. Debug builds accept `--live-tuner`

@@ -204,13 +204,12 @@ private struct GlassIf: ViewModifier {
     func body(content: Content) -> some View { if enabled { content.phoneGlass(theme, radius: radius) } else { content } }
 }
 
-/// iPhone: a slim line under the status bar. Its light rises into the status bar toward the
-/// Dynamic Island, and the ring around the island lights in tune. Stays on every screen.
+/// iPhone: a slim line under the status bar. A pitch-following highlight opens into
+/// a steady full-width line in tune, while a soft glow rises around the camera area.
 struct TunerLine: View {
     @ObservedObject var readout: TunerReadout
     let theme: PhoneTheme
-    /// The safe area's top inset: how far the light reaches up, and whether there is an island.
-    let topInset: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let open: () -> Void
     static let height: CGFloat = 44
     private let note: CGFloat = 34, cents: CGFloat = 44, gap: CGFloat = 12, side: CGFloat = 20
@@ -229,25 +228,55 @@ struct TunerLine: View {
         .tunerHaptic(readout.pitch)
     }
     private func light(width: CGFloat) -> some View {
+        let pitch = readout.pitch
+        let inTune = pitch?.inTune == true
         let start = side + note + gap, span = max(1, width - start - gap - cents - side)
-        let x = readout.pitch?.inTune == true ? width / 2 : start + span * CGFloat(50 + min(50, max(-50, readout.pitch?.cents ?? 0))) / 100
-        // Dynamic Island iPhones have a top inset of at least 54 pt; the island is about 126 × 37 pt, 11 pt down.
-        let island = topInset >= 54
-        let inTune = readout.pitch?.inTune == true
+        let marker = start + span * CGFloat(50 + min(50, max(-50, pitch?.cents ?? 0))) / 100
+        let available = max(1, width - 2 * side)
+        let closeness = max(0, 1 - abs(pitch?.cents ?? 50) / 50)
+        // Reduce Motion keeps the light stationary; color and opacity still confirm tuning.
+        let spread = reduceMotion || inTune ? available : min(available, 32 + 48 * closeness)
+        let center = reduceMotion || inTune ? width / 2 : marker
+        let color = inTune ? theme.signal : theme.ink
         return ZStack(alignment: .topLeading) {
-            TunerGlow(pitch: readout.pitch, theme: theme, far: CGSize(width: 160, height: 130), near: CGSize(width: 340, height: 240), tuned: CGSize(width: 560, height: 280))
-                .position(x: x, y: Self.height / 2 - (inTune ? 30 : 10))
-            if island {
-                RoundedRectangle(cornerRadius: 24).strokeBorder(inTune ? theme.signal : theme.ink.opacity(0.12), lineWidth: inTune ? 2 : 1.5)
-                    .frame(width: 136, height: 47)
-                    .shadow(color: inTune ? theme.signal.opacity(0.6) : .clear, radius: 11)
-                    .position(x: width / 2, y: 6 + 23.5 - topInset)
-                    .opacity(readout.pitch == nil ? 0 : 1)
-                    .animation(.easeOut(duration: 0.2), value: inTune)
-            }
+            LinearGradient(colors: [.clear, color.opacity(theme.daylight ? 0.06 : 0.10)],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(width: spread, height: 16)
+                .mask(LinearGradient(colors: [.clear, .white, .white, .clear], startPoint: .leading, endPoint: .trailing))
+                .position(x: center, y: Self.height - 8)
+            Capsule()
+                .fill(LinearGradient(colors: [color.opacity(0), color, color, color.opacity(0)],
+                                     startPoint: .leading, endPoint: .trailing))
+                .frame(width: spread, height: 2)
+                .position(x: center, y: Self.height - 1)
         }
         .frame(width: width, height: Self.height)
-        .allowsHitTesting(false)
+        .clipped()
+        .opacity(pitch == nil ? 0 : (inTune ? 1 : 0.45))
+        .animation(reduceMotion ? nil : tunerEase, value: pitch?.cents)
+        .animation(reduceMotion ? .easeOut(duration: 0.15) : .timingCurve(0.22, 1, 0.36, 1, duration: 0.24), value: inTune)
+        .animation(.easeOut(duration: 0.15), value: pitch == nil)
+        .background {
+            // Ambient light reaches behind the status bar without assuming a camera shape.
+            if reduceMotion {
+                EllipticalGradient(colors: [color.opacity(theme.daylight ? 0.18 : 0.35), .clear],
+                                   center: .center, startRadiusFraction: 0, endRadiusFraction: 0.5)
+                    .frame(width: width * 1.3, height: 280)
+                    .position(x: width / 2, y: Self.height / 2 - 30)
+                    .opacity(pitch == nil ? 0 : (inTune ? 1 : 0.3))
+                    .animation(.easeOut(duration: 0.15), value: inTune)
+                    .animation(.easeOut(duration: 0.15), value: pitch == nil)
+            } else {
+                TunerGlow(pitch: pitch, theme: theme,
+                          far: CGSize(width: 160, height: 130),
+                          near: CGSize(width: 340, height: 240),
+                          tuned: CGSize(width: max(560, width * 1.3), height: 280))
+                    .position(x: center, y: Self.height / 2 - (inTune ? 30 : 10))
+                    .animation(tunerEase, value: pitch?.cents)
+                    .animation(.easeOut(duration: 0.24), value: inTune)
+            }
+        }
+        .allowsHitTesting(false).accessibilityHidden(true)
     }
 }
 
