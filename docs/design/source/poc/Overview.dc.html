@@ -37,7 +37,7 @@
         </div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 4px;">
-        <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Tremonti w Mic</h1>
+        <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Dirty Riffage</h1>
         <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: {{t.muted}};">
           My Presets · 16
           <span style="{{savedStyle}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>{{savedText}}</span>
@@ -63,7 +63,7 @@
     <sc-if value="{{tn.takeover}}" hint-placeholder-val="{{false}}">
       <section aria-label="{{tn.aria}}" style="height: 188px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
         <div style="min-height: 44px; display: flex; align-items: center; justify-content: space-between;">
-          <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: {{t.muted}};"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: {{active.color}};"></span>Tremonti w Mic · Scene F</span>
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: {{t.muted}};"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: {{active.color}};"></span>Dirty Riffage · Scene F</span>
           <button type="button" aria-label="Tuner" aria-pressed="{{tn.livePressed}}" style="{{tn.buttonStyle}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 2v7a4 4 0 0 0 8 0V2M12 13v9"></path></svg></button>
         </div>
         <div style="display: flex; align-items: baseline; justify-content: space-between;"><span style="display: inline-flex; align-items: baseline; font-size: 88px; font-weight: {{tn.noteWeight}}; letter-spacing: -0.02em; line-height: 1; color: {{tn.noteColor}};">{{tn.note}}<span style="margin-left: 2px; font-size: 34px; font-weight: 600; letter-spacing: 0; color: {{t.muted}};">{{tn.oct}}</span></span><span style="width: 110px; flex: none; text-align: right; font-size: 34px; font-weight: 600; line-height: 1.2; color: {{tn.centsColor}};">{{tn.cents}}</span></div>
@@ -251,10 +251,10 @@ class Component extends DCLogic {
     const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
     // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
     const rows = [
-      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'Eltron 30', 'Capture OG TS808', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
-      [null, null, B('utl', 'Volume', 'Curve Log'), null, null, null, null, null],
-      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2% · Depth 50.0%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms · Trails On')],
-      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, null, null]
+      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'OG TS808', 'Eltron 30 capture', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
+      [null, null, null, null, null, null, null, null],
+      [null, B('cap', 'Paul\'s MT16 7', 'Eltron 30 capture', true), null, B('cap', 'Paul\'s MT16 6', 'Eltron 30 capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2% · Depth 50.0%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms · Trails On')],
+      [null, B('cap', 'Paul\'s MT16 7', 'Eltron 30 capture', true), null, B('cap', 'Bogna Uber 1', 'Eltron 30 capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, null, null]
     ];
     const cellBase = { height: '38px', boxSizing: 'border-box', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, letterSpacing: '0.02em' };
     const grid = rows.map((row, ri) => {

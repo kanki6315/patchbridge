@@ -15,7 +15,7 @@
 
   <header style="height: 52px; flex: none; display: flex; align-items: center; gap: 12px;">
     <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
-      <h1 style="margin: 0; font-size: 28px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tremonti w Mic</h1>
+      <h1 style="margin: 0; font-size: 28px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dirty Riffage</h1>
       <span style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: {{t.muted}};">
         My Presets · 16
         <span style="{{savedStyle}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>{{savedText}}</span>
@@ -408,10 +408,10 @@ class Component extends DCLogic {
     const RO = 'Read-only';
     const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
     const rows = [
-      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'Eltron 30', 'Capture OG TS808', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
-      [null, null, B('utl', 'Volume', 'Curve Log'), null, null, null, null, null],
-      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2% · Depth 50.0%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms · Trails On')],
-      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, null, null]
+      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'OG TS808', 'Eltron 30 capture', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
+      [null, null, null, null, null, null, null, null],
+      [null, B('cap', 'Paul\'s MT16 7', 'Eltron 30 capture', true), null, B('cap', 'Paul\'s MT16 6', 'Eltron 30 capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2% · Depth 50.0%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms · Trails On')],
+      [null, B('cap', 'Paul\'s MT16 7', 'Eltron 30 capture', true), null, B('cap', 'Bogna Uber 1', 'Eltron 30 capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, null, null]
     ];
     const SEL = { comp: [0, 1], capture: [0, 2], chorus: [2, 6] }[key];
     const [selRow, selSlot] = SEL;
@@ -476,7 +476,7 @@ class Component extends DCLogic {
         P('Makeup', '+8.0', 'dB', 0.583), P('Mix', '100.0', '%', 1),
         P('Gain Reduction', '—', '', 0, { locked: 'meter' })
       ] },
-      capture: { code: 'CAP', title: 'Eltron 30', where: 'Capture OG TS808 · Row 1, slot 3 · Scene F', hero: 0, params: [
+      capture: { code: 'CAP', title: 'OG TS808', where: 'Eltron 30 capture · Row 1, slot 3 · Scene F', hero: 0, params: [
         P('Gain', '50', '%', 0.5, { locked: 'taper' }), P('Bass', '—', '', 0.5, { locked: 'taper' }),
         P('Mid', '—', '', 0.5, { locked: 'taper' }), P('Treble', '—', '', 0.5, { locked: 'taper' }), P('Volume', '—', '', 0.5, { locked: 'taper' })
       ] },

@@ -173,7 +173,7 @@
     <div style="height: 100%; box-sizing: border-box; padding: 62px 16px 34px; display: flex; flex-direction: column; gap: 18px;">
       <a href="#" style="align-self: flex-start; height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
-        Tremonti w Mic
+        Dirty Riffage
       </a>
       <h1 style="margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em;">Connection</h1>
 
@@ -274,7 +274,7 @@ class Component extends DCLogic {
 
     const A = {
       connected: { title: 'Connected to Studio Mac', glyph: 'filled', tone: 'signal', glyphLabel: 'Connected',
-        sub: [txt('Tremonti w Mic', 'ink'), sep(), dotTxt('F', SCENE, 'muted'), sep(), dotTxt('2 unsaved', t.signal, 'muted')],
+        sub: [txt('Dirty Riffage', 'ink'), sep(), dotTxt('F', SCENE, 'muted'), sep(), dotTxt('2 unsaved', t.signal, 'muted')],
         rail: rail('ok', 'live', 'ok', 'live', 'ok'), btn: 'Disconnect', kind: 'danger' },
       lost: { title: 'Connection lost', glyph: 'warn', tone: 'caution', glyphLabel: 'Needs attention',
         sub: [txt('Studio Mac', 'ink'), sep(), txt('21:32', 'muted')],
@@ -330,7 +330,7 @@ class Component extends DCLogic {
       approval: { trail: 'Approve', dot: false, color: t.signal }
     };
     const EXP = {
-      connected: { title: 'Tremonti w Mic', sub: '2 unsaved edits', subDot: true, trail: 'F · RHYTHM', dot: true, color: t.ink },
+      connected: { title: 'Dirty Riffage', sub: '2 unsaved edits', subDot: true, trail: 'F · RHYTHM', dot: true, color: t.ink },
       lost: { title: 'Connection lost', sub: 'At 21:32', subDot: false, trail: 'Lost', dot: false, color: t.caution },
       approval: { title: 'Approval needed', sub: 'Approve on Studio Mac', subDot: false, trail: 'Waiting', dot: false, color: t.signal }
     };
