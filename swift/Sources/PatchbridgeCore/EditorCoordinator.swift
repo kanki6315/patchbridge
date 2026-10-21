@@ -30,7 +30,29 @@ public final class EditorCoordinator {
     public private(set) var outcome: String?
     public private(set) var status = "Disconnected"
     public var onChange: (() -> Void)?
-    public var busy: Bool { request != nil }
+    /// Each new tuner reading. Kept apart from `onChange`, which redraws whole screens, because it fires about ten times a second.
+    public var onTuner: (() -> Void)?
+    /// Tuner requests run between edits, never in their way, so they don't count as busy.
+    public var busy: Bool { request.map { !Self.tunerOperations.contains($0.operation) } ?? false }
+
+    // Tuner. The Mac gives the QC the strongest mode any device wants: open (shown, and mute
+    // applies), then live (streaming, never muted), then off.
+    public enum TunerMode: String { case off, live, open }
+    static let tunerOperations: Set<String> = ["tuner", "tuner_read", "set_tuner_mute"]
+    public private(set) var tunerMode: TunerMode = .off
+    public private(set) var tunerMuted: Bool?
+    public private(set) var tunerError: String?
+    public private(set) var tunerTrack = TunerTrack()
+    public var tunerAvailable: Bool { operations.contains("tuner") && operations.contains("tuner_read") }
+    public var tunerMuteAvailable: Bool { operations.contains("set_tuner_mute") }
+    public func tunerPitch() -> TunerPitch? { tunerTrack.pitch(at: now()) }
+    private var tunerSeq = 0
+    private var tunerSync = false
+    private var muteRequest: Bool?
+    private var nextTunerRead = TimeInterval.infinity
+    /// An edit or save that arrived while a tuner request was in flight; it goes first.
+    private var held: (operation: String, command: [String: Any])?
+    private let tunerInterval: TimeInterval = 0.08
     private let makeTransport: () -> EditorTransport
     private let now: () -> TimeInterval
     private let pollInterval: TimeInterval
@@ -116,6 +138,8 @@ public final class EditorCoordinator {
         nearbyMacs.removeAll(); approvalCode = nil; trusted = false; preferredMac = nil
         request = nil; staged = nil; connection = nil; session = nil; revision = 0
         operations.removeAll(); nextPoll = .infinity; discoveryDeadline = .infinity; editor.disconnect()
+        held = nil; tunerMode = .off; tunerMuted = nil; tunerError = nil; tunerTrack = TunerTrack()
+        tunerSeq = 0; tunerSync = false; muteRequest = nil; nextTunerRead = .infinity
         phase = .disconnected; status = "Disconnected"; old?.disconnect(); onChange?()
     }
     public func authorize() {
@@ -138,9 +162,47 @@ public final class EditorCoordinator {
         if phase == .connecting, nearbyMacs.isEmpty, now() >= discoveryDeadline { fail("No Mac replied. Open Patchbridge on your Mac and try again."); return }
         if let request, now() >= request.deadline { fail("Request timed out; its outcome is unknown. Reconnect before editing."); return }
         guard !isInBackground else { return }
-        if phase == .ready, !busy, now() >= nextPoll { refresh() }
+        if phase == .ready, request == nil, now() >= nextPoll { refresh() }
+        pump()
         if phase == .recovering, !busy, now() >= nextPoll { send("recover") }
         if phase == .loading, !busy, let step = deferred, now() >= step.at { deferred = nil; send(step.operation) }
+    }
+    /// Starts, changes or stops this phone's tuner. It keeps its mode across reconnects.
+    public func setTuner(_ mode: TunerMode) {
+        guard mode != tunerMode else { return }
+        tunerMode = mode; tunerError = nil; tunerSync = true
+        if mode == .off { tunerTrack = TunerTrack(); tunerMuted = nil; muteRequest = nil }
+        pump(); onChange?()
+    }
+    /// Mute only applies while the tuner is open; the QC confirms each change.
+    public func setTunerMuted(_ muted: Bool) {
+        guard tunerMode == .open, tunerMuteAvailable else { return }
+        tunerError = nil; muteRequest = muted; pump(); onChange?()
+    }
+    /// Sends what is waiting, in order: a held edit, a tuner change, then the next tuner read.
+    private func pump() {
+        guard phase == .ready, request == nil else { return }
+        if let held { self.held = nil; send(held.operation, command: held.command); return }
+        guard tunerAvailable, !isInBackground else { return }
+        if tunerSync { tunerSync = false; send("tuner", payload: ["mode": tunerMode.rawValue]); return }
+        if let mute = muteRequest { muteRequest = nil; send("set_tuner_mute", payload: ["value": mute]); return }
+        if tunerMode != .off, now() >= nextTunerRead { send("tuner_read", payload: ["after": tunerSeq]) }
+    }
+    private func applyTuner(_ object: Any?, operation: String) throws {
+        guard let tuner = object as? [String: Any], let mode = tuner["mode"] as? String, let seq = integer(tuner["seq"]) else { throw EditorFailure.invalidState }
+        tunerMuted = tuner["muted"] as? Bool
+        // Another device can stop or restart the stream, which starts its numbering over.
+        if seq < tunerSeq { tunerSeq = 0 }
+        let readings = (tuner["readings"] as? [[String: Any]]) ?? []
+        for reading in readings {
+            guard let number = integer(reading["seq"]), number > tunerSeq, let hz = reading["hz"] as? Double else { continue }
+            tunerTrack.add(hz: hz, at: now()); tunerSeq = number
+        }
+        tunerSeq = max(tunerSeq, seq)
+        // The helper's tuner is off although this phone wants it: a new USB session. Ask again.
+        if mode == "off", tunerMode != .off { tunerSync = true }
+        nextTunerRead = operation == "tuner_read" ? now() + tunerInterval : now()
+        if automaticPolling { DispatchQueue.main.asyncAfter(deadline: .now() + tunerInterval) { [weak self] in self?.tick() } }
     }
     public func edit(blockID: String, parameterID: String, value: ParameterValue) throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
@@ -162,9 +224,12 @@ public final class EditorCoordinator {
     private static func deviceName(_ response: [String: Any]) -> String? {
         (response["changed_by"] as? String).map { DeviceIdentity.name($0, fallback: "another device") }
     }
-    private func send(_ operation: String, command: [String: Any]? = nil) {
+    private func send(_ operation: String, command: [String: Any]? = nil, payload: [String: Any]? = nil) {
+        // An edit waits for a tuner request already in flight, then goes before anything else.
+        if let request, Self.tunerOperations.contains(request.operation), command != nil { held = (operation, command!); onChange?(); return }
         guard request == nil, let transport else { return }
         var message = command ?? ["version": 1, "id": UUID().uuidString, "operation": operation]
+        if let payload { message["payload"] = payload }
         if operation == "hello" {
             message["device_name"] = phoneName
             if let macID, let token = trustTokens[macID] { message["trust_token"] = token }
@@ -226,7 +291,11 @@ public final class EditorCoordinator {
                 if code == "busy" {
                     let retry = response["retry_after"] as? Double ?? 1
                     let delay = retry.isFinite ? min(8, max(0.5, retry)) : 1
-                    if ["set_parameter", "save"].contains(pending.operation) {
+                    if Self.tunerOperations.contains(pending.operation) {
+                        // Nothing reached the QC; ask again once the bridge is free.
+                        if pending.operation == "tuner" { tunerSync = true }
+                        nextTunerRead = now() + delay
+                    } else if ["set_parameter", "save"].contains(pending.operation) {
                         let text = pending.operation == "save" ? "Save not applied. The bridge was busy with another device; try again."
                             : "Not applied. The bridge was busy with another device; try again."
                         editor.reject(id: pending.id, message: text); error = text; ready()
@@ -239,7 +308,7 @@ public final class EditorCoordinator {
                 }
                 if code == "device_unavailable" {
                     let uncertain = ["set_parameter", "save"].contains(pending.operation)
-                    editor.disconnect(); staged = nil; session = nil; operations.removeAll()
+                    editor.disconnect(); staged = nil; session = nil; operations.removeAll(); held = nil
                     phase = .recovering; status = "QC unavailable · reconnecting"
                     if uncertain {
                         // The bridge marks an edit it never sent; only then is the outcome certain.
@@ -250,6 +319,13 @@ public final class EditorCoordinator {
                     let delay = response["retry_after"] as? Double ?? 1
                     nextPoll = now() + (delay.isFinite ? min(8, max(0.5, delay)) : 1)
                     onChange?(); return
+                }
+                // The tuner never ends the connection: say what went wrong and keep editing.
+                if Self.tunerOperations.contains(pending.operation), response["session_id"] as? String == session {
+                    if pending.operation == "tuner" { tunerMode = .off; tunerTrack = TunerTrack() }
+                    if pending.operation != "tuner_read" || code != "unsupported_operation" { tunerError = message }
+                    if code == "unsupported_operation" { tunerMode = .off }
+                    nextTunerRead = now() + 1; ready(keepingPoll: true); pump(); onChange?(); return
                 }
                 // Only explicit, session-preserving rejections are recoverable. Resync before more edits.
                 if ["set_parameter", "save"].contains(pending.operation),
@@ -306,6 +382,12 @@ public final class EditorCoordinator {
                     outcome = editor.value(blockID: block, parameterID: parameter) == proposed?.proposedValue ? "Confirmed" : "Adjusted by the QC"
                 }
                 revision = newRevision; error = nil; ready()
+            case "tuner", "tuner_read", "set_tuner_mute":
+                try applyTuner(result["tuner"], operation: pending.operation)
+                pump()
+                // Readings redraw only the tuner; everything else redraws the screen.
+                if pending.operation == "tuner_read" { onTuner?(); return }
+                onTuner?()
             default: throw EditorFailure.invalidState
             }
             onChange?()
@@ -323,6 +405,13 @@ public final class EditorCoordinator {
         try editor.load(snapshot: staged, catalog: cachedCatalog, session: session, connection: connection,
                         revision: revision, operations: operations)
         self.staged = nil; ready()
+        // A fresh session starts with the tuner off; ask for this phone's mode again.
+        tunerSeq = 0; tunerTrack = TunerTrack()
+        if tunerMode != .off { tunerSync = true; nextTunerRead = now() }
+        pump()
     }
-    private func ready() { phase = .ready; status = "Confirmed state loaded"; nextPoll = now() + pollInterval }
+    private func ready(keepingPoll: Bool = false) {
+        phase = .ready; status = "Confirmed state loaded"
+        if !keepingPoll { nextPoll = now() + pollInterval }
+    }
 }

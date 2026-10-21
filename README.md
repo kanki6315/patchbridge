@@ -37,6 +37,12 @@ phone-to-Mac-to-QC run on hardware hasn't happened yet; see
   [read-only mode](docs/READ_ONLY_QC.md), [diagnostics](docs/DIAGNOSTICS.md) and
   [preflight](docs/PREFLIGHT.md).
 
+- **Tuner.** A live tuner reads pitch from the QC over USB, about ten readings a
+  second. The full tuner (a sheet on iPhone, a popover on iPad and the Duo's inner
+  screen) can mute the output; the live tuner keeps pitch on screen while you play:
+  a line under the iPhone's status bar, a band in the iPad's top bar, and the
+  crease itself on the Duo. See [the tuner protocol](docs/PROCESS_PROTOCOL.md#tuner).
+
 Not yet supported from the phone: Save As, bypass, scene and preset selection, and
 scene-specific values. The real adapter doesn't expose them yet.
 

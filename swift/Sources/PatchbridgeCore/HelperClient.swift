@@ -59,7 +59,10 @@ public final class HelperClient {
         }
         let started = ProcessInfo.processInfo.systemUptime
         let operation = fields["operation"] as? String
-        diagnostics.record(.requestStarted, operation: operation, device: device)
+        // Tuner reads run about ten times a second; logging each would push everything else out
+        // of the bounded diagnostics. Their rejections and failures are still recorded.
+        let quiet = operation == "tuner_read"
+        if !quiet { diagnostics.record(.requestStarted, operation: operation, device: device) }
         let id = UUID().uuidString
         var message = fields
         message["id"] = id; message["version"] = 1; message["type"] = "request"
@@ -80,9 +83,12 @@ public final class HelperClient {
                         continue
                     }
                     guard reply["type"] as? String == "response", reply["id"] as? String == id else { throw BridgeFailure.protocolError }
-                    diagnostics.record(reply["status"] as? String == "confirmed" ? .requestConfirmed : .requestRejected,
-                        operation: operation, code: (reply["error"] as? [String: Any])?["code"] as? String,
-                        duration: ProcessInfo.processInfo.systemUptime - started, device: device)
+                    let confirmed = reply["status"] as? String == "confirmed"
+                    if !(quiet && confirmed) {
+                        diagnostics.record(confirmed ? .requestConfirmed : .requestRejected,
+                            operation: operation, code: (reply["error"] as? [String: Any])?["code"] as? String,
+                            duration: ProcessInfo.processInfo.systemUptime - started, device: device)
+                    }
                     return reply
                 }
                 let remaining = deadline.timeIntervalSinceNow

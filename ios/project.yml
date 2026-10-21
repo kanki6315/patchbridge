@@ -37,6 +37,7 @@ targets:
       - ../swift/Sources/PatchbridgeCore/DeviceIdentity.swift
       - ../swift/Sources/PatchbridgeCore/GenericEditor.swift
       - ../swift/Sources/PatchbridgeCore/EditorCoordinator.swift
+      - ../swift/Sources/PatchbridgeCore/Tuner.swift
       - ../swift/Sources/PatchbridgeCore/Diagnostics.swift
     settings:
       base:

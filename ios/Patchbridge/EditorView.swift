@@ -2,6 +2,10 @@ import SwiftUI
 
 struct EditorView: View {
     @ObservedObject var model: PhoneModel
+    /// Mode and mute only; the pitch itself redraws just the tuner's own views.
+    @ObservedObject private var tuner: TunerModel
+    init(model: PhoneModel) { self.model = model; _tuner = ObservedObject(wrappedValue: model.tuner) }
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("patchbridge.phoneName") private var phoneName = ""
     @AppStorage("appearance") private var appearance = "Stage"
     @AppStorage("matchSystem") private var matchSystem = false
@@ -29,17 +33,27 @@ struct EditorView: View {
     private let macURL = macAppURL
 
     var body: some View {
+        GeometryReader { outer in
+        let duoWindow = duoScreen(outer)
+        // The live tuner line sits above the navigation stack, so it stays put on every screen,
+        // the block editor included. Turning it on or off slides the screen in one motion.
+        let showLine = model.ready && model.snapshot != nil && tuner.live && !pad && duoWindow == nil
+        VStack(spacing: 0) {
+        if showLine {
+            TunerLine(readout: tuner.readout, theme: theme, topInset: outer.safeAreaInsets.top) { tuner.setOpen(true) }
+                .zIndex(1).transition(.move(edge: .top).combined(with: .opacity))
+        }
         NavigationStack {
         GeometryReader { geometry in
             let landscape = geometry.size.width > geometry.size.height && !dynamicTypeSize.isAccessibilitySize
             let duo = duoScreen(geometry)
             Group {
                 if model.ready, model.snapshot != nil, let duo {
-                    DuoWorkspaceView(model: model, theme: theme, screen: duo, size: geometry.size, insets: geometry.safeAreaInsets,
+                    DuoWorkspaceView(model: model, tuner: tuner, theme: theme, screen: duo, size: geometry.size, insets: geometry.safeAreaInsets,
                                      row: $duoRow, selected: $duoSelected, editing: $duoEditing,
                                      showConnection: { sheet = .connection }, openEditor: { selectedBlock = $0 })
                 } else if model.ready, model.snapshot != nil, pad {
-                    PadWorkspaceView(model: model, theme: theme)
+                    PadWorkspaceView(model: model, tuner: tuner, theme: theme)
                 } else if model.ready, let snapshot = model.snapshot {
                     if landscape {
                         landscapeOverview(snapshot)
@@ -90,6 +104,8 @@ struct EditorView: View {
                     model.loadDemo()
                     if ProcessInfo.processInfo.arguments.contains("--editor") && !pad { selectedBlock = "0:1" }
                     if ProcessInfo.processInfo.arguments.contains("--daylight") { appearance = "Daylight" }
+                    if arguments.contains("--live-tuner") { tuner.setLive(true) }
+                    if arguments.contains("--tuner") { tuner.setOpen(true) }
                 }
                 #endif
             }
@@ -108,6 +124,15 @@ struct EditorView: View {
                     Button(model.demo ? "Save demo preset" : "Save preset") { confirmCurrentSave() }
                 } message: { Text(model.demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
             }
+        }
+        }
+        }
+        .background(theme.ground.ignoresSafeArea())
+        .animation(reduceMotion ? nil : .timingCurve(0.22, 1, 0.36, 1, duration: 0.25), value: showLine)
+        // iPhone and the Duo's folded screens show the full tuner as a sheet; iPad and the Duo's
+        // inner screen use a popover from their tuner button instead.
+        .sheet(isPresented: Binding(get: { tuner.open && !pad && duoWindow != .inner }, set: { if !$0 { tuner.setOpen(false) } })) {
+            TunerSheet(tuner: tuner, theme: theme)
         }
         }
     }
@@ -133,6 +158,7 @@ struct EditorView: View {
                         .font(.subheadline.weight(.semibold)).padding(.horizontal, 16).frame(minHeight: 44)
                 }.phoneGlass(theme)
                 Spacer()
+                if tuner.available { TunerButton(tuner: tuner, theme: theme) { tuner.setOpen(true) } }
             }
             Text(snapshot.name).font(.largeTitle.bold())
             HStack(spacing: 10) {
@@ -233,6 +259,7 @@ struct EditorView: View {
                             .accessibilityLabel("Scene \(letter) \(model.sceneName(index))\(snapshot.scene == letter ? ", active" : "")")
                     }
                 }
+                if tuner.available { TunerButton(tuner: tuner, theme: theme) { tuner.setOpen(true) } }
                 if model.editor.supports("save") {
                     Button("Save") { requestSave() }.font(.headline).padding(.horizontal, 24).frame(height: 44).background(theme.signal, in: Capsule()).foregroundStyle(theme.signalInk).disabled(model.busy || !snapshot.dirty)
                 }

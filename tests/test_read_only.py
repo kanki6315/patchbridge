@@ -7,6 +7,7 @@ from patchbridge.adapter import BridgeError
 from patchbridge.captured import CapturedAdapter
 from patchbridge.helper import Coordinator, WRITES
 from patchbridge.read_only import ReadOnlyAdapter, READ_OPERATIONS
+from patchbridge import tuner as tuning
 
 
 class ReadOnlyTests(unittest.TestCase):
@@ -22,7 +23,8 @@ class ReadOnlyTests(unittest.TestCase):
             coordinator.adapter.execute('save', {})
         underlying.execute.assert_not_called()
         capabilities = coordinator.handle({'version': 1, 'type': 'request', 'id': 'c', 'operation': 'capabilities'})[0]
-        self.assertEqual(set(capabilities['result']['operations']), READ_OPERATIONS)
+        # An adapter without a tuner doesn't advertise one.
+        self.assertEqual(set(capabilities['result']['operations']), READ_OPERATIONS - tuning.READ_OPERATIONS)
         self.assertEqual(capabilities['result']['access_mode'], 'read_only')
 
     def test_fixture_changes_removal_and_reconnect(self):

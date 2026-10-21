@@ -2,14 +2,27 @@
 
 from copy import deepcopy
 import math
+import time
 from typing import Any
 
 from .adapter import BridgeError
+from . import tuner as tuning
+
+# Open strings the simulated tuner cycles through: (Hz, cents off at the pluck).
+STRINGS = [(82.41, 22), (110.0, -16), (146.83, 9), (196.0, -26), (246.94, 12), (329.63, -8)]
+RING, GAP, STEP = 4.5, 1.5, 0.1
 
 
 class SimulatedAdapter:
-    def __init__(self):
+    operations = frozenset({"connect", "disconnect", "identify", "capabilities", "snapshot", "catalog",
+                            "subscribe", "set_parameter", "set_bypass", "select_scene", "select_preset",
+                            "save", "save_as"}) | tuning.OPERATIONS
+
+    def __init__(self, clock=time.monotonic):
         self.connected = False
+        self.clock = clock
+        self.tuning = tuning.TunerBuffer(clock)
+        self.generated = 0.0
         self.saved = {str(i): self._preset(str(i)) for i in range(1, 5)}
         self.state = deepcopy(self.saved["1"])
 
@@ -42,6 +55,47 @@ class SimulatedAdapter:
 
     def disconnect(self) -> None:
         self.connected = False
+        self.tuning.reset()
+
+    def tuner(self, mode: Any) -> dict[str, Any]:
+        self._require_connection()
+        tuning.validate_mode(mode)
+        if mode == "off":
+            self.tuning.reset()
+        else:
+            if self.tuning.state()["mode"] == "off":
+                self.tuning.reset(mode)
+                self.tuning.report(muted=False, input_port=1)
+                self.generated = self.clock()
+            self.tuning.set_mode(mode)
+        return self.tuning.state()
+
+    def tuner_read(self, after: Any) -> dict[str, Any]:
+        self._require_connection()
+        tuning.validate_after(after)
+        if self.tuning.state()["mode"] != "off":
+            # Readings arrive about ten times a second while a string rings, and none while quiet.
+            now = self.clock()
+            self.generated = max(self.generated, now - 1)
+            while self.generated + STEP <= now:
+                self.generated += STEP
+                t = (self.generated - self.tuning.started) % ((RING + GAP) * len(STRINGS))
+                hz, start = STRINGS[int(t // (RING + GAP))]
+                ringing = t % (RING + GAP)
+                if ringing < RING:
+                    settle = 1 - math.exp(-ringing / 1.0)
+                    cents = start * (1 - settle) + 1.2 * math.sin(ringing * 3.5) * (1 - 0.7 * settle)
+                    self.tuning.add(hz * 2 ** (cents / 1200))
+        return self.tuning.state(after)
+
+    def set_tuner_mute(self, value: Any) -> dict[str, Any]:
+        self._require_connection()
+        if type(value) is not bool:
+            raise BridgeError("invalid_value", "Mute must be a boolean.")
+        if self.tuning.state()["mode"] != "open":
+            raise BridgeError("tuner_closed", "Open the tuner before changing mute.")
+        self.tuning.report(muted=value)
+        return self.tuning.state()
 
     def snapshot(self) -> dict[str, Any]:
         self._require_connection()

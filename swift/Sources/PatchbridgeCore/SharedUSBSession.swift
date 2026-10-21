@@ -90,6 +90,11 @@ public final class SharedUSBSession {
     /// device learn that a change it didn't make came from another device, not the QC.
     var lastWrite: (revision: Int, device: ObjectIdentifier, name: String)?
     private var joined = Set<ObjectIdentifier>()
+    /// The QC has one tuner. Each device asks for a mode and the QC gets the strongest anyone
+    /// wants (open, then live, then off), so one device closing its tuner never stops another's.
+    private var tunerModes = [ObjectIdentifier: String]()
+    private static let tunerRank = ["off": 0, "live": 1, "open": 2]
+    var tunerMode: String { tunerModes.values.max { Self.tunerRank[$0, default: 0] < Self.tunerRank[$1, default: 0] } ?? "off" }
     private struct Admitted { weak var device: DeviceSession? }
     private var admitted: [Admitted] = []
     /// Diagnostics numbers devices in admission order for this run; never reused.
@@ -150,7 +155,10 @@ public final class SharedUSBSession {
     }
     private func adopt(_ response: [String: Any]) {
         let session = response["session_id"] as? String
-        if session != helperSession { helperSession = session; lastWrite = nil; if session != nil { generation += 1 } }
+        if session != helperSession {
+            helperSession = session; lastWrite = nil; tunerModes.removeAll() // A new helper session starts with the tuner off.
+            if session != nil { generation += 1 }
+        }
         if let value = response["revision"], !(value is NSNull) { revision = value }
     }
 
@@ -176,10 +184,31 @@ public final class SharedUSBSession {
         joined.insert(ObjectIdentifier(device)); device.adoptedGeneration = generation
         return result
     }
+    /// Sends the QC the strongest mode any device wants, after recording this device's request.
+    /// A refused request leaves the device's previous mode in place.
+    func tuner(_ device: DeviceSession, _ message: [String: Any]) throws -> (response: [String: Any], recovering: Bool) {
+        let id = ObjectIdentifier(device)
+        guard var payload = message["payload"] as? [String: Any], let mode = payload["mode"] as? String,
+              Self.tunerRank[mode] != nil else { return try forward(message, for: device) }
+        let previous = tunerModes[id]
+        tunerModes[id] = mode == "off" ? nil : mode
+        payload["mode"] = tunerMode
+        var forwarded = message; forwarded["payload"] = payload
+        let result = try forward(forwarded, for: device)
+        if result.response["status"] as? String != "confirmed" { tunerModes[id] = previous }
+        return result
+    }
+    /// A departing device's tuner request ends; the others keep theirs.
+    private func releaseTuner(_ id: ObjectIdentifier) {
+        guard tunerModes.removeValue(forKey: id) != nil, !joined.isEmpty, let session = helperSession else { return }
+        _ = try? helper.request(["operation": "tuner", "session_id": session, "payload": ["mode": tunerMode]])
+    }
+
     /// The last device to leave closes the helper session; earlier ones leave it open.
     /// A device's own `disconnect` is forwarded only when it is the last one.
     func leave(_ device: DeviceSession, forwarding message: [String: Any]? = nil) throws -> [String: Any] {
         joined.remove(ObjectIdentifier(device)); device.adoptedGeneration = nil
+        releaseTuner(ObjectIdentifier(device))
         var response: [String: Any] = ["version": 1, "status": "confirmed", "result": [String: Any](),
                                        "session_id": helperSession ?? NSNull(), "revision": revision]
         guard joined.isEmpty else { return response }
@@ -200,14 +229,16 @@ public final class SharedUSBSession {
     /// Called from a device's deinit, so a released device never holds the helper session open.
     func forget(_ id: ObjectIdentifier) {
         admitted.removeAll { $0.device == nil }
-        guard joined.remove(id) != nil, joined.isEmpty, let session = helperSession else { return }
+        let wasJoined = joined.remove(id) != nil
+        releaseTuner(id)
+        guard wasJoined, joined.isEmpty, let session = helperSession else { return }
         _ = try? helper.request(["operation": "disconnect", "session_id": session])
         helperSession = nil; recovering = false; retryDelay = 1; retryAt = 0
     }
     /// The helper's transport failed: no approval survives. Trust belongs to the devices, not
     /// the helper, so trusted devices reconnect without a code once the bridge is back.
     private func failAll() {
-        let all = devices; joined.removeAll(); helperSession = nil
+        let all = devices; joined.removeAll(); helperSession = nil; tunerModes.removeAll()
         if !all.isEmpty { helper.diagnostics.record(.bridgeRevoked) }
         recovering = false; retryDelay = 1; retryAt = 0
         for device in all { device.endConnection() }
