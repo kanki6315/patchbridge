@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PoC · Preset browser component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+@keyframes pbspin{to{transform:rotate(360deg)}}
+@keyframes pbsweep{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
+.pb-spin{animation:pbspin 0.9s linear infinite;transform-origin:50% 50%}
+.pb-sweep{animation:pbsweep 1.6s cubic-bezier(0.22,1,0.36,1) infinite}
+@media (prefers-reduced-motion: reduce){.pb-spin{animation:none}.pb-sweep{animation:none;width:100% !important;opacity:0.45}}
+</style>
+</helmet>
+<div style="width: 402px; height: 874px; position: relative; overflow: hidden; box-sizing: border-box; background: {{t.ground}}; color: {{t.ink}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <!-- The overview underneath: the preset name in the header is the way in. -->
+  <sc-if value="{{showOverview}}" hint-placeholder-val="{{true}}">
+    <dc-import name="Overview" selected-row="1" overlay="none" theme="stage" preset-menu="{{true}}" preset-menu-open="{{menuOpen}}" hint-size="402px,874px"></dc-import>
+  </sc-if>
+
+  <!-- After a switch the overview reloads in place. The name and slot are the QC's new position; nothing below is drawn until the QC reports it. -->
+  <sc-if value="{{reloading}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 62px 16px 0; display: flex; flex-direction: column; gap: 14px;">
+      <header style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <button type="button" aria-label="Connection details: Studio Mac, QC connected" style="height: 44px; padding: 0 14px; display: flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; font: inherit; font-size: 15px; cursor: pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+            Studio Mac
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: 0.7;"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;"><button type="button" aria-haspopup="dialog" aria-label="Blues Lead, My Presets 15, loading. Browse presets" style="margin: -4px -8px; padding: 4px 8px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer;">Blues Lead<span aria-hidden="true" style="width: 26px; height: 26px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: {{t.fill}};"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></span></button></h1>
+          <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: {{t.muted}};">
+            My Presets · 15
+            <span role="status" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;"><svg class="pb-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>Loading from the QC…</span>
+          </span>
+        </div>
+        <div aria-hidden="true" style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="width: 128px; height: 18px; border-radius: 999px; background: {{t.skeleton}};"></span>
+          <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px;">
+            <sc-for list="{{eight}}" as="x" hint-placeholder-count="8">
+              <span style="height: 40px; border-radius: 12px; background: {{t.skeleton}};"></span>
+            </sc-for>
+          </div>
+        </div>
+      </header>
+      <section aria-label="Signal chain, loading" style="padding: 8px; display: flex; flex-direction: column; gap: 2px; border-radius: 20px; background: {{t.surface}}; box-shadow: {{t.panelEdge}};">
+        <sc-for list="{{four}}" as="row" hint-placeholder-count="4">
+          <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; padding: 4px;">
+            <sc-for list="{{eight}}" as="x" hint-placeholder-count="8">
+              <span style="height: 38px; border-radius: 9px; background: {{t.skeleton}};"></span>
+            </sc-for>
+          </div>
+        </sc-for>
+      </section>
+      <div aria-hidden="true" style="display: flex; flex-direction: column;">
+        <span style="width: 64px; height: 18px; margin: 0 2px 10px; border-radius: 999px; background: {{t.skeleton}};"></span>
+        <sc-for list="{{laneSk}}" as="s" hint-placeholder-count="5">
+          <span style="{{s.rowStyle}}">
+            <span style="width: 42px; height: 42px; flex: none; border-radius: 12px; background: {{t.skeleton}};"></span>
+            <span style="flex: 1; display: flex; flex-direction: column; gap: 7px;">
+              <span style="{{s.titleStyle}}"></span>
+              <span style="{{s.subStyle}}"></span>
+            </span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+    <div style="position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 12px 16px 34px; display: flex; background: {{t.bar}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); border-top: 1px solid {{t.divider}};">
+      <button type="button" aria-disabled="true" style="flex: 1; height: 54px; border: 0; border-radius: 999px; background: {{t.fill}}; color: {{t.muted}}; font: inherit; font-size: 17px; font-weight: 600; cursor: default;">Save to My Presets 15</button>
+    </div>
+  </sc-if>
+
+  <!-- The browser: a large sheet over the overview, opened scrolled to the loaded slot. -->
+  <sc-if value="{{sheetOpen}}" hint-placeholder-val="{{true}}">
+    <div aria-hidden="true" style="position: absolute; z-index: 30; inset: 0; background: {{t.scrim}};"></div>
+    <div role="dialog" aria-label="Presets" style="position: absolute; z-index: 40; left: 0; right: 0; top: 74px; bottom: 0; box-sizing: border-box; padding-top: 10px; display: flex; flex-direction: column; border-radius: 34px 34px 0 0; background: {{t.detailsSheet}}; backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6); box-shadow: {{t.sheetLift}};">
+      <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; flex: none; border-radius: 999px; background: {{t.grabber}};"></span>
+      <div style="margin-top: 8px; padding: 0 16px; display: flex; align-items: center; gap: 8px;">
+        <h2 style="margin: 0; flex: 1; font-size: 22px; font-weight: 700;">Presets</h2>
+        <sc-if value="{{st.refresh}}" hint-placeholder-val="{{true}}">
+          <button type="button" aria-disabled="{{st.refreshBusy}}" style="{{st.refreshStyle}}">
+            <sc-if value="{{st.refreshSpin}}" hint-placeholder-val="{{false}}"><svg class="pb-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>
+            <sc-if value="{{st.refreshIcon}}" hint-placeholder-val="{{true}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"></path><path d="M20 4v5h-5"></path></svg></sc-if>
+            {{st.refreshLabel}}
+          </button>
+        </sc-if>
+        <button type="button" style="height: 44px; padding: 0 16px; flex: none; border: 0; border-radius: 999px; background: {{t.fill}}; color: inherit; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Done</button>
+      </div>
+
+      <sc-if value="{{st.firstRead}}" hint-placeholder-val="{{false}}">
+        <div role="status" style="margin-top: 10px; padding: 0 16px; display: flex; flex-direction: column; gap: 4px;">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;"><svg class="pb-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>Reading the preset list from the QC</span>
+          <span style="font-size: 13px; color: {{t.muted}};">About 12 seconds. Closing this won’t stop it.</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{st.line}}" hint-placeholder-val="{{true}}">
+        <span role="status" style="margin-top: 2px; padding: 0 16px; display: flex; align-items: center; gap: 7px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">
+          <sc-if value="{{st.lineSpin}}" hint-placeholder-val="{{false}}"><svg class="pb-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>
+          {{st.text}}
+        </span>
+      </sc-if>
+      <sc-if value="{{st.bar}}" hint-placeholder-val="{{false}}">
+        <span aria-hidden="true" style="height: 3px; flex: none; margin: 10px 16px 0; border-radius: 999px; background: {{t.fill}}; overflow: hidden;"><span class="pb-sweep" style="display: block; width: 30%; height: 100%; border-radius: 999px; background: {{t.signal}};"></span></span>
+      </sc-if>
+
+      <div style="position: relative; flex: 1; min-height: 0; margin-top: 8px; overflow: hidden;">
+        <div style="position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: 40px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: {{t.stickyBg}}; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+          <span style="font-size: 15px; font-weight: 600;">My Presets</span>
+          <span style="font-size: 13px; color: {{t.muted}};">{{countText}}</span>
+        </div>
+        <div style="box-sizing: border-box; padding: 40px 16px 34px; display: flex; flex-direction: column;">
+          <ol aria-label="My Presets" style="list-style: none; margin: {{listShift}} 0 0; padding: 0; border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; overflow: hidden;">
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+              <li style="{{r.liStyle}}">
+                <sc-if value="{{r.isButton}}" hint-placeholder-val="{{true}}">
+                  <button type="button" aria-label="{{r.aria}}" style="{{r.rowStyle}}">
+                    <span style="{{r.numStyle}}">{{r.num}}</span>
+                    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                      <span style="{{r.nameStyle}}">{{r.name}}</span>
+                      <sc-if value="{{r.hasCaption}}" hint-placeholder-val="{{false}}">
+                        <span style="{{r.capStyle}}"><sc-if value="{{r.capSpin}}" hint-placeholder-val="{{false}}"><svg class="pb-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>{{r.caption}}</span>
+                      </sc-if>
+                    </span>
+                  </button>
+                </sc-if>
+                <sc-if value="{{r.isStatic}}" hint-placeholder-val="{{false}}">
+                  <div aria-label="{{r.aria}}" aria-current="{{r.current}}" style="{{r.rowStyle}}">
+                    <span style="{{r.numStyle}}">{{r.num}}</span>
+                    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                      <span style="{{r.nameStyle}}">{{r.name}}</span>
+                      <sc-if value="{{r.hasCaption}}" hint-placeholder-val="{{false}}">
+                        <span style="{{r.capStyle}}"><sc-if value="{{r.capDot}}" hint-placeholder-val="{{false}}"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span></sc-if><sc-if value="{{r.capSpin}}" hint-placeholder-val="{{false}}"><svg class="pb-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>{{r.caption}}</span>
+                      </sc-if>
+                    </span>
+                    <sc-if value="{{r.trailCheck}}" hint-placeholder-val="{{false}}">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M20 6L9 17l-5-5"></path></svg>
+                    </sc-if>
+                  </div>
+                </sc-if>
+              </li>
+            </sc-for>
+            <sc-for list="{{skeleton}}" as="s" hint-placeholder-count="0">
+              <li aria-hidden="true" style="{{s.liStyle}}">
+                <span style="width: 30px; display: flex; justify-content: flex-end;"><span style="width: 18px; height: 12px; border-radius: 999px; background: {{t.skeleton}};"></span></span>
+                <span style="{{s.barStyle}}"></span>
+              </li>
+            </sc-for>
+          </ol>
+
+          <!-- Factory, Downloads and plugin presets come later. Their headers hold the place and say so. -->
+          <div role="group" aria-label="Other preset sources" style="margin-top: 18px; display: flex; flex-direction: column;">
+            <sc-for list="{{sources}}" as="s" hint-placeholder-count="3">
+              <button type="button" disabled aria-label="{{s.aria}}" style="height: 44px; box-sizing: border-box; padding: 0 4px; display: flex; align-items: center; justify-content: space-between; border: 0; border-top: 1px solid {{t.divider}}; background: transparent; color: {{t.muted}}; font: inherit; text-align: left; cursor: default;">
+                <span style="font-size: 15px; font-weight: 600;">{{s.name}}</span>
+                <span style="font-size: 13px;">Not yet</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Unsaved edits: a floating sheet that names what would be lost before anything is sent. -->
+  <sc-if value="{{confirm}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; z-index: 50; inset: 0; background: {{t.scrim}};"></div>
+    <div role="alertdialog" aria-label="Switch to Blues Lead?" style="position: absolute; z-index: 60; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 10px 20px 26px; display: flex; flex-direction: column; gap: 16px; border-radius: 34px; background: {{t.sheet}}; backdrop-filter: blur(30px) saturate(1.7); -webkit-backdrop-filter: blur(30px) saturate(1.7); box-shadow: {{t.sheetLift}};">
+      <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: {{t.grabber}};"></span>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px;">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Switch to Blues Lead?</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.4; text-wrap: pretty; color: {{t.muted}};">Dirty Riffage has 3 edits that aren’t saved on the QC. Switching anyway loses them.</p>
+      </div>
+      <ul aria-label="Edits that would be lost" style="list-style: none; margin: 0; padding: 0; border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; overflow: hidden;">
+        <sc-for list="{{edits}}" as="e" hint-placeholder-count="3">
+          <li style="{{e.liStyle}}">
+            <span aria-hidden="true" style="{{e.swatchStyle}}">{{e.code}}</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600;">{{e.block}}<sc-if value="{{e.qc}}" hint-placeholder-val="{{false}}"><span title="Changed on the QC" style="height: 18px; padding: 0 6px; display: inline-flex; align-items: center; border-radius: 6px; background: oklch(1 0 0 / 0.14); font-size: 10px; font-weight: 700; letter-spacing: 0.02em;">QC</span></sc-if></span>
+              <span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{e.change}}</span>
+            </span>
+          </li>
+        </sc-for>
+      </ul>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" aria-label="Save to My Presets 16, then switch to Blues Lead" style="height: 54px; border: 0; border-radius: 999px; background: {{t.signal}}; color: {{t.signalInk}}; font: inherit; font-size: 17px; font-weight: 600; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4); cursor: pointer;">Save and switch</button>
+        <button type="button" style="height: 54px; border: 0; border-radius: 999px; background: {{t.fill}}; color: {{t.danger}}; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;">Switch anyway</button>
+        <button type="button" style="height: 54px; border: 0; border-radius: 999px; background: {{t.fill}}; color: inherit; font: inherit; font-size: 17px; cursor: pointer;">Cancel</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["entry","loading","cached","refreshing","confirm","switching","reloading"],"default":"cached","section":"Screen"},"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const state = this.props.state ?? 'cached';
+    const t = { ground: 'oklch(0.16 0.008 110)', surface: 'oklch(0.2 0.009 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', hairline: 'oklch(0.3 0.01 110)', divider: 'oklch(1 0 0 / 0.07)',
+      glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)', bar: 'oklch(0.2 0.009 110 / 0.62)',
+      fill: 'oklch(1 0 0 / 0.1)', band: 'oklch(1 0 0 / 0.07)', skeleton: 'oklch(1 0 0 / 0.07)', sheet: 'oklch(0.24 0.01 110 / 0.86)', detailsSheet: 'oklch(0.19 0.008 110 / 0.94)', stickyBg: 'oklch(0.19 0.008 110 / 0.9)', group: 'oklch(0.24 0.01 110)',
+      sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.16), 0 -10px 30px oklch(0 0 0 / 0.4)', grabber: 'oklch(1 0 0 / 0.3)', scrim: 'oklch(0 0 0 / 0.45)',
+      signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', danger: 'oklch(0.8 0.15 30)' };
+
+    // My Presets is a fixed 256-slot table; empty slots come back with a blank name. Names are the player's own.
+    const PRESETS = { 1: 'Clean Machine', 2: 'Sparkle Verb', 3: 'Edge of Breakup', 4: 'Plexi Crunch', 6: 'Rhythm Hi-Gain', 7: 'Lead Boost', 9: 'Ambient Swells', 10: 'Octave Fuzz',
+      11: 'Acoustic Sim', 12: 'Worship Clean', 14: 'Drop D Chug', 15: 'Blues Lead', 16: 'Dirty Riffage', 17: 'Solo Delay', 18: 'Funk Wah' };
+    const LAST = 18, SLOTS = 256, LOADED = 16, TARGET = 15;
+    const used = Object.keys(PRESETS).length;
+
+    const listed = ['cached', 'refreshing', 'confirm', 'switching'].includes(state);
+    const switching = state === 'switching';
+    const rowH = 50, tallH = 60;
+    const rowBase = { width: '100%', boxSizing: 'border-box', padding: '0 16px 0 10px', display: 'flex', alignItems: 'center', gap: '12px', border: '0', background: 'transparent', color: 'inherit', font: 'inherit', textAlign: 'left' };
+    const numStyle = (on) => ({ width: '30px', flex: 'none', textAlign: 'right', fontSize: '15px', fontWeight: 600, color: on ? t.ink : t.muted });
+    const nameStyle = { fontSize: '17px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' };
+    const capStyle = (color) => ({ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color, whiteSpace: 'nowrap' });
+    const li = (first) => ({ borderTop: first ? '0' : '1px solid ' + t.divider });
+
+    const row = (n, first) => {
+      const name = PRESETS[n];
+      const base = { num: String(n), name: name || 'Empty', liStyle: li(first), hasCaption: false, caption: '', capSpin: false, capDot: false, trailCheck: false, current: 'false', isButton: false, isStatic: true, numStyle: numStyle(false), capStyle: {} };
+      if (!name) return { ...base, aria: 'Slot ' + n + ', empty', nameStyle: { fontSize: '15px', color: t.muted }, rowStyle: { ...rowBase, minHeight: rowH + 'px' } };
+      if (n === LOADED) {
+        // The QC still holds this preset until it confirms the switch, so it stays marked while the other one loads.
+        const caption = switching ? 'Loaded · saved to My Presets 16' : 'Loaded · unsaved edits';
+        return { ...base, hasCaption: true, caption, capDot: !switching, trailCheck: true, current: 'true', numStyle: numStyle(true), nameStyle,
+          capStyle: capStyle(switching ? t.muted : t.signal), aria: 'Slot ' + n + ', ' + name + ', loaded on the QC' + (switching ? ', saved' : ', unsaved edits'),
+          rowStyle: { ...rowBase, minHeight: tallH + 'px', background: t.band } };
+      }
+      if (switching && n === TARGET) {
+        return { ...base, isButton: true, isStatic: false, hasCaption: true, caption: 'Loading on the QC…', capSpin: true, capStyle: capStyle(t.signal), nameStyle,
+          aria: 'Slot ' + n + ', ' + name + ', loading on the QC',
+          rowStyle: { ...rowBase, minHeight: tallH + 'px', borderRadius: '12px', outline: '1.5px dashed ' + t.signal, outlineOffset: '-5px', cursor: 'default' } };
+      }
+      return { ...base, isButton: true, isStatic: false, nameStyle, aria: 'Slot ' + n + ', ' + name + '. Load on the QC', rowStyle: { ...rowBase, minHeight: rowH + 'px', cursor: 'pointer' } };
+    };
+    // Opened scrolled to the loaded slot: rows from 12.
+    const FROM = 12;
+    const rows = [];
+    if (listed) {
+      for (let n = FROM; n <= LAST; n++) rows.push(row(n, n === FROM));
+      rows.push({ num: '', name: 'Slots ' + (LAST + 1) + '–' + SLOTS + ' are empty', aria: 'Slots ' + (LAST + 1) + ' to ' + SLOTS + ', empty', liStyle: li(false), isButton: false, isStatic: true, hasCaption: false, caption: '', capSpin: false, capDot: false, trailCheck: false, current: 'false',
+        numStyle: numStyle(false), nameStyle: { fontSize: '15px', color: t.muted }, capStyle: {}, rowStyle: { ...rowBase, minHeight: rowH + 'px' } });
+    } else if (state === 'loading') {
+      // The loaded slot is known before the list arrives; everything else waits for the QC.
+      rows.push(row(LOADED, true));
+    }
+    const skeleton = state === 'loading'
+      ? [132, 176, 104, 150, 120, 164, 96, 140].map((w, i) => ({ liStyle: { height: rowH + 'px', boxSizing: 'border-box', padding: '0 16px 0 10px', display: 'flex', alignItems: 'center', gap: '12px', borderTop: '1px solid ' + t.divider, opacity: String(1 - i * 0.11) },
+        barStyle: { width: w + 'px', height: '14px', borderRadius: '999px', background: t.skeleton } }))
+      : [];
+
+    const refreshBtn = (busy) => ({ height: '44px', flex: 'none', boxSizing: 'border-box', padding: '0 14px', display: 'flex', alignItems: 'center', gap: '7px', border: '0', borderRadius: '999px',
+      background: t.glass, backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)', boxShadow: t.glassEdge, color: busy ? t.muted : t.ink, font: 'inherit', fontSize: '15px', fontWeight: 600, cursor: busy ? 'default' : 'pointer' });
+    const st = {
+      firstRead: state === 'loading', line: listed, bar: state === 'loading' || state === 'refreshing',
+      text: switching ? 'Switching to Blues Lead…' : 'Listed at 9:41 PM', lineSpin: switching,
+      refresh: listed && !switching, refreshBusy: state === 'refreshing' ? 'true' : 'false',
+      refreshSpin: state === 'refreshing', refreshIcon: state !== 'refreshing', refreshLabel: state === 'refreshing' ? 'Refreshing' : 'Refresh',
+      refreshStyle: refreshBtn(state === 'refreshing')
+    };
+
+    const CAT = {
+      cmp: { code: 'CMP', bg: 'oklch(0.68 0.12 160)', ink: 'oklch(0.17 0.02 160)' },
+      pit: { code: 'PIT', bg: 'oklch(0.55 0.16 290)', ink: '#ffffff' },
+      mod: { code: 'MOD', bg: 'oklch(0.58 0.18 330)', ink: '#ffffff' }
+    };
+    const sw = { width: '36px', height: '36px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '9px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.02em', boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' };
+    const edits = [
+      ['cmp', 'Opto Comp (M)', 'Threshold −30.0 dB · saved −34.2 dB', false],
+      ['pit', 'Transpose', 'Semitones −2.0 · saved −1.0', false],
+      ['mod', 'Dual Chorus', 'Mix 60.0 % · saved 73.2 %', true]
+    ].map(([cat, block, change, qc], i) => ({ code: CAT[cat].code, block, change, qc,
+      liStyle: { minHeight: '58px', boxSizing: 'border-box', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '12px', borderTop: i ? '1px solid ' + t.divider : '0' },
+      swatchStyle: { ...sw, background: CAT[cat].bg, color: CAT[cat].ink } }));
+
+    const laneSk = [150, 118, 170, 96, 136].map((w, i) => ({
+      rowStyle: { height: '60px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid ' + t.divider, opacity: String(1 - i * 0.16) },
+      titleStyle: { width: w + 'px', height: '14px', borderRadius: '999px', background: t.skeleton },
+      subStyle: { width: Math.round(w * 1.4) + 'px', height: '10px', borderRadius: '999px', background: t.skeleton } }));
+
+    return {
+      t, st, rows, skeleton, edits, laneSk,
+      showOverview: state !== 'reloading', reloading: state === 'reloading',
+      menuOpen: state !== 'entry' && state !== 'reloading',
+      sheetOpen: !['entry', 'reloading'].includes(state), confirm: state === 'confirm',
+      listShift: '0',
+      countText: state === 'loading' ? 'Reading…' : used + ' of ' + SLOTS + ' slots',
+      sources: ['Factory Presets', 'Downloads', 'Plugin presets'].map((name) => ({ name, aria: name + ', not available yet' })),
+      eight: [1, 2, 3, 4, 5, 6, 7, 8], four: [1, 2, 3, 4]
+    };
+  }
+}
+</script>
+</body>
+</html>
