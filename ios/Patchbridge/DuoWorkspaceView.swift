@@ -266,31 +266,29 @@ struct DuoWorkspaceView: View {
         .padding(.horizontal, 16).padding(.vertical, 8)
         .animation(motion, value: editing)
     }
-    /// Portrait: the whole grid at touch size with codes, scenes as a 4 × 2 set and the save bar.
+    /// Portrait: the whole grid at touch size with codes, scenes as a 4 × 2 set and the save bar,
+    /// which floats over the content so the scenes scroll up past it.
     /// The block menu rises as a medium-height panel with no scrim, leaving the top rows visible.
     private func outerPortrait(_ snapshot: PresetSnapshot) -> some View {
         let menuBlock = editing ? snapshot.blocks.first(where: { $0.id == selected }) : nil
-        return VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack(alignment: .top, spacing: 8) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(snapshot.name).font(.largeTitle.bold()).lineLimit(1).minimumScaleFactor(0.7)
-                            HStack(spacing: 10) {
-                                Text(model.location(snapshot)).foregroundStyle(theme.muted)
-                                if snapshot.dirty { unsaved }
-                            }.font(.subheadline.weight(.medium))
-                        }.layoutPriority(1)
-                        Spacer(minLength: 8)
-                        tunerButton
-                        statusButton(compact: false)
-                    }
-                    grid(snapshot, style: .code, band: false, cellHeight: 66)
-                    sceneGrid(snapshot)
-                }.padding(16)
-            }
-            saveBar(snapshot)
-        }
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(snapshot.name).font(.largeTitle.bold()).lineLimit(1).minimumScaleFactor(0.7)
+                        HStack(spacing: 10) {
+                            Text(model.location(snapshot)).foregroundStyle(theme.muted)
+                            if snapshot.dirty { unsaved }
+                        }.font(.subheadline.weight(.medium))
+                    }.layoutPriority(1)
+                    Spacer(minLength: 8)
+                    tunerButton
+                    statusButton(compact: false)
+                }
+                grid(snapshot, style: .code, band: false, cellHeight: 66)
+                sceneGrid(snapshot)
+            }.padding(16)
+        }.safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot) }
         .overlay(alignment: .bottom) {
             if let menuBlock {
                 menu(menuBlock, sheet: true)
