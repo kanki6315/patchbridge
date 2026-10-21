@@ -17,14 +17,19 @@
   <div style="{{topStyle}}">
     <header style="display: flex; align-items: center; gap: 12px;">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
-        <h1 style="{{titleStyle}}">Dirty Riffage</h1>
+        <sc-if value="{{pm.on}}" hint-placeholder-val="{{false}}">
+          <h1 style="{{titleStyle}}"><button type="button" aria-haspopup="dialog" aria-expanded="{{pm.expanded}}" aria-label="Dirty Riffage, My Presets 16. Browse presets" style="{{pm.btnStyle}}"><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dirty Riffage</span><span aria-hidden="true" style="{{pm.chevStyle}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></span></button></h1>
+        </sc-if>
+        <sc-if value="{{pm.off}}" hint-placeholder-val="{{true}}">
+          <h1 style="{{titleStyle}}">Dirty Riffage</h1>
+        </sc-if>
         <span style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">
           My Presets · 16
-          <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: {{t.signal}};"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>Unsaved</span>
+          <span style="{{savedStyle}}"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>{{savedText}}</span>
         </span>
       </div>
-      <div role="img" aria-label="{{sceneAria}}" aria-hidden="{{flatAria}}" style="{{stripWrapStyle}}">
-        <span style="font-size: 13px; font-weight: 600; white-space: nowrap;">Scene F · RHYTHM</span>
+      <div role="img" aria-label="{{sceneAria}}" aria-hidden="{{stripHidden}}" style="{{stripWrapStyle}}">
+        <span style="font-size: 13px; font-weight: 600; white-space: nowrap;">{{activeTitle}}</span>
         <div aria-hidden="true" style="display: flex; gap: 2px;">
           <sc-for list="{{strip}}" as="s" hint-placeholder-count="8">
             <span style="{{s.cellStyle}}">
@@ -59,18 +64,6 @@
     </section>
   </sc-if>
 
-    <div role="img" aria-label="{{sceneAria}}" aria-hidden="{{halfAria}}" style="{{chipsStyle}}">
-      <sc-for list="{{chips}}" as="s" hint-placeholder-count="8">
-        <span style="{{s.cellStyle}}">
-          <span style="display: flex; align-items: center; gap: 6px;">
-            <span style="{{s.dotStyle}}"></span>
-            <span style="{{s.letterStyle}}">{{s.letter}}</span>
-          </span>
-          <span style="{{s.nameStyle}}">{{s.name}}</span>
-        </span>
-      </sc-for>
-    </div>
-
     <section aria-label="Signal chain, 4 rows by 8 slots" style="flex: 1; min-height: 0; box-sizing: border-box; padding: 5px; display: flex; flex-direction: column; gap: 2px; border-radius: 20px; background: {{t.surface}}; box-shadow: {{t.panelEdge}};">
       <sc-for list="{{grid}}" as="row" hint-placeholder-count="4">
         <div style="{{row.bandStyle}}">
@@ -90,46 +83,48 @@
   <div style="{{deckStyle}}">
     <div aria-hidden="true" style="{{deckShadeStyle}}"></div>
 
-    <sc-if value="{{isRow}}" hint-placeholder-val="{{true}}">
+    <!-- By default the deck is the scene pads, the QC's footswitches under your fingers. Tapping a block swaps them for its controls. -->
+    <sc-if value="{{isScenes}}" hint-placeholder-val="{{true}}">
       <div style="height: 44px; flex: none; display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 17px; font-weight: 600;">Row 1</span>
-        <span style="font-size: 13px; color: {{t.muted}};">7 blocks · 1 empty</span>
-        <span style="flex: 1;"></span>
-        <button type="button" style="{{savePill}}">Save to My Presets 16</button>
+        <span style="font-size: 17px; font-weight: 600;">Scenes</span>
+        <span role="status" style="{{sc.statusStyle}}">
+          <sc-if value="{{sc.isPending}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-dasharray="3 3" aria-hidden="true" style="flex: none;"><circle cx="12" cy="12" r="9"></circle></svg></sc-if>
+          <sc-if value="{{sc.isOk}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M20 6L9 17l-5-5"></path></svg></sc-if>
+          <sc-if value="{{sc.isWarn}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg></sc-if>
+          <sc-if value="{{sc.isLock}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></sc-if>
+          {{sc.text}}
+        </span>
+        <button type="button" aria-label="Save to My Presets 16" aria-disabled="{{saveDisabled}}" style="{{savePill}}">Save</button>
       </div>
-      <div style="position: relative;">
-        <div aria-hidden="true" style="position: absolute; left: 19px; top: 25px; bottom: 25px; width: 2px; background: {{t.hairline}};"></div>
-        <ol aria-label="Row 1 blocks" style="list-style: none; margin: 0; padding: 0;">
-          <sc-for list="{{lane}}" as="b" hint-placeholder-count="7">
-            <li style="position: relative; height: 50px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid {{t.divider}};">
-              <span aria-hidden="true" style="{{b.swatchStyle}}">{{b.code}}</span>
-              <a href="#" aria-label="{{b.aria}}" style="flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none;">
-                <span style="flex: none; width: 168px; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.title}}</span>
-                <span style="flex: 1; min-width: 0; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.summary}}</span>
-                <sc-if value="{{b.locked}}" hint-placeholder-val="{{false}}">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
-                </sc-if>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
-              </a>
-            </li>
-          </sc-for>
-        </ol>
+      <div role="radiogroup" aria-label="{{padsAria}}" style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px;">
+        <sc-for list="{{pads}}" as="s" hint-placeholder-count="8">
+          <button type="button" role="radio" aria-checked="{{s.checked}}" aria-disabled="{{s.disabled}}" aria-label="{{s.aria}}" style="{{s.padStyle}}">
+            <span aria-hidden="true" style="{{s.ledStyle}}"></span>
+            <span aria-hidden="true" style="max-width: 100%; display: flex; flex-direction: column; gap: 8px;">
+              <span style="{{s.letterStyle}}">{{s.letter}}</span>
+              <span style="{{s.nameStyle}}">{{s.name}}</span>
+            </span>
+            <sc-if value="{{s.warn}}" hint-placeholder-val="{{false}}">
+              <span aria-hidden="true" style="{{sc.badgeStyle}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v8M12 19h.01"></path></svg></span>
+            </sc-if>
+          </button>
+        </sc-for>
       </div>
     </sc-if>
 
     <sc-if value="{{isEditor}}" hint-placeholder-val="{{false}}">
       <div style="height: 44px; flex: none; display: flex; align-items: center; gap: 10px;">
-        <a href="#" aria-label="Back to row 1" style="height: 40px; padding: 0 12px 0 4px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
+        <a href="#" aria-label="Back to scenes" style="height: 40px; padding: 0 12px 0 4px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
-          Row 1
+          Scenes
         </a>
         <span aria-hidden="true" style="width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: {{cmp.bg}}; color: {{cmp.ink}}; font-size: 10px; font-weight: 700; box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4);">CMP</span>
         <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
           <span style="font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Opto Comp (M)</span>
-          <span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap;">Compressor · slot 2</span>
+          <span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap;">Compressor · Row 1, slot 2</span>
         </span>
         <sc-if value="{{notTyping}}" hint-placeholder-val="{{true}}">
-          <button type="button" aria-label="Save to My Presets 16" style="{{savePill}}">Save</button>
+          <button type="button" aria-label="Save to My Presets 16" aria-disabled="{{saveDisabled}}" style="{{savePill}}">Save</button>
         </sc-if>
       </div>
 
@@ -227,18 +222,25 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"tuner":{"editor":"enum","options":["none","button","crease","popover","band","panel"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"posture":{"editor":"enum","options":["flat","half"],"default":"flat","section":"Screen"},"state":{"editor":"enum","options":["row","edit","pending","type"],"default":"edit","section":"Screen"},"fold3d":{"editor":"boolean","default":false,"section":"Screen"},"$preview":{"width":626,"height":890}}'>
+<script type="text/x-dc" data-dc-script data-props='{"presetMenu":{"editor":"boolean","default":false,"section":"Presets"},"presetMenuOpen":{"editor":"boolean","default":false,"section":"Presets"},"tuner":{"editor":"enum","options":["none","button","crease","popover","band","panel"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"posture":{"editor":"enum","options":["flat","half"],"default":"flat","section":"Screen"},"state":{"editor":"enum","options":["scenes","edit","pending","type"],"default":"scenes","section":"Screen"},"fold3d":{"editor":"boolean","default":false,"section":"Screen"},"scene":{"editor":"enum","options":["idle","pending","confirmed","rejected","readonly"],"default":"idle","section":"Scenes"},"dirty":{"editor":"boolean","default":true,"section":"Scenes"},"$preview":{"width":626,"height":890}}'>
 class Component extends DCLogic {
+  // Preset browser entry (Presets page). Off by default, so boards elsewhere are unchanged.
+  presetMenu(t) {
+    const on = !!this.props.presetMenu, open = !!this.props.presetMenuOpen;
+    return { on, off: !on, expanded: open ? 'true' : 'false',
+      btnStyle: { maxWidth: 'calc(100% + 16px)', margin: '-4px -8px', padding: '4px 8px', boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', gap: '8px', border: '0', borderRadius: '12px', background: open ? t.fill : 'transparent', color: 'inherit', font: 'inherit', letterSpacing: 'inherit', textAlign: 'left', cursor: 'pointer' },
+      chevStyle: { width: '26px', height: '26px', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: open ? t.signal : t.fill, color: open ? t.signalInk : t.ink } };
+  }
   renderVals() {
     const half = (this.props.posture ?? 'flat') === 'half';
-    const state = this.props.state ?? 'edit';
+    const state = this.props.state ?? 'scenes';
     const fold3d = !!this.props.fold3d;
-    const typing = state === 'type', pending = state === 'pending', rowState = state === 'row';
+    const typing = state === 'type', pending = state === 'pending', scenesDeck = state === 'scenes' || state === 'row';
     const t = { ground: 'oklch(0.16 0.008 110)', surface: 'oklch(0.2 0.009 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', hairline: 'oklch(0.3 0.01 110)', divider: 'oklch(1 0 0 / 0.07)',
       glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', panelEdge: 'inset 0 0 0 1px oklch(1 0 0 / 0.06)',
       sheet: 'oklch(0.22 0.01 110 / 0.78)', fill: 'oklch(1 0 0 / 0.1)', group: 'oklch(0.3 0.01 110 / 0.55)', band: 'oklch(1 0 0 / 0.09)', track: 'oklch(1 0 0 / 0.13)', tileFill: 'oklch(1 0 0 / 0.08)', key: 'oklch(1 0 0 / 0.12)',
-      signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)' };
-    // One motion for the whole fold: ease-out-quint. Layout-driven pieces (the scene row collapsing, the grid growing) share it so they move as one.
+      signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', caution: 'oklch(0.86 0.13 75)' };
+    // One motion for the whole fold: ease-out-quint. Layout-driven pieces (the title tightening, the status pill shrinking) share it so they move as one.
     const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
     const tr = (props, ms = 560, delay = 0) => props.map((p) => p + ' ' + ms + 'ms ' + ease + ' ' + delay + 'ms').join(', ');
     const CAT = {
@@ -255,19 +257,21 @@ class Component extends DCLogic {
     const RO = 'Read-only';
     const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
     // Positions and models from the captured preset (tests/fixtures/qc-editor.json); summaries and locks follow the app for scene F.
+    // Bypass follows the scene the QC confirms: scene B where a switch has landed, scene F otherwise.
+    const inB = (this.props.scene ?? 'idle') === 'confirmed';
     const rows = [
-      [B('wah', 'Bad Horse', 'Bypassed', true), B('cmp', 'Opto Comp (M)', 'Bypassed'), B('cap', 'OG TS808', 'Bass 0.0 dB · Mid 0.0 dB'), B('drv', 'Myth Drive', 'Bypassed'), B('pit', 'Transpose', 'Semitones -1.0'), B('pit', 'Poly Octaver', 'Bypassed'), B('utl', 'Adaptive Gate', 'Noise Reduction 16.1 %'), null],
+      [B('wah', 'Bad Horse', inB ? RO : 'Bypassed', true), B('cmp', 'Opto Comp (M)', 'Bypassed'), B('cap', 'OG TS808', inB ? 'Bypassed' : 'Bass 0.0 dB · Mid 0.0 dB'), B('drv', 'Myth Drive', inB ? 'Gain 3.6 · Treble 4.2' : 'Bypassed'), B('pit', 'Transpose', 'Semitones -1.0'), B('pit', 'Poly Octaver', 'Bypassed'), B('utl', 'Adaptive Gate', 'Noise Reduction 16.1 %'), null],
       [null, null, null, null, null, null, null, null],
-      [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Paul\'s MT16 6', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S', RO, true), null, B('mod', 'Dual Chorus', 'Bypassed'), B('rev', 'Plate Tight', 'Mix 24.4 % · Decay 43.2 %')],
-      [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Bogna Uber 1', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S', RO, true), null, null, null]
+      [null, B('cap', 'Paul\'s MT16 7', inB ? 'Gain 0.0 dB · Bass 0.0 dB' : 'Bypassed'), null, B('cap', 'Paul\'s MT16 6', inB ? 'Bypassed' : 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S', RO, true), null, B('mod', 'Dual Chorus', 'Bypassed'), B('rev', 'Plate Tight', 'Mix 24.4 % · Decay 43.2 %')],
+      [null, B('cap', 'Paul\'s MT16 7', inB ? 'Gain 0.0 dB · Bass 0.0 dB' : 'Bypassed'), null, B('cap', 'Bogna Uber 1', inB ? 'Bypassed' : 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S', RO, true), null, null, null]
     ];
     const cellBase = { minWidth: '0', boxSizing: 'border-box', padding: '7px 5px 7px 6px', borderRadius: '12px', border: '0', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', font: 'inherit', textAlign: 'left', cursor: 'pointer' };
     const grid = rows.map((row, ri) => ({
-      bandStyle: { flex: '1', minHeight: '0', display: 'grid', gridTemplateColumns: 'repeat(8, minmax(0, 1fr))', gap: '5px', padding: '3px', borderRadius: '15px', background: rowState && ri === 0 ? t.band : 'transparent', boxShadow: rowState && ri === 0 ? 'inset 0 0 0 1.5px ' + t.signal : 'none' },
+      bandStyle: { flex: '1', minHeight: '0', display: 'grid', gridTemplateColumns: 'repeat(8, minmax(0, 1fr))', gap: '5px', padding: '3px', borderRadius: '15px', background: 'transparent', boxShadow: 'none' },
       cells: row.map((b, si) => {
         const slot = 'Row ' + (ri + 1) + ', slot ' + (si + 1);
         if (!b) return { code: '', name: '', aria: slot + ', empty', style: { ...cellBase, background: 'transparent', border: '1px solid ' + t.hairline, cursor: 'default' }, codeStyle: {}, nameStyle: {} };
-        const c = CAT[b.cat], sel = !rowState && ri === 0 && si === 1, off = b.summary === 'Bypassed';
+        const c = CAT[b.cat], sel = !scenesDeck && ri === 0 && si === 1, off = b.summary === 'Bypassed';
         // Bypassed in scene F, as the app draws it: surface fill, category-colored dashed edge and struck-through code.
         const fill = off ? { background: t.surface, color: c.bg, boxShadow: 'none', border: '1.5px dashed ' + c.bg } : { background: c.bg, color: c.ink, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.35)' };
         return { code: c.code, name: b.title, aria: slot + ', ' + b.title + ', ' + c.kind + (off ? ', bypassed' : '') + (sel ? ', selected' : ''),
@@ -277,25 +281,47 @@ class Component extends DCLogic {
       })
     }));
 
-    const sw = { position: 'relative', width: '40px', height: '40px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', fontSize: '11px', fontWeight: 700, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' };
-    const lane = rows[0].map((b, si) => b && { ...b, slot: si + 1 }).filter(Boolean).map((b) => ({
-      code: CAT[b.cat].code, title: b.title, summary: b.summary, locked: b.locked,
-      aria: b.title + ', ' + CAT[b.cat].kind + ', slot ' + b.slot + '. ' + b.summary,
-      swatchStyle: { ...sw, background: CAT[b.cat].bg, color: CAT[b.cat].ink }
-    }));
 
     // Scene names and colors come from the QC and never follow the theme. Blank names fall back to the letter alone.
     const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];
-    const ACTIVE = 5, letters = 'ABCDEFGH';
+    const letters = 'ABCDEFGH';
+    // Scene switching, as on iPhone. The deck's scene pads are the way to switch: only the scene the QC has confirmed is
+    // drawn active, a tap adds a dashed pending ring until the QC answers, and switching never marks the preset unsaved.
+    // While a block's controls fill the deck, the compact header strip mirrors the QC and stays display-only (cells under 44 pt).
+    const sceneState = this.props.scene ?? 'idle';
+    const ACTIVE = sceneState === 'confirmed' ? 1 : 5;
+    const TARGET = sceneState === 'rejected' ? 3 : 1;
+    const pendingAt = sceneState === 'pending' ? TARGET : -1, rejectedAt = sceneState === 'rejected' ? TARGET : -1;
+    const readOnly = sceneState === 'readonly';
+    const nameOf = (i) => letters[i] + (QC_SCENES[i][0] ? ' · ' + QC_SCENES[i][0] : '');
     const dot = (on, color, size) => ({ width: size + 'px', height: size + 'px', flex: 'none', borderRadius: '50%', background: color, boxShadow: on ? '0 0 10px ' + color : 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' });
-    const chips = QC_SCENES.map(([label, color], i) => {
-      const on = i === ACTIVE;
-      return { letter: letters[i], name: label,
-        cellStyle: { height: '52px', minWidth: '0', boxSizing: 'border-box', padding: '0 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', borderRadius: '14px', background: on ? t.fill : 'transparent', boxShadow: on ? 'inset 0 0 0 1.5px ' + color : 'none' },
-        dotStyle: dot(on, color, on ? 11 : 9),
-        letterStyle: { fontSize: '14px', fontWeight: on ? 700 : 600, color: on ? t.ink : t.muted, lineHeight: '1' },
-        nameStyle: { maxWidth: '100%', height: '11px', fontSize: '11px', fontWeight: on ? 700 : 500, color: on ? t.ink : t.muted, lineHeight: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } };
+    // The pads are the QC's footswitches: an LED in the scene's own colour, the letter, then the name (blank names show the letter alone).
+    const pads = QC_SCENES.map(([label, color], i) => {
+      const on = i === ACTIVE, pend = i === pendingAt, warn = i === rejectedAt;
+      return { letter: letters[i], name: label, warn,
+        checked: on ? 'true' : 'false', disabled: readOnly ? 'true' : 'false',
+        aria: 'Scene ' + letters[i] + (label ? ' ' + label : '') + (on ? ', active on the QC' : pend ? ', switching' : warn ? ', not applied' : ''),
+        padStyle: { position: 'relative', minWidth: '0', minHeight: '0', boxSizing: 'border-box', padding: '14px 14px 16px', border: '0', font: 'inherit', color: 'inherit', textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', borderRadius: '22px', cursor: readOnly ? 'default' : 'pointer',
+          background: on ? 'color-mix(in oklch, ' + color + ' 22%, ' + t.surface + ')' : pend ? t.fill : t.surface,
+          boxShadow: on ? 'inset 0 0 0 2px ' + color + ', 0 0 28px -8px ' + color : warn ? 'inset 0 0 0 2px ' + t.caution : readOnly ? 'none' : 'inset 0 0 0 1px ' + t.hairline,
+          outline: pend ? '2px dashed ' + t.signal : 'none', outlineOffset: '-2px', transition: tr(['background-color', 'box-shadow'], 240) },
+        ledStyle: { width: '14px', height: '14px', flex: 'none', borderRadius: '50%', background: color, opacity: readOnly && !on ? 0.5 : 1, boxShadow: on ? '0 0 14px 2px ' + color : 'inset 0 0 0 1px oklch(0 0 0 / 0.2)' },
+        letterStyle: { fontSize: '38px', fontWeight: on ? 700 : 600, letterSpacing: '-0.02em', lineHeight: '1', color: on || pend ? t.ink : t.muted },
+        nameStyle: { maxWidth: '100%', height: '14px', fontSize: '13px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: '1', color: on ? t.ink : t.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } };
     });
+    const STATUS = {
+      idle: ['hint', 'Tap a block to edit it', t.muted],
+      pending: ['pending', 'Switching to ' + nameOf(TARGET), t.signal],
+      confirmed: ['ok', nameOf(ACTIVE) + ' on the QC', t.muted],
+      rejected: ['warn', letters[TARGET] + ' not applied · QC stayed on ' + letters[ACTIVE], t.caution],
+      readonly: ['lock', 'Read-only', t.muted]
+    }[sceneState];
+    const sc = { show: !!STATUS[0], text: STATUS[1],
+      isPending: STATUS[0] === 'pending', isOk: STATUS[0] === 'ok', isWarn: STATUS[0] === 'warn', isLock: STATUS[0] === 'lock',
+      statusStyle: { flex: '1', minWidth: '0', overflow: 'hidden', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: STATUS[0] === 'hint' ? 400 : 600, color: STATUS[2], whiteSpace: 'nowrap' },
+      badgeStyle: { position: 'absolute', top: '10px', right: '10px', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: t.caution, color: 'oklch(0.2 0.04 75)', boxShadow: '0 0 0 2px ' + t.ground } };
+    // Scene boards start from a saved preset, so they show Save staying off through every scene change.
+    const dirty = this.props.dirty ?? true;
     const strip = QC_SCENES.map(([, color], i) => {
       const on = i === ACTIVE;
       return { letter: letters[i],
@@ -393,16 +419,18 @@ class Component extends DCLogic {
     tn.popStyle = { position: 'absolute', zIndex: 40, top: '98px', right: '24px', width: '380px', boxSizing: 'border-box', padding: '16px 14px 14px', display: 'flex', flexDirection: 'column', gap: '10px', borderRadius: '28px', background: 'oklch(0.25 0.01 110 / 0.95)', backdropFilter: 'blur(30px) saturate(1.7)', WebkitBackdropFilter: 'blur(30px) saturate(1.7)', boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.07), 0 24px 60px oklch(0 0 0 / 0.55)' };
     tn.popArrow = { position: 'absolute', width: '18px', height: '18px', background: 'oklch(0.25 0.01 110 / 0.95)', transform: 'rotate(45deg)', borderRadius: '4px', boxShadow: 'inset 1px 1px 0 oklch(1 0 0 / 0.16)', top: '-8px', right: '157px' };
     return {
-      t, tn, grid, lane, chips, strip, g, tiles, keys, value, arcColor, typing, pending, notTyping: !typing, cmp: CAT.cmp,
-      isRow: rowState, isEditor: !rowState,
-      sceneAria: 'Scene F, RHYTHM, is active on the QC. ' + QC_SCENES.map((s, i) => letters[i] + (s[0] ? ' ' + s[0] : '')).join(', '),
-      flatAria: half ? 'false' : 'true', halfAria: half ? 'true' : 'false',
+      t, tn, grid, pads, strip, sc, g, pm: this.presetMenu(t),
+      activeTitle: 'Scene ' + nameOf(ACTIVE), padsAria: 'Scenes' + (readOnly ? ', read-only' : ''),
+      savedText: dirty ? 'Unsaved' : 'Saved', saveDisabled: dirty ? 'false' : 'true',
+      savedStyle: { display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: dirty ? t.signal : t.muted }, tiles, keys, value, arcColor, typing, pending, notTyping: !typing, cmp: CAT.cmp,
+      isScenes: scenesDeck, isEditor: !scenesDeck,
+      sceneAria: 'Scene ' + nameOf(ACTIVE) + ' is active on the QC. ' + QC_SCENES.map((s, i) => letters[i] + (s[0] ? ' ' + s[0] : '')).join(', '),
+      stripHidden: scenesDeck ? 'true' : 'false',
       rootStyle: { width: '626px', height: '890px', position: 'relative', overflow: fold3d ? 'visible' : 'hidden', background: fold3d ? 'transparent' : t.ground, color: t.ink, fontFamily: "-apple-system, 'SF Pro Text', Inter, system-ui, sans-serif", fontVariantNumeric: 'tabular-nums', perspective: fold3d ? '2200px' : 'none', perspectiveOrigin: '50% 30%' },
       topStyle: { ...halfBase, top: '0', zIndex: 1, padding: tunerMode === 'crease' ? (half ? '48px 24px 34px' : '48px 24px 30px') : (half ? '48px 24px 18px' : '48px 24px 12px'), display: 'flex', flexDirection: 'column', gap: '12px', borderRadius: fold3d ? '44px 44px 0 0' : '0', transition: tr(['padding']) },
       titleStyle: { margin: '0', fontSize: half ? '22px' : '30px', lineHeight: '1.1', fontWeight: 700, letterSpacing: half ? '-0.015em' : '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', transition: tr(['font-size', 'letter-spacing']) },
-      // The named scene row folds up into the header strip; the grid takes the space it frees.
-      chipsStyle: { display: 'grid', gridTemplateColumns: 'repeat(8, minmax(0, 1fr))', gap: '6px', height: half ? '0px' : '52px', marginBottom: half ? '-12px' : '0px', overflow: 'hidden', opacity: half ? 0 : 1, transform: half ? 'translateY(-14px) scale(0.96)' : 'none', transformOrigin: '100% 0', transition: tr(['height', 'margin-bottom'], 560) + ', ' + tr(['opacity', 'transform'], 320) },
-      stripWrapStyle: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', maxWidth: half ? '260px' : '0px', overflow: 'hidden', opacity: half ? 1 : 0, transform: half ? 'none' : 'translateY(10px)', transition: tr(['max-width'], 560) + ', ' + tr(['opacity', 'transform'], 360, half ? 120 : 0) },
+      // The pads hold the scenes; while a block's controls replace them, the header carries a compact strip so the scene stays in view.
+      stripWrapStyle: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', maxWidth: scenesDeck ? '0px' : '260px', overflow: 'hidden', opacity: scenesDeck ? 0 : 1, transform: scenesDeck ? 'translateY(10px)' : 'none', transition: tr(['max-width'], 560) + ', ' + tr(['opacity', 'transform'], 360, scenesDeck ? 0 : 120) },
       pillLabelStyle: { display: 'inline-block', maxWidth: half ? '0px' : '110px', marginLeft: half ? '0px' : '7px', overflow: 'hidden', whiteSpace: 'nowrap', opacity: half ? 0 : 1, transition: tr(['max-width', 'margin-left', 'opacity'], 420) },
       creaseStyle: { position: 'absolute', zIndex: 3, left: '0', right: '0', top: '435px', height: '20px', pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent, oklch(0 0 0 / 0.4) 50%, transparent)', opacity: half ? 1 : 0, transition: tr(['opacity'], 480, half ? 160 : 0) },
       // In 3D the deck hinges back to lie on the table while the view stays upright facing the player.
@@ -412,7 +440,7 @@ class Component extends DCLogic {
       valueAria: typing ? 'Threshold, typing −30' : 'Threshold ' + value + ' dB. Tap to type a value',
       valueStyle: { position: 'absolute', left: '50%', top: '87px', transform: 'translateX(-50%)', font: 'inherit', height: '66px', padding: '0 12px', boxSizing: 'border-box', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '5px', lineHeight: '66px', whiteSpace: 'nowrap', border: '0', borderRadius: '18px', background: typing ? 'oklch(1 0 0 / 0.08)' : 'transparent', boxShadow: typing ? 'inset 0 0 0 2px ' + t.signal : 'none', outline: pending ? '1.5px dashed ' + t.signal : 'none', outlineOffset: '-1.5px', color: 'inherit', cursor: 'text' },
       stepStyle: 'position: absolute; top: 200px; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: ' + t.glass + '; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: ' + t.glassEdge + '; color: inherit; font: inherit; cursor: pointer',
-      savePill: { height: '44px', padding: '0 22px', border: '0', borderRadius: '999px', background: t.signal, color: t.signalInk, font: 'inherit', fontSize: '15px', fontWeight: 600, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)', cursor: 'pointer', whiteSpace: 'nowrap', opacity: pending ? 0.45 : 1 }
+      savePill: { height: '44px', padding: '0 22px', border: '0', borderRadius: '999px', background: dirty ? t.signal : t.fill, color: dirty ? t.signalInk : t.muted, font: 'inherit', fontSize: '15px', fontWeight: 600, boxShadow: dirty ? 'inset 0 1px 0 oklch(1 0 0 / 0.4)' : 'none', cursor: dirty ? 'pointer' : 'default', whiteSpace: 'nowrap', opacity: pending ? 0.45 : 1 }
     };
   }
 }

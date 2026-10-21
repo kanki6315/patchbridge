@@ -43,17 +43,30 @@
           <span style="{{savedStyle}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>{{savedText}}</span>
         </span>
       </div>
-      <div role="img" aria-label="{{sceneAria}}" style="display: flex; flex-direction: column; gap: 6px;">
-        <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;">
-          <span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: {{active.color}};"></span>
-          {{active.title}}
-        </span>
-        <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="height: 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; white-space: nowrap;">
+            <span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: {{active.color}};"></span>
+            {{active.title}}
+          </span>
+          <span role="status" style="{{sc.statusStyle}}">
+            <sc-if value="{{sc.isPending}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-dasharray="3 3" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle></svg></sc-if>
+            <sc-if value="{{sc.isOk}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg></sc-if>
+            <sc-if value="{{sc.isWarn}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg></sc-if>
+            <sc-if value="{{sc.isLock}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></sc-if>
+            <span aria-hidden="true">{{sc.text}}</span>
+            <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{sc.announce}}</span>
+          </span>
+        </div>
+        <div role="radiogroup" aria-label="{{sceneAria}}" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px;">
           <sc-for list="{{scenes}}" as="s" hint-placeholder-count="8">
-            <span style="{{s.cellStyle}}">
-              <span style="{{s.dotStyle}}"></span>
-              <span style="{{s.letterStyle}}">{{s.letter}}</span>
-            </span>
+            <button type="button" role="radio" aria-checked="{{s.checked}}" aria-disabled="{{s.disabled}}" aria-label="{{s.aria}}" style="{{s.cellStyle}}">
+              <span aria-hidden="true" style="{{s.dotStyle}}"></span>
+              <span aria-hidden="true" style="{{s.letterStyle}}">{{s.letter}}</span>
+              <sc-if value="{{s.warn}}" hint-placeholder-val="{{false}}">
+                <span aria-hidden="true" style="{{sc.badgeStyle}}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v8M12 19h.01"></path></svg></span>
+              </sc-if>
+            </button>
           </sc-for>
         </div>
       </div>
@@ -215,7 +228,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"tuner":{"editor":"enum","options":["none","button","island","strip","takeover","pill","sheet"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"selectedRow":{"editor":"enum","options":["1","2","3","4"],"default":"1","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details"],"default":"none","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"$preview":{"width":402,"height":874}}'>
+<script type="text/x-dc" data-dc-script data-props='{"tuner":{"editor":"enum","options":["none","button","island","strip","takeover","pill","sheet"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"selectedRow":{"editor":"enum","options":["1","2","3","4"],"default":"1","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details"],"default":"none","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"scene":{"editor":"enum","options":["idle","pending","confirmed","rejected","readonly"],"default":"idle","section":"Scenes"},"dirty":{"editor":"boolean","default":true,"section":"Scenes"},"$preview":{"width":402,"height":874}}'>
 class Component extends DCLogic {
   renderVals() {
     const sel = Number(this.props.selectedRow ?? '1') - 1;
@@ -249,12 +262,14 @@ class Component extends DCLogic {
     };
     const RO = 'Read-only';
     const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
-    // Positions and models from the captured preset (tests/fixtures/qc-editor.json); summaries and locks follow the app for scene F.
+    // Positions and models from the captured preset (tests/fixtures/qc-editor.json); summaries and locks follow the app for scene F,
+    // or for scene B once a switch to it has been confirmed.
+    const inB = (this.props.scene ?? 'idle') === 'confirmed';
     const rows = [
-      [B('wah', 'Bad Horse', 'Bypassed', true), B('cmp', 'Opto Comp (M)', 'Bypassed'), B('cap', 'OG TS808', 'Bass 0.0 dB · Mid 0.0 dB'), B('drv', 'Myth Drive', 'Bypassed'), B('pit', 'Transpose', 'Semitones -1.0'), B('pit', 'Poly Octaver', 'Bypassed'), B('utl', 'Adaptive Gate', 'Noise Reduction 16.1 %'), null],
+      [B('wah', 'Bad Horse', inB ? RO : 'Bypassed', true), B('cmp', 'Opto Comp (M)', 'Bypassed'), B('cap', 'OG TS808', inB ? 'Bypassed' : 'Bass 0.0 dB · Mid 0.0 dB'), B('drv', 'Myth Drive', inB ? 'Gain 3.6 · Treble 4.2' : 'Bypassed'), B('pit', 'Transpose', 'Semitones -1.0'), B('pit', 'Poly Octaver', 'Bypassed'), B('utl', 'Adaptive Gate', 'Noise Reduction 16.1 %'), null],
       [null, null, null, null, null, null, null, null],
-      [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Paul\'s MT16 6', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S UKV30 90s (M)', RO, true), null, B('mod', 'Dual Chorus', 'Bypassed'), B('rev', 'Plate Tight', 'Mix 24.4 % · Decay 43.2 %')],
-      [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Bogna Uber 1', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S UKV30 90s (M)', RO, true), null, null, null]
+      [null, B('cap', 'Paul\'s MT16 7', inB ? 'Gain 0.0 dB · Bass 0.0 dB' : 'Bypassed'), null, B('cap', 'Paul\'s MT16 6', inB ? 'Bypassed' : 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S UKV30 90s (M)', RO, true), null, B('mod', 'Dual Chorus', 'Bypassed'), B('rev', 'Plate Tight', 'Mix 24.4 % · Decay 43.2 %')],
+      [null, B('cap', 'Paul\'s MT16 7', inB ? 'Gain 0.0 dB · Bass 0.0 dB' : 'Bypassed'), null, B('cap', 'Bogna Uber 1', inB ? 'Bypassed' : 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S UKV30 90s (M)', RO, true), null, null, null]
     ];
     const cellBase = { height: '38px', boxSizing: 'border-box', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, letterSpacing: '0.02em' };
     // Bypassed in this scene, as the app draws it: surface fill, category-colored dashed edge and struck-through code.
@@ -281,19 +296,47 @@ class Component extends DCLogic {
 
     // Scene names and colors come from the QC (scene_labels / scene_colors) and never follow the theme.
     const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];
-    const ACTIVE = 5;
     const letters = 'ABCDEFGH';
-    const titleOf = (i) => 'Scene ' + letters[i] + (QC_SCENES[i][0] ? ' · ' + QC_SCENES[i][0] : '');
+    // Scene switching. Only the scene the QC has confirmed is drawn active. A tap adds a dashed pending ring until the QC
+    // answers; a refusal leaves the old scene active and marks the tapped one. Switching never marks the preset unsaved.
+    const sceneState = this.props.scene ?? 'idle';
+    const ACTIVE = sceneState === 'confirmed' ? 1 : 5;
+    const TARGET = sceneState === 'rejected' ? 3 : 1;
+    const pendingAt = sceneState === 'pending' ? TARGET : -1, rejectedAt = sceneState === 'rejected' ? TARGET : -1;
+    const readOnly = sceneState === 'readonly';
+    const nameOf = (i) => letters[i] + (QC_SCENES[i][0] ? ' · ' + QC_SCENES[i][0] : '');
+    const titleOf = (i) => 'Scene ' + nameOf(i);
     const scenes = QC_SCENES.map(([label, color], i) => {
-      const on = i === ACTIVE;
+      const on = i === ACTIVE, pend = i === pendingAt, warn = i === rejectedAt;
       return {
-        letter: letters[i],
-        cellStyle: { height: '40px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '12px', background: on ? t.fill : 'transparent', boxShadow: on ? 'inset 0 0 0 1.5px ' + color : 'none' },
-        dotStyle: { width: on ? '12px' : '9px', height: on ? '12px' : '9px', borderRadius: '50%', background: color, boxShadow: on && t.dark ? '0 0 10px ' + color : (t.dark ? 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' : 'inset 0 0 0 1.5px oklch(0.2 0.01 110 / 0.55)') },
-        letterStyle: { fontSize: '12px', fontWeight: on ? 700 : 500, color: on ? t.ink : t.muted, lineHeight: '1' }
+        letter: letters[i], warn,
+        checked: on ? 'true' : 'false', disabled: readOnly ? 'true' : 'false',
+        aria: 'Scene ' + letters[i] + (label ? ' ' + label : '') + (on ? ', active on the QC' : pend ? ', switching' : warn ? ', not applied' : ''),
+        cellStyle: { position: 'relative', height: '44px', minWidth: '0', boxSizing: 'border-box', padding: '0', border: '0', font: 'inherit', color: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '12px', cursor: readOnly ? 'default' : 'pointer',
+          background: on || pend ? t.fill : 'transparent',
+          boxShadow: on ? 'inset 0 0 0 1.5px ' + color : warn ? 'inset 0 0 0 1.5px ' + t.caution : readOnly ? 'none' : 'inset 0 0 0 1px ' + t.hairline,
+          outline: pend ? '1.5px dashed ' + t.signal : 'none', outlineOffset: '-1.5px' },
+        dotStyle: { width: on ? '12px' : '9px', height: on ? '12px' : '9px', borderRadius: '50%', background: color, opacity: readOnly && !on ? 0.5 : 1, boxShadow: on && t.dark ? '0 0 10px ' + color : (t.dark ? 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' : 'inset 0 0 0 1.5px oklch(0.2 0.01 110 / 0.55)') },
+        letterStyle: { fontSize: '12px', fontWeight: on ? 700 : pend ? 600 : 500, color: on || pend ? t.ink : t.muted, lineHeight: '1' }
       };
     });
-    const sceneAria = titleOf(ACTIVE) + ' is active on the QC. ' + QC_SCENES.map((s, i) => letters[i] + (s[0] ? ' ' + s[0] : '')).join(', ');
+    const sceneAria = 'Scenes' + (readOnly ? ', read-only' : '');
+    const STATUS = {
+      idle: ['', '', t.muted],
+      pending: ['pending', 'Switching to ' + letters[TARGET], t.signal],
+      confirmed: ['ok', 'On the QC', t.muted],
+      rejected: ['warn', 'Not applied', t.caution],
+      readonly: ['lock', 'Read-only', t.muted]
+    }[sceneState];
+    const sc = {
+      isPending: STATUS[0] === 'pending', isOk: STATUS[0] === 'ok', isWarn: STATUS[0] === 'warn', isLock: STATUS[0] === 'lock', text: STATUS[1],
+      announce: { idle: '', pending: 'Switching to ' + titleOf(TARGET) + '. Waiting for the QC.', confirmed: titleOf(ACTIVE) + ' is active on the QC.',
+        rejected: titleOf(TARGET) + ' not applied. The QC stayed on ' + titleOf(ACTIVE) + '.', readonly: 'Read-only connection. Change scenes on the QC.' }[sceneState],
+      statusStyle: { position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 600, color: STATUS[2], whiteSpace: 'nowrap' },
+      badgeStyle: { position: 'absolute', top: '-5px', right: '-5px', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: t.caution, color: t.dark ? 'oklch(0.2 0.04 75)' : '#ffffff', boxShadow: '0 0 0 2px ' + t.ground }
+    };
+    // Scene boards start from a saved preset, so they show Save staying off through every scene change.
+    const dirty = this.props.dirty ?? true;
 
     const saving = overlay === 'saving', saved = overlay === 'saved';
     const toast = overlay === 'saved' ? { show: true, isSaved: true, isDevice: false, title: 'Saved to My Presets 16', body: '', iconBg: t.signal, iconColor: t.signalInk }
@@ -365,17 +408,17 @@ class Component extends DCLogic {
     if (tn.creaseBar) tn.creaseBar = { ...tn.creaseBar, background: inTune ? signalA(0.4) : tn.creaseBar.background };
     tn.buttonStyle = tunerButtonStyle(['island', 'strip', 'takeover'].includes(tunerMode) || (tunerMode === 'sheet' && tLive));
     return {
-      t, tn, demo, grid, lane, scenes, saving, saved, toast, detailGroups, sceneAria,
+      t, tn, demo, grid, lane, scenes, sc, saving, saved, toast, detailGroups, sceneAria,
       active: { title: titleOf(ACTIVE), color: QC_SCENES[ACTIVE][1] },
       sheet: { save: overlay === 'saveSheet', details: overlay === 'details' },
       laneTitle: 'Row ' + (sel + 1),
       laneMeta: laneBlocks.length + (laneBlocks.length === 1 ? ' block' : ' blocks') + (empty ? ' · ' + empty + ' empty' : ''),
       laneAria: 'Row ' + (sel + 1) + ' blocks',
-      savedText: saved ? 'Saved' : 'Unsaved',
-      savedStyle: { display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: saved ? t.muted : t.signal },
+      savedText: saved || !dirty ? 'Saved' : 'Unsaved',
+      savedStyle: { display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: saved || !dirty ? t.muted : t.signal },
       saveLabel: saving ? 'Saving on the QC…' : saved ? 'Saved' : 'Save to My Presets 16',
-      saveDisabled: saving || saved ? 'true' : 'false',
-      sv: saving || saved ? { bg: t.fill, color: t.muted, shadow: 'none', cursor: 'default' } : { bg: t.signal, color: t.signalInk, shadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)', cursor: 'pointer' }
+      saveDisabled: saving || saved || !dirty ? 'true' : 'false',
+      sv: saving || saved || !dirty ? { bg: t.fill, color: t.muted, shadow: 'none', cursor: 'default' } : { bg: t.signal, color: t.signalInk, shadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)', cursor: 'pointer' }
     };
   }
 }

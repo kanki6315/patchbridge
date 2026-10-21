@@ -1020,146 +1020,6 @@
     "html": "html/ipad/p-typing.html"
   },
   {
-    "key": "duo/u-row.dc.html",
-    "slug": "duo-u-row",
-    "page": "iPhone Duo",
-    "title": "Unfolded · row",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-u-row.png",
-    "html": "html/screens/duo-u-row.html"
-  },
-  {
-    "key": "duo/u-idle.dc.html",
-    "slug": "duo-u-idle",
-    "page": "iPhone Duo",
-    "title": "Unfolded · editing",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-u-idle.png",
-    "html": "html/screens/duo-u-idle.html"
-  },
-  {
-    "key": "duo/u-pending.dc.html",
-    "slug": "duo-u-pending",
-    "page": "iPhone Duo",
-    "title": "Unfolded · sending a value",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-u-pending.png",
-    "html": "html/screens/duo-u-pending.html"
-  },
-  {
-    "key": "duo/h-row.dc.html",
-    "slug": "duo-h-row",
-    "page": "iPhone Duo",
-    "title": "Half-folded · row",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-h-row.png",
-    "html": "html/screens/duo-h-row.html"
-  },
-  {
-    "key": "duo/h-edit.dc.html",
-    "slug": "duo-h-edit",
-    "page": "iPhone Duo",
-    "title": "Half-folded · editing",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-h-edit.png",
-    "html": "html/screens/duo-h-edit.html"
-  },
-  {
-    "key": "duo/h-type.dc.html",
-    "slug": "duo-h-type",
-    "page": "iPhone Duo",
-    "title": "Half-folded · typing a value",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-h-type.png",
-    "html": "html/screens/duo-h-type.html"
-  },
-  {
-    "key": "duo/Fold.dc.html",
-    "slug": "duo-Fold",
-    "page": "iPhone Duo",
-    "title": "Fold prototype (Play)",
-    "w": 860,
-    "h": 1000,
-    "png": "screens/duo-Fold.png",
-    "html": "html/screens/duo-Fold.html"
-  },
-  {
-    "key": "duo/f-half.dc.html",
-    "slug": "duo-f-half",
-    "page": "iPhone Duo",
-    "title": "Fold prototype · half-folded",
-    "w": 860,
-    "h": 1000,
-    "png": "screens/duo-f-half.png",
-    "html": "html/screens/duo-f-half.html"
-  },
-  {
-    "key": "duo/xl-grid.dc.html",
-    "slug": "duo-xl-grid",
-    "page": "iPhone Duo",
-    "title": "Outer landscape · grid",
-    "w": 678,
-    "h": 466,
-    "png": "screens/duo-xl-grid.png",
-    "html": "html/screens/duo-xl-grid.html"
-  },
-  {
-    "key": "duo/xl-sheet.dc.html",
-    "slug": "duo-xl-sheet",
-    "page": "iPhone Duo",
-    "title": "Outer landscape · block menu",
-    "w": 678,
-    "h": 466,
-    "png": "screens/duo-xl-sheet.png",
-    "html": "html/screens/duo-xl-sheet.html"
-  },
-  {
-    "key": "duo/xl-pending.dc.html",
-    "slug": "duo-xl-pending",
-    "page": "iPhone Duo",
-    "title": "Outer landscape · block menu, sending",
-    "w": 678,
-    "h": 466,
-    "png": "screens/duo-xl-pending.png",
-    "html": "html/screens/duo-xl-pending.html"
-  },
-  {
-    "key": "duo/x-grid.dc.html",
-    "slug": "duo-x-grid",
-    "page": "iPhone Duo",
-    "title": "Outer portrait · grid",
-    "w": 466,
-    "h": 678,
-    "png": "screens/duo-x-grid.png",
-    "html": "html/screens/duo-x-grid.html"
-  },
-  {
-    "key": "duo/x-sheet.dc.html",
-    "slug": "duo-x-sheet",
-    "page": "iPhone Duo",
-    "title": "Outer portrait · block menu",
-    "w": 466,
-    "h": 678,
-    "png": "screens/duo-x-sheet.png",
-    "html": "html/screens/duo-x-sheet.html"
-  },
-  {
-    "key": "duo/x-pending.dc.html",
-    "slug": "duo-x-pending",
-    "page": "iPhone Duo",
-    "title": "Outer portrait · block menu, sending",
-    "w": 466,
-    "h": 678,
-    "png": "screens/duo-x-pending.png",
-    "html": "html/screens/duo-x-pending.html"
-  },
-  {
     "key": "live/ls-connected.dc.html",
     "slug": "ls-connected",
     "page": "Live Activity",
@@ -1340,6 +1200,376 @@
     "html": "html/live/mac-trusted-away.html"
   },
   {
+    "key": "poc/s-idle.dc.html",
+    "slug": "s-idle",
+    "page": "Scene parameters",
+    "title": "Scene parameter · editing scene F",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-idle.png",
+    "html": "html/screens/s-idle.html"
+  },
+  {
+    "key": "poc/s-pending.dc.html",
+    "slug": "s-pending",
+    "page": "Scene parameters",
+    "title": "Scene parameter · sending to scene F",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-pending.png",
+    "html": "html/screens/s-pending.html"
+  },
+  {
+    "key": "poc/s-menu.dc.html",
+    "slug": "s-menu",
+    "page": "Scene parameters",
+    "title": "Scene parameter · choosing a scene",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-menu.png",
+    "html": "html/screens/s-menu.html"
+  },
+  {
+    "key": "poc/s-loading.dc.html",
+    "slug": "s-loading",
+    "page": "Scene parameters",
+    "title": "Scene parameter · switched to G, dial reloading",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-loading.png",
+    "html": "html/screens/s-loading.html"
+  },
+  {
+    "key": "poc/s-loaded.dc.html",
+    "slug": "s-loaded",
+    "page": "Scene parameters",
+    "title": "Scene parameter · editing scene G",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-loaded.png",
+    "html": "html/screens/s-loaded.html"
+  },
+  {
+    "key": "poc/s-expression.dc.html",
+    "slug": "s-expression",
+    "page": "Scene parameters",
+    "title": "Expression parameter · read-only",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-expression.png",
+    "html": "html/screens/s-expression.html"
+  },
+  {
+    "key": "poc/s-daylight.dc.html",
+    "slug": "s-daylight",
+    "page": "Scene parameters",
+    "title": "Daylight · scene parameter",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-daylight.png",
+    "html": "html/screens/s-daylight.html"
+  },
+  {
+    "key": "poc/s-global.dc.html",
+    "slug": "s-global",
+    "page": "Scene parameters",
+    "title": "Global parameter · applies to all scenes",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-global.png",
+    "html": "html/screens/s-global.html"
+  },
+  {
+    "key": "poc/sc-idle.dc.html",
+    "slug": "poc-sc-idle",
+    "page": "Scene switching",
+    "title": "Idle · tap a scene",
+    "w": 402,
+    "h": 874,
+    "png": "switching/poc-sc-idle.png",
+    "html": "html/switching/poc-sc-idle.html"
+  },
+  {
+    "key": "poc/sc-pending.dc.html",
+    "slug": "poc-sc-pending",
+    "page": "Scene switching",
+    "title": "Pending · switching to B",
+    "w": 402,
+    "h": 874,
+    "png": "switching/poc-sc-pending.png",
+    "html": "html/switching/poc-sc-pending.html"
+  },
+  {
+    "key": "poc/sc-confirmed.dc.html",
+    "slug": "poc-sc-confirmed",
+    "page": "Scene switching",
+    "title": "Confirmed · B on the QC",
+    "w": 402,
+    "h": 874,
+    "png": "switching/poc-sc-confirmed.png",
+    "html": "html/switching/poc-sc-confirmed.html"
+  },
+  {
+    "key": "poc/sc-rejected.dc.html",
+    "slug": "poc-sc-rejected",
+    "page": "Scene switching",
+    "title": "Rejected · D not applied",
+    "w": 402,
+    "h": 874,
+    "png": "switching/poc-sc-rejected.png",
+    "html": "html/switching/poc-sc-rejected.html"
+  },
+  {
+    "key": "poc/sc-readonly.dc.html",
+    "slug": "poc-sc-readonly",
+    "page": "Scene switching",
+    "title": "Read-only connection",
+    "w": 402,
+    "h": 874,
+    "png": "switching/poc-sc-readonly.png",
+    "html": "html/switching/poc-sc-readonly.html"
+  },
+  {
+    "key": "ipad/sc-idle.dc.html",
+    "slug": "ipad-sc-idle",
+    "page": "Scene switching",
+    "title": "Idle · tap a scene",
+    "w": 1180,
+    "h": 820,
+    "png": "switching/ipad-sc-idle.png",
+    "html": "html/switching/ipad-sc-idle.html"
+  },
+  {
+    "key": "ipad/sc-pending.dc.html",
+    "slug": "ipad-sc-pending",
+    "page": "Scene switching",
+    "title": "Pending · switching to B",
+    "w": 1180,
+    "h": 820,
+    "png": "switching/ipad-sc-pending.png",
+    "html": "html/switching/ipad-sc-pending.html"
+  },
+  {
+    "key": "ipad/sc-confirmed.dc.html",
+    "slug": "ipad-sc-confirmed",
+    "page": "Scene switching",
+    "title": "Confirmed · B on the QC",
+    "w": 1180,
+    "h": 820,
+    "png": "switching/ipad-sc-confirmed.png",
+    "html": "html/switching/ipad-sc-confirmed.html"
+  },
+  {
+    "key": "ipad/sc-rejected.dc.html",
+    "slug": "ipad-sc-rejected",
+    "page": "Scene switching",
+    "title": "Rejected · D not applied",
+    "w": 1180,
+    "h": 820,
+    "png": "switching/ipad-sc-rejected.png",
+    "html": "html/switching/ipad-sc-rejected.html"
+  },
+  {
+    "key": "ipad/sc-readonly.dc.html",
+    "slug": "ipad-sc-readonly",
+    "page": "Scene switching",
+    "title": "Read-only connection",
+    "w": 1180,
+    "h": 820,
+    "png": "switching/ipad-sc-readonly.png",
+    "html": "html/switching/ipad-sc-readonly.html"
+  },
+  {
+    "key": "duo/sc-idle.dc.html",
+    "slug": "duo-sc-idle",
+    "page": "Scene switching",
+    "title": "Idle · tap a scene",
+    "w": 626,
+    "h": 890,
+    "png": "switching/duo-sc-idle.png",
+    "html": "html/switching/duo-sc-idle.html"
+  },
+  {
+    "key": "duo/sc-pending.dc.html",
+    "slug": "duo-sc-pending",
+    "page": "Scene switching",
+    "title": "Pending · switching to B",
+    "w": 626,
+    "h": 890,
+    "png": "switching/duo-sc-pending.png",
+    "html": "html/switching/duo-sc-pending.html"
+  },
+  {
+    "key": "duo/sc-confirmed.dc.html",
+    "slug": "duo-sc-confirmed",
+    "page": "Scene switching",
+    "title": "Confirmed · B on the QC",
+    "w": 626,
+    "h": 890,
+    "png": "switching/duo-sc-confirmed.png",
+    "html": "html/switching/duo-sc-confirmed.html"
+  },
+  {
+    "key": "duo/sc-rejected.dc.html",
+    "slug": "duo-sc-rejected",
+    "page": "Scene switching",
+    "title": "Rejected · D not applied",
+    "w": 626,
+    "h": 890,
+    "png": "switching/duo-sc-rejected.png",
+    "html": "html/switching/duo-sc-rejected.html"
+  },
+  {
+    "key": "duo/sc-readonly.dc.html",
+    "slug": "duo-sc-readonly",
+    "page": "Scene switching",
+    "title": "Read-only connection",
+    "w": 626,
+    "h": 890,
+    "png": "switching/duo-sc-readonly.png",
+    "html": "html/switching/duo-sc-readonly.html"
+  },
+  {
+    "key": "duo/u-row.dc.html",
+    "slug": "duo-u-row",
+    "page": "iPhone Duo",
+    "title": "Unfolded · scenes",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-u-row.png",
+    "html": "html/screens/duo-u-row.html"
+  },
+  {
+    "key": "duo/u-idle.dc.html",
+    "slug": "duo-u-idle",
+    "page": "iPhone Duo",
+    "title": "Unfolded · editing",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-u-idle.png",
+    "html": "html/screens/duo-u-idle.html"
+  },
+  {
+    "key": "duo/u-pending.dc.html",
+    "slug": "duo-u-pending",
+    "page": "iPhone Duo",
+    "title": "Unfolded · sending a value",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-u-pending.png",
+    "html": "html/screens/duo-u-pending.html"
+  },
+  {
+    "key": "duo/h-row.dc.html",
+    "slug": "duo-h-row",
+    "page": "iPhone Duo",
+    "title": "Half-folded · scenes",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-h-row.png",
+    "html": "html/screens/duo-h-row.html"
+  },
+  {
+    "key": "duo/h-edit.dc.html",
+    "slug": "duo-h-edit",
+    "page": "iPhone Duo",
+    "title": "Half-folded · editing",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-h-edit.png",
+    "html": "html/screens/duo-h-edit.html"
+  },
+  {
+    "key": "duo/h-type.dc.html",
+    "slug": "duo-h-type",
+    "page": "iPhone Duo",
+    "title": "Half-folded · typing a value",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-h-type.png",
+    "html": "html/screens/duo-h-type.html"
+  },
+  {
+    "key": "duo/Fold.dc.html",
+    "slug": "duo-Fold",
+    "page": "iPhone Duo",
+    "title": "Fold prototype (Play)",
+    "w": 860,
+    "h": 1000,
+    "png": "screens/duo-Fold.png",
+    "html": "html/screens/duo-Fold.html"
+  },
+  {
+    "key": "duo/f-half.dc.html",
+    "slug": "duo-f-half",
+    "page": "iPhone Duo",
+    "title": "Fold prototype · half-folded",
+    "w": 860,
+    "h": 1000,
+    "png": "screens/duo-f-half.png",
+    "html": "html/screens/duo-f-half.html"
+  },
+  {
+    "key": "duo/xl-grid.dc.html",
+    "slug": "duo-xl-grid",
+    "page": "iPhone Duo",
+    "title": "Outer landscape · grid",
+    "w": 678,
+    "h": 466,
+    "png": "screens/duo-xl-grid.png",
+    "html": "html/screens/duo-xl-grid.html"
+  },
+  {
+    "key": "duo/xl-sheet.dc.html",
+    "slug": "duo-xl-sheet",
+    "page": "iPhone Duo",
+    "title": "Outer landscape · block menu",
+    "w": 678,
+    "h": 466,
+    "png": "screens/duo-xl-sheet.png",
+    "html": "html/screens/duo-xl-sheet.html"
+  },
+  {
+    "key": "duo/xl-pending.dc.html",
+    "slug": "duo-xl-pending",
+    "page": "iPhone Duo",
+    "title": "Outer landscape · block menu, sending",
+    "w": 678,
+    "h": 466,
+    "png": "screens/duo-xl-pending.png",
+    "html": "html/screens/duo-xl-pending.html"
+  },
+  {
+    "key": "duo/x-grid.dc.html",
+    "slug": "duo-x-grid",
+    "page": "iPhone Duo",
+    "title": "Outer portrait · grid",
+    "w": 466,
+    "h": 678,
+    "png": "screens/duo-x-grid.png",
+    "html": "html/screens/duo-x-grid.html"
+  },
+  {
+    "key": "duo/x-sheet.dc.html",
+    "slug": "duo-x-sheet",
+    "page": "iPhone Duo",
+    "title": "Outer portrait · block menu",
+    "w": 466,
+    "h": 678,
+    "png": "screens/duo-x-sheet.png",
+    "html": "html/screens/duo-x-sheet.html"
+  },
+  {
+    "key": "duo/x-pending.dc.html",
+    "slug": "duo-x-pending",
+    "page": "iPhone Duo",
+    "title": "Outer portrait · block menu, sending",
+    "w": 466,
+    "h": 678,
+    "png": "screens/duo-x-pending.png",
+    "html": "html/screens/duo-x-pending.html"
+  },
+  {
     "key": "poc/tn-island.dc.html",
     "slug": "tn-island",
     "page": "Tuner",
@@ -1478,85 +1708,5 @@
     "h": 890,
     "png": "tuner/duo-tn-crease-half.png",
     "html": "html/tuner/duo-tn-crease-half.html"
-  },
-  {
-    "key": "poc/s-idle.dc.html",
-    "slug": "s-idle",
-    "page": "Scene parameters",
-    "title": "Scene parameter · editing scene F",
-    "w": 402,
-    "h": 874,
-    "png": "screens/s-idle.png",
-    "html": "html/screens/s-idle.html"
-  },
-  {
-    "key": "poc/s-pending.dc.html",
-    "slug": "s-pending",
-    "page": "Scene parameters",
-    "title": "Scene parameter · sending to scene F",
-    "w": 402,
-    "h": 874,
-    "png": "screens/s-pending.png",
-    "html": "html/screens/s-pending.html"
-  },
-  {
-    "key": "poc/s-menu.dc.html",
-    "slug": "s-menu",
-    "page": "Scene parameters",
-    "title": "Scene parameter · choosing a scene",
-    "w": 402,
-    "h": 874,
-    "png": "screens/s-menu.png",
-    "html": "html/screens/s-menu.html"
-  },
-  {
-    "key": "poc/s-loading.dc.html",
-    "slug": "s-loading",
-    "page": "Scene parameters",
-    "title": "Scene parameter · switched to G, dial reloading",
-    "w": 402,
-    "h": 874,
-    "png": "screens/s-loading.png",
-    "html": "html/screens/s-loading.html"
-  },
-  {
-    "key": "poc/s-loaded.dc.html",
-    "slug": "s-loaded",
-    "page": "Scene parameters",
-    "title": "Scene parameter · editing scene G",
-    "w": 402,
-    "h": 874,
-    "png": "screens/s-loaded.png",
-    "html": "html/screens/s-loaded.html"
-  },
-  {
-    "key": "poc/s-expression.dc.html",
-    "slug": "s-expression",
-    "page": "Scene parameters",
-    "title": "Expression parameter · read-only",
-    "w": 402,
-    "h": 874,
-    "png": "screens/s-expression.png",
-    "html": "html/screens/s-expression.html"
-  },
-  {
-    "key": "poc/s-daylight.dc.html",
-    "slug": "s-daylight",
-    "page": "Scene parameters",
-    "title": "Daylight · scene parameter",
-    "w": 402,
-    "h": 874,
-    "png": "screens/s-daylight.png",
-    "html": "html/screens/s-daylight.html"
-  },
-  {
-    "key": "poc/s-global.dc.html",
-    "slug": "s-global",
-    "page": "Scene parameters",
-    "title": "Global parameter · applies to all scenes",
-    "w": 402,
-    "h": 874,
-    "png": "screens/s-global.png",
-    "html": "html/screens/s-global.html"
   }
 ]

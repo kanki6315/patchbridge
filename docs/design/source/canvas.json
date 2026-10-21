@@ -19,6 +19,10 @@
       "name": "Scene parameters"
     },
     {
+      "id": "switching",
+      "name": "Scene switching"
+    },
+    {
       "id": "ipad",
       "name": "iPad PoC"
     },
@@ -951,7 +955,7 @@
       "y": 0,
       "w": 626,
       "h": 890,
-      "title": "Unfolded · row",
+      "title": "Unfolded · scenes",
       "page": "duo"
     },
     "duo/u-idle.dc.html": {
@@ -975,7 +979,7 @@
       "y": 1290,
       "w": 626,
       "h": 890,
-      "title": "Half-folded · row",
+      "title": "Half-folded · scenes",
       "page": "duo"
     },
     "duo/h-edit.dc.html": {
@@ -1415,6 +1419,126 @@
       "h": 874,
       "title": "Scene parameter editor (Tweaks: state, theme)",
       "page": "components"
+    },
+    "poc/sc-idle.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Idle · tap a scene",
+      "page": "switching"
+    },
+    "poc/sc-pending.dc.html": {
+      "x": 482,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Pending · switching to B",
+      "page": "switching"
+    },
+    "poc/sc-confirmed.dc.html": {
+      "x": 964,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Confirmed · B on the QC",
+      "page": "switching"
+    },
+    "poc/sc-rejected.dc.html": {
+      "x": 1446,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Rejected · D not applied",
+      "page": "switching"
+    },
+    "poc/sc-readonly.dc.html": {
+      "x": 1928,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Read-only connection",
+      "page": "switching"
+    },
+    "ipad/sc-idle.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Idle · tap a scene",
+      "page": "switching"
+    },
+    "ipad/sc-pending.dc.html": {
+      "x": 1260,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Pending · switching to B",
+      "page": "switching"
+    },
+    "ipad/sc-confirmed.dc.html": {
+      "x": 2520,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Confirmed · B on the QC",
+      "page": "switching"
+    },
+    "ipad/sc-rejected.dc.html": {
+      "x": 3780,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Rejected · D not applied",
+      "page": "switching"
+    },
+    "ipad/sc-readonly.dc.html": {
+      "x": 5040,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Read-only connection",
+      "page": "switching"
+    },
+    "duo/sc-idle.dc.html": {
+      "x": 0,
+      "y": 2540,
+      "w": 626,
+      "h": 890,
+      "title": "Idle · tap a scene",
+      "page": "switching"
+    },
+    "duo/sc-pending.dc.html": {
+      "x": 706,
+      "y": 2540,
+      "w": 626,
+      "h": 890,
+      "title": "Pending · switching to B",
+      "page": "switching"
+    },
+    "duo/sc-confirmed.dc.html": {
+      "x": 1412,
+      "y": 2540,
+      "w": 626,
+      "h": 890,
+      "title": "Confirmed · B on the QC",
+      "page": "switching"
+    },
+    "duo/sc-rejected.dc.html": {
+      "x": 2118,
+      "y": 2540,
+      "w": 626,
+      "h": 890,
+      "title": "Rejected · D not applied",
+      "page": "switching"
+    },
+    "duo/sc-readonly.dc.html": {
+      "x": 2824,
+      "y": 2540,
+      "w": 626,
+      "h": 890,
+      "title": "Read-only connection",
+      "page": "switching"
     }
   },
   "order": [
@@ -1584,7 +1708,22 @@
     "poc/s-expression.dc.html",
     "poc/s-daylight.dc.html",
     "poc/s-global.dc.html",
-    "poc/SceneEditor.dc.html"
+    "poc/SceneEditor.dc.html",
+    "poc/sc-idle.dc.html",
+    "poc/sc-pending.dc.html",
+    "poc/sc-confirmed.dc.html",
+    "poc/sc-rejected.dc.html",
+    "poc/sc-readonly.dc.html",
+    "ipad/sc-idle.dc.html",
+    "ipad/sc-pending.dc.html",
+    "ipad/sc-confirmed.dc.html",
+    "ipad/sc-rejected.dc.html",
+    "ipad/sc-readonly.dc.html",
+    "duo/sc-idle.dc.html",
+    "duo/sc-pending.dc.html",
+    "duo/sc-confirmed.dc.html",
+    "duo/sc-rejected.dc.html",
+    "duo/sc-readonly.dc.html"
   ],
   "notes": {
     "pocConnect": {
@@ -1786,6 +1925,30 @@
       "page": "scenes",
       "color": "teal",
       "text": "How scene parameters work\n\n• Editable for the active scene only. The dial carries a scene marker (dot + letter) above the value; the tile carries the same marker after its label. Global parameters carry no marker, so the marker itself says \"this one changes per scene\".\n• The other seven scenes sit under the dial as a flat, read-only strip in A–H order. The active scene keeps its slot, outlined in its own color, so positions never move when you switch.\n• Switching scene from the header pill changes the scene on the QC. Block and parameter stay selected. The dial clears to \"—\", steppers and typing pause, and the status reads \"Loading scene G from the QC…\" until the bridge answers. Then the arc sweeps from 0 to the new value (280 ms, ease-out-quint; Reduce Motion: instant) and the status confirms \"Now editing scene G\".\n• Global parameters (Width, Mode, Sync here) edit as before, with no marker. The status says \"Applies to all scenes\" and, in place of the scene strip, a row reads \"Same in every scene\" with all eight scene dots, so the tiles never shift when you move between parameter kinds.\n• A pending edit belongs to the scene it was sent to. If the QC changes scene first, the existing \"Not applied · scene changed\" state applies.\n• Expression-controlled parameters stay read-only. They use a pedal glyph, never the padlock, and show the heel and toe sweep on the arc and beside it. The padlock stays for other reasons (meter, unknown scale, depends on Sync).\n• Scene switching stays hidden until the bridge advertises it; without it the pill is a static label and the strip still shows every scene's value."
+    },
+    "switchPhone": {
+      "x": 0,
+      "y": -280,
+      "kind": "title1",
+      "maxW": 2330,
+      "page": "switching",
+      "text": "iPhone: tap a scene; only the scene the QC confirms is drawn active"
+    },
+    "switchPad": {
+      "x": 0,
+      "y": 1040,
+      "kind": "title1",
+      "maxW": 6220,
+      "page": "switching",
+      "text": "iPad: the named strip, with scene status in the top bar"
+    },
+    "switchDuo": {
+      "x": 0,
+      "y": 2260,
+      "kind": "title1",
+      "maxW": 3450,
+      "page": "switching",
+      "text": "iPhone Duo, unfolded: the named scene row"
     }
   },
   "designSystems": []
