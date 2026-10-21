@@ -1478,5 +1478,85 @@
     "h": 890,
     "png": "tuner/duo-tn-crease-half.png",
     "html": "html/tuner/duo-tn-crease-half.html"
+  },
+  {
+    "key": "poc/s-idle.dc.html",
+    "slug": "s-idle",
+    "page": "Scene parameters",
+    "title": "Scene parameter · editing scene F",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-idle.png",
+    "html": "html/screens/s-idle.html"
+  },
+  {
+    "key": "poc/s-pending.dc.html",
+    "slug": "s-pending",
+    "page": "Scene parameters",
+    "title": "Scene parameter · sending to scene F",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-pending.png",
+    "html": "html/screens/s-pending.html"
+  },
+  {
+    "key": "poc/s-menu.dc.html",
+    "slug": "s-menu",
+    "page": "Scene parameters",
+    "title": "Scene parameter · choosing a scene",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-menu.png",
+    "html": "html/screens/s-menu.html"
+  },
+  {
+    "key": "poc/s-loading.dc.html",
+    "slug": "s-loading",
+    "page": "Scene parameters",
+    "title": "Scene parameter · switched to G, dial reloading",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-loading.png",
+    "html": "html/screens/s-loading.html"
+  },
+  {
+    "key": "poc/s-loaded.dc.html",
+    "slug": "s-loaded",
+    "page": "Scene parameters",
+    "title": "Scene parameter · editing scene G",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-loaded.png",
+    "html": "html/screens/s-loaded.html"
+  },
+  {
+    "key": "poc/s-expression.dc.html",
+    "slug": "s-expression",
+    "page": "Scene parameters",
+    "title": "Expression parameter · read-only",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-expression.png",
+    "html": "html/screens/s-expression.html"
+  },
+  {
+    "key": "poc/s-daylight.dc.html",
+    "slug": "s-daylight",
+    "page": "Scene parameters",
+    "title": "Daylight · scene parameter",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-daylight.png",
+    "html": "html/screens/s-daylight.html"
+  },
+  {
+    "key": "poc/s-global.dc.html",
+    "slug": "s-global",
+    "page": "Scene parameters",
+    "title": "Global parameter · applies to all scenes",
+    "w": 402,
+    "h": 874,
+    "png": "screens/s-global.png",
+    "html": "html/screens/s-global.html"
   }
 ]

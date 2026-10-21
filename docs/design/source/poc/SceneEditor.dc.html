@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PoC · Scene parameter editor component</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+    <a href="#" style="height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+      Dirty Riffage
+    </a>
+    <button type="button" aria-haspopup="menu" aria-expanded="{{pill.expanded}}" aria-label="{{pill.aria}}" style="{{pill.style}}">
+      <span aria-hidden="true" style="{{pill.dot}}"></span>
+      <span style="font-weight: 700;">{{pill.letter}}</span>
+      <sc-if value="{{pill.hasName}}" hint-placeholder-val="{{true}}">
+        <span style="color: {{t.muted}};">{{pill.name}}</span>
+      </sc-if>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: {{t.muted}};"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+  </div>
+
+  <div style="margin-top: 14px; display: flex; align-items: center; gap: 12px;">
+    <span aria-hidden="true" style="{{chipStyle}}">MOD</span>
+    <div style="min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 style="margin: 0; font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dual Chorus</h1>
+      <span style="font-size: 13px; color: {{t.muted}};">Modulation · Mix and Tone change per scene</span>
+    </div>
+  </div>
+
+  <section aria-label="{{heroLabel}}" style="position: relative; height: 284px; margin-top: 10px; display: flex; flex-direction: column; align-items: center;">
+    <span style="font-size: 19px; font-weight: 600;">{{hero.label}}</span>
+
+    <div style="position: relative; width: 240px; height: 222px;">
+      <svg width="240" height="240" viewBox="0 0 240 240" role="img" aria-label="{{gaugeAria}}" style="position: absolute; top: 0; left: 0;">
+        <path d="{{g.track}}" fill="none" stroke="{{t.track}}" stroke-width="16" stroke-linecap="round"></path>
+        <path d="{{g.sweep}}" fill="none" stroke="{{arcColor}}" stroke-width="16" opacity="{{g.sweepOpacity}}"></path>
+        <path d="{{g.solid}}" fill="none" stroke="{{arcColor}}" stroke-width="16" stroke-linecap="round" opacity="{{g.solidOpacity}}"></path>
+        <path d="{{g.prov}}" fill="none" stroke="{{arcColor}}" stroke-width="16" stroke-dasharray="3 6" opacity="{{g.provOpacity}}"></path>
+        <line x1="{{g.tick.x1}}" y1="{{g.tick.y1}}" x2="{{g.tick.x2}}" y2="{{g.tick.y2}}" stroke="{{t.ink}}" stroke-width="3" stroke-linecap="round" opacity="{{g.provOpacity}}"></line>
+        <line x1="{{g.heel.x1}}" y1="{{g.heel.y1}}" x2="{{g.heel.x2}}" y2="{{g.heel.y2}}" stroke="{{t.ink}}" stroke-width="2" stroke-linecap="round" opacity="{{g.sweepTicks}}"></line>
+        <line x1="{{g.toe.x1}}" y1="{{g.toe.y1}}" x2="{{g.toe.x2}}" y2="{{g.toe.y2}}" stroke="{{t.ink}}" stroke-width="2" stroke-linecap="round" opacity="{{g.sweepTicks}}"></line>
+        <circle cx="{{g.thumb.x}}" cy="{{g.thumb.y}}" r="13" fill="{{g.thumbFill}}" stroke="{{g.thumbStroke}}" stroke-width="3" opacity="{{g.thumbOpacity}}"></circle>
+      </svg>
+      <sc-if value="{{marker.show}}" hint-placeholder-val="{{true}}">
+        <span aria-hidden="true" style="{{marker.style}}"><span style="{{marker.dot}}"></span>{{marker.letter}}</span>
+      </sc-if>
+      <button type="button" aria-label="{{valueAria}}" style="position: absolute; left: 50%; top: 87px; transform: translateX(-50%); height: 66px; padding: 0 12px; box-sizing: border-box; display: flex; align-items: baseline; justify-content: center; gap: 5px; line-height: 66px; white-space: nowrap; border: 0; border-radius: 18px; background: transparent; outline: {{v.outline}}; outline-offset: -1.5px; color: {{v.color}}; font: inherit; cursor: {{v.cursor}};">
+        <sc-if value="{{expr}}" hint-placeholder-val="{{false}}">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="align-self: center;"><path d="M3 20h18"></path><path d="M5.5 16.5L19 9.5"></path><circle cx="5.5" cy="17" r="1.6"></circle><path d="M17 15v5"></path></svg>
+        </sc-if>
+        <span style="font-size: {{v.size}}; font-weight: 700; letter-spacing: -0.02em;">{{shownValue}}</span>
+        <span style="font-size: 18px; font-weight: 600; color: {{t.muted}};">%</span>
+      </button>
+      <span style="position: absolute; left: 22px; top: 202px; font-size: 12px; color: {{t.muted}};">{{hero.min}}</span>
+      <span style="position: absolute; right: 16px; top: 202px; font-size: 12px; color: {{t.muted}};">{{hero.max}}</span>
+    </div>
+
+    <sc-if value="{{showSteppers}}" hint-placeholder-val="{{true}}">
+      <button type="button" aria-label="{{decAria}}" aria-disabled="{{stepper.disabled}}" style="{{stepper.left}}">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+      </button>
+      <button type="button" aria-label="{{incAria}}" aria-disabled="{{stepper.disabled}}" style="{{stepper.right}}">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
+      </button>
+    </sc-if>
+
+    <div aria-live="polite" style="position: absolute; left: 0; right: 0; top: 260px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 500; text-align: center; color: {{st.color}};">
+      <sc-if value="{{st.dot}}" hint-placeholder-val="{{true}}">
+        <span aria-hidden="true" style="{{st.dotStyle}}"></span>
+      </sc-if>
+      <sc-if value="{{st.pending}}" hint-placeholder-val="{{false}}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-dasharray="3 3" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle></svg>
+      </sc-if>
+      <sc-if value="{{st.check}}" hint-placeholder-val="{{false}}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+      </sc-if>
+      <sc-if value="{{st.pedal}}" hint-placeholder-val="{{false}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"></path><path d="M5.5 16.5L19 9.5"></path><circle cx="5.5" cy="17" r="1.6"></circle><path d="M17 15v5"></path></svg>
+      </sc-if>
+      <span>{{st.text}}</span>
+    </div>
+  </section>
+
+  <sc-if value="{{showSceneList}}" hint-placeholder-val="{{true}}">
+    <div role="group" aria-label="{{list.aria}}" style="margin-top: 6px; display: flex; flex-direction: column; gap: 6px;">
+      <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 2px; font-size: 12px; color: {{t.muted}};">
+        <span style="font-weight: 600;">Mix in each scene · %</span>
+        <span>Switch scene to edit another</span>
+      </span>
+      <ul style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px;">
+        <sc-for list="{{list.cells}}" as="s" hint-placeholder-count="8">
+          <li aria-label="{{s.aria}}" style="{{s.cell}}">
+            <span aria-hidden="true" style="display: flex; align-items: center; gap: 3px;">
+              <span style="{{s.dot}}"></span>
+              <span style="{{s.letterStyle}}">{{s.letter}}</span>
+            </span>
+            <span aria-hidden="true" style="{{s.valueStyle}}">{{s.value}}</span>
+          </li>
+        </sc-for>
+      </ul>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{glob}}" hint-placeholder-val="{{false}}">
+    <div role="group" aria-label="Width is shared by all eight scenes" style="margin-top: 6px; height: 64px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 15px; box-shadow: inset 0 0 0 1px {{t.hairline}};">
+      <span style="display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 15px; font-weight: 600;">Same in every scene</span>
+        <span style="font-size: 12px; color: {{t.muted}};">Switching scene keeps this value</span>
+      </span>
+      <span aria-hidden="true" style="display: flex; align-items: center; gap: 5px;">
+        <sc-for list="{{shared.dots}}" as="d" hint-placeholder-count="8">
+          <span style="{{d.dot}}"></span>
+        </sc-for>
+      </span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{expr}}" hint-placeholder-val="{{false}}">
+    <div role="group" aria-label="Expression 1 sweep, heel 20.0 percent to toe 80.0 percent. Edit the assignment on the QC" style="margin-top: 6px; height: 64px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 15px; box-shadow: inset 0 0 0 1px {{t.hairline}};">
+      <span style="display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 15px; font-weight: 600;">Expression 1</span>
+        <span style="font-size: 12px; color: {{t.muted}};">Assigned on the QC</span>
+      </span>
+      <span style="display: flex; align-items: baseline; gap: 6px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">
+        Heel <span style="font-size: 17px; font-weight: 600; color: {{t.ink}};">20.0</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="align-self: center;"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        Toe <span style="font-size: 17px; font-weight: 600; color: {{t.ink}};">80.0</span>
+      </span>
+    </div>
+  </sc-if>
+
+  <div role="group" aria-label="Parameters" style="margin-top: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+    <sc-for list="{{tiles}}" as="p" hint-placeholder-count="8">
+      <button type="button" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" style="{{p.style}}">
+        <span style="display: flex; align-items: center; gap: 4px; max-width: 100%; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden;">
+          <sc-if value="{{p.locked}}" hint-placeholder-val="{{false}}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+          </sc-if>
+          <sc-if value="{{p.exp}}" hint-placeholder-val="{{false}}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M3 20h18"></path><path d="M5.5 16.5L19 9.5"></path><circle cx="5.5" cy="17" r="1.6"></circle><path d="M17 15v5"></path></svg>
+          </sc-if>
+          <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{p.label}}</span>
+          <sc-if value="{{p.scene}}" hint-placeholder-val="{{false}}">
+            <span aria-hidden="true" style="flex: none; display: flex; align-items: center; gap: 3px; margin-left: auto; padding-left: 2px; font-size: 11px; font-weight: 700; color: {{t.ink}};"><span style="{{p.sceneDot}}"></span>{{p.sceneLetter}}</span>
+          </sc-if>
+        </span>
+        <span style="{{p.valueStyle}}">{{p.value}}<span style="font-size: 12px; font-weight: 500; margin-left: 3px; opacity: 0.8;">{{p.unit}}</span></span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 12px 16px 34px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: {{t.bar}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); border-top: 1px solid {{t.fgBase}} / 0.08);">
+    <span style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.signal}};"></span>
+      Unsaved
+    </span>
+    <button type="button" style="{{saveStyle}}">Save</button>
+  </div>
+
+  <sc-if value="{{menu.open}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; z-index: 30; inset: 0; background: {{t.scrim}};"></div>
+    <div role="menu" aria-label="Scene" style="position: absolute; z-index: 31; top: 112px; right: 16px; width: 276px; box-sizing: border-box; padding: 6px; display: flex; flex-direction: column; border-radius: 20px; background: {{t.sheet}}; backdrop-filter: blur(30px) saturate(1.7); -webkit-backdrop-filter: blur(30px) saturate(1.7); box-shadow: {{t.sheetLift}};">
+      <span style="padding: 8px 10px 6px; display: flex; justify-content: space-between; font-size: 12px; color: {{t.muted}};"><span style="font-weight: 600;">Scene</span><span>Mix %</span></span>
+      <sc-for list="{{menu.rows}}" as="r" hint-placeholder-count="8">
+        <button type="button" role="menuitemradio" aria-checked="{{r.checked}}" aria-label="{{r.aria}}" style="{{r.style}}">
+          <span aria-hidden="true" style="{{r.dot}}"></span>
+          <span style="width: 14px; font-weight: 700;">{{r.letter}}</span>
+          <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: {{t.muted}};">{{r.name}}</span>
+          <span style="font-size: 14px; color: {{t.muted}};">{{r.value}}</span>
+          <span style="width: 18px; display: flex; justify-content: center; color: {{t.signal}};">
+            <sc-if value="{{r.on}}" hint-placeholder-val="{{false}}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+            </sc-if>
+          </span>
+        </button>
+      </sc-for>
+      <span style="margin-top: 4px; padding: 10px 10px 6px; border-top: 1px solid {{t.hairline}}; font-size: 13px; line-height: 1.35; color: {{t.muted}};">Switches the scene on the QC. Dual Chorus and Mix stay selected.</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["idle","pending","menu","loading","loaded","global","expression"],"default":"idle","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const state = this.props.state ?? 'idle';
+    const themeName = this.props.theme ?? 'stage';
+    const THEMES = {
+      stage: { dark: true, ground: 'oklch(0.16 0.008 110)', ink: 'oklch(0.96 0.005 110)', muted: 'oklch(0.76 0.01 110)', fgBase: 'oklch(1 0 0', track: 'oklch(1 0 0 / 0.13)',
+        glass: 'oklch(0.26 0.01 110 / 0.6)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 0 0 1px oklch(1 0 0 / 0.06)', bar: 'oklch(0.2 0.009 110 / 0.62)',
+        sheet: 'oklch(0.22 0.01 110 / 0.86)', sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.16), 0 18px 40px oklch(0 0 0 / 0.5)',
+        signal: 'oklch(0.87 0.17 115)', signalInk: 'oklch(0.2 0.04 115)', tileFill: 'oklch(1 0 0 / 0.08)', hairline: 'oklch(1 0 0 / 0.12)', scrim: 'oklch(0 0 0 / 0.38)' },
+      daylight: { dark: false, ground: 'oklch(0.975 0.003 110)', ink: 'oklch(0.2 0.01 110)', muted: 'oklch(0.45 0.01 110)', fgBase: 'oklch(0.2 0.01 110', track: 'oklch(0.2 0.01 110 / 0.1)',
+        glass: 'oklch(1 0 0 / 0.66)', glassEdge: 'inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 0 0 1px oklch(0.2 0.01 110 / 0.08), 0 2px 8px oklch(0.2 0.01 110 / 0.06)', bar: 'oklch(1 0 0 / 0.7)',
+        sheet: 'oklch(0.99 0.002 110 / 0.92)', sheetLift: 'inset 0 1px 0 oklch(1 0 0 / 0.9), 0 18px 40px oklch(0.2 0.01 110 / 0.18)',
+        signal: 'oklch(0.48 0.12 115)', signalInk: '#ffffff', tileFill: 'oklch(1 0 0 / 0.72)', hairline: 'oklch(0.2 0.01 110 / 0.14)', scrim: 'oklch(0.2 0.01 110 / 0.14)' }
+    };
+    const t = THEMES[themeName];
+    const hue = 330;
+    const arcColor = t.dark ? 'oklch(0.76 0.14 330)' : 'oklch(0.55 0.17 330)';
+
+    // Scene names and colors come from the QC (scene_labels / scene_colors) and never follow the theme.
+    const QC_SCENES = [['CLEAN', '#ff2727'], ['CRONCH', '#0a74e0'], ['', '#ffd236'], ['', '#ff02c2'], ['RHYTHM', '#45f862'], ['RHYTHM', '#ff7000'], ['OCTAVE FUN', '#0a74e0'], ['LEAD', '#ff02c2']];
+    const letters = 'ABCDEFGH';
+    // Mix and Tone are scene-assigned on this block: one stored value per scene. Depth follows Expression 1.
+    const MIX = [45.0, 30.0, 25.0, 52.5, 20.0, 73.2, 60.0, 35.0];
+    const TONE = [62.0, 41.5, 38.0, 55.5, 44.0, 49.5, 70.0, 58.0];
+    const SENT = 80.0;
+    const fmt = (n) => n.toFixed(1);
+
+    const loading = state === 'loading', loaded = state === 'loaded', pending = state === 'pending';
+    const expr = state === 'expression', menuOpen = state === 'menu', glob = state === 'global';
+    const active = loading || loaded ? 6 : 5;
+    const L = letters[active];
+    const sceneColor = QC_SCENES[active][1];
+    // Scene Dot Rule: in Daylight every dot gets a dark edge, since several QC colors vanish on white.
+    const dotOf = (color, size) => ({ width: size + 'px', height: size + 'px', flex: 'none', borderRadius: '50%', background: color,
+      boxShadow: t.dark ? 'inset 0 0 0 1px oklch(0 0 0 / 0.15)' : 'inset 0 0 0 1.5px oklch(0.2 0.01 110 / 0.55)' });
+
+    const mixNow = loading ? null : pending ? SENT : MIX[active];
+    const mixText = mixNow === null ? '—' : fmt(mixNow);
+
+    // Gauge geometry matches the block editor: 270° sweep, knob travel normalized 0 to 1.
+    const cx = 120, cy = 120, r = 96;
+    const ang = (v) => (135 + v * 270) * Math.PI / 180;
+    const pt = (v, rad = r) => ({ x: +(cx + rad * Math.cos(ang(v))).toFixed(2), y: +(cy + rad * Math.sin(ang(v))).toFixed(2) });
+    const arc = (a, z) => { const p0 = pt(a), p1 = pt(Math.max(z, a + 0.0005)); const large = (z - a) * 270 > 180 ? 1 : 0; return 'M ' + p0.x + ' ' + p0.y + ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p1.x + ' ' + p1.y; };
+    const tickAt = (v, a, b) => { const i = pt(v, a), o = pt(v, b); return { x1: i.x, y1: i.y, x2: o.x, y2: o.y }; };
+    const confirmed = MIX[active] / 100;
+    const thumbPos = expr ? 0.5 : glob ? 0.7 : pending ? SENT / 100 : loading ? 0 : confirmed;
+    const g = {
+      track: arc(0, 1),
+      sweep: arc(0.2, 0.8), sweepOpacity: expr ? 0.3 : 0, sweepTicks: expr ? 0.9 : 0,
+      heel: tickAt(0.2, 82, 110), toe: tickAt(0.8, 82, 110),
+      solid: arc(0, expr ? 0.5 : glob ? 0.7 : confirmed), solidOpacity: loading ? 0 : expr ? 0 : 1,
+      prov: arc(confirmed, SENT / 100), provOpacity: pending ? 1 : 0,
+      tick: tickAt(confirmed, 80, 112),
+      thumb: pt(thumbPos), thumbOpacity: loading ? 0 : 1,
+      thumbFill: expr ? 'transparent' : '#ffffff', thumbStroke: expr ? t.muted : t.ground
+    };
+
+    const shownValue = expr ? '50.0' : glob ? '70.0' : mixText;
+    const v = {
+      outline: pending ? '1.5px dashed ' + t.signal : 'none',
+      color: expr || loading ? t.muted : t.ink,
+      cursor: expr || loading ? 'default' : 'text',
+      size: expr ? '42px' : '48px'
+    };
+
+    // The scene marker sits on the dial, above the value, so the number always says whose it is.
+    const marker = {
+      show: !expr && !glob, letter: L, dot: dotOf(sceneColor, 9),
+      style: { position: 'absolute', left: '50%', top: '52px', transform: 'translateX(-50%)', height: '24px', boxSizing: 'border-box', padding: '0 9px 0 8px', display: 'flex', alignItems: 'center', gap: '5px', borderRadius: '999px', background: t.fgBase + ' / 0.08)', boxShadow: 'inset 0 0 0 1px ' + t.fgBase + ' / 0.12)', fontSize: '13px', fontWeight: 700, lineHeight: '1', color: t.ink }
+    };
+
+    // A global parameter says so as plainly as a scene one does, so a nudge in scene F never looks scene-only.
+    const statusMap = expr ? { pedal: true, text: 'Read-only · set by Expression 1', color: t.muted }
+      : glob ? { all: true, text: 'Applies to all scenes', color: t.muted }
+      : pending ? { pending: true, text: 'Sending to scene ' + L + '…', color: t.signal }
+      : loading ? { pending: true, text: 'Loading scene ' + L + ' from the QC…', color: t.muted }
+      : loaded ? { check: true, text: 'Now editing scene ' + L, color: t.signal }
+      : { dot: true, text: 'Edits scene ' + L + ' only', color: t.muted };
+    const st = { dot: !!statusMap.dot, pending: !!statusMap.pending, check: !!statusMap.check, pedal: !!statusMap.pedal, all: !!statusMap.all, text: statusMap.text, color: statusMap.color, dotStyle: dotOf(sceneColor, 8) };
+
+    const cells = QC_SCENES.map(([name, color], i) => {
+      const on = i === active;
+      const val = on ? mixText : fmt(MIX[i]);
+      return {
+        letter: letters[i], value: val, dot: dotOf(color, 7),
+        aria: 'Scene ' + letters[i] + (name ? ' ' + name : '') + ', ' + (on && loading ? 'loading' : val + ' percent') + (on ? ', editing' : ''),
+        cell: { height: '44px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '12px',
+          background: on ? t.fgBase + ' / 0.07)' : 'transparent',
+          outline: on ? (pending ? '1.5px dashed ' + t.signal : '1.5px solid ' + color) : 'none', outlineOffset: '-1.5px',
+          boxShadow: on ? 'none' : 'inset 0 -1px 0 ' + t.hairline },
+        letterStyle: { fontSize: '11px', fontWeight: on ? 700 : 500, lineHeight: '1', color: on ? t.ink : t.muted },
+        valueStyle: { fontSize: '13px', fontWeight: on ? 700 : 500, lineHeight: '1', color: on ? t.ink : t.muted }
+      };
+    });
+    const list = { cells, aria: 'Mix in each scene, read-only. Switch scene to edit another' };
+
+    const tileBase = { height: '62px', boxSizing: 'border-box', padding: '0 11px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: '2px', borderRadius: '18px', border: '1.5px solid transparent', background: t.tileFill, boxShadow: t.glassEdge, backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)', color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer', minWidth: '0' };
+    const flat = { ...tileBase, background: t.fgBase + ' / 0.035)', boxShadow: 'inset 0 0 0 1px ' + t.fgBase + ' / 0.1)', backdropFilter: 'none', WebkitBackdropFilter: 'none', cursor: 'default' };
+    const P = (label, value, unit, extra = {}) => ({ label, value, unit, ...extra });
+    const params = [
+      P('Mix', mixText, '%', { scene: true, hero: !expr && !glob }),
+      P('Mode', 'Chorus', ''),
+      P('Rate', 'Depends on Sync', '', { locked: true }),
+      P('Depth', 'On Exp 1', '', { exp: true, hero: expr }),
+      P('Width', '70.0', '%', { hero: glob }),
+      P('Tone', loading ? '—' : fmt(TONE[active]), '', { scene: true }),
+      P('Sync', 'Off', ''),
+      P('Sync Note', 'Depends on Sync', '', { locked: true })
+    ];
+    const tiles = params.map((p) => {
+      const reason = p.locked || p.exp;
+      const style = p.hero && expr ? { ...flat, border: '1.5px solid ' + t.muted }
+        : reason ? flat
+        : p.hero && pending ? { ...tileBase, border: '1.5px dashed ' + t.signal }
+        : p.hero ? { ...tileBase, background: arcColor.replace(')', ' / 0.2)'), border: '1.5px solid ' + arcColor }
+        : tileBase;
+      const what = p.exp ? 'read-only, set by Expression 1'
+        : p.locked ? 'read-only, ' + p.value.toLowerCase()
+        : p.scene ? 'scene ' + L + ', ' + (p.value === '—' ? 'loading' : p.value + ' ' + p.unit)
+        : p.value + ' ' + p.unit;
+      return {
+        label: p.label, value: p.value, unit: reason || p.value === '—' ? '' : p.unit,
+        locked: !!p.locked, exp: !!p.exp, scene: !!p.scene, sceneLetter: L, sceneDot: dotOf(sceneColor, 7),
+        pressed: p.hero ? 'true' : 'false', aria: p.label + ', ' + what, style,
+        valueStyle: reason ? { fontSize: '13px', fontWeight: 500, color: t.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }
+          : { fontSize: '19px', fontWeight: 600, whiteSpace: 'nowrap', color: p.value === '—' ? t.muted : 'inherit' }
+      };
+    });
+
+    const name = QC_SCENES[active][0];
+    const pill = {
+      letter: L, name, hasName: !!name, dot: dotOf(sceneColor, 10), expanded: menuOpen ? 'true' : 'false',
+      aria: 'Scene ' + L + (name ? ', ' + name : '') + '. Change scene',
+      style: { position: 'relative', zIndex: menuOpen ? 32 : 'auto', height: '44px', padding: '0 10px 0 14px', display: 'flex', alignItems: 'center', gap: '7px', border: '0', borderRadius: '999px', background: menuOpen ? t.fgBase + ' / 0.16)' : t.glass, backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)', boxShadow: t.glassEdge, color: 'inherit', font: 'inherit', fontSize: '15px', whiteSpace: 'nowrap', cursor: 'pointer' }
+    };
+
+    const PRESSED = 6;
+    const menu = {
+      open: menuOpen,
+      rows: QC_SCENES.map(([n, color], i) => ({
+        letter: letters[i], name: n, value: fmt(MIX[i]), dot: dotOf(color, 10), on: i === active, checked: i === active ? 'true' : 'false',
+        aria: 'Scene ' + letters[i] + (n ? ' ' + n : '') + ', mix ' + fmt(MIX[i]) + ' percent',
+        style: { height: '44px', boxSizing: 'border-box', padding: '0 8px 0 12px', display: 'flex', alignItems: 'center', gap: '10px', border: '0', borderRadius: '12px', background: i === PRESSED ? t.fgBase + ' / 0.1)' : 'transparent', color: 'inherit', font: 'inherit', fontSize: '15px', textAlign: 'left', cursor: 'pointer' }
+      }))
+    };
+
+    const stepperBase = { position: 'absolute', top: '200px', width: '54px', height: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '0', borderRadius: '50%', background: t.glass, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: t.glassEdge, color: 'inherit', font: 'inherit', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.4 : 1 };
+    const stepper = { disabled: loading ? 'true' : 'false', left: { ...stepperBase, left: '0' }, right: { ...stepperBase, right: '0' } };
+
+    const ground = t.dark ? 'oklch(0.16 0.012 ' + hue + ')' : 'oklch(0.97 0.01 ' + hue + ')';
+    const glow = t.dark ? 'oklch(0.3 0.06 ' + hue + ' / 0.7)' : 'oklch(0.9 0.06 ' + hue + ' / 0.8)';
+    const heroName = expr ? 'Depth' : glob ? 'Width' : 'Mix';
+    const shared = { dots: QC_SCENES.map(([, color]) => ({ dot: dotOf(color, 8) })) };
+    return {
+      t, g, v, st, marker, list, tiles, pill, menu, stepper, arcColor, expr, glob, shared, shownValue,
+      showSteppers: !expr, showSceneList: !expr && !glob,
+      hero: { label: heroName, min: '0', max: '100' },
+      heroLabel: heroName + ' control',
+      decAria: 'Decrease ' + heroName.toLowerCase() + ' by 0.1', incAria: 'Increase ' + heroName.toLowerCase() + ' by 0.1',
+      gaugeAria: expr ? 'Depth 50.0 percent, set by Expression 1, sweep 20.0 to 80.0' : glob ? 'Width 70.0 percent, all scenes' : loading ? 'Mix, loading scene ' + L : 'Mix ' + shownValue + ' percent in scene ' + L + (pending ? ', sending, QC at ' + fmt(MIX[active]) : ''),
+      valueAria: expr ? 'Depth 50.0 percent, read-only, set by Expression 1' : glob ? 'Width 70.0 percent, all scenes. Tap to type a value' : loading ? 'Mix, loading scene ' + L : 'Mix ' + shownValue + ' percent in scene ' + L + '. Tap to type a value',
+      rootStyle: { width: '402px', height: '874px', position: 'relative', overflow: 'hidden', boxSizing: 'border-box', padding: '62px 16px 0', display: 'flex', flexDirection: 'column', background: 'radial-gradient(120% 55% at 50% 34%, ' + glow + ', transparent 70%), ' + ground, color: t.ink, fontFamily: "-apple-system, 'SF Pro Text', Inter, system-ui, sans-serif", fontVariantNumeric: 'tabular-nums' },
+      chipStyle: { width: '44px', height: '44px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'oklch(0.58 0.18 330)', color: '#ffffff', fontSize: '11px', fontWeight: 700, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)' },
+      saveStyle: { height: '50px', padding: '0 26px', border: '0', borderRadius: '999px', background: t.signal, color: t.signalInk, font: 'inherit', fontSize: '16px', fontWeight: 600, boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.4)', cursor: 'pointer', opacity: pending || loading ? 0.45 : 1 }
+    };
+  }
+}
+</script>
+</body>
+</html>
