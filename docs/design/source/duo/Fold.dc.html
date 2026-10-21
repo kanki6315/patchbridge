@@ -33,13 +33,13 @@
 class Component extends DCLogic {
   renderVals() {
     const posture = this.state.posture ?? this.props.start ?? 'flat';
-    const screen = this.state.screen ?? 'edit';
+    const screen = this.state.screen ?? 'scenes';
     const seg = (on) => ({ height: '40px', padding: '0 18px', border: '0', borderRadius: '999px', background: on ? 'oklch(0.87 0.17 115)' : 'transparent', color: on ? 'oklch(0.2 0.04 115)' : 'inherit', font: 'inherit', fontSize: '15px', fontWeight: 600, cursor: 'pointer', transition: 'background 200ms cubic-bezier(0.22, 1, 0.36, 1), color 200ms cubic-bezier(0.22, 1, 0.36, 1)' });
     const opts = (list, cur, key) => list.map(([id, label]) => ({ label, pressed: id === cur ? 'true' : 'false', style: seg(id === cur), pick: () => this.setState({ [key]: id }) }));
     return {
       posture, screen,
       postures: opts([['flat', 'Unfolded'], ['half', 'Half-folded']], posture, 'posture'),
-      screens: opts([['row', 'Row'], ['edit', 'Block'], ['type', 'Typing']], screen, 'screen')
+      screens: opts([['scenes', 'Scenes'], ['edit', 'Block'], ['type', 'Typing']], screen, 'screen')
     };
   }
 }
