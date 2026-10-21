@@ -16,7 +16,7 @@
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
     <a href="#" style="height: 44px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: {{t.glass}}; backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: {{t.glassEdge}}; color: inherit; text-decoration: none; font-size: 15px;">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
-      Tremonti w Mic
+      Dirty Riffage
     </a>
     <div style="display: flex; align-items: center; gap: 8px;">
       <sc-if value="{{demo}}" hint-placeholder-val="{{false}}">
@@ -192,7 +192,7 @@ class Component extends DCLogic {
         P('Makeup', '+8.0', 'dB', 0.583), P('Mix', '100.0', '%', 1),
         P('Gain Reduction', '—', '', 0, { locked: 'meter' })
       ] },
-      capture: { code: 'CAP', title: 'Eltron 30', where: 'Capture OG TS808 · Scene F', hero: 0, params: [
+      capture: { code: 'CAP', title: 'OG TS808', where: 'Neural Capture · Eltron 30 · Scene F', hero: 0, params: [
         P('Gain', '50', '%', 0.5, { locked: 'taper', min: '', max: '' }), P('Bass', '—', '', 0.5, { locked: 'taper' }),
         P('Mid', '—', '', 0.5, { locked: 'taper' }), P('Treble', '—', '', 0.5, { locked: 'taper' }), P('Volume', '—', '', 0.5, { locked: 'taper' })
       ] },

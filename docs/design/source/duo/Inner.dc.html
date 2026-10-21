@@ -17,7 +17,7 @@
   <div style="{{topStyle}}">
     <header style="display: flex; align-items: center; gap: 12px;">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
-        <h1 style="{{titleStyle}}">Tremonti w Mic</h1>
+        <h1 style="{{titleStyle}}">Dirty Riffage</h1>
         <span style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">
           My Presets · 16
           <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: {{t.signal}};"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>Unsaved</span>
@@ -254,12 +254,12 @@ class Component extends DCLogic {
     };
     const RO = 'Read-only';
     const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
-    // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
+    // Positions and models from the captured preset (tests/fixtures/qc-editor.json); summaries and locks follow the app for scene F.
     const rows = [
-      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'Eltron 30', 'Capture OG TS808', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
-      [null, null, B('utl', 'Volume', 'Curve Log'), null, null, null, null, null],
-      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms')],
-      [null, B('cap', 'Eltron 30', 'Capture', true), null, B('cap', 'Eltron 30', 'Capture', true), B('cab', '412 CA Trad S', 'Cab', true), null, null, null]
+      [B('wah', 'Bad Horse', 'Bypassed', true), B('cmp', 'Opto Comp (M)', 'Bypassed'), B('cap', 'OG TS808', 'Bass 0.0 dB · Mid 0.0 dB'), B('drv', 'Myth Drive', 'Bypassed'), B('pit', 'Transpose', 'Semitones -1.0'), B('pit', 'Poly Octaver', 'Bypassed'), B('utl', 'Adaptive Gate', 'Noise Reduction 16.1 %'), null],
+      [null, null, null, null, null, null, null, null],
+      [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Paul\'s MT16 6', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S', RO, true), null, B('mod', 'Dual Chorus', 'Bypassed'), B('rev', 'Plate Tight', 'Mix 24.4 % · Decay 43.2 %')],
+      [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Bogna Uber 1', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S', RO, true), null, null, null]
     ];
     const cellBase = { minWidth: '0', boxSizing: 'border-box', padding: '7px 5px 7px 6px', borderRadius: '12px', border: '0', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', font: 'inherit', textAlign: 'left', cursor: 'pointer' };
     const grid = rows.map((row, ri) => ({

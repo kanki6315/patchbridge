@@ -215,7 +215,7 @@ struct AppearanceSettings: View {
     private func miniature(_ preview: PhoneTheme) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Capsule().fill(preview.raised).frame(width: 38, height: 9)
-            Text("Tremonti w Mic").font(.system(size: 13, weight: .bold)).foregroundStyle(preview.ink).lineLimit(1)
+            Text(DemoFixture.name).font(.system(size: 13, weight: .bold)).foregroundStyle(preview.ink).lineLimit(1)
             HStack(spacing: 4) {
                 ForEach(DemoFixture.sceneColors.indices, id: \.self) { index in
                     Circle().fill(DemoFixture.sceneColors[index]).frame(width: 6, height: 6)

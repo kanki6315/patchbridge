@@ -1,6 +1,6 @@
 ---
 // A live HTML rebuild of the app's 4×8 signal-chain grid, using the captured
-// "Tremonti w Mic" preset from the design boards. Decorative: the real
+// "Dirty Riffage" preset from the design boards. Decorative: the real
 // information is in the hero copy, so the rig is hidden from assistive tech
 // apart from a one-line description.
 
@@ -19,10 +19,10 @@ const REV = (name: string): Block => ({ code: 'REV', name, cat: 'reverb' });
 const _ = null;
 
 const rows: Block[][] = [
-  [W('Bad Horse'), CMP('Opto Comp (M)'), CAP('Eltron 30'), DRV('Myth Drive'), PIT('Transpose'), PIT('Poly Octaver'), UTL('Adaptive Gate'), _],
-  [_, _, UTL('Volume'), _, _, _, _, _],
-  [_, CAP('Eltron 30'), _, CAP('Eltron 30'), CAB('412 CA Trad'), _, MOD('Dual Chorus'), REV('Plate Tight')],
-  [_, CAP('Eltron 30'), _, CAP('Eltron 30'), CAB('412 CA Trad'), _, _, _],
+  [W('Bad Horse'), CMP('Opto Comp (M)'), CAP('OG TS808'), DRV('Myth Drive'), PIT('Transpose'), PIT('Poly Octaver'), UTL('Adaptive Gate'), _],
+  [_, _, _, _, _, _, _, _],
+  [_, CAP("Paul's MT16 7"), _, CAP("Paul's MT16 6"), CAB('412 CA Trad'), _, MOD('Dual Chorus'), REV('Plate Tight')],
+  [_, CAP("Paul's MT16 7"), _, CAP('Bogna Uber 1'), CAB('412 CA Trad'), _, _, _],
 ];
 
 // Scene names and colors exactly as the QC reported them.
@@ -38,10 +38,10 @@ const scenes = [
 ];
 const active = 'F';
 ---
-<figure class="rig" role="img" aria-label="Patchbridge showing the preset Tremonti w Mic: scene F, a four-row signal chain of colored blocks, and the Opto Comp threshold at −34.2 dB.">
+<figure class="rig" role="img" aria-label="Patchbridge showing the preset Dirty Riffage: scene F, a four-row signal chain of colored blocks, and the Opto Comp threshold at −34.2 dB.">
   <div class="rig-head" aria-hidden="true">
     <div class="preset">
-      <span class="preset-name">Tremonti w Mic</span>
+      <span class="preset-name">Dirty Riffage</span>
       <span class="preset-meta tnum">My Presets · 16 <span class="unsaved"><i></i>Unsaved</span></span>
     </div>
     <ol class="scenes">

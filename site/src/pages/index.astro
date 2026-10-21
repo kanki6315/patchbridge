@@ -8,7 +8,7 @@ import StoreButtons from '../components/StoreButtons.astro';
 import appIcon from '../assets/app-icon.png';
 import phoneOverview from '../assets/screens/phone-overview.png';
 import phoneFine from '../assets/screens/phone-fine.png';
-import phoneWelcome from '../assets/screens/phone-welcome.png';
+import duoUnfolded from '../assets/screens/duo-unfolded.png';
 import phoneLandscape from '../assets/screens/phone-landscape.png';
 import ipadOverview from '../assets/screens/ipad-overview.png';
 import macConnected from '../assets/screens/mac-connected.png';
@@ -23,11 +23,11 @@ const log = [
 ];
 
 const shots = [
-  { src: phoneOverview, alt: 'iPhone: the preset Tremonti w Mic, scene F, the signal-chain grid with row 1 selected and its blocks listed below.', caption: 'Portrait: tap a row, its blocks list below', kind: 'phone' },
+  { src: phoneOverview, alt: 'iPhone: the preset Dirty Riffage, scene F, the signal-chain grid with row 1 selected and its blocks listed below.', caption: 'Portrait: tap a row, its blocks list below', kind: 'phone' },
   { src: phoneFine, alt: 'iPhone: the Opto Comp threshold gauge at −30.05 dB in fine 0.05 steps.', caption: 'Fine mode steps in 0.05 dB', kind: 'phone' },
   { src: phoneLandscape, alt: 'iPhone in landscape: the full 4 by 8 grid beside an inspector.', caption: 'Sideways: all 32 slots at once', kind: 'wide' },
   { src: ipadOverview, alt: 'iPad: grid, row list, all eight scenes and a persistent block editor on one screen.', caption: 'iPad: grid, scenes and editor on one screen', kind: 'tablet' },
-  { src: phoneWelcome, alt: 'iPhone welcome screen: iPhone to Mac over Bluetooth, Mac to QC over USB.', caption: 'First launch', kind: 'phone' },
+  { src: duoUnfolded, alt: 'iPhone Duo unfolded: the preset Dirty Riffage with its scenes and named grid above, and row 1’s blocks listed below.', caption: 'iPhone Duo: the grid up top, the row below', kind: 'tablet' },
 ];
 ---
 <Base>
@@ -88,13 +88,14 @@ const shots = [
       <h2 id="setup-title">Your Mac holds the&nbsp;cable.</h2>
       <p class="sub">
         The QC talks over USB, so a small bridge app on your Mac keeps the connection
-        and passes edits to and from your phone over&nbsp;Bluetooth.
+        and shares it over Bluetooth. Up to four iPhones and iPads can join at once,
+        each seeing the same preset and editing it&nbsp;live.
       </p>
 
       <ol class="steps">
         <li><b>Install the free Mac bridge.</b> <span>It owns the USB connection.</span></li>
         <li><b>Plug in your QC.</b> <span>Close Cortex Control first.</span></li>
-        <li><b>Approve your iPhone on the Mac.</b> <span>Match the six-character code once.</span></li>
+        <li><b>Approve each iPhone or iPad on the Mac.</b> <span>Match its six-character code once.</span></li>
       </ol>
     </div>
     <figure class="setup-shot">
@@ -351,12 +352,15 @@ const shots = [
     margin-top: clamp(2.5rem, 5vw, 4rem);
     padding: 0.5rem max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter))) 1.5rem;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity;
     scroll-padding-inline: max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter)));
-    scrollbar-width: thin;
-    scrollbar-color: var(--hairline) transparent;
     overscroll-behavior-x: contain;
+    /* No scrollbar: the screens fade out at the page edges instead, which shows there's more. */
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--gutter), #000 calc(100% - var(--gutter)), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 var(--gutter), #000 calc(100% - var(--gutter)), transparent);
   }
+  .rail::-webkit-scrollbar { display: none; }
   .rail:focus-visible { outline-offset: -2px; }
   .shot {
     flex: none;

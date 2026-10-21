@@ -16,7 +16,7 @@
   <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 0; display: flex; flex-direction: column; gap: 14px;">
     <header style="display: flex; align-items: center; gap: 12px;">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
-        <h1 style="margin: 0; font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tremonti w Mic</h1>
+        <h1 style="margin: 0; font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dirty Riffage</h1>
         <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: {{t.muted}};">
           My Presets · 16
           <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: {{t.signal}};"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>Unsaved</span>
@@ -124,10 +124,10 @@ class Component extends DCLogic {
     };
     // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
     const rows = [
-      [['wah', 'Bad Horse'], ['cmp', 'Opto Comp (M)'], ['cap', 'Eltron 30'], ['drv', 'Myth Drive'], ['pit', 'Transpose'], ['pit', 'Poly Octaver'], ['utl', 'Adaptive Gate'], null],
-      [null, null, ['utl', 'Volume'], null, null, null, null, null],
-      [null, ['cap', 'Eltron 30'], null, ['cap', 'Eltron 30'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, ['mod', 'Dual Chorus'], ['rev', 'Plate Tight']],
-      [null, ['cap', 'Eltron 30'], null, ['cap', 'Eltron 30'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, null, null]
+      [['wah', 'Bad Horse'], ['cmp', 'Opto Comp (M)'], ['cap', 'OG TS808'], ['drv', 'Myth Drive'], ['pit', 'Transpose'], ['pit', 'Poly Octaver'], ['utl', 'Adaptive Gate'], null],
+      [null, null, null, null, null, null, null, null],
+      [null, ['cap', 'Paul\'s MT16 7'], null, ['cap', 'Paul\'s MT16 6'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, ['mod', 'Dual Chorus'], ['rev', 'Plate Tight']],
+      [null, ['cap', 'Paul\'s MT16 7'], null, ['cap', 'Bogna Uber 1'], ['cab', '412 CA Trad S UKV30 90s (M)'], null, null, null]
     ];
     // The outer screen is wider than a Pro, so the whole grid fits at touch size and becomes the way in.
     const cellBase = { height: '70px', minWidth: '0', padding: '0', boxSizing: 'border-box', borderRadius: '11px', border: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', font: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer' };

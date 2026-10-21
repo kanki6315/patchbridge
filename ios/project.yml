@@ -28,7 +28,7 @@ targets:
       - path: Patchbridge
         excludes: [".impeccable/**"]
       - Shared
-      - path: ../tests/fixtures/qc-editor.json
+      - path: ../tests/fixtures/demo-preset.json
         buildPhase: resources
       - ../swift/Sources/PatchbridgeCore/BLECentral.swift
       - ../swift/Sources/PatchbridgeCore/Chunks.swift

@@ -115,7 +115,7 @@ final class ConnectionActivityController {
     /// `--activity <status>` shows a sample activity for design review. No session is involved.
     func preview(_ name: String, daylight: Bool) {
         guard let status = ConnectionAttributes.ContentState.Status(rawValue: name) else { return }
-        let state = ConnectionAttributes.ContentState(status: status, macName: "Studio Mac", preset: "Tremonti w Mic", scene: "F", sceneName: "Rhythm",
+        let state = ConnectionAttributes.ContentState(status: status, macName: "Studio Mac", preset: "Dirty Riffage", scene: "F", sceneName: "Rhythm",
                                                       sceneColor: 0xff7000, unsaved: true, trusted: true, lostAt: Date(), daylight: daylight)
         activity = try? Activity.request(attributes: ConnectionAttributes(), content: ActivityContent(state: state, staleDate: nil))
     }

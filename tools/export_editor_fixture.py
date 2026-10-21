@@ -5,6 +5,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 from patchbridge.metadata import WRITABLE_TYPES, normalize_models, normalize_parameter
 from patchbridge.usb import active
+import export_demo_fixture
 
 root = Path(__file__).resolve().parents[1]
 source = root / 'hardware-results/2026-10-20'
@@ -51,4 +52,6 @@ fixture = {'catalog': {'id': catalog_id, 'metadata_version': 1,
                         'name': spec['name'], 'scene_labels': spec.get('scene_labels', []),
                         'scene_colors': spec.get('scene_colors', []), 'scene': 'F', 'dirty': True, 'blocks': blocks}}
 (root / 'tests/fixtures/qc-editor.json').write_text(json.dumps(fixture, indent=2) + '\n')
+# The app's demo preset is derived from this one; keep it in step.
+export_demo_fixture.write(fixture)
 print(f'Exported {len(blocks)} blocks and {len(used)} model definitions from captured evidence.')
