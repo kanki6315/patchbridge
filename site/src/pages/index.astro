@@ -11,7 +11,7 @@ import phoneFine from '../assets/screens/phone-fine.png';
 import duoUnfolded from '../assets/screens/duo-unfolded.png';
 import phoneLandscape from '../assets/screens/phone-landscape.png';
 import ipadOverview from '../assets/screens/ipad-overview.png';
-import macConnected from '../assets/screens/mac-connected.png';
+import macDevices from '../assets/screens/mac-devices.png';
 
 // The replayed edit, written the way the Mac bridge logs it. `step` matches
 // the gauge's replay so the row it's on lights up; every row is always visible.
@@ -99,7 +99,7 @@ const shots = [
       </ol>
     </div>
     <figure class="setup-shot">
-      <Image src={macConnected} alt="Mac bridge window: iPhone, Mac and Quad Cortex connected, with recent edits and one not applied." widths={[480, 960, 1400]} sizes="(max-width: 56rem) 92vw, 40vw" loading="lazy" decoding="async" />
+      <Image src={macDevices} alt="Mac bridge window: an iPhone and an iPad connected to one Quad Cortex, each listed with Disconnect, and recent edits naming the device that sent them, one not applied." widths={[480, 960, 1400]} sizes="(max-width: 56rem) min(92vw, 30rem), 30rem" loading="lazy" decoding="async" />
       <figcaption>The bridge window. Glance at it, then forget it.</figcaption>
     </figure>
   </section>
@@ -335,7 +335,8 @@ const shots = [
   .steps b { font-size: 1.0625rem; font-weight: 600; line-height: 1.35; }
   .steps span { color: var(--ink-muted); }
 
-  .setup-shot { margin: 0; display: grid; gap: 0.9rem; }
+  /* Never larger than the window itself (480 pt wide), so the taller two-device window stays in view. */
+  .setup-shot { margin: 0; display: grid; gap: 0.9rem; width: 100%; max-width: 30rem; justify-self: center; }
   .setup-shot :global(img) {
     width: 100%;
     border-radius: 0.9rem;

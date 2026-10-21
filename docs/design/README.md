@@ -146,11 +146,11 @@ Bluetooth permission, finding the QC, an unavailable USB connection, Bluetooth o
 
 ### Approving an iPhone and recovering
 
-Approval uses the same short code as the iPhone. While connected, the window shows the preset, the scene, unsaved state and the last few edits, including any the QC didn't apply. Recovery covers the QC being unplugged, the bridge stopping, and an untested CorOS version.
+Approval uses the same short code as the iPhone. While connected, the window shows the preset, the scene, unsaved state and the last few edits, including any the QC didn't apply. With more than one iPhone or iPad connected, it lists each device with Disconnect, and every recent edit names the device that sent it. Recovery covers the QC being unplugged, the bridge stopping, and an untested CorOS version.
 
 <table>
 <tr><td align="center" valign="top"><a href="html/mac/m-request.html"><img src="mac/m-request.png" width="220" alt="Approve an iPhone"></a><br><sub>Approve an iPhone</sub></td><td align="center" valign="top"><a href="html/mac/m-connected.html"><img src="mac/m-connected.png" width="220" alt="Connected · recent edits"></a><br><sub>Connected · recent edits</sub></td><td align="center" valign="top"><a href="html/mac/m-unplugged.html"><img src="mac/m-unplugged.png" width="220" alt="QC unplugged mid-session"></a><br><sub>QC unplugged mid-session</sub></td><td align="center" valign="top"><a href="html/mac/m-helper.html"><img src="mac/m-helper.png" width="220" alt="Bridge stopped"></a><br><sub>Bridge stopped</sub></td></tr>
-<tr><td align="center" valign="top"><a href="html/mac/m-firmware.html"><img src="mac/m-firmware.png" width="220" alt="Untested CorOS"></a><br><sub>Untested CorOS</sub></td></tr>
+<tr><td align="center" valign="top"><a href="html/mac/m-firmware.html"><img src="mac/m-firmware.png" width="220" alt="Untested CorOS"></a><br><sub>Untested CorOS</sub></td><td align="center" valign="top"><a href="html/mac/m-devices.html"><img src="mac/m-devices.png" width="220" alt="Two devices connected"></a><br><sub>Two devices connected</sub></td></tr>
 </table>
 
 ### Running in the menu bar

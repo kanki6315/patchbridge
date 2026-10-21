@@ -530,6 +530,16 @@
     "html": "html/mac/m-connected.html"
   },
   {
+    "key": "mac/m-devices.dc.html",
+    "slug": "m-devices",
+    "page": "Mac bridge",
+    "title": "Two devices connected",
+    "w": 480,
+    "h": 860,
+    "png": "mac/m-devices.png",
+    "html": "html/mac/m-devices.html"
+  },
+  {
     "key": "mac/m-unplugged.dc.html",
     "slug": "m-unplugged",
     "page": "Mac bridge",

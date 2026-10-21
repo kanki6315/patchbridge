@@ -63,6 +63,31 @@
         <h1 style="margin: 26px 0 6px; font-size: 22px; line-height: 1.2; font-weight: 700; letter-spacing: -0.015em; text-wrap: balance;">{{s.h}}</h1>
         <p style="margin: 0; max-width: 60ch; font-size: 14px; line-height: 1.4; color: {{t.muted}}; text-wrap: pretty;">{{s.sub}}</p>
 
+        <sc-if value="{{s.hasDevices}}" hint-placeholder-val="{{false}}">
+          <section aria-label="Devices" style="margin-top: 18px; display: flex; flex-direction: column; gap: 8px;">
+            <span style="padding: 0 4px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Devices</span>
+            <ul style="margin: 0; padding: 0; list-style: none; border-radius: 15px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; overflow: hidden;">
+              <sc-for list="{{devices}}" as="d" hint-placeholder-count="2">
+                <li style="{{d.rowStyle}}">
+                  <span aria-hidden="true" style="{{d.iconStyle}}">
+                    <sc-if value="{{d.pad}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2.5" width="16" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg></sc-if>
+                    <sc-if value="{{d.phone}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect><path d="M11 18.5h2"></path></svg></sc-if>
+                  </span>
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                    <span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span>
+                    <span style="font-size: 12px; color: {{t.muted}};">{{d.status}}</span>
+                  </span>
+                  <span style="display: flex; gap: 6px;">
+                    <sc-for list="{{d.actions}}" as="b" hint-placeholder-count="1">
+                      <button type="button" aria-label="{{b.aria}}" style="{{b.style}}">{{b.label}}</button>
+                    </sc-for>
+                  </span>
+                </li>
+              </sc-for>
+            </ul>
+          </section>
+        </sc-if>
+
         <sc-if value="{{s.code}}" hint-placeholder-val="{{false}}">
           <div role="img" aria-label="Code 4 F 7 K 2 Q" style="margin-top: 22px; height: 96px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 18px; background: {{t.glass}}; backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); box-shadow: {{t.glassEdge}};">
             <sc-for list="{{code}}" as="ch" hint-placeholder-count="7">
@@ -117,6 +142,9 @@
                   </span>
                   <sc-if value="{{e.warn}}" hint-placeholder-val="{{false}}">
                     <span style="padding-left: 25px; font-size: 12px; color: {{t.caution}};">{{e.note}}</span>
+                  </sc-if>
+                  <sc-if value="{{e.hasBy}}" hint-placeholder-val="{{false}}">
+                    <span style="padding-left: 25px; display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: {{t.muted}};"><span>{{e.by}}</span><span style="font-variant-numeric: tabular-nums;">{{e.time}}</span></span>
                   </sc-if>
                 </li>
               </sc-for>
@@ -346,7 +374,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["firstrun","noqc","cortex","ready","request","connected","unplugged","btoff","helper","firmware","settings","closing","menubar","mb-ready","mb-request","mb-lost","mb-stopped","notify-request","notify-lost","icons"],"default":"ready","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"$preview":{"width":480,"height":700}}'>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["firstrun","noqc","cortex","ready","request","connected","devices","unplugged","btoff","helper","firmware","settings","closing","menubar","mb-ready","mb-request","mb-lost","mb-stopped","notify-request","notify-lost","icons"],"default":"ready","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"$preview":{"width":480,"height":700}}'>
 class Component extends DCLogic {
   renderVals() {
     const screen = this.props.screen ?? 'ready';
@@ -369,6 +397,7 @@ class Component extends DCLogic {
     };
     const t = THEMES[themeName];
     const PHONE = 'Jamie’s iPhone';
+    const PAD = 'Jamie’s iPad';
     const MAC = 'Studio Mac';
 
     const node = (state, label) => {
@@ -417,6 +446,16 @@ class Component extends DCLogic {
         h: 'Connected', sub: PHONE + ' is connected to Crunch Lead.',
         rows: [QC_ROW, { ...PRESET_ROW, tail: 'Unsaved', tailKind: 'signal' }, { k: 'Scene', v: 'F · RHYTHM', dot: '#ff7000' }, { k: 'iPhone', v: 'Approved 21:04' }],
         edits: true, left: [exportBtn], right: [btn('Disconnect iPhone', 'danger')] },
+      // Two approved devices on one bridge, as the window lists them (mac/main.swift deviceList, recentEdits).
+      devices: { nodes: ['ok', 'on', 'ok'], links: [['live', 'Bluetooth'], ['live', 'USB']], phone: '2 devices',
+        h: PHONE + ' and ' + PAD + ' connected', sub: 'Both are editing Dirty Riffage. If they change the same value at once, the first edit wins.',
+        devices: [{ name: PHONE, status: 'Connected · Trusted', trusted: true }, { name: PAD, status: 'Connected', pad: true }],
+        rows: [{ k: 'Preset', v: 'Dirty Riffage · My Presets 16', tail: 'Unsaved', tailKind: 'signal' }, { k: 'Scene', v: 'F · RHYTHM', dot: '#ff7000' }],
+        edits: [
+          { name: 'Mix', block: 'Plate Tight', value: '30.0 %', by: PAD, time: '21:06' },
+          { name: 'Bass', block: 'OG TS808', value: '+2.0 dB', warn: true, note: 'Not applied · Device state changed', by: PAD, time: '21:05' },
+          { name: 'Bass', block: 'OG TS808', value: '+1.5 dB', by: PHONE, time: '21:05' }
+        ], left: [exportBtn], right: [btn('Stop bridge', 'glass')] },
       unplugged: { nodes: ['ok', 'on', 'warn'], links: [['live', 'Bluetooth'], ['down', 'USB · lost']], phone: PHONE,
         h: 'The QC was disconnected', sub: 'Editing is paused. Nothing is sent until the QC is back, then Patchbridge reloads it.', status: 'Waiting for the QC…',
         rows: [{ k: 'Last preset', v: 'Crunch Lead · My Presets 16' }, { k: 'iPhone', v: 'Still connected' }], left: [exportBtn], right: [btn('Disconnect iPhone', 'danger')] },
@@ -450,19 +489,26 @@ class Component extends DCLogic {
       tailStyle: { flex: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: r.tailKind === 'caution' ? t.caution : t.ink },
       rowStyle: { minHeight: '40px', boxSizing: 'border-box', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px', borderTop: i ? '1px solid ' + t.hairline : '0' }
     }));
-    const edits = [
+    const edits = (Array.isArray(s0.edits) ? s0.edits : [
       { name: 'Gain', block: 'Amp', value: '6.4' },
       { name: 'Decay', block: 'Reverb', value: '2.4 s', warn: true, note: 'Not applied · device state changed' },
       { name: 'Mix', block: 'Delay', value: '32.0 %' }
-    ].map((e, i) => ({ ...e, ok: !e.warn, warn: !!e.warn, note: e.note || '',
+    ]).map((e, i) => ({ ...e, ok: !e.warn, warn: !!e.warn, note: e.note || '', hasBy: !!e.by, by: e.by ? e.by + ' · Dirty Riffage · Scene F' : '', time: e.time || '',
       valueStyle: { fontSize: '14px', fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: e.warn ? t.muted : t.ink, textDecoration: e.warn ? 'line-through' : 'none' },
       rowStyle: { minHeight: '40px', boxSizing: 'border-box', padding: '9px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '3px', borderTop: i ? '1px solid ' + t.hairline : '0' } }));
+
+    const smallBtn = { height: '28px', padding: '0 12px', fontSize: '12px' };
+    const devices = (s0.devices || []).map((d, i) => ({ name: d.name, status: d.status, pad: !!d.pad, phone: !d.pad,
+      actions: [...(d.trusted ? [{ label: 'Revoke Trust', aria: 'Revoke Trust for ' + d.name, style: { ...B.glass, ...smallBtn } }] : []),
+        { label: 'Disconnect', aria: 'Disconnect ' + d.name, style: { ...B.danger, ...smallBtn } }],
+      iconStyle: { width: '36px', height: '36px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: t.ground, color: t.ink },
+      rowStyle: { boxSizing: 'border-box', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '12px', borderTop: i ? '1px solid ' + t.hairline : '0' } }));
 
     const code = '4F7K2Q'.split('');
     code.splice(3, 0, '·');
 
     const DIMS = { menubar: [340, 322], 'mb-ready': [340, 322], 'mb-request': [340, 516], 'mb-lost': [340, 441], 'mb-stopped': [340, 460],
-      'notify-request': [380, 122], 'notify-lost': [380, 78], icons: [760, 220], settings: [560, 660] };
+      devices: [480, 860], 'notify-request': [380, 122], 'notify-lost': [380, 78], icons: [760, 220], settings: [560, 660] };
     const dims = DIMS[screen] || [480, 700];
     const rootStyle = { width: dims[0] + 'px', height: dims[1] + 'px', position: 'relative', overflow: 'hidden', boxSizing: 'border-box', display: 'flex', flexDirection: 'column',
       borderRadius: isFloating ? '15px' : '18px', background: isFloating ? t.popover : t.ground, boxShadow: isFloating ? t.popoverEdge : t.windowEdge,
@@ -502,11 +548,11 @@ class Component extends DCLogic {
     const menuItem = { width: '100%', minHeight: '32px', boxSizing: 'border-box', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', border: '0', borderRadius: '9px', background: 'transparent', color: t.ink, font: 'inherit', fontSize: '14px', textAlign: 'left', cursor: 'pointer' };
 
     return {
-      t, n, l, rows, edits, diagramLabel,
+      t, n, l, rows, edits, devices, diagramLabel,
       is: { window: isWindow, main: isWindow && !isSettings, settings: isSettings, sheet: screen === 'closing', menubar: isMenubar, notify: isNotify, icons: isIcons },
       mb, nt, glyphs,
       windowTitle: isSettings ? 'Settings' : 'Patchbridge',
-      s: { h: s0.h || '', sub: s0.sub || '', code: !!s0.code, hasStatus: !!s0.status, status: s0.status || '', hasRows: rows.length > 0, edits: !!s0.edits, left: s0.left || [], right: s0.right || [] },
+      s: { h: s0.h || '', sub: s0.sub || '', code: !!s0.code, hasStatus: !!s0.status, status: s0.status || '', hasRows: rows.length > 0, hasDevices: devices.length > 0, edits: !!s0.edits, left: s0.left || [], right: s0.right || [] },
       code: code.map((c) => ({ c, style: c === '·'
         ? { fontSize: '26px', color: t.muted }
         : { fontSize: '40px', fontWeight: 700, letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums', fontFamily: "ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif" } })),
