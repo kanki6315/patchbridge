@@ -20,6 +20,7 @@
 		5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */; };
 		5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */; };
 		65F0DF151692770297348421 /* Chunks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F75207A678F28257EA105F3 /* Chunks.swift */; };
+		8476F1A6BB746C32FD575EE1 /* SetupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */; };
 		8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */; };
 		935F95CD7F754CD972C43AAC /* ConnectionActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F9F5091A58713B6AB66672 /* ConnectionActivityWidget.swift */; };
 		A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */; };
@@ -79,6 +80,7 @@
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
 		67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PadWorkspaceView.swift; sourceTree = "<group>"; };
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
+		7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupViews.swift; sourceTree = "<group>"; };
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA318B3E68E63CA3046061E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -138,6 +140,7 @@
 				17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */,
 				D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */,
 				9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */,
+				7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */,
 				81EB72B83CCED483250AEC0C /* Theme.swift */,
 				D296E6B8332175985BB77130 /* TrustStore.swift */,
 			);
@@ -343,6 +346,7 @@
 				31876869DBD5740176721AEB /* PadWorkspaceView.swift in Sources */,
 				8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */,
 				47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */,
+				8476F1A6BB746C32FD575EE1 /* SetupViews.swift in Sources */,
 				444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */,
 				07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */,
 			);
