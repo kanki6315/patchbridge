@@ -344,27 +344,23 @@ struct EditorView: View {
             VStack(alignment: .leading, spacing: 26) {
                 Group {
                     if model.coordinator.phase == .disconnected { Wordmark(theme: theme) }
-                    else { Text(connectionTitle).font(.largeTitle.bold()) }
+                    else { Text(connectionTitle).font(.largeTitle.bold()).tracking(-0.4).accessibilityAddTraits(.isHeader) }
                 }.padding(.top, pad ? 72 : 24).frame(maxWidth: .infinity, alignment: pad ? .center : .leading)
                 if model.coordinator.phase == .disconnected && model.error == nil { demoPreview }
                 connectionRail
                 if model.coordinator.phase == .awaitingApproval {
                     if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
                     if let code = model.coordinator.approvalCode { Text(code.prefix(3) + " · " + code.suffix(3)).font(.largeTitle.bold().monospacedDigit()).frame(maxWidth: .infinity).padding(24).phoneGlass(theme) }
-                    PrimaryButton(title: "I’ve approved it", theme: theme) { model.coordinator.authorize() }.disabled(model.busy)
                 } else if model.coordinator.phase == .recovering {
                     Text("Editing is paused. Reconnect the QC cable; uncertain edits will not be retried.").foregroundStyle(theme.muted)
-                    Button("Disconnect") { model.disconnect() }
                 } else if model.coordinator.phase == .connecting || model.coordinator.phase == .loading {
                     ForEach(model.coordinator.nearbyMacs.keys.sorted(), id: \.self) { id in
                         Button { model.coordinator.chooseMac(id) } label: {
                             Label(model.coordinator.nearbyMacs[id] ?? "Mac", systemImage: "laptopcomputer").font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(20)
                         }.phoneGlass(theme)
                     }
-                    Button("Cancel") { model.disconnect() }.frame(minHeight: 44)
                 } else if let error = model.error {
                     Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(theme.caution)
-                    PrimaryButton(title: "Reconnect", theme: theme) { model.reconnect() }
                 }
                 if let notice = model.notice { Text(notice).foregroundStyle(theme.caution) }
                 if pad { connectActions.padding(.top, 8) }
@@ -374,12 +370,30 @@ struct EditorView: View {
             if !pad { connectActions.padding(20) }
         }
     }
+    /// Every setup phase keeps its actions in the same place: full-width capsules pinned to the bottom.
     @ViewBuilder private var connectActions: some View {
-        if model.coordinator.phase == .disconnected || model.coordinator.phase == .failed {
+        switch model.coordinator.phase {
+        case .disconnected:
             VStack(spacing: 10) {
                 PrimaryButton(title: "Find my Mac", theme: theme) { model.start() }
                 SecondaryButton(title: "Try the demo preset", theme: theme) { model.loadDemo() }
             }
+        case .failed:
+            VStack(spacing: 10) {
+                PrimaryButton(title: "Reconnect", theme: theme) { model.reconnect() }
+                SecondaryButton(title: "Try the demo preset", theme: theme) { model.loadDemo() }
+            }
+        case .awaitingApproval:
+            VStack(spacing: 10) {
+                PrimaryButton(title: "I’ve approved it", theme: theme) { model.coordinator.authorize() }.disabled(model.busy)
+                SecondaryButton(title: "Cancel", theme: theme) { model.disconnect() }
+            }
+        case .connecting, .loading:
+            SecondaryButton(title: "Cancel", theme: theme) { model.disconnect() }
+        case .recovering:
+            SecondaryButton(title: "Disconnect", theme: theme) { model.disconnect() }
+        default:
+            EmptyView()
         }
     }
     /// The demo preset's chain, so the first screen shows what Patchbridge is before anything is plugged in.
@@ -438,12 +452,16 @@ struct EditorView: View {
                 .onChange(of: nameFocused) { _, focused in if !focused { renaming = false } }
         } else {
             let name = phoneName.trimmingCharacters(in: .whitespaces).isEmpty ? deviceName : phoneName
-            Button { renaming = true } label: {
-                HStack(spacing: 5) {
-                    Text("Shown on your Mac as “\(name)”").foregroundStyle(theme.muted)
-                    if editable { Image(systemName: "pencil").foregroundStyle(theme.signal) }
-                }.font(.footnote).frame(minHeight: 28).contentShape(Rectangle())
-            }.buttonStyle(.plain).disabled(!editable).accessibilityHint(editable ? "Rename" : "")
+            let label = Text("Shown on your Mac as “\(name)”").foregroundStyle(theme.muted)
+            // Once sent, the name is plain text: a disabled button would fade it below the rail's other captions.
+            if editable {
+                Button { renaming = true } label: {
+                    HStack(spacing: 5) { label; Image(systemName: "pencil").foregroundStyle(theme.signal) }
+                        .font(.footnote).frame(minHeight: 28).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityHint("Rename")
+            } else {
+                label.font(.footnote).frame(minHeight: 28)
+            }
         }
     }
     private var connectionTitle: String {
