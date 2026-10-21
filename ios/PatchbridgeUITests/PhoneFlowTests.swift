@@ -184,7 +184,10 @@ final class PhoneFlowTests: XCTestCase {
             app.buttons["Increase THRESHOLD"].tap()
             app.buttons["Close"].tap()
             app.buttons["Save demo preset"].tap()
-            app.sheets.buttons["Save demo preset"].tap()
+            XCTAssertTrue(app.staticTexts["Save this demo preset?"].waitForExistence(timeout: 5))
+            // iOS 26 anchors the confirmation to the Save button as a popover; both are labelled "Save demo preset".
+            let confirm = app.popovers.buttons["Save demo preset"]
+            (confirm.exists ? confirm : app.sheets.buttons["Save demo preset"]).tap()
             XCTAssertTrue(app.staticTexts["Saved in demo only"].waitForExistence(timeout: 5))
             optoComp.tap()
             XCTAssertTrue(app.staticTexts["Saved in demo only"].isHittable,
