@@ -34,7 +34,7 @@
 		B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E125DD1594C135E050EF4E8 /* BLECentral.swift */; };
 		B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59B2D058255097DC58ED315 /* EditorCoordinator.swift */; };
 		CCB8F3B7D3AB5BBCEAFF5B6E /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
-		CFDBC47AD10CC294B4320C98 /* qc-editor.json in Resources */ = {isa = PBXBuildFile; fileRef = D1060EC516FC395E41ABB898 /* qc-editor.json */; };
+		F97C260A660F2DC435857133 /* demo-preset.json in Resources */ = {isa = PBXBuildFile; fileRef = 86359669B935F031597CF377 /* demo-preset.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,12 +84,12 @@
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
 		7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupViews.swift; sourceTree = "<group>"; };
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		86359669B935F031597CF377 /* demo-preset.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "demo-preset.json"; sourceTree = "<group>"; };
 		9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA318B3E68E63CA3046061E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PatchbridgeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		C63A6F4CA999A8014567F2A6 /* Tuner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tuner.swift; sourceTree = "<group>"; };
-		D1060EC516FC395E41ABB898 /* qc-editor.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "qc-editor.json"; sourceTree = "<group>"; };
 		D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneModel.swift; sourceTree = "<group>"; };
 		D296E6B8332175985BB77130 /* TrustStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustStore.swift; sourceTree = "<group>"; };
 		D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
@@ -125,7 +125,7 @@
 		2DC3422CA05E44CC9F85EECB /* fixtures */ = {
 			isa = PBXGroup;
 			children = (
-				D1060EC516FC395E41ABB898 /* qc-editor.json */,
+				86359669B935F031597CF377 /* demo-preset.json */,
 			);
 			name = fixtures;
 			path = ../tests/fixtures;
@@ -308,7 +308,7 @@
 			files = (
 				B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */,
 				A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */,
-				CFDBC47AD10CC294B4320C98 /* qc-editor.json in Resources */,
+				F97C260A660F2DC435857133 /* demo-preset.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

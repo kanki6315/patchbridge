@@ -42,7 +42,9 @@ The Get Patchbridge for Mac button, Share action and Copy action use
 `https://patchbridge.arjunakankipati.com/appstorelink` without displaying the full
 address as UI text.
 
-Try the demo preset loads the bundled captured `qc-editor.json` fixture. Demo
+Try the demo preset loads the bundled `demo-preset.json`: the captured
+`qc-editor.json` fixture renamed Dirty Riffage, without its row 2 Volume utility
+(`python3 tools/export_demo_fixture.py` regenerates it). Demo
 edits and saves are local to that session and never reach Bluetooth or USB.
 Leaving the demo discards them. The demo badge and save wording distinguish it
 from a live connection.

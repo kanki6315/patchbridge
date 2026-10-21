@@ -18,7 +18,7 @@ final class PhoneFlowTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--demo", "--stage"]
         app.launch()
-        XCTAssertTrue(app.staticTexts["Tremonti w Mic"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Dirty Riffage"].waitForExistence(timeout: 10))
         if duoScreen(app) != nil { throw XCTSkip("iPhone Duo layouts; see testDuoWorkspace") }
         capture("Stage overview")
         // Transpose's SEMITONES control has the unit "Semitones"; its row summary says it once.
@@ -72,7 +72,7 @@ final class PhoneFlowTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--demo", "--stage"]
         app.launch()
-        XCTAssertTrue(app.staticTexts["Tremonti w Mic"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Dirty Riffage"].waitForExistence(timeout: 10))
         if duoScreen(app) != nil { throw XCTSkip("iPhone Duo layouts; see testDuoWorkspace") }
         XCTAssertFalse(app.buttons["tuner-line"].exists)
         app.buttons["tuner-button"].tap()
@@ -145,7 +145,7 @@ final class PhoneFlowTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--demo", "--stage"]
         app.launch()
-        XCTAssertTrue(app.staticTexts["Tremonti w Mic"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Dirty Riffage"].waitForExistence(timeout: 10))
         guard let screen = duoScreen(app) else { throw XCTSkip("iPhone Duo layouts only") }
         let optoComp = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Opto Comp")).firstMatch
         if screen == "inner" {

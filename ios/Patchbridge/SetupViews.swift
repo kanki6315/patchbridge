@@ -9,7 +9,7 @@ struct DemoFixture: Decodable {
     let catalog: EditorCatalog
     let snapshot: PresetSnapshot
     static func load() throws -> DemoFixture {
-        guard let url = Bundle.main.url(forResource: "qc-editor", withExtension: "json") else { throw EditorFailure.invalidState }
+        guard let url = Bundle.main.url(forResource: "demo-preset", withExtension: "json") else { throw EditorFailure.invalidState }
         return try JSONDecoder().decode(DemoFixture.self, from: Data(contentsOf: url))
     }
     struct Cell { let category: BlockCategory; let bypassed: Bool }
@@ -24,6 +24,7 @@ struct DemoFixture: Decodable {
         return cells
     }()
     static let sceneColors: [Color] = ((try? load())?.snapshot.scene_colors ?? []).map { Color(hex: $0) }
+    static let name: String = (try? load())?.snapshot.name ?? "Demo preset"
 }
 
 /// A small, non-interactive picture of the demo preset's signal chain.

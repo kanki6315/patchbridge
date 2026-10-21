@@ -356,7 +356,7 @@ struct EditorView: View {
             VStack(alignment: .leading, spacing: 10) {
                 DemoGrid(theme: theme)
                 HStack {
-                    Text("Tremonti w Mic · demo").font(.footnote).foregroundStyle(theme.muted)
+                    Text("\(DemoFixture.name) · demo").font(.footnote).foregroundStyle(theme.muted)
                     Spacer()
                     HStack(spacing: 3) { Text("Play with it"); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }
                         .font(.footnote.weight(.semibold)).foregroundStyle(theme.signal)
