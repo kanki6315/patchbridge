@@ -1020,146 +1020,6 @@
     "html": "html/ipad/p-typing.html"
   },
   {
-    "key": "duo/u-row.dc.html",
-    "slug": "duo-u-row",
-    "page": "iPhone Duo",
-    "title": "Unfolded · scenes",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-u-row.png",
-    "html": "html/screens/duo-u-row.html"
-  },
-  {
-    "key": "duo/u-idle.dc.html",
-    "slug": "duo-u-idle",
-    "page": "iPhone Duo",
-    "title": "Unfolded · editing",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-u-idle.png",
-    "html": "html/screens/duo-u-idle.html"
-  },
-  {
-    "key": "duo/u-pending.dc.html",
-    "slug": "duo-u-pending",
-    "page": "iPhone Duo",
-    "title": "Unfolded · sending a value",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-u-pending.png",
-    "html": "html/screens/duo-u-pending.html"
-  },
-  {
-    "key": "duo/h-row.dc.html",
-    "slug": "duo-h-row",
-    "page": "iPhone Duo",
-    "title": "Half-folded · scenes",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-h-row.png",
-    "html": "html/screens/duo-h-row.html"
-  },
-  {
-    "key": "duo/h-edit.dc.html",
-    "slug": "duo-h-edit",
-    "page": "iPhone Duo",
-    "title": "Half-folded · editing",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-h-edit.png",
-    "html": "html/screens/duo-h-edit.html"
-  },
-  {
-    "key": "duo/h-type.dc.html",
-    "slug": "duo-h-type",
-    "page": "iPhone Duo",
-    "title": "Half-folded · typing a value",
-    "w": 626,
-    "h": 890,
-    "png": "screens/duo-h-type.png",
-    "html": "html/screens/duo-h-type.html"
-  },
-  {
-    "key": "duo/Fold.dc.html",
-    "slug": "duo-Fold",
-    "page": "iPhone Duo",
-    "title": "Fold prototype (Play)",
-    "w": 860,
-    "h": 1000,
-    "png": "screens/duo-Fold.png",
-    "html": "html/screens/duo-Fold.html"
-  },
-  {
-    "key": "duo/f-half.dc.html",
-    "slug": "duo-f-half",
-    "page": "iPhone Duo",
-    "title": "Fold prototype · half-folded",
-    "w": 860,
-    "h": 1000,
-    "png": "screens/duo-f-half.png",
-    "html": "html/screens/duo-f-half.html"
-  },
-  {
-    "key": "duo/xl-grid.dc.html",
-    "slug": "duo-xl-grid",
-    "page": "iPhone Duo",
-    "title": "Outer landscape · grid",
-    "w": 678,
-    "h": 466,
-    "png": "screens/duo-xl-grid.png",
-    "html": "html/screens/duo-xl-grid.html"
-  },
-  {
-    "key": "duo/xl-sheet.dc.html",
-    "slug": "duo-xl-sheet",
-    "page": "iPhone Duo",
-    "title": "Outer landscape · block menu",
-    "w": 678,
-    "h": 466,
-    "png": "screens/duo-xl-sheet.png",
-    "html": "html/screens/duo-xl-sheet.html"
-  },
-  {
-    "key": "duo/xl-pending.dc.html",
-    "slug": "duo-xl-pending",
-    "page": "iPhone Duo",
-    "title": "Outer landscape · block menu, sending",
-    "w": 678,
-    "h": 466,
-    "png": "screens/duo-xl-pending.png",
-    "html": "html/screens/duo-xl-pending.html"
-  },
-  {
-    "key": "duo/x-grid.dc.html",
-    "slug": "duo-x-grid",
-    "page": "iPhone Duo",
-    "title": "Outer portrait · grid",
-    "w": 466,
-    "h": 678,
-    "png": "screens/duo-x-grid.png",
-    "html": "html/screens/duo-x-grid.html"
-  },
-  {
-    "key": "duo/x-sheet.dc.html",
-    "slug": "duo-x-sheet",
-    "page": "iPhone Duo",
-    "title": "Outer portrait · block menu",
-    "w": 466,
-    "h": 678,
-    "png": "screens/duo-x-sheet.png",
-    "html": "html/screens/duo-x-sheet.html"
-  },
-  {
-    "key": "duo/x-pending.dc.html",
-    "slug": "duo-x-pending",
-    "page": "iPhone Duo",
-    "title": "Outer portrait · block menu, sending",
-    "w": 466,
-    "h": 678,
-    "png": "screens/duo-x-pending.png",
-    "html": "html/screens/duo-x-pending.html"
-  },
-  {
     "key": "live/ls-connected.dc.html",
     "slug": "ls-connected",
     "page": "Live Activity",
@@ -1338,146 +1198,6 @@
     "h": 290,
     "png": "live/mac-trusted-away.png",
     "html": "html/live/mac-trusted-away.html"
-  },
-  {
-    "key": "poc/tn-island.dc.html",
-    "slug": "tn-island",
-    "page": "Tuner",
-    "title": "Tuner line · sharp, light rising into the status bar",
-    "w": 402,
-    "h": 874,
-    "png": "tuner/tn-island.png",
-    "html": "html/tuner/tn-island.html"
-  },
-  {
-    "key": "poc/tn-island-tuned.dc.html",
-    "slug": "tn-island-tuned",
-    "page": "Tuner",
-    "title": "Tuner line · in tune, island ring lit",
-    "w": 402,
-    "h": 874,
-    "png": "tuner/tn-island-tuned.png",
-    "html": "html/tuner/tn-island-tuned.html"
-  },
-  {
-    "key": "poc/tn-island-quiet.dc.html",
-    "slug": "tn-island-quiet",
-    "page": "Tuner",
-    "title": "Tuner line · no signal",
-    "w": 402,
-    "h": 874,
-    "png": "tuner/tn-island-quiet.png",
-    "html": "html/tuner/tn-island-quiet.html"
-  },
-  {
-    "key": "poc/tn-island-editor.dc.html",
-    "slug": "tn-island-editor",
-    "page": "Tuner",
-    "title": "Tuner line · stays on in the block editor",
-    "w": 402,
-    "h": 874,
-    "png": "tuner/tn-island-editor.png",
-    "html": "html/tuner/tn-island-editor.html"
-  },
-  {
-    "key": "poc/tn-sheet.dc.html",
-    "slug": "tn-sheet",
-    "page": "Tuner",
-    "title": "Full tuner · muted",
-    "w": 402,
-    "h": 874,
-    "png": "tuner/tn-sheet.png",
-    "html": "html/tuner/tn-sheet.html"
-  },
-  {
-    "key": "poc/tn-sheet-quiet.dc.html",
-    "slug": "tn-sheet-quiet",
-    "page": "Tuner",
-    "title": "Full tuner · no signal, live on",
-    "w": 402,
-    "h": 874,
-    "png": "tuner/tn-sheet-quiet.png",
-    "html": "html/tuner/tn-sheet-quiet.html"
-  },
-  {
-    "key": "ipad/tn-popover.dc.html",
-    "slug": "tn-popover",
-    "page": "Tuner",
-    "title": "Popover from the tuner button",
-    "w": 1180,
-    "h": 820,
-    "png": "tuner/tn-popover.png",
-    "html": "html/tuner/tn-popover.html"
-  },
-  {
-    "key": "ipad/tn-band.dc.html",
-    "slug": "tn-band",
-    "page": "Tuner",
-    "title": "Live tuner as a top-bar band",
-    "w": 1180,
-    "h": 820,
-    "png": "tuner/tn-band.png",
-    "html": "html/tuner/tn-band.html"
-  },
-  {
-    "key": "ipad/tn-band-portrait.dc.html",
-    "slug": "tn-band-portrait",
-    "page": "Tuner",
-    "title": "Live tuner band, portrait",
-    "w": 820,
-    "h": 1180,
-    "png": "tuner/tn-band-portrait.png",
-    "html": "html/tuner/tn-band-portrait.html"
-  },
-  {
-    "key": "duo/tn-popover.dc.html",
-    "slug": "duo-tn-popover",
-    "page": "Tuner",
-    "title": "Popover from the tuner button",
-    "w": 626,
-    "h": 890,
-    "png": "tuner/duo-tn-popover.png",
-    "html": "html/tuner/duo-tn-popover.html"
-  },
-  {
-    "key": "duo/tn-crease-far.dc.html",
-    "slug": "duo-tn-crease-far",
-    "page": "Tuner",
-    "title": "Crease · 14¢ flat, light follows the marker",
-    "w": 626,
-    "h": 890,
-    "png": "tuner/duo-tn-crease-far.png",
-    "html": "html/tuner/duo-tn-crease-far.html"
-  },
-  {
-    "key": "duo/tn-crease-close.dc.html",
-    "slug": "duo-tn-crease-close",
-    "page": "Tuner",
-    "title": "Crease · 6¢ sharp, light widening",
-    "w": 626,
-    "h": 890,
-    "png": "tuner/duo-tn-crease-close.png",
-    "html": "html/tuner/duo-tn-crease-close.html"
-  },
-  {
-    "key": "duo/tn-crease-tuned.dc.html",
-    "slug": "duo-tn-crease-tuned",
-    "page": "Tuner",
-    "title": "Crease · in tune, light across the fold",
-    "w": 626,
-    "h": 890,
-    "png": "tuner/duo-tn-crease-tuned.png",
-    "html": "html/tuner/duo-tn-crease-tuned.html"
-  },
-  {
-    "key": "duo/tn-crease-half.dc.html",
-    "slug": "duo-tn-crease-half",
-    "page": "Tuner",
-    "title": "Crease · half-folded, nothing moves",
-    "w": 626,
-    "h": 890,
-    "png": "tuner/duo-tn-crease-half.png",
-    "html": "html/tuner/duo-tn-crease-half.html"
   },
   {
     "key": "poc/s-idle.dc.html",
@@ -1708,5 +1428,285 @@
     "h": 890,
     "png": "switching/duo-sc-readonly.png",
     "html": "html/switching/duo-sc-readonly.html"
+  },
+  {
+    "key": "duo/u-row.dc.html",
+    "slug": "duo-u-row",
+    "page": "iPhone Duo",
+    "title": "Unfolded · scenes",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-u-row.png",
+    "html": "html/screens/duo-u-row.html"
+  },
+  {
+    "key": "duo/u-idle.dc.html",
+    "slug": "duo-u-idle",
+    "page": "iPhone Duo",
+    "title": "Unfolded · editing",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-u-idle.png",
+    "html": "html/screens/duo-u-idle.html"
+  },
+  {
+    "key": "duo/u-pending.dc.html",
+    "slug": "duo-u-pending",
+    "page": "iPhone Duo",
+    "title": "Unfolded · sending a value",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-u-pending.png",
+    "html": "html/screens/duo-u-pending.html"
+  },
+  {
+    "key": "duo/h-row.dc.html",
+    "slug": "duo-h-row",
+    "page": "iPhone Duo",
+    "title": "Half-folded · scenes",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-h-row.png",
+    "html": "html/screens/duo-h-row.html"
+  },
+  {
+    "key": "duo/h-edit.dc.html",
+    "slug": "duo-h-edit",
+    "page": "iPhone Duo",
+    "title": "Half-folded · editing",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-h-edit.png",
+    "html": "html/screens/duo-h-edit.html"
+  },
+  {
+    "key": "duo/h-type.dc.html",
+    "slug": "duo-h-type",
+    "page": "iPhone Duo",
+    "title": "Half-folded · typing a value",
+    "w": 626,
+    "h": 890,
+    "png": "screens/duo-h-type.png",
+    "html": "html/screens/duo-h-type.html"
+  },
+  {
+    "key": "duo/Fold.dc.html",
+    "slug": "duo-Fold",
+    "page": "iPhone Duo",
+    "title": "Fold prototype (Play)",
+    "w": 860,
+    "h": 1000,
+    "png": "screens/duo-Fold.png",
+    "html": "html/screens/duo-Fold.html"
+  },
+  {
+    "key": "duo/f-half.dc.html",
+    "slug": "duo-f-half",
+    "page": "iPhone Duo",
+    "title": "Fold prototype · half-folded",
+    "w": 860,
+    "h": 1000,
+    "png": "screens/duo-f-half.png",
+    "html": "html/screens/duo-f-half.html"
+  },
+  {
+    "key": "duo/xl-grid.dc.html",
+    "slug": "duo-xl-grid",
+    "page": "iPhone Duo",
+    "title": "Outer landscape · grid",
+    "w": 678,
+    "h": 466,
+    "png": "screens/duo-xl-grid.png",
+    "html": "html/screens/duo-xl-grid.html"
+  },
+  {
+    "key": "duo/xl-sheet.dc.html",
+    "slug": "duo-xl-sheet",
+    "page": "iPhone Duo",
+    "title": "Outer landscape · block menu",
+    "w": 678,
+    "h": 466,
+    "png": "screens/duo-xl-sheet.png",
+    "html": "html/screens/duo-xl-sheet.html"
+  },
+  {
+    "key": "duo/xl-pending.dc.html",
+    "slug": "duo-xl-pending",
+    "page": "iPhone Duo",
+    "title": "Outer landscape · block menu, sending",
+    "w": 678,
+    "h": 466,
+    "png": "screens/duo-xl-pending.png",
+    "html": "html/screens/duo-xl-pending.html"
+  },
+  {
+    "key": "duo/x-grid.dc.html",
+    "slug": "duo-x-grid",
+    "page": "iPhone Duo",
+    "title": "Outer portrait · grid",
+    "w": 466,
+    "h": 678,
+    "png": "screens/duo-x-grid.png",
+    "html": "html/screens/duo-x-grid.html"
+  },
+  {
+    "key": "duo/x-sheet.dc.html",
+    "slug": "duo-x-sheet",
+    "page": "iPhone Duo",
+    "title": "Outer portrait · block menu",
+    "w": 466,
+    "h": 678,
+    "png": "screens/duo-x-sheet.png",
+    "html": "html/screens/duo-x-sheet.html"
+  },
+  {
+    "key": "duo/x-pending.dc.html",
+    "slug": "duo-x-pending",
+    "page": "iPhone Duo",
+    "title": "Outer portrait · block menu, sending",
+    "w": 466,
+    "h": 678,
+    "png": "screens/duo-x-pending.png",
+    "html": "html/screens/duo-x-pending.html"
+  },
+  {
+    "key": "poc/tn-island.dc.html",
+    "slug": "tn-island",
+    "page": "Tuner",
+    "title": "Tuner line · sharp, light rising into the status bar",
+    "w": 402,
+    "h": 874,
+    "png": "tuner/tn-island.png",
+    "html": "html/tuner/tn-island.html"
+  },
+  {
+    "key": "poc/tn-island-tuned.dc.html",
+    "slug": "tn-island-tuned",
+    "page": "Tuner",
+    "title": "Tuner line · in tune, island ring lit",
+    "w": 402,
+    "h": 874,
+    "png": "tuner/tn-island-tuned.png",
+    "html": "html/tuner/tn-island-tuned.html"
+  },
+  {
+    "key": "poc/tn-island-quiet.dc.html",
+    "slug": "tn-island-quiet",
+    "page": "Tuner",
+    "title": "Tuner line · no signal",
+    "w": 402,
+    "h": 874,
+    "png": "tuner/tn-island-quiet.png",
+    "html": "html/tuner/tn-island-quiet.html"
+  },
+  {
+    "key": "poc/tn-island-editor.dc.html",
+    "slug": "tn-island-editor",
+    "page": "Tuner",
+    "title": "Tuner line · stays on in the block editor",
+    "w": 402,
+    "h": 874,
+    "png": "tuner/tn-island-editor.png",
+    "html": "html/tuner/tn-island-editor.html"
+  },
+  {
+    "key": "poc/tn-sheet.dc.html",
+    "slug": "tn-sheet",
+    "page": "Tuner",
+    "title": "Full tuner · muted",
+    "w": 402,
+    "h": 874,
+    "png": "tuner/tn-sheet.png",
+    "html": "html/tuner/tn-sheet.html"
+  },
+  {
+    "key": "poc/tn-sheet-quiet.dc.html",
+    "slug": "tn-sheet-quiet",
+    "page": "Tuner",
+    "title": "Full tuner · no signal, live on",
+    "w": 402,
+    "h": 874,
+    "png": "tuner/tn-sheet-quiet.png",
+    "html": "html/tuner/tn-sheet-quiet.html"
+  },
+  {
+    "key": "ipad/tn-popover.dc.html",
+    "slug": "tn-popover",
+    "page": "Tuner",
+    "title": "Popover from the tuner button",
+    "w": 1180,
+    "h": 820,
+    "png": "tuner/tn-popover.png",
+    "html": "html/tuner/tn-popover.html"
+  },
+  {
+    "key": "ipad/tn-band.dc.html",
+    "slug": "tn-band",
+    "page": "Tuner",
+    "title": "Live tuner as a top-bar band",
+    "w": 1180,
+    "h": 820,
+    "png": "tuner/tn-band.png",
+    "html": "html/tuner/tn-band.html"
+  },
+  {
+    "key": "ipad/tn-band-portrait.dc.html",
+    "slug": "tn-band-portrait",
+    "page": "Tuner",
+    "title": "Live tuner band, portrait",
+    "w": 820,
+    "h": 1180,
+    "png": "tuner/tn-band-portrait.png",
+    "html": "html/tuner/tn-band-portrait.html"
+  },
+  {
+    "key": "duo/tn-popover.dc.html",
+    "slug": "duo-tn-popover",
+    "page": "Tuner",
+    "title": "Popover from the tuner button",
+    "w": 626,
+    "h": 890,
+    "png": "tuner/duo-tn-popover.png",
+    "html": "html/tuner/duo-tn-popover.html"
+  },
+  {
+    "key": "duo/tn-crease-far.dc.html",
+    "slug": "duo-tn-crease-far",
+    "page": "Tuner",
+    "title": "Crease · 14¢ flat, light follows the marker",
+    "w": 626,
+    "h": 890,
+    "png": "tuner/duo-tn-crease-far.png",
+    "html": "html/tuner/duo-tn-crease-far.html"
+  },
+  {
+    "key": "duo/tn-crease-close.dc.html",
+    "slug": "duo-tn-crease-close",
+    "page": "Tuner",
+    "title": "Crease · 6¢ sharp, light widening",
+    "w": 626,
+    "h": 890,
+    "png": "tuner/duo-tn-crease-close.png",
+    "html": "html/tuner/duo-tn-crease-close.html"
+  },
+  {
+    "key": "duo/tn-crease-tuned.dc.html",
+    "slug": "duo-tn-crease-tuned",
+    "page": "Tuner",
+    "title": "Crease · in tune, light across the fold",
+    "w": 626,
+    "h": 890,
+    "png": "tuner/duo-tn-crease-tuned.png",
+    "html": "html/tuner/duo-tn-crease-tuned.html"
+  },
+  {
+    "key": "duo/tn-crease-half.dc.html",
+    "slug": "duo-tn-crease-half",
+    "page": "Tuner",
+    "title": "Crease · half-folded, nothing moves",
+    "w": 626,
+    "h": 890,
+    "png": "tuner/duo-tn-crease-half.png",
+    "html": "html/tuner/duo-tn-crease-half.html"
   }
 ]
