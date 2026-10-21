@@ -65,7 +65,7 @@ struct EditorView: View {
                                 grid(snapshot)
                                 rowList(snapshot)
                             }.padding(16)
-                        }.safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot) }
+                        }.safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot, pushed: false) }
                     }
                 } else if pad && duo == nil && model.coordinator.phase == .loading {
                     PadLoadingView(theme: theme) { model.disconnect() }
@@ -82,9 +82,6 @@ struct EditorView: View {
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
                 }.tint(theme.signal).preferredColorScheme(theme.daylight ? .light : .dark)
             }
-            .confirmationDialog(model.demo ? "Save this demo preset?" : "Save on the Quad Cortex?", isPresented: $confirmSave, titleVisibility: .visible) {
-                Button(model.demo ? "Save demo preset" : "Save preset") { confirmCurrentSave() }
-            } message: { Text(model.demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
             .onChange(of: model.ready) { _, ready in
                 if !ready { selectedBlock = nil; duoRow = 0; duoSelected = nil; duoEditing = false }
             }
@@ -145,15 +142,12 @@ struct EditorView: View {
         .navigationDestination(item: $selectedBlock) { id in
             if let snapshot = model.snapshot, let block = snapshot.blocks.first(where: { $0.id == id }) {
                 BlockEditorView(model: model, block: block, theme: theme)
-                .safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot) }
+                .safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot, pushed: true) }
                 .background(theme.ground.ignoresSafeArea()).foregroundStyle(theme.ink).tint(theme.signal)
                 .navigationTitle(snapshot.name).navigationBarTitleDisplayMode(.inline)
                 .toolbar(.visible, for: .navigationBar)
                 .toolbarBackground(theme.ground, for: .navigationBar)
                 .preferredColorScheme(matchSystem ? nil : (theme.daylight ? .light : .dark))
-                .confirmationDialog(model.demo ? "Save this demo preset?" : "Save on the Quad Cortex?", isPresented: $confirmSave, titleVisibility: .visible) {
-                    Button(model.demo ? "Save demo preset" : "Save preset") { confirmCurrentSave() }
-                } message: { Text(model.demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
             }
         }
         }
@@ -175,6 +169,11 @@ struct EditorView: View {
                                         height: geometry.size.height + insets.top + insets.bottom))
     }
     private func requestSave() { saveContext = model.snapshot; confirmSave = true }
+    /// The overview's Save button stays in the hierarchy under a pushed block editor, so only the
+    /// button on top presents the confirmation.
+    private func saveConfirmation(pushed: Bool) -> Binding<Bool> {
+        Binding(get: { confirmSave && pushed == (selectedBlock != nil) }, set: { confirmSave = $0 })
+    }
     private func confirmCurrentSave() {
         guard saveContext == model.snapshot else {
             model.notice = "Not saved · the preset changed. Review it before saving."; return
@@ -293,6 +292,7 @@ struct EditorView: View {
                 if tuner.available { TunerButton(tuner: tuner, theme: theme) { tuner.setOpen(true) } }
                 if model.editor.supports("save") {
                     Button("Save") { requestSave() }.font(.headline).padding(.horizontal, 24).frame(height: 44).background(theme.signal, in: Capsule()).foregroundStyle(theme.signalInk).disabled(model.busy || !snapshot.dirty)
+                        .saveConfirmation(isPresented: saveConfirmation(pushed: false), demo: model.demo, confirm: confirmCurrentSave)
                 }
             }
             HStack(alignment: .top, spacing: 16) {
@@ -324,7 +324,7 @@ struct EditorView: View {
             if let message = model.error ?? model.notice ?? model.coordinator.outcome { Text(message).font(.footnote).foregroundStyle(theme.caution) }
         }.padding(.horizontal, 16).padding(.vertical, 8)
     }
-    private func saveBar(_ snapshot: PresetSnapshot) -> some View {
+    private func saveBar(_ snapshot: PresetSnapshot, pushed: Bool) -> some View {
         VStack(spacing: 8) {
             if let error = model.error ?? model.notice ?? model.coordinator.outcome { Label(error, systemImage: "info.circle").font(.footnote).foregroundStyle(theme.caution).floatingNote(theme) }
             if model.editor.pending != nil { Label(model.editor.pending?.operation == "save" ? "Saving…" : "Sending…", systemImage: "arrow.triangle.2.circlepath").font(.footnote).floatingNote(theme) }
@@ -334,6 +334,7 @@ struct EditorView: View {
                     PrimaryButton(title: selectedBlock == nil ? (model.demo ? "Save demo preset" : "Save on the QC") : "Save", theme: theme) { requestSave() }
                         .frame(maxWidth: selectedBlock == nil ? .infinity : 100)
                         .floatingDimmed(model.busy || !snapshot.dirty, theme)
+                        .saveConfirmation(isPresented: saveConfirmation(pushed: pushed), demo: model.demo, confirm: confirmCurrentSave)
                 }
             } else { Label("Read-only connection", systemImage: "lock").font(.footnote).foregroundStyle(theme.muted).floatingNote(theme) }
         }.padding(.horizontal, 16).padding(.vertical, 12)

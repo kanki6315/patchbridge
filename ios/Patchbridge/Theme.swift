@@ -65,6 +65,13 @@ extension View {
         if enabled { phoneGlass(theme, radius: 18) } else { self }
     }
     func phoneGlass(_ theme: PhoneTheme, radius: CGFloat = 24) -> some View { modifier(GlassSurface(theme: theme, radius: radius)) }
+    /// The save confirmation. iOS 26 draws it as a popover pointing at the view it's attached to,
+    /// so attach it to the Save button itself, never to the screen around it.
+    func saveConfirmation(isPresented: Binding<Bool>, demo: Bool, confirm: @escaping () -> Void) -> some View {
+        confirmationDialog(demo ? "Save this demo preset?" : "Save on the Quad Cortex?", isPresented: isPresented, titleVisibility: .visible) {
+            Button(demo ? "Save demo preset" : "Save preset", action: confirm)
+        } message: { Text(demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
+    }
 }
 struct PrimaryButton: View {
     let title: String
