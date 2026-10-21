@@ -147,13 +147,46 @@ iPhone / iPad app  ──Bluetooth──▶  Mac bridge  ──USB──▶  Qua
 | Shared Swift package | `swift/` | Helper process client, chunked BLE protocol, Core Bluetooth central and peripheral, bridge backend, editor model. [Swift/BLE demo](docs/SWIFT_BLE_DEMO.md) |
 | Mac bridge | `mac/` | Menu bar app with a bundled Python runtime. Up to four phones per bridge. [Bridge shell](docs/MAC_BRIDGE_SHELL.md), [multi-device](docs/MULTI_DEVICE_PLAN.md) |
 | Python helper | `src/patchbridge/` | Versioned line-delimited JSON protocol. Adapters: simulated, captured read-only, direct USB. [Process protocol](docs/PROCESS_PROTOCOL.md) |
-| QC USB transport | `vendor/qc-mcp/` | Vendored and pinned. [VENDORED.md](vendor/qc-mcp/VENDORED.md) |
+| QC USB transport | `vendor/qc-mcp/` | Vendored and pinned. [About qc-mcp](#qc-mcp-the-usb-transport) |
 | Marketing site | `site/` | Astro on Cloudflare Workers. [site/README.md](site/README.md) |
 
 The helper exchanges values in the QC's normalized 0–1 form and passes raw device
 metadata through. Display conversion happens in the Swift editor model. The
 [metadata and editor model contract](docs/METADATA_AND_EDITOR_MODEL.md) describes
 that layer and is tested against captured QC fixtures.
+
+### qc-mcp, the USB transport
+
+Patchbridge doesn't speak to the Quad Cortex directly. The USB layer comes from
+[qc-mcp](https://github.com/lexasoft123/qc-mcp), an open-source project that
+reverse-engineered the protocol Cortex Control uses over USB. Patchbridge owes
+its hardware support to that work.
+
+Inside the Python helper, qc-mcp handles the parts that touch the device:
+
+- **Transport.** Finding the QC over USB HID and exchanging framed messages.
+- **Protocol.** Encoding and decoding those messages with the QC's protobuf schema.
+- **Preset and directory.** Reading the current preset, the grid, and the
+  My Presets slots.
+- **Catalog.** The device's own block and parameter definitions, which the
+  editor turns into controls.
+
+Everything above that layer is Patchbridge: the session and revision model,
+confirmed writes, explicit save, read-only enforcement, the Bluetooth bridge
+and the apps.
+
+**It's vendored, not installed.** A copy lives in `vendor/qc-mcp/`, pinned to a
+single upstream commit under qc-mcp's MIT license. That keeps the Mac app
+reproducible and lets Patchbridge carry a small local fix (a queue that doubled
+on every read) while it's upstream. Only the modules the app needs are copied;
+the MCP server, GUI, audio tools and Windows HID are left out.
+
+Two files derived from Neural DSP software are deliberately not in Git: the
+protocol descriptors extracted from Cortex Control and upstream's device
+catalog snapshot. You generate the descriptors from your own installed Cortex
+Control, and the adapter reads the catalog from the QC on every connect.
+[VENDORED.md](vendor/qc-mcp/VENDORED.md) has the pinned commit, the local
+changes and the update steps.
 
 ### Run the helper locally
 
