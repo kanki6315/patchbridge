@@ -2,6 +2,7 @@
 import '@fontsource-variable/archivo/wdth.css';
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
+import GitHubMark from '../components/GitHubMark.astro';
 import { site } from '../site';
 
 interface Props {
@@ -63,6 +64,10 @@ const nav = [
               </li>
             ))}
           </ul>
+          <a class="github" href={site.githubUrl} aria-label="View Patchbridge on GitHub">
+            <GitHubMark />
+            <span class="github-label">View on GitHub</span>
+          </a>
         </nav>
       </div>
     </header>
@@ -137,6 +142,11 @@ const nav = [
   }
   .brand :global(svg) { color: var(--signal); }
 
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
   nav ul {
     display: flex;
     gap: 0.25rem;
@@ -158,6 +168,25 @@ const nav = [
   }
   nav a:hover { color: var(--ink); background: rgb(255 255 255 / 0.06); }
   nav a[aria-current='page'] { color: var(--ink); box-shadow: var(--glass-edge); background: var(--glass-fill); }
+
+  /* GitHub's mark and name, unaltered, on the header's glass pill. */
+  nav .github {
+    gap: 0.5rem;
+    margin-left: 0.25rem;
+    color: var(--ink);
+    background: var(--glass-fill);
+    box-shadow: var(--glass-edge);
+  }
+  nav .github:hover { background: rgb(52 52 46 / 0.7); }
+  .github :global(svg) { width: 18px; height: 18px; flex: none; }
+  /* Phones: the mark alone, so the header never scrolls sideways. */
+  @media (max-width: 30rem) {
+    .bar { gap: 0.5rem; }
+    nav { gap: 0.25rem; }
+    nav ul a { padding: 0 0.55rem; }
+    nav .github { width: 44px; padding: 0; justify-content: center; margin-left: 0; }
+    .github-label { display: none; }
+  }
 
   .site-footer {
     border-top: 1px solid var(--hairline);

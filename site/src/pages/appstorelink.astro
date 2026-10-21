@@ -1,0 +1,173 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import { site } from '../site';
+import appIcon from '../assets/app-icon.png';
+import appStoreBadge from '../assets/badges/app-store.svg?url';
+import macAppStoreBadge from '../assets/badges/mac-app-store.svg?url';
+
+// A stable link for sharing: it points at both stores, so it never needs to change.
+// Until a store URL is set in site.ts, its badge shows dimmed and unlinked.
+const stores = [
+  {
+    kind: 'app',
+    tag: 'The app',
+    device: 'iPhone and iPad',
+    title: site.name,
+    body: 'Edit the preset in your hand: the whole chain, scenes A to H, every value live.',
+    url: site.appStoreUrl,
+    badge: appStoreBadge,
+    alt: 'Download Patchbridge on the App Store',
+    width: 120,
+  },
+  {
+    kind: 'bridge',
+    tag: 'The bridge',
+    device: 'Mac',
+    title: site.name,
+    body: 'Holds the USB cable to your Quad Cortex and shares it over Bluetooth.',
+    url: site.macAppUrl,
+    badge: macAppStoreBadge,
+    alt: 'Download the Patchbridge Mac bridge on the Mac App Store',
+    width: 156,
+  },
+];
+
+const chain = ['iPhone or iPad', 'Bluetooth', 'Mac bridge', 'USB', 'Quad Cortex'];
+---
+<Base title="Get the app" description={`Download ${site.name} free for iPhone, iPad and Mac.`}>
+  <section class="wrap get">
+    <header class="head">
+      <h1>Get {site.name}.</h1>
+      <p class="lede">Two free downloads: the app on your iPhone or iPad, and the bridge on the Mac your Quad Cortex plugs into.</p>
+    </header>
+
+    <ul class="cards">
+      {stores.map((s) => (
+        <li class:list={['card', s.kind]}>
+          <div class="top">
+            <Image class="glyph" src={appIcon} alt="" width={64} height={64} />
+
+            <div>
+              <p class="tag">{s.tag} <span>· for {s.device}</span></p>
+              <h2>{s.title} <span class="free">Free</span></h2>
+            </div>
+          </div>
+          <p class="body">{s.body}</p>
+          <div class="cta">
+            {s.url ? (
+              <a class="badge" href={s.url}>
+                <img src={s.badge} alt={s.alt} width={s.width * 1.35} height={54} />
+              </a>
+            ) : (
+              <>
+                <img class="badge soon" src={s.badge} alt="" width={s.width * 1.35} height={54} />
+                <span class="btn btn-soon">Coming soon</span>
+              </>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+
+    <figure class="chain">
+      <figcaption>How they connect</figcaption>
+      <ol>
+        {chain.map((step, i) => (
+          <li class:list={[i % 2 ? 'link' : 'node']}>{step}</li>
+        ))}
+      </ol>
+    </figure>
+  </section>
+</Base>
+
+<style>
+  .get {
+    display: grid;
+    gap: clamp(2rem, 1.5rem + 2vw, 3rem);
+    padding-block: clamp(3.5rem, 2.5rem + 6vw, 8rem);
+  }
+  .head { display: grid; gap: 1.25rem; max-width: 44rem; }
+  h1 { font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem); letter-spacing: -0.035em; }
+  .lede { color: var(--ink-muted); font-size: var(--text-lede); }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .card {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 1.25rem;
+    padding: clamp(1.25rem, 1rem + 1.2vw, 2rem);
+    border-radius: var(--r-panel);
+    position: relative;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--glass-edge);
+  }
+  /* Each download gets its own accent: signal for the app, a deeper signal for the bridge. */
+  .card { --accent: var(--signal); }
+  .card.bridge { --accent: color-mix(in oklch, var(--signal) 68%, var(--ground)); }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: var(--accent);
+  }
+
+  .top { display: flex; align-items: center; gap: 1rem; }
+  .glyph { flex: none; width: 64px; height: 64px; border-radius: var(--r-md); }
+
+  .tag {
+    font-size: var(--text-label);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .tag { color: var(--accent); }
+  .tag span { color: var(--ink-muted); font-weight: 500; letter-spacing: 0.04em; }
+  h2 { display: flex; align-items: center; gap: 0.6rem; font-size: var(--text-h3); margin-top: 0.3rem; }
+  .free {
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--r-pill);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--accent);
+    font: 600 var(--text-label)/1 var(--font);
+    letter-spacing: 0.04em;
+  }
+
+  .body { color: var(--ink-muted); max-width: 34ch; }
+
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+  .badge { display: inline-block; }
+  .badge img, img.badge { height: 54px; width: auto; }
+  .badge.soon { opacity: 0.35; }
+
+  .chain { margin: 0; display: grid; gap: 0.75rem; }
+  .chain figcaption { color: var(--ink-muted); font-size: var(--text-caption); }
+  .chain ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-caption);
+  }
+  .node {
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--r-pill);
+    background: var(--surface-raised);
+    box-shadow: var(--glass-edge);
+    font-weight: 600;
+  }
+  .link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ink-muted); }
+  .link::before, .link::after { content: ''; width: 1rem; height: 1px; background: var(--hairline); }
+</style>

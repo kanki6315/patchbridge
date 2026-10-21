@@ -12,7 +12,7 @@ Tell us which iPhone or iPad you're using, your macOS version, your Quad Cortex 
 
 ## What you need
 
-- An iPhone or iPad with Bluetooth.
+- An iPhone or iPad with Bluetooth, running the free Patchbridge app.
 - A Mac running the free Patchbridge bridge app.
 - A Quad Cortex connected to that Mac over USB.
 

@@ -40,7 +40,10 @@ const shots = [
           Patchbridge puts the preset in your hand: the whole chain, scenes A to H,
           every value the QC is holding. Change it standing up, guitar still&nbsp;on.
         </p>
-        <StoreButtons />
+        <div class="get">
+          <StoreButtons />
+          <p class="price">Free on iPhone, iPad and Mac.</p>
+        </div>
       </div>
     </div>
     <div class="wrap hero-rig">
@@ -124,7 +127,7 @@ const shots = [
       <Image class="icon" src={appIcon} alt="" width={168} height={168} loading="lazy" />
       <div class="listing-text">
         <b>Patchbridge</b>
-        <span>Quad Cortex editor for iPhone and iPad, with a free Mac bridge.</span>
+        <span>Free Quad Cortex editor for iPhone and iPad. The Mac bridge is free too.</span>
       </div>
       <StoreButtons class="listing-cta" />
     </div>
@@ -157,6 +160,8 @@ const shots = [
     letter-spacing: -0.03em;
   }
   .hero-side { display: grid; gap: 1.5rem; padding-bottom: 0.4rem; }
+  .get { display: grid; gap: 0.75rem; }
+  .price { color: var(--ink-muted); font-size: var(--text-caption); }
   .lede {
     color: var(--ink-muted);
     font-size: 1.125rem;
