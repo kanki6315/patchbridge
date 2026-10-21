@@ -3,6 +3,7 @@
 Status: **partially verified on CorOS 4.1.1**. See
 [the dated results](USB_RESULTS_2026-10-20.md) for evidence, successful
 File CREATE persistence, and the problematic RecallPreset SAVE experiments.
+[Bypass writes and the qc-mcp request queue fix](USB_RESULTS_2026-10-21.md) follow.
 The table below is the original procedure, not the current results ledger.
 
 Use a disposable preset with Cortex Control closed. Record results from the

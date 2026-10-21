@@ -19,7 +19,9 @@ None of the live phone → Mac → USB path has run against the QC yet.
 - **Mac bridge.** `dist/Patchbridge.app` opens stopped with live USB/Bluetooth
   selected. Start bridge advertises over BLE; USB opens only after a phone is
   approved and requests a connection. The bundled helper runs the pinned USB
-  adapter (`--usb`), which exposes `set_parameter` and File CREATE `save` only.
+  adapter (`--usb`), which exposes `set_parameter`, `set_bypass` and File CREATE
+  `save` only. `set_bypass` and the request queue fix were verified directly over
+  USB on 2026-10-21, not yet through the bridge; see [USB results](USB_RESULTS_2026-10-21.md).
   **Use simulation** switches back to the bundled simulator with BLE and USB off.
   See [Mac bridge shell](MAC_BRIDGE_SHELL.md).
 - **iPhone app.** The designed app drives `EditorCoordinator` over BLE. It loads
@@ -83,7 +85,7 @@ With the user present, Cortex Control closed, and the disposable preset
    afterwards.
 
    ```sh
-   PYTHONPATH=/private/tmp/patchbridge-qc-mcp/src .venv-hardware/bin/python tools/calibrate_qc_controls.py
+   PYTHONPATH=vendor/qc-mcp/src .venv-hardware/bin/python tools/calibrate_qc_controls.py
    ```
 
 ## Still unverified after that run

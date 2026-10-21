@@ -103,7 +103,7 @@ required encryption to work around a pairing failure.
   scene, like the QC's own bypass button, and is shown only when the bridge
   advertises `set_bypass`. The readback decides what it shows. A block whose bypass
   isn't assigned to scenes shares one flag, so other scenes follow. The USB write
-  uses qc-mcp's `set_block_bypass` and still needs confirming on hardware.
+  uses qc-mcp's `set_block_bypass`; see [USB results](../docs/USB_RESULTS_2026-10-21.md).
 - Connection details includes Stage/Daylight appearance and Match iPhone
   appearance. Scene colors remain the QC's reported ARGB values.
 
