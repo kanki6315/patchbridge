@@ -311,7 +311,7 @@ struct DuoWorkspaceView: View {
                 PrimaryButton(title: saveTitle(snapshot), theme: theme) { requestSave() }
                     .disabled(model.busy || !snapshot.dirty).opacity(model.busy || !snapshot.dirty ? 0.45 : 1)
             } else { Label("Read-only connection", systemImage: "lock").font(.footnote).foregroundStyle(theme.muted) }
-        }.padding(.horizontal, 16).padding(.vertical, 12).phoneGlass(theme, radius: 0)
+        }.padding(.horizontal, 16).padding(.vertical, 12).phoneBar(theme)
     }
 
     // MARK: Block menu
