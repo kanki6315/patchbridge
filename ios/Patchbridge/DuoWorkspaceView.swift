@@ -302,14 +302,20 @@ struct DuoWorkspaceView: View {
         }
         .animation(motion, value: editing)
     }
+    /// No bar: the button floats over the content on its own, so its dimmed state stays opaque
+    /// and the notes above it carry their own glass.
     private func saveBar(_ snapshot: PresetSnapshot) -> some View {
         VStack(spacing: 8) {
-            if !editing { notice }
+            if !editing { notice.padding(.horizontal, 12).padding(.vertical, 8).phoneGlass(theme, radius: 16) }
             if model.editor.supports("save") {
                 PrimaryButton(title: saveTitle(snapshot), theme: theme) { requestSave() }
                     .disabled(model.busy || !snapshot.dirty).opacity(model.busy || !snapshot.dirty ? 0.45 : 1)
-            } else { Label("Read-only connection", systemImage: "lock").font(.footnote).foregroundStyle(theme.muted) }
-        }.padding(.horizontal, 16).padding(.vertical, 12).phoneBar(theme)
+                    .background(theme.ground, in: Capsule())
+            } else {
+                Label("Read-only connection", systemImage: "lock").font(.footnote).foregroundStyle(theme.muted)
+                    .padding(.horizontal, 12).padding(.vertical, 8).phoneGlass(theme, radius: 16)
+            }
+        }.padding(.horizontal, 16).padding(.vertical, 12)
     }
 
     // MARK: Block menu
