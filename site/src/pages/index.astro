@@ -352,12 +352,15 @@ const shots = [
     margin-top: clamp(2.5rem, 5vw, 4rem);
     padding: 0.5rem max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter))) 1.5rem;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity;
     scroll-padding-inline: max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter)));
-    scrollbar-width: thin;
-    scrollbar-color: var(--hairline) transparent;
     overscroll-behavior-x: contain;
+    /* No scrollbar: the screens fade out at the page edges instead, which shows there's more. */
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--gutter), #000 calc(100% - var(--gutter)), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 var(--gutter), #000 calc(100% - var(--gutter)), transparent);
   }
+  .rail::-webkit-scrollbar { display: none; }
   .rail:focus-visible { outline-offset: -2px; }
   .shot {
     flex: none;
