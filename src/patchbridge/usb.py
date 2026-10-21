@@ -14,7 +14,7 @@ from .metadata import OPTION_TYPES, WRITABLE_TYPES, normalize_models
 from . import tuner as tuning
 
 OPERATIONS = {'connect', 'disconnect', 'identify', 'capabilities', 'snapshot',
-              'catalog', 'subscribe', 'set_parameter', 'save'} | tuning.OPERATIONS
+              'catalog', 'subscribe', 'set_parameter', 'set_bypass', 'save'} | tuning.OPERATIONS
 # Broadcasts the QC streams on its own while a session is live. The tuner reader drops them
 # so they don't pile up between requests; anything else stays queued for the next request.
 STREAMED = {'KeepAlive', 'CPULoad', 'GlobalTempo', 'IOMeter', 'GridModelMeter', 'ModuleStats'}
@@ -29,6 +29,21 @@ def active(definitions, parameter, values, depth=0):
     value = values.get(rule['parameter'])
     return (depth < 8 and type(value) in (int, float) and any(abs(value - v) < 1e-6 for v in rule['values'])
             and active(definitions, rule['parameter'], values, depth + 1))
+
+
+def drop_broadcasts(qc, protocol):
+    """qc-mcp queues every message a read doesn't consume, and the QC streams some on its
+    own (GlobalTempo about four times a second), so a long session's queue grows without
+    end and every read scans it. Nothing here reads them; drop them after each read."""
+    original = qc.request
+
+    def request(*args, **kwargs):
+        with qc._io_lock:
+            result = original(*args, **kwargs)
+            commands = protocol().COMMANDS
+            qc._pending = [t for t in qc._pending if commands.get(t[0]) not in STREAMED]
+            return result
+    qc.request = request
 
 
 class USBAdapter:
@@ -50,6 +65,7 @@ class USBAdapter:
             self.factory = QuadCortex
         self.qc = self.factory()
         try:
+            drop_broadcasts(self.qc, self._protocol)
             # ctypes returns a signed IOReturn; accept both representations.
             self.qc.io.BENIGN_WRITE_CODES = frozenset({0, 0xe0005000, -536850432})
             self.qc.open()
@@ -268,7 +284,7 @@ class USBAdapter:
         return state
 
     def execute(self, operation, payload):
-        if operation not in {'set_parameter', 'save'}:
+        if operation not in {'set_parameter', 'set_bypass', 'save'}:
             raise BridgeError('unsupported_operation', 'Operation not yet validated for the USB adapter.')
         expected = deepcopy(self.state)
         current = self.snapshot()
@@ -296,6 +312,23 @@ class USBAdapter:
                     or actual is None or actual['model_id'] != block['model_id']
                     or abs(actual['scenes'][after['scene']]['parameters'][parameter]-value) > 1e-5):
                 raise RuntimeError('Write could not be confirmed; reconnect required.')
+            return after
+        if operation == 'set_bypass':
+            block = next((b for b in current['blocks'] if b['id'] == payload.get('block_id')), None)
+            if block is None:
+                raise BridgeError('invalid_value', 'Unknown block.')
+            value = payload.get('value')
+            if type(value) is not bool:
+                raise BridgeError('invalid_value', 'Bypass must be a boolean.')
+            # Like Cortex Control's bypass button: one flag for the active scene. A block whose
+            # bypass isn't assigned to scenes shares that flag, so other scenes may follow.
+            self.qc.set_block_bypass(*block['position'], value)
+            after = self.snapshot()
+            actual = next((b for b in after['blocks'] if b['id'] == block['id']), None)
+            if (after['preset_id'] != current['preset_id'] or after['scene'] != current['scene']
+                    or actual is None or actual['model_id'] != block['model_id']
+                    or actual['scenes'][after['scene']].get('bypass') is not value):
+                raise RuntimeError('Bypass could not be confirmed; reconnect required.')
             return after
         folder, position, factory, downloads, plugin = self.position
         if factory or downloads or plugin or folder != '/media/p4/Presets/My Presets' or not current['name']:

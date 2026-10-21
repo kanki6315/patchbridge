@@ -1,4 +1,4 @@
-"""Read-only QC evidence capture; run with qc-mcp's src on PYTHONPATH."""
+"""Read-only QC evidence capture; run with vendor/qc-mcp/src on PYTHONPATH."""
 import json
 import platform
 from pathlib import Path
@@ -24,6 +24,11 @@ try:
     spec = preset.describe(bp)
     (out / 'initial-preset.json').write_text(json.dumps(spec, indent=2))
     report['preset_name'] = bp.name
+    # The vendored qc-mcp has no bundled catalog; names come from the device's own.
+    repo = qc.read_state('ModelRepo', timeout_ms=10000)
+    if repo is None:
+        raise RuntimeError('Catalog read returned no data')
+    catalog.load_from_bytes(repo.model_repo_payload)
     report['blocks'] = [{'row': row, 'column': column, 'hash': m.hash,
                          'metadata': catalog.lookup(m.hash)}
                         for row, ch in enumerate(bp.chains)
@@ -31,10 +36,8 @@ try:
     for name in ('Scene', 'SetlistPosition', 'PresetDirty'):
         obj = qc.read_state(name)
         report[name] = MessageToDict(obj, preserving_proto_field_name=True) if obj else None
-    obj = qc.read_state('ModelRepo', timeout_ms=10000)
-    if obj:
-        (out / 'model-repo-message.json').write_text(json.dumps(MessageToDict(obj, preserving_proto_field_name=True), indent=2))
-        report['model_repo_fields'] = [f.name for f, v in obj.ListFields()]
+    (out / 'model-repo-message.json').write_text(json.dumps(MessageToDict(repo, preserving_proto_field_name=True), indent=2))
+    report['model_repo_fields'] = [f.name for f, v in repo.ListFields()]
     report['write_errors'] = qc.write_errors
     report['last_write_error'] = qc.last_write_error
 finally:

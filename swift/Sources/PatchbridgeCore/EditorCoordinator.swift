@@ -39,6 +39,8 @@ public final class EditorCoordinator {
     // applies), then live (streaming, never muted), then off.
     public enum TunerMode: String { case off, live, open }
     static let tunerOperations: Set<String> = ["tuner", "tuner_read", "set_tuner_mute"]
+    /// Edits this phone sends. Their outcome is reported and they are never replayed.
+    static let mutations: Set<String> = ["set_parameter", "set_bypass", "save"]
     public private(set) var tunerMode: TunerMode = .off
     public private(set) var tunerMuted: Bool?
     public private(set) var tunerError: String?
@@ -211,6 +213,13 @@ public final class EditorCoordinator {
         let pending = try editor.propose(blockID: blockID, parameterID: parameterID, value: value)
         send(pending.operation, command: pending.command)
     }
+    public func setBypass(blockID: String, bypassed: Bool) throws {
+        guard phase == .ready else { throw EditorFailure.disconnected }
+        guard !busy else { throw EditorFailure.busy }
+        outcome = nil
+        let pending = try editor.proposeBypass(blockID: blockID, bypassed: bypassed)
+        send(pending.operation, command: pending.command)
+    }
     public func save() throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
         guard !busy else { throw EditorFailure.busy }
@@ -295,7 +304,7 @@ public final class EditorCoordinator {
                         // Nothing reached the QC; ask again once the bridge is free.
                         if pending.operation == "tuner" { tunerSync = true }
                         nextTunerRead = now() + delay
-                    } else if ["set_parameter", "save"].contains(pending.operation) {
+                    } else if Self.mutations.contains(pending.operation) {
                         let text = pending.operation == "save" ? "Save not applied. The bridge was busy with another device; try again."
                             : "Not applied. The bridge was busy with another device; try again."
                         editor.reject(id: pending.id, message: text); error = text; ready()
@@ -307,7 +316,7 @@ public final class EditorCoordinator {
                     onChange?(); return
                 }
                 if code == "device_unavailable" {
-                    let uncertain = ["set_parameter", "save"].contains(pending.operation)
+                    let uncertain = Self.mutations.contains(pending.operation)
                     editor.disconnect(); staged = nil; session = nil; operations.removeAll(); held = nil
                     phase = .recovering; status = "QC unavailable · reconnecting"
                     if uncertain {
@@ -328,7 +337,7 @@ public final class EditorCoordinator {
                     nextTunerRead = now() + 1; ready(keepingPoll: true); pump(); onChange?(); return
                 }
                 // Only explicit, session-preserving rejections are recoverable. Resync before more edits.
-                if ["set_parameter", "save"].contains(pending.operation),
+                if Self.mutations.contains(pending.operation),
                    ["stale_context", "invalid_value", "unsupported_parameter", "unsupported_operation"].contains(code),
                    response["session_id"] as? String == session {
                     let text = code == "stale_context" ? Self.deviceName(response).map { "Not applied. \($0) changed it first." } ?? message : message
@@ -373,11 +382,14 @@ public final class EditorCoordinator {
                     try editor.refresh(state, session: newSession, connection: connection!, revision: newRevision)
                     revision = newRevision; ready()
                 }
-            case "set_parameter", "save":
+            case "set_parameter", "set_bypass", "save":
                 let state = try decode(PresetSnapshot.self, result["state"])
                 let proposed = editor.pending
                 try editor.confirm(id: pending.id, snapshot: state, session: newSession, connection: connection!, revision: newRevision)
                 if pending.operation == "save" { outcome = "Saved on the QC" }
+                else if pending.operation == "set_bypass", let block = proposed?.blockID, case .boolean(let wanted)? = proposed?.proposedValue {
+                    outcome = editor.bypassed(blockID: block) == wanted ? (wanted ? "Bypassed" : "Enabled") : "Adjusted by the QC"
+                }
                 else if let block = proposed?.blockID, let parameter = proposed?.parameterID {
                     outcome = editor.value(blockID: block, parameterID: parameter) == proposed?.proposedValue ? "Confirmed" : "Adjusted by the QC"
                 }

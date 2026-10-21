@@ -96,9 +96,14 @@ required encryption to work around a pairing failure.
 - Confirmed values remain authoritative. Pending edits are dashed; rejected,
   adjusted, externally changed and saved state are reported. A changed snapshot
   invalidates an in-progress gesture, typed entry or save confirmation.
-- Unknown scales and unsupported parameters remain read-only. Scene and bypass
-  state are indicators; scene switching, bypass writes, preset browsing and Save
-  As are not exposed in this PoC. Save is shown only when advertised by the bridge.
+- Unknown scales and unsupported parameters remain read-only. Scene state is an
+  indicator; scene switching, preset browsing and Save As are not exposed in this
+  PoC. Save is shown only when advertised by the bridge.
+- The On/Off button in a block's header bypasses or re-enables it for the active
+  scene, like the QC's own bypass button, and is shown only when the bridge
+  advertises `set_bypass`. The readback decides what it shows. A block whose bypass
+  isn't assigned to scenes shares one flag, so other scenes follow. The USB write
+  uses qc-mcp's `set_block_bypass`; see [USB results](../docs/USB_RESULTS_2026-10-21.md).
 - Connection details includes Stage/Daylight appearance and Match iPhone
   appearance. Scene colors remain the QC's reported ARGB values.
 

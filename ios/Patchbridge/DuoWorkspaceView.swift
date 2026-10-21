@@ -221,6 +221,7 @@ struct DuoWorkspaceView: View {
                         Text("\(model.kind(block)) · slot \(block.position[1] + 1)").font(.subheadline).foregroundStyle(theme.muted).lineLimit(1)
                     }
                     Spacer(minLength: 8)
+                    BypassButton(model: model, block: block, theme: theme)
                     saveButton(snapshot, short: true)
                 }
                 notice
@@ -382,6 +383,7 @@ struct DuoWorkspaceView: View {
                         Text(sheet ? "\(model.kind(block)) · \(slot)" : slot).font(.subheadline).foregroundStyle(theme.muted).lineLimit(1)
                     }
                     Spacer(minLength: 4)
+                    BypassButton(model: model, block: block, theme: theme)
                     Button { closeEditor() } label: {
                         Image(systemName: "xmark").font(.headline).frame(width: 44, height: 44).background(theme.raised, in: Circle())
                     }.buttonStyle(.plain).accessibilityLabel("Close")

@@ -508,6 +508,7 @@ struct EditorView: View {
                 Text("Available now").font(.headline)
                 Label("Read preset and parameter values", systemImage: "checkmark")
                 if model.editor.supports("set_parameter") { Label("Edit supported parameters", systemImage: "checkmark") }
+                if model.editor.supports("set_bypass") { Label("Turn blocks on or off", systemImage: "checkmark") }
                 if model.editor.supports("save") { Label("Save the current preset", systemImage: "checkmark") }
                 if model.coordinator.trusted {
                     LabeledContent("Trusted", value: "Until revoked on the Mac").foregroundStyle(theme.ink)

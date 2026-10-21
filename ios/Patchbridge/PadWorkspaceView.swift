@@ -340,7 +340,8 @@ struct PadConnectionDetails: View {
                         section("Available right now") {
                             row("Edit parameters", model.editor.supports("set_parameter") ? "Supported ones" : "Not yet", ok: model.editor.supports("set_parameter"))
                             row("Save to this slot", model.editor.supports("save") ? "Yes" : "Not yet", ok: model.editor.supports("save"))
-                            row("Scenes, bypass, Save As", "Not yet")
+                            row("Turn blocks on or off", model.editor.supports("set_bypass") ? "Yes" : "Not yet", ok: model.editor.supports("set_bypass"))
+                            row("Scenes, Save As", "Not yet")
                         }
                         ConnectionStatusSettings(model: model, theme: theme).padding(.horizontal, 4)
                     }

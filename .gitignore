@@ -51,3 +51,8 @@ Patchbridge-Troubleshooting*.json
 
 # Generated marketing screenshots and preview videos
 /output/
+
+# Neural DSP-derived files for the vendored qc-mcp; generated locally (vendor/qc-mcp/VENDORED.md)
+/vendor/qc-mcp/src/qc_mcp/descriptors/
+/vendor/qc-mcp/src/qc_mcp/ModelRepo.xml
+/vendor/qc-mcp/src/qc_mcp/qc_descriptors.pb
