@@ -14,13 +14,14 @@ OPERATIONS = {'connect', 'disconnect', 'identify', 'capabilities', 'snapshot',
               'catalog', 'subscribe', 'set_parameter', 'save'}
 
 
-def active(definition, values):
-    """False while the switch a conditional control depends on is in its other position."""
-    rule = definition.get('control', {}).get('active_when')
+def active(definitions, parameter, values, depth=0):
+    """False while a conditional control's switch is elsewhere, or that switch is itself inactive."""
+    rule = definitions.get(parameter, {}).get('control', {}).get('active_when')
     if not rule:
         return True
     value = values.get(rule['parameter'])
-    return type(value) in (int, float) and abs(value - rule['value']) < 1e-6
+    return (depth < 8 and type(value) in (int, float) and any(abs(value - v) < 1e-6 for v in rule['values'])
+            and active(definitions, rule['parameter'], values, depth + 1))
 
 
 class USBAdapter:
@@ -135,7 +136,7 @@ class USBAdapter:
                         scenes[chr(65+s)]['parameters'][str(index)] = getattr(v, field) if field else None
                 # A conditional control is writable only while its switch makes it active.
                 current = scenes[chr(65+scene.selected_scene)]['parameters']
-                editable = [p for p in editable if active(definitions.get(p, {}), current)]
+                editable = [p for p in editable if active(definitions, p, current)]
                 blocks.append({'id': f'{row}:{column}', 'position': [row, column],
                                'model_id': str(model.hash), 'scenes': scenes,
                                'editable_parameters': editable})

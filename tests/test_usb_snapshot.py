@@ -66,7 +66,7 @@ class SnapshotTests(unittest.TestCase):
     def test_conditional_control_is_writable_only_while_active(self):
         # Treat Myth Drive's second parameter as the switch that GAIN depends on.
         self.adapter.metadata = {'models': {'1': {'parameters': {
-            '0': {'type': 'float', 'control': {'active_when': {'parameter': '1', 'value': 1.0}}},
+            '0': {'type': 'float', 'control': {'active_when': {'parameter': '1', 'values': [1.0]}}},
             '1': {'type': 'switch', 'steps': '2'}}}}}
         block = next(m for m in self.spec['chains'][0]['models'] if m['hash'] == 1)
         for position, expected in [(1.0, True), (0.0, False)]:
@@ -77,6 +77,15 @@ class SnapshotTests(unittest.TestCase):
         with self.assertRaisesRegex(BridgeError, 'inactive'):
             self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
         self.qc.set_param.assert_not_called()
+
+    def test_control_is_inactive_while_its_switch_is_inactive(self):
+        from patchbridge.usb import active
+        definitions = {'0': {'control': {}},
+                       '1': {'control': {'active_when': {'parameter': '0', 'values': [0.0]}}},
+                       '2': {'control': {'active_when': {'parameter': '1', 'values': [0.5, 1.0]}}}}
+        self.assertTrue(active(definitions, '2', {'0': 0.0, '1': 1.0}))
+        self.assertFalse(active(definitions, '2', {'0': 1.0, '1': 1.0}))  # Its switch is greyed out.
+        self.assertFalse(active(definitions, '2', {'0': 0.0, '1': 0.0}))
 
     def test_hidden_routing_change_invalidates_pending_save(self):
         self.adapter.snapshot()

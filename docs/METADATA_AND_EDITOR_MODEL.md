@@ -20,16 +20,18 @@ type (number, boolean, string, null).
 | --- | --- |
 | float + finite ordered range + LIN_SKEW | Numeric control with explicit linear conversion |
 | float + finite range + positive numeric skew | Numeric control with declared power conversion |
-| float or fader + finite range + no skew | Linear (power exponent 1), from hardware calibration |
+| float, fader or floatWithLed + finite range + no or empty skew | Linear (power exponent 1), from hardware calibration |
 | Measured range constant (MIN/MAX_EQ_DB, _FXLOOP_OUT_GAIN_DB, _FXLOOP_IN_GAIN_DB) | Resolved to the value read on the QC; other constants stay read-only |
 | float + finite range + LOG_SKEW | Power conversion with skew 0.3, from hardware calibration |
 | float + finite range + xValues/yValues table | Numeric control interpolated linearly between the declared points |
 | switch/rotarySwitch/toggleButton/comboBox + matching steps and stepNames | Named enumeration; normalized option values i/(count−1) |
 | Two-step switch without stepNames | Off/On, from hardware calibration |
-| Empty or unknown skew, symbolic/invalid range | Read-only; no guessed taper/range |
+| Unknown skew, unmeasured symbolic/invalid range | Read-only; no guessed taper/range |
 | Missing or inconsistent option labels | Read-only; never fabricate labels |
-| toggleOn/toggleOff naming one two-step switch | Editable while active: toggleOn while the switch is 1, toggleOff while it is 0 (`active_when`) |
-| toggleOn/toggleOff naming any other controller, or several | Read-only until those semantics are measured |
+| toggleOn/toggleOff naming one switch, with toggleStep | Editable while active: toggleOn at the listed steps, toggleOff at the others (`active_when.values`) |
+| toggleOn/toggleOff naming a two-step switch, no toggleStep | toggleOn active at 1, toggleOff at 0 |
+| toggleOn/toggleOff naming a float, several controllers, or a multi-step switch without toggleStep | Read-only until those semantics are measured |
+| grMeter, meter, empty, or hidden="true" | Read-only and marked `hidden`; the gap report leaves them out, but the editor still lists them |
 | int | Read-only: in CorOS 4.1.1 every int is a device command (Neural Capture, ZenLink), a calibration setting or hidden |
 | Unknown/meter/string type | Read-only |
 
@@ -47,8 +49,9 @@ switch encoding: 1 is active and the value latches. The QC's button text is the 
 it offers, so it reads FREEZE while released and RELEASE while frozen. A `min_string`
 such as OFF is carried as `minimum_label`: the QC shows it instead of the minimum value.
 
-Conditional controls carry `active_when: {parameter, value}`. While the switch holds
-the other value, the QC greys the control out but keeps its value. The USB adapter
+Conditional controls carry `active_when: {parameter, values}`. While the switch holds
+another value, or the switch is itself inactive, the QC greys the control out but keeps
+its value. The USB adapter
 leaves inactive controls out of `editable_parameters` and refuses writes to them, and
 `readOnlyReason` reports "Inactive while SYNC is Off." so the phone greys them out too.
 
@@ -150,8 +153,9 @@ read-only in the generic model. QC controls continue to use normalized values.
 these rules and reports what is editable, why the rest is read-only, and which
 categories and models have the largest gaps. Hidden parameters are counted
 separately. `--model NAME` lists one model's parameters and `--json` prints data.
-On the CorOS 4.1.1 capture, 3,319 of 3,888 visible parameters (85%) are editable
+On the CorOS 4.1.1 capture, 3,336 of 3,837 visible parameters (87%) are editable
 (conditional controls count while active), up from 1,233 (32%) before calibration.
+Meters and placeholders no longer count toward that total, though the phone still shows them as read-only.
 
 `tools/calibrate_qc_controls.py` answers that question on hardware. It picks
 parameters from the loaded disposable preset in six groups: no declared taper,
@@ -184,6 +188,13 @@ Saved in `hardware-results/2026-10-20/calibration-probe*.json`, all values resto
 | Range constants | Parametric-8 1 and 2 GAIN, FX Loop 1 SEND and RET LEV | EQ −12…12 dB, loop send −40…0 dB, return −40…12 dB, all linear; OFF shown at the minimum |
 
 | Conditional controls | Simple Delay SYNC, SLO-100 CHANNEL, Dual Chorus SYNC | toggleOff controls active at 0, toggleOn at 1; inactive ones greyed out |
+| Multi-step conditionals | Phase Doctor Ø ADJUST and STEREO LINK, Micro Processor MOD SOURCE and SYNC, Pitch Correction MODE, Reverse Delay SYNC | toggleOn active at the toggleStep positions, toggleOff at the others; a control under a greyed-out switch is greyed out too (Ø ADJUST R) |
+| floatWithLed | Reverse Delay TRIG THRESHOLD | Linear −40…0 dB, OFF at the minimum |
+| Empty skew | Cory Wong Wash Shimmer and Petrucci Reverb Shimmer DECAY | Linear 0…100% |
+
+Pass 5 ran on the "Dirty Honey" preset with `--preset`. A split row's Splitter and Mixer
+don't appear among the preset's blocks over USB, so the Mixer level range and Splitter
+TYPE switch remain unmeasured.
 
 Three readings were mistyped at the prompt and corrected afterwards; each keeps
 `corrected_from` and a note. `MIN_CABSIM_DB` (14 parameters) and `MIN_MIXER_DB` (8)

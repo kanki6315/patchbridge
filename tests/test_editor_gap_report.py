@@ -11,7 +11,7 @@ spec.loader.exec_module(gap_report)
 XML = b'''<Models><Category name="Drive">
 <Model id="1" name="Easy"><Parameter type="float" name="GAIN" min="0" max="10" skew="LIN_SKEW"/>
 <Parameter type="switch" name="MODE" steps="2" stepNames="A,B"/></Model>
-<Model id="2" name="Hard"><Parameter type="float" name="TONE" min="0" max="10" skew=""/>
+<Model id="2" name="Hard"><Parameter type="float" name="TONE" min="0" max="10" skew="CUSTOM_SKEW"/>
 <Parameter type="float" name="BIAS" min="0" max="10" hidden="true"/>
 <Parameter type="float" name="FREQ" min="20" max="200" xValues="0,1" yValues="20,200"/></Model>
 </Category></Models>'''

@@ -161,6 +161,35 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(calibrate.analyze(record), {'rule_matches': True, 'inverted_matches': False, 'latched': True})
         self.assertEqual(qc.state['chains'][0]['models'][0]['params'][0]['values'], values(0.0))
 
+    def test_multi_step_conditional_uses_listed_steps(self):
+        models = {'5': {'name': 'Splitter', 'category': 'Splitter', 'parameters': {
+            '0': {'type': 'switch', 'name': 'TYPE', 'steps': '3', 'stepNames': 'Balance,A/B,Crossover'},
+            '1': {'type': 'float', 'name': 'BALANCE', 'min': '0', 'max': '1', 'toggleOn': '0', 'toggleStep': '0'},
+            '2': {'type': 'float', 'name': 'LEVEL TO A', 'min': '0', 'max': '1', 'toggleOn': '0', 'toggleStep': '1'},
+            '3': {'type': 'float', 'name': 'FREQUENCY', 'min': '0', 'max': '1', 'toggleOn': '0', 'toggleStep': '2'},
+            '4': {'type': 'float', 'name': 'MODE', 'min': '0', 'max': '1', 'toggleOff': '0', 'toggleStep': '0,1'}}}}
+        qc = FakeQC()
+        qc.state['chains'][0]['models'][0] = {'hash': 5, 'params': [param(0.5)] + [param(0.5) for _ in range(4)]}
+        prompts, answers = [], iter(['yes', '1', '2', '3 4'])
+        def ask(prompt):
+            prompts.append(prompt); return next(answers)
+        with tempfile.TemporaryDirectory() as tmp, redirect_stdout(io.StringIO()):
+            output = Path(tmp) / 'probe.json'
+            calibrate.main(['--groups', 'conditional', '--settle', '0', '--output', str(output)],
+                           connect=lambda: (qc, deepcopy, models), ask=ask)
+            record, = json.loads(output.read_text())['results']
+        self.assertIn('TYPE at Crossover', prompts[-1])
+        self.assertEqual([r['predicted']['active'] for r in record['readings']],
+                         [['BALANCE'], ['LEVEL TO A'], ['FREQUENCY', 'MODE']])
+        self.assertEqual(calibrate.analyze(record)['rule_matches'], True)
+        self.assertEqual(qc.state['chains'][0]['models'][0]['params'][0]['values'], values(0.5))
+
+    def test_led_and_empty_curve_groups(self):
+        led = {'type': 'floatWithLed', 'min': '-40', 'max': '0', 'min_string': 'OFF', 'steps': '401'}
+        decay = {'type': 'float', 'min': '0.1', 'max': '60', 'skew': ''}
+        self.assertEqual(calibrate.group(led, calibrate.normalize_parameter(led)), 'led')
+        self.assertEqual(calibrate.group(decay, calibrate.normalize_parameter(decay)), 'empty_skew')
+
     def test_capture_blocks_use_the_capture_name(self):
         model = {'name': 'Eltron 30', 'parameters': {'0': {'name': 'BASS'}, '1': {'name': 'file_name'}}}
         block = {'params': [param(0.5), {'values': [[None, None, '1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808']]}]}

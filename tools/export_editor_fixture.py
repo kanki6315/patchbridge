@@ -38,8 +38,8 @@ for row, chain in enumerate(spec['chains']):
                 if value_index < len(values):
                     scenes[chr(65+scene)]['parameters'][str(index)] = next((v for v in values[value_index] if v is not None), None)
         # Like the live adapter: conditional controls are writable only while active in scene F.
-        editable = [p for p in editable if active({'control': normalize_parameter(definitions[p], definitions)},
-                                                  scenes['F']['parameters'])]
+        controls = {i: {'control': normalize_parameter(d, definitions)} for i, d in definitions.items()}
+        editable = [p for p in editable if active(controls, p, scenes['F']['parameters'])]
         blocks.append({'id': f'{row}:{column}', 'model_id': str(block['hash']), 'position': [row, column],
                        'scenes': scenes, 'editable_parameters': editable})
 used = {b['model_id'] for b in blocks}

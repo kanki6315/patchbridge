@@ -230,7 +230,8 @@
               "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
-              "reason": "Unsupported parameter type."
+              "reason": "Meter or placeholder, not a control.",
+              "hidden": true
             }
           }
         }
@@ -319,7 +320,9 @@
               "exponent": 0.6,
               "active_when": {
                 "parameter": "6",
-                "value": 0.0
+                "values": [
+                  0.0
+                ]
               }
             }
           },
@@ -506,7 +509,9 @@
               ],
               "active_when": {
                 "parameter": "6",
-                "value": 1.0
+                "values": [
+                  1.0
+                ]
               }
             }
           }
@@ -924,7 +929,8 @@
               "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
-              "reason": "String writes are not validated."
+              "reason": "String writes are not validated.",
+              "hidden": true
             }
           }
         }
@@ -1115,7 +1121,8 @@
               "minimum": 0.0,
               "maximum": 100.0,
               "mapping": "power",
-              "exponent": 1.0
+              "exponent": 1.0,
+              "hidden": true
             }
           },
           "1": {
@@ -1140,7 +1147,8 @@
               "minimum": -24.0,
               "maximum": 24.0,
               "mapping": "power",
-              "exponent": 1.0
+              "exponent": 1.0,
+              "hidden": true
             }
           },
           "2": {
@@ -1165,7 +1173,8 @@
               "minimum": -100.0,
               "maximum": 100.0,
               "mapping": "power",
-              "exponent": 1.0
+              "exponent": 1.0,
+              "hidden": true
             }
           },
           "3": {

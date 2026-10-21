@@ -119,9 +119,9 @@ extension GenericEditorTests {
                "0": {"control": {"kind": "enum", "encoding": "qc_normalized", "name": "SYNC", "unit": "", "editable": true,
                      "options": [{"label": "Off", "value": 0}, {"label": "On", "value": 1}]}},
                "1": {"control": {"kind": "number", "encoding": "qc_normalized", "name": "SYNC NOTE", "unit": "", "editable": true,
-                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "0", "value": 1}}},
+                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "0", "values": [1]}}},
                "2": {"control": {"kind": "number", "encoding": "qc_normalized", "name": "DELAY TIME", "unit": "ms", "editable": true,
-                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "0", "value": 0}}}}}}},
+                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "0", "values": [0]}}}}}}},
              "snapshot": {"preset_id": "p", "catalog_id": "c", "name": "Test", "scene": "A", "dirty": false,
                "blocks": [{"id": "0:0", "model_id": "9", "position": [0, 0], "editable_parameters": ["0", "1", "2"],
                  "scenes": {"A": {"parameters": {"0": \(sync), "1": 0.25, "2": 0.5}}}}]}}
@@ -137,6 +137,28 @@ extension GenericEditorTests {
         XCTAssertNil(synced.readOnlyReason(blockID: "0:0", parameterID: "1"))
         XCTAssertEqual(synced.readOnlyReason(blockID: "0:0", parameterID: "2"), "Inactive while SYNC is On.")
         XCTAssertNil(synced.readOnlyReason(blockID: "0:0", parameterID: "0"))
+    }
+    func testConditionalControlFollowsStepsAndItsSwitchsOwnState() throws {
+        func editor(link: Double, adjust: Double) throws -> GenericEditor {
+            let json = """
+            {"catalog": {"id": "c", "metadata_version": 1, "models": {"9": {"name": "Phase Doctor", "parameters": {
+               "0": {"control": {"kind": "enum", "encoding": "qc_normalized", "name": "STEREO LINK", "unit": "", "editable": true,
+                     "options": [{"label": "Unlinked", "value": 0}, {"label": "Linked", "value": 1}]}},
+               "1": {"control": {"kind": "enum", "encoding": "qc_normalized", "name": "ADJUST R", "unit": "", "editable": true,
+                     "options": [{"label": "Bypass", "value": 0}, {"label": "90", "value": 0.5}, {"label": "180", "value": 1}],
+                     "active_when": {"parameter": "0", "values": [0]}}},
+               "2": {"control": {"kind": "number", "encoding": "qc_normalized", "name": "SHIFT R", "unit": "", "editable": true,
+                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "1", "values": [0.5, 1]}}}}}}},
+             "snapshot": {"preset_id": "p", "catalog_id": "c", "name": "Test", "scene": "A", "dirty": false,
+               "blocks": [{"id": "0:0", "model_id": "9", "position": [0, 0], "editable_parameters": ["0", "1", "2"],
+                 "scenes": {"A": {"parameters": {"0": \(link), "1": \(adjust), "2": 0.25}}}}]}}
+            """
+            return try self.editor(try JSONDecoder().decode(Fixture.self, from: Data(json.utf8)))
+        }
+        XCTAssertNil(try editor(link: 0, adjust: 0.5).readOnlyReason(blockID: "0:0", parameterID: "2"))
+        XCTAssertEqual(try editor(link: 0, adjust: 0).readOnlyReason(blockID: "0:0", parameterID: "2"), "Inactive while ADJUST R is Bypass.")
+        XCTAssertEqual(try editor(link: 1, adjust: 1).readOnlyReason(blockID: "0:0", parameterID: "2"), "Inactive while ADJUST R is inactive.")
+        XCTAssertEqual(try editor(link: 1, adjust: 1).readOnlyReason(blockID: "0:0", parameterID: "1"), "Inactive while STEREO LINK is Linked.")
     }
     func testExternalStateCancelsPendingEdit() throws {
         let f = try fixture(); let model = try editor(f)

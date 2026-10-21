@@ -19,7 +19,7 @@ class MetadataTests(unittest.TestCase):
 
     def test_unknown_mapping_never_gets_guessed(self):
         base = {'type': 'float', 'min': '0', 'max': '10'}
-        for patch in [{'skew': ''}, {'skew': 'CUSTOM_SKEW'}, {'skew': '-1'}, {'skew': 'nan'},
+        for patch in [{'skew': 'CUSTOM_SKEW'}, {'skew': '-1'}, {'skew': 'nan'},
                       {'skew': 'LIN_SKEW', 'min': 'MIN_GAIN'}, {'skew': 'LIN_SKEW', 'max': '0'}]:
             self.assertFalse(normalize_parameter(base | patch)['editable'])
 
@@ -56,11 +56,33 @@ class MetadataTests(unittest.TestCase):
                   '4': {'type': 'float', 'name': 'TAP', 'min': '0', 'max': '1', 'toggleOn': '3'},
                   '5': {'type': 'float', 'name': 'PAN', 'min': '0', 'max': '1', 'toggleOn': '0,3'},
                   '6': {'type': 'float', 'name': 'LEVEL', 'min': 'MIN_MIXER_DB', 'max': 'MAX_MIXER_DB', 'toggleOn': '0'}}
-        self.assertEqual(normalize_parameter(params['1'], params)['active_when'], {'parameter': '0', 'value': 1.0})
-        self.assertEqual(normalize_parameter(params['2'], params)['active_when'], {'parameter': '0', 'value': 0.0})
+        self.assertEqual(normalize_parameter(params['1'], params)['active_when'], {'parameter': '0', 'values': [1.0]})
+        self.assertEqual(normalize_parameter(params['2'], params)['active_when'], {'parameter': '0', 'values': [0.0]})
         for index in ('4', '5', '6'):
             self.assertFalse(normalize_parameter(params[index], params)['editable'], index)
         self.assertFalse(normalize_parameter(params['1'])['editable'])  # Without the model, the switch is unknown.
+
+    def test_multi_step_conditionals_use_toggle_step(self):
+        params = {'0': {'type': 'comboBox', 'name': 'MOD SOURCE', 'steps': '4', 'stepNames': 'LFO,LFO St,+Env,-Env'},
+                  '1': {'type': 'float', 'name': 'LFO RATE', 'min': '0', 'max': '1', 'toggleOn': '0', 'toggleStep': '0,1'},
+                  '2': {'type': 'float', 'name': 'ROOT', 'min': '0', 'max': '1', 'toggleOff': '0', 'toggleStep': '2'},
+                  '3': {'type': 'float', 'name': 'BAD', 'min': '0', 'max': '1', 'toggleOn': '0', 'toggleStep': '7'}}
+        self.assertEqual(normalize_parameter(params['1'], params)['active_when']['values'], [0, 1 / 3])
+        self.assertEqual(normalize_parameter(params['2'], params)['active_when']['values'], [0, 1 / 3, 1])
+        self.assertFalse(normalize_parameter(params['3'], params)['editable'])
+
+    def test_led_float_and_empty_skew_are_linear(self):
+        led = normalize_parameter({'type': 'floatWithLed', 'min': '-40', 'max': '0', 'min_string': 'OFF', 'steps': '401'})
+        self.assertEqual((led['editable'], led['exponent'], led['minimum_label']), (True, 1.0, 'OFF'))
+        decay = normalize_parameter({'type': 'float', 'min': '0', 'max': '100', 'skew': ''})
+        self.assertEqual((decay['exponent'], decay['mapping_source']), (1.0, 'hardware_calibration'))
+
+    def test_meters_placeholders_and_hidden_parameters_are_hidden(self):
+        for raw in [{'type': 'grMeter', 'name': 'GAIN REDUCTION'}, {'type': 'empty', 'name': 'DUMMY1'},
+                    {'type': 'float', 'min': '0', 'max': '1', 'hidden': 'true'}]:
+            self.assertTrue(normalize_parameter(raw)['hidden'], raw)
+        self.assertNotIn('hidden', normalize_parameter({'type': 'float', 'min': '0', 'max': '1'}))
+        self.assertFalse(normalize_parameter({'type': 'meter'})['editable'])
 
     def test_int_commands_stay_read_only(self):
         c = normalize_parameter({'type': 'int', 'name': 'EXPORT MODEL', 'min': '0', 'max': '1', 'steps': '2'})
