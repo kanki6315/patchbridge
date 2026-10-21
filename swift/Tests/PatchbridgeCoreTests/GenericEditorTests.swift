@@ -233,6 +233,50 @@ extension GenericEditorTests {
         XCTAssertEqual(model.readOnlyReason(blockID: "0:1", parameterID: "6"), "Meter, not a control.")
         XCTAssertEqual(model.visibleParameters(blockID: "unknown"), [])
     }
+    func testCaptureBlocksUseTheCaptureName() throws {
+        let f = try fixture(); let model = try editor(f)
+        let names = ["0:2": "OG TS808", "2:1": "Paul's MT16 7", "2:3": "Paul's MT16 6", "3:1": "Paul's MT16 7", "3:3": "Bogna Uber 1"]
+        for (id, name) in names {
+            XCTAssertEqual(model.blockName(blockID: id), name)
+            XCTAssertEqual(model.modelName(blockID: id), "Eltron 30")
+            // file_name is read for display only: never listed, never writable.
+            XCTAssertFalse(model.visibleParameters(blockID: id).contains("5"))
+            XCTAssertEqual(model.readOnlyReason(blockID: id, parameterID: "5"), "Hidden on the QC.")
+            XCTAssertThrowsError(try model.propose(blockID: id, parameterID: "5", value: .text("0000OG TS808")))
+        }
+        XCTAssertEqual(model.blockName(blockID: "0:1"), "Opto Comp (M)")
+        XCTAssertNil(model.captureName(blockID: "0:1"))
+        XCTAssertNil(model.blockName(blockID: "unknown"))
+    }
+    func testCaptureNameFallsBackToTheModelName() throws {
+        let f = try fixture()
+        for value in [nil, "", "not a hash", String(repeating: "a", count: 64), String(repeating: "A", count: 64) + "Caps", 0.5] as [Any?] {
+            var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(f.snapshot)) as! [String: Any]
+            var blocks = object["blocks"] as! [[String: Any]]
+            let i = blocks.firstIndex { $0["id"] as? String == "0:2" }!
+            var scenes = blocks[i]["scenes"] as! [String: [String: Any]]
+            var parameters = scenes["F"]!["parameters"] as! [String: Any]
+            parameters["5"] = value; scenes["F"]!["parameters"] = parameters
+            blocks[i]["scenes"] = scenes; object["blocks"] = blocks
+            let state = try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
+            let model = GenericEditor()
+            try model.load(snapshot: state, catalog: f.catalog, session: "s", connection: "c", revision: 0, operations: [])
+            XCTAssertEqual(model.blockName(blockID: "0:2"), "Eltron 30", "\(String(describing: value))")
+        }
+    }
+    func testCaptureNameParsing() {
+        let hash = "1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2"
+        XCTAssertEqual(GenericEditor.captureName(fileName: hash + "OG TS808"), "OG TS808")
+        XCTAssertEqual(GenericEditor.captureName(fileName: hash + " Paul's MT16 7 "), "Paul's MT16 7")
+        XCTAssertEqual(GenericEditor.captureName(fileName: hash + hash), hash)
+        XCTAssertNil(GenericEditor.captureName(fileName: ""))
+        XCTAssertNil(GenericEditor.captureName(fileName: "OG TS808"))
+        XCTAssertNil(GenericEditor.captureName(fileName: hash))
+        XCTAssertNil(GenericEditor.captureName(fileName: hash + "   "))
+        XCTAssertNil(GenericEditor.captureName(fileName: String(hash.dropFirst()) + "OG TS808"))
+        XCTAssertNil(GenericEditor.captureName(fileName: hash.uppercased() + "OG TS808"))
+        XCTAssertNil(GenericEditor.captureName(fileName: "g" + hash.dropFirst() + "OG TS808"))
+    }
     func testBlockWithoutCatalogModelListsEveryValueReadOnly() throws {
         let f = try fixture()
         var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(f.snapshot)) as! [String: Any]

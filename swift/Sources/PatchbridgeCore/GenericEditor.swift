@@ -193,6 +193,30 @@ public final class GenericEditor {
             return control.hidden != true
         }.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
+    /// The catalog model's name, e.g. "Eltron 30".
+    public func modelName(blockID: String) -> String? {
+        guard let block = snapshot?.blocks.first(where: { $0.id == blockID }) else { return nil }
+        return catalog?.models[block.model_id]?.name
+    }
+    /// What the QC calls the block: a Neural Capture's own name ("OG TS808") when its hidden
+    /// file_name holds one, otherwise the model name. Display only; file_name stays unlisted and unwritable.
+    public func blockName(blockID: String) -> String? {
+        captureName(blockID: blockID) ?? modelName(blockID: blockID)
+    }
+    public func captureName(blockID: String) -> String? {
+        guard let snapshot, let block = snapshot.blocks.first(where: { $0.id == blockID }),
+              let parameters = catalog?.models[block.model_id]?.parameters,
+              let id = parameters.first(where: { $0.value.control?.name == "file_name" })?.key,
+              case .text(let raw)? = block.scenes[snapshot.scene]?.parameters[id] else { return nil }
+        return Self.captureName(fileName: raw)
+    }
+    /// file_name is a 64-character lowercase hex hash followed by the capture's name. Anything else is nil.
+    public static func captureName(fileName: String) -> String? {
+        let hash = fileName.prefix(64)
+        guard hash.count == 64, hash.allSatisfy({ ("0"..."9").contains($0) || ("a"..."f").contains($0) }) else { return nil }
+        let name = fileName.dropFirst(64).trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? nil : name
+    }
     public func value(blockID: String, parameterID: String) -> ParameterValue? {
         guard let snapshot else { return nil }
         return snapshot.blocks.first { $0.id == blockID }?.scenes[snapshot.scene]?.parameters[parameterID]

@@ -34,7 +34,7 @@ struct BlockEditorView: View {
     /// The deck shows the number pad beside the dial instead of in a sheet or popover.
     private var inlinePad: Bool { layout == .deck }
     private var subtitle: String {
-        let kind = model.editor.catalog?.models[block.model_id]?.category ?? "Block"
+        let kind = model.kind(block)
         let slot = regular && block.position.count == 2 ? " · Row \(block.position[0] + 1), slot \(block.position[1] + 1)" : ""
         return kind + slot + " · Scene \(model.snapshot?.scene ?? "")"
     }
