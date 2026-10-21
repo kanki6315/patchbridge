@@ -4,7 +4,9 @@ Details the firmware leaves implicit use rules measured on CorOS 4.1.1 hardware
 (hardware-results/2026-10-20/calibration-probe*.json): a float or fader with no skew
 is linear, LOG_SKEW is a power curve with skew 0.3, lookup tables are linear between
 points, comboBox uses the switch encoding, an unlabeled two-step switch is Off/On,
-and the range constants in MEASURED_RANGES have the values shown on the QC.
+and the range constants in MEASURED_RANGES have the values shown on the QC. A control
+with toggleOn/toggleOff naming a two-step switch is active while that switch is 1 or 0
+respectively; inactive controls are greyed out on the QC and read-only here.
 """
 import math
 
@@ -46,7 +48,25 @@ def _table(raw, low, high):
     return [[x, y] for x, y in zip(xs, ys)]
 
 
-def normalize_parameter(raw):
+def _controller(raw, parameters):
+    """The two-step switch a toggleOn/toggleOff control depends on, as (index, active value)."""
+    ref = raw.get('toggleOn') or raw.get('toggleOff')
+    if parameters is None or not ref or not ref.strip().isdigit():
+        return None
+    switch = parameters.get(ref.strip())
+    if not switch or switch.get('type') != 'switch' or switch.get('steps') != '2':
+        return None
+    return ref.strip(), 1.0 if raw.get('toggleOn') else 0.0
+
+
+def normalize_parameter(raw, parameters=None):
+    """parameters: the model's raw parameters by index, needed to resolve conditional controls."""
+    controller = _controller(raw, parameters)
+    if controller is not None:
+        control = normalize_parameter({k: v for k, v in raw.items() if k not in ('toggleOn', 'toggleOff')})
+        if control['editable']:
+            control['active_when'] = {'parameter': controller[0], 'value': controller[1]}
+        return control
     control = {'kind': 'unknown', 'encoding': 'qc_normalized', 'name': raw.get('name', 'Unknown parameter'),
                'unit': raw.get('units') or '', 'editable': False,
                'mapping_source': 'device_metadata', 'verification': 'not_hardware_calibrated'}
@@ -114,5 +134,5 @@ def normalize_models(models):
     """Add controls without removing original firmware fields used by adapters."""
     for model in models.values():
         for definition in model['parameters'].values():
-            definition['control'] = normalize_parameter(definition)
+            definition['control'] = normalize_parameter(definition, model['parameters'])
     return models

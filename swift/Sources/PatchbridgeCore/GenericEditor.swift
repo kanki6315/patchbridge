@@ -23,6 +23,8 @@ public enum ParameterValue: Codable, Equatable {
 
 public struct ParameterControl: Codable {
     public struct Option: Codable { public let label: String; public let value: Double }
+    /// A conditional control is active only while another parameter (a two-step switch) holds this value.
+    public struct ActiveWhen: Codable { public let parameter: String; public let value: Double }
     public let kind: String
     public let encoding: String
     public let name: String
@@ -37,6 +39,7 @@ public struct ParameterControl: Codable {
     public let points: [[Double]]?
     public let options: [Option]?
     public let verification: String?
+    public var active_when: ActiveWhen? = nil
 
     /// Raw QC normalized -> declared display units. Unknown metadata returns nil.
     public func displayValue(_ raw: ParameterValue) -> Double? {
@@ -184,6 +187,18 @@ public final class GenericEditor {
               let control = control(blockID: blockID, parameterID: parameterID) else { return "Unknown block or metadata." }
         guard operations.contains("set_parameter") else { return "Adapter does not support parameter edits." }
         guard control.editable else { return control.reason ?? "Unsupported control." }
+        if let rule = control.active_when {
+            // The QC greys out a conditional control while its switch is in the other position.
+            let switchControl = self.control(blockID: blockID, parameterID: rule.parameter)
+            let name = switchControl?.name ?? "its switch"
+            guard case .number(let position)? = block.scenes[snapshot.scene]?.parameters[rule.parameter] else {
+                return "Inactive: \(name) has no current value."
+            }
+            if abs(position - rule.value) > 0.000001 {
+                let label = switchControl?.options?.first { abs($0.value - position) < 0.000001 }?.label ?? (position == 0 ? "Off" : "On")
+                return "Inactive while \(name) is \(label)."
+            }
+        }
         guard block.editable_parameters?.contains(parameterID) == true else { return "Device marks this parameter read-only." }
         guard let value = block.scenes[snapshot.scene]?.parameters[parameterID], control.accepts(value) else { return "Missing or unsupported current value." }
         return nil

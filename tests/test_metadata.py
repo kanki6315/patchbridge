@@ -48,6 +48,20 @@ class MetadataTests(unittest.TestCase):
         for unmeasured in ['MIN_CABSIM_DB', 'MIN_MIXER_DB']:
             self.assertFalse(normalize_parameter({'type': 'float', 'min': unmeasured, 'max': unmeasured.replace('MIN', 'MAX')})['editable'])
 
+    def test_conditional_controls_follow_their_two_step_switch(self):
+        params = {'0': {'type': 'switch', 'name': 'SYNC', 'steps': '2', 'stepNames': 'Off,On'},
+                  '1': {'type': 'float', 'name': 'SYNC NOTE', 'min': '0', 'max': '1', 'toggleOn': '0'},
+                  '2': {'type': 'float', 'name': 'DELAY TIME', 'min': '0', 'max': '1', 'toggleOff': '0'},
+                  '3': {'type': 'comboBox', 'name': 'KEY', 'steps': '3', 'stepNames': 'A,B,C'},
+                  '4': {'type': 'float', 'name': 'TAP', 'min': '0', 'max': '1', 'toggleOn': '3'},
+                  '5': {'type': 'float', 'name': 'PAN', 'min': '0', 'max': '1', 'toggleOn': '0,3'},
+                  '6': {'type': 'float', 'name': 'LEVEL', 'min': 'MIN_MIXER_DB', 'max': 'MAX_MIXER_DB', 'toggleOn': '0'}}
+        self.assertEqual(normalize_parameter(params['1'], params)['active_when'], {'parameter': '0', 'value': 1.0})
+        self.assertEqual(normalize_parameter(params['2'], params)['active_when'], {'parameter': '0', 'value': 0.0})
+        for index in ('4', '5', '6'):
+            self.assertFalse(normalize_parameter(params[index], params)['editable'], index)
+        self.assertFalse(normalize_parameter(params['1'])['editable'])  # Without the model, the switch is unknown.
+
     def test_int_commands_stay_read_only(self):
         c = normalize_parameter({'type': 'int', 'name': 'EXPORT MODEL', 'min': '0', 'max': '1', 'steps': '2'})
         self.assertFalse(c['editable'])

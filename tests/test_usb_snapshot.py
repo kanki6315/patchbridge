@@ -63,6 +63,21 @@ class SnapshotTests(unittest.TestCase):
         state['blocks'].clear()
         self.assertEqual(len(self.adapter.state['blocks']), 16)
 
+    def test_conditional_control_is_writable_only_while_active(self):
+        # Treat Myth Drive's second parameter as the switch that GAIN depends on.
+        self.adapter.metadata = {'models': {'1': {'parameters': {
+            '0': {'type': 'float', 'control': {'active_when': {'parameter': '1', 'value': 1.0}}},
+            '1': {'type': 'switch', 'steps': '2'}}}}}
+        block = next(m for m in self.spec['chains'][0]['models'] if m['hash'] == 1)
+        for position, expected in [(1.0, True), (0.0, False)]:
+            block['params'][1]['values'] = [[position, None, None]] * 8
+            editable = next(b for b in self.adapter.snapshot()['blocks'] if b['id'] == '0:3')['editable_parameters']
+            self.assertEqual('0' in editable, expected)
+            self.assertIn('1', editable)
+        with self.assertRaisesRegex(BridgeError, 'inactive'):
+            self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
+        self.qc.set_param.assert_not_called()
+
     def test_hidden_routing_change_invalidates_pending_save(self):
         self.adapter.snapshot()
         self.spec['chains'][0]['out_portid'] += 1
