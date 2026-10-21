@@ -89,6 +89,17 @@ class SnapshotTests(unittest.TestCase):
                 self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
         self.qc.set_param.assert_not_called()
 
+    def test_hidden_capture_name_is_sent_but_never_writable(self):
+        # The phone titles a Neural Capture by its hidden file_name, so the value must reach it.
+        self.adapter.metadata = {'models': {'14000': {'parameters': {'5': {
+            'type': 'string', 'hidden': 'true', 'control': {'kind': 'text', 'editable': False, 'hidden': True}}}}}}
+        block = next(b for b in self.adapter.snapshot()['blocks'] if b['id'] == '0:2')
+        self.assertTrue(block['scenes']['F']['parameters']['5'].endswith('OG TS808'))
+        self.assertNotIn('5', block['editable_parameters'])
+        with self.assertRaisesRegex(BridgeError, 'hidden'):
+            self.adapter.execute('set_parameter', {'block_id': '0:2', 'parameter_id': '5', 'value': 0.5})
+        self.qc.set_param.assert_not_called()
+
     def test_control_is_inactive_while_its_switch_is_inactive(self):
         from patchbridge.usb import active
         definitions = {'0': {'control': {}},

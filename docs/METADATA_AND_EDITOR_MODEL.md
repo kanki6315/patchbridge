@@ -171,7 +171,11 @@ Each block lists the parameters the QC shows, in index order, in three groups:
   model is missing from the catalog lists every value, read-only.
 
 The bridge's `editable_parameters` requires the control itself to be editable, so a hidden
-or unsupported parameter can't be written even if a phone sends it. `displayPos` ordering
+or unsupported parameter can't be written even if a phone sends it. The snapshot still
+carries hidden values: the phone titles a Neural Capture block by its hidden `file_name`
+(a 64-character hex hash followed by the capture's name, e.g. "OG TS808"), with the model
+name ("Eltron 30") beside the category in the editor, and falls back to the model name when
+the value is missing or malformed. `displayPos` ordering
 isn't applied yet: two models (Plugin Parametric-4, Minivoicer) repeat positions.
 
 `tools/calibrate_qc_controls.py` answers that question on hardware. It picks

@@ -125,6 +125,21 @@ extension MacBridgeModelTests {
         let adjusted = RecentBridgeEdit(request: request, response: ["status": "confirmed", "result": ["state": ["scene": "A", "blocks": [["id": "amp", "scenes": ["A": ["parameters": ["gain": 4]]]]]]]], snapshot: nil, catalog: nil)
         XCTAssertEqual(adjusted.outcome, .adjusted)
     }
+    func testHistoryTitlesCaptureBlocksByTheCaptureName() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let fixture = try JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent("tests/fixtures/qc-editor.json"))) as! [String: Any]
+        var snapshot = fixture["snapshot"] as! [String: Any]
+        let catalog = fixture["catalog"] as! [String: Any]
+        let request: [String: Any] = ["operation": "set_parameter", "payload": ["block_id": "0:2", "parameter_id": "1", "value": 0.5]]
+        XCTAssertEqual(RecentBridgeEdit(request: request, response: nil, snapshot: snapshot, catalog: catalog).title, "Bass · OG TS808")
+        var blocks = snapshot["blocks"] as! [[String: Any]]
+        let i = blocks.firstIndex { $0["id"] as? String == "0:2" }!
+        var scenes = blocks[i]["scenes"] as! [String: [String: Any]]
+        var parameters = scenes["F"]!["parameters"] as! [String: Any]
+        parameters["5"] = "OG TS808"; scenes["F"]!["parameters"] = parameters
+        blocks[i]["scenes"] = scenes; snapshot["blocks"] = blocks
+        XCTAssertEqual(RecentBridgeEdit(request: request, response: nil, snapshot: snapshot, catalog: catalog).title, "Bass · Eltron 30")
+    }
 }
 
 extension MacBridgeModelTests {
