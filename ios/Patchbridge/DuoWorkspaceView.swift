@@ -105,14 +105,6 @@ struct DuoWorkspaceView: View {
                 if editing, !value.blocks.contains(where: { $0.id == selected }) { editing = false }
                 if let target = typingTarget, !value.blocks.contains(where: { $0.id == target.block }) { typingTarget = nil }
             }
-            .confirmationDialog(model.demo ? "Save this demo preset?" : "Save on the Quad Cortex?", isPresented: $confirmSave, titleVisibility: .visible) {
-                Button(model.demo ? "Save demo preset" : "Save preset") {
-                    guard saveContext == model.snapshot else {
-                        model.notice = "Not saved · the preset changed. Review it before saving."; return
-                    }
-                    model.save()
-                }
-            } message: { Text(model.demo ? "Changes stay in this demo until you leave it." : "This replaces the saved values of the current preset on the QC.") }
             .sheet(item: $typingTarget) { target in
                 NumberPad(theme: theme, control: model.editor.control(blockID: target.block, parameterID: target.parameter), entry: $entry, busy: model.busy,
                           cancel: { typingTarget = nil }, set: { commitTyped(target, $0) })
@@ -136,6 +128,12 @@ struct DuoWorkspaceView: View {
     }
     private func closeEditor() { withAnimation(motion) { editing = false } }
     private func requestSave() { saveContext = model.snapshot; confirmSave = true }
+    private func confirmCurrentSave() {
+        guard saveContext == model.snapshot else {
+            model.notice = "Not saved · the preset changed. Review it before saving."; return
+        }
+        model.save()
+    }
 
     // MARK: Inner screen, flat and half-folded
 
@@ -333,6 +331,7 @@ struct DuoWorkspaceView: View {
             if model.editor.supports("save") {
                 PrimaryButton(title: saveTitle(snapshot), theme: theme) { requestSave() }
                     .floatingDimmed(model.busy || !snapshot.dirty, theme)
+                    .saveConfirmation(isPresented: $confirmSave, demo: model.demo, confirm: confirmCurrentSave)
             } else { Label("Read-only connection", systemImage: "lock").font(.footnote).foregroundStyle(theme.muted).floatingNote(theme) }
         }.padding(.horizontal, 16).padding(.vertical, 12)
     }
@@ -548,6 +547,7 @@ struct DuoWorkspaceView: View {
                     .foregroundStyle(theme.signalInk).background(theme.signal, in: Capsule())
             }
             .buttonStyle(.plain).disabled(disabled).opacity(disabled ? 0.45 : 1)
+            .saveConfirmation(isPresented: $confirmSave, demo: model.demo, confirm: confirmCurrentSave)
         } else {
             Label("Read-only connection", systemImage: "lock").font(.footnote).foregroundStyle(theme.muted)
         }
