@@ -222,6 +222,9 @@ struct TunerLine: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let open: () -> Void
     static let height: CGFloat = 44
+    /// The highlight sits just under the marker and hangs past the line's layout into the
+    /// content below, so the screen starts right after the readout instead of after the light.
+    private static let floor: CGFloat = 38, overhang: CGFloat = 10
     private let note: CGFloat = 34, cents: CGFloat = 44, gap: CGFloat = 12, side: CGFloat = 20
     var body: some View {
         Button(action: open) {
@@ -236,6 +239,7 @@ struct TunerLine: View {
         .background { GeometryReader { geometry in light(width: geometry.size.width) } }
         .tunerAccessibility(readout.pitch).accessibilityAddTraits(.isButton).accessibilityHint("Opens the full tuner").accessibilityIdentifier("tuner-line")
         .tunerHaptic(readout.pitch)
+        .padding(.bottom, -Self.overhang)
     }
     private func light(width: CGFloat) -> some View {
         let pitch = readout.pitch
@@ -253,12 +257,12 @@ struct TunerLine: View {
                            startPoint: .top, endPoint: .bottom)
                 .frame(width: spread, height: 16)
                 .mask(LinearGradient(colors: [.clear, .white, .white, .clear], startPoint: .leading, endPoint: .trailing))
-                .position(x: center, y: Self.height - 8)
+                .position(x: center, y: Self.floor - 7)
             Capsule()
                 .fill(LinearGradient(colors: [color.opacity(0), color, color, color.opacity(0)],
                                      startPoint: .leading, endPoint: .trailing))
                 .frame(width: spread, height: 2)
-                .position(x: center, y: Self.height - 1)
+                .position(x: center, y: Self.floor)
         }
         .frame(width: width, height: Self.height)
         .clipped()
