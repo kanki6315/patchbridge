@@ -46,6 +46,16 @@ struct BlockEditorView: View {
             RadialGradient(colors: [category.color.opacity(theme.daylight ? 0.06 : 0.13), .clear], center: UnitPoint(x: 0.5, y: 0.35), startRadius: 30, endRadius: 260)
         }
         .onAppear { selectInitial() }
+        .task {
+            #if DEBUG
+            if model.screenshotFixture, ProcessInfo.processInfo.arguments.contains("--exact-value") {
+                try? await Task.sleep(for: .milliseconds(600))
+                editingContext = model.snapshot
+                entry = "-30.00"
+                typing = true
+            }
+            #endif
+        }
         .onChange(of: block.id) { _, _ in selectInitial(); typing = false }
         .onChange(of: model.snapshot) { _, _ in draft = nil; fine = false }
         .sheet(isPresented: Binding(get: { typing && !regular && !inlinePad }, set: { typing = $0 })) { numberPad.presentationDetents([.height(dynamicTypeSize.isAccessibilitySize ? 550 : 355)]).presentationDragIndicator(.visible) }

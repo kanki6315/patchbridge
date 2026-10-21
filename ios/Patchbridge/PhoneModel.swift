@@ -4,28 +4,39 @@ import SwiftUI
 final class PhoneModel: ObservableObject {
     @Published private(set) var version = 0
     @Published private(set) var demo = false
+    #if DEBUG
+    @Published private(set) var screenshotFixture = false
+    #endif
+    /// Both offline transports confirm edits locally; screenshot fixtures use the normal UI.
+    var usesLocalFixture: Bool {
+        #if DEBUG
+        return demo || screenshotFixture
+        #else
+        return demo
+        #endif
+    }
     @Published var notice: String?
     let coordinator = EditorCoordinator()
     let liveActivity = ConnectionActivityController()
     let tuner = TunerModel()
     private let demoEditor = GenericEditor()
     private var demoRevision = 0
-    var editor: GenericEditor { demo ? demoEditor : coordinator.editor }
+    var editor: GenericEditor { usesLocalFixture ? demoEditor : coordinator.editor }
     var snapshot: PresetSnapshot? { editor.snapshot }
-    var ready: Bool { demo || coordinator.phase == .ready }
-    var busy: Bool { !demo && coordinator.busy }
-    var error: String? { (demo ? nil : coordinator.error) ?? editor.lastError }
+    var ready: Bool { usesLocalFixture || coordinator.phase == .ready }
+    var busy: Bool { !usesLocalFixture && coordinator.busy }
+    var error: String? { (usesLocalFixture ? nil : coordinator.error) ?? editor.lastError }
     /// The last Mac has a trust token, so Reconnect should skip the approval code.
     var hasTrust: Bool { coordinator.macID.flatMap { coordinator.trustTokens[$0] } != nil }
     /// Reconnect finds the last Mac directly instead of listing nearby ones.
-    var canReconnect: Bool { coordinator.macID != nil && !demo }
+    var canReconnect: Bool { coordinator.macID != nil && !usesLocalFixture }
     init() {
         tuner.phone = self
         coordinator.trustTokens = TrustStore.load()
         coordinator.onChange = { [weak self] in
             guard let self else { return }
             // A connection that ended takes the tuner with it; recovery keeps it.
-            if !self.demo, [.disconnected, .failed].contains(self.coordinator.phase), self.tuner.open || self.tuner.live { self.tuner.reset() }
+            if !self.usesLocalFixture, [.disconnected, .failed].contains(self.coordinator.phase), self.tuner.open || self.tuner.live { self.tuner.reset() }
             if self.coordinator.trustTokens != self.savedTrust { self.savedTrust = self.coordinator.trustTokens; TrustStore.save(self.savedTrust) }
             self.liveActivity.sync(self)
             self.version += 1
@@ -39,18 +50,33 @@ final class PhoneModel: ObservableObject {
         }
     }
     private var savedTrust = [String: String]()
-    func start() { coordinator.setPhoneName(UserDefaults.standard.string(forKey: "patchbridge.phoneName") ?? ""); demo = false; notice = nil; coordinator.start() }
+    private func clearScreenshotFixture() {
+        #if DEBUG
+        screenshotFixture = false
+        #endif
+    }
+    func start() { clearScreenshotFixture(); coordinator.setPhoneName(UserDefaults.standard.string(forKey: "patchbridge.phoneName") ?? ""); demo = false; notice = nil; coordinator.start() }
     func reconnect() {
         guard canReconnect else { start(); return }
         coordinator.setPhoneName(UserDefaults.standard.string(forKey: "patchbridge.phoneName") ?? "")
         notice = nil; liveActivity.willReconnect(); coordinator.start(reconnecting: true)
     }
-    func disconnect() { tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoEditor.disconnect(); demo = false; notice = nil; version += 1 }
+    func disconnect() { clearScreenshotFixture(); tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoEditor.disconnect(); demo = false; notice = nil; version += 1 }
     /// Settings changed: start, update or end the activity to match.
     func connectionStatusPreferenceChanged() { liveActivity.sync(self) }
     func background() { coordinator.setBackgrounded(true) }
     func foreground() { coordinator.setBackgrounded(false) }
+    #if DEBUG
+    /// Website preset data with connected-state presentation, without Bluetooth or USB writes.
+    func loadScreenshotFixture() {
+        loadDemo()
+        guard demo else { return }
+        screenshotFixture = true
+        demo = false
+    }
+    #endif
     func loadDemo() {
+        clearScreenshotFixture()
         do {
             let fixture = try DemoFixture.load()
             tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0
@@ -61,7 +87,7 @@ final class PhoneModel: ObservableObject {
     func edit(_ block: String, _ parameter: String, _ value: ParameterValue) {
         do {
             notice = nil
-            if demo {
+            if usesLocalFixture {
                 let pending = try editor.propose(blockID: block, parameterID: parameter, value: value)
                 try confirmDemo(pending)
             } else { try coordinator.edit(blockID: block, parameterID: parameter, value: value) }
@@ -70,7 +96,7 @@ final class PhoneModel: ObservableObject {
     }
     func save() {
         do {
-            if demo { try confirmDemo(editor.proposeSave()); notice = "Saved in demo only" }
+            if usesLocalFixture { try confirmDemo(editor.proposeSave()); notice = demo ? "Saved in demo only" : "Saved on the QC" }
             else { try coordinator.save() }
         } catch { notice = "Couldn’t save. Check the connection and try again." }
         version += 1

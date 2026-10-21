@@ -30,7 +30,7 @@ final class ConnectionActivityController {
 
     func sync(_ model: PhoneModel) {
         let coordinator = model.coordinator
-        if model.demo { live = false; reconnecting = false; intentional = false; end(ended: false); return }
+        if model.usesLocalFixture { live = false; reconnecting = false; intentional = false; end(ended: false); return }
         let status: ConnectionAttributes.ContentState.Status?
         switch coordinator.phase {
         case .ready:

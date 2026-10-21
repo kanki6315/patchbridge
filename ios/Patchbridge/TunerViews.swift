@@ -22,7 +22,7 @@ final class TunerModel: ObservableObject {
     private var demoStarted: TimeInterval = 0
     private var demoMuted = false
 
-    private var demo: Bool { phone?.demo == true }
+    private var demo: Bool { phone?.usesLocalFixture == true }
     private var coordinator: EditorCoordinator? { phone?.coordinator }
     var available: Bool { demo || coordinator?.tunerAvailable == true }
     var canMute: Bool { demo || coordinator?.tunerMuteAvailable == true }
@@ -65,6 +65,9 @@ final class TunerModel: ObservableObject {
 
     /// Demo mode has no QC: strings are plucked off pitch, settle while they ring, then go quiet.
     private func demoPitch(_ t: TimeInterval) -> TunerPitch? {
+        #if DEBUG
+        if phone?.screenshotFixture == true { return TunerPitch(hz: 110 * pow(2, 2.0 / 1200)) }
+        #endif
         let strings: [(Double, Double)] = [(82.41, 22), (110, -16), (146.83, 9), (196, -26), (246.94, 12), (329.63, -8)]
         let ring = 4.5, cycle = 6.0
         let index = Int(t / cycle) % strings.count, ringing = t.truncatingRemainder(dividingBy: cycle)

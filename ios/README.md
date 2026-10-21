@@ -167,6 +167,32 @@ Xcode's Test action or `xcodebuild test` with an available iPhone destination.
 Debug builds accept `--demo`, `--editor`, `--stage`, `--daylight` and
 `--half-folded` launch arguments for reproducible visual inspection; these do not enable live writes.
 
+For marketing captures, Debug builds also accept `--screenshots` instead of
+`--demo`. This loads the same Dirty Riffage fixture used by the website boards,
+shows the normal connected interface without demo labels, and keeps edits and
+saves entirely local. Tuner captures use a stable A2 pitch at +2 cents.
+`--duo-editor` opens Opto Comp in the Duo deck or folded block menu.
+`--editor --exact-value` opens the native exact-value sheet, popover or inline
+pad with −30.00 entered. `--save-confirmation` shows the native Save prompt
+without saving anything. `--editor` uses the Duo deck when unfolded and the
+full editor when folded; iPad keeps its persistent editor panel.
+These screenshot launch options are unavailable in Release builds.
+`tools/capture_app_screenshots.py` captures the same seven features per layout:
+overview, parameter editor, exact-value entry, full tuner, Daylight overview,
+Save confirmation and preset with live tuner. It uses a 4:00 PM Eastern clock
+and matching numbered filenames in `iphone/`, `ipad/`, `duo-folded/` and
+`duo-unfolded/` subfolders. The Duo must be in the corresponding posture in
+Device Hub: folded captures use the `primary` display at 1398 × 2034, unfolded
+captures use `primary-1` at 2007 × 2853. Changing screen power alone does not
+change posture. By default, capture iPhone, iPad and folded Duo, then unfold
+the Duo and rerun with `--layouts duo-unfolded`. `--features 02 07` recaptures
+only those feature numbers (plus any missing files).
+
+```sh
+python3 tools/capture_app_screenshots.py --iphone IPHONE_UDID --ipad IPAD_UDID \
+  --duo DUO_UDID --app PATH_TO_DEBUG_SIMULATOR_APP --output output/app-screenshots
+```
+
 This implementation has been built and exercised in the iPhone Simulator.
 Live Bluetooth pairing, hardware editing and fine-gesture feel still require
 validation on a physical iPhone with the Mac bridge and QC.

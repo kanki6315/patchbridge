@@ -100,12 +100,29 @@ struct EditorView: View {
                 if let flag = arguments.firstIndex(of: "--activity"), arguments.indices.contains(flag + 1) {
                     model.liveActivity.preview(arguments[flag + 1], daylight: arguments.contains("--daylight"))
                 }
-                if ProcessInfo.processInfo.arguments.contains("--demo") {
-                    model.loadDemo()
-                    if ProcessInfo.processInfo.arguments.contains("--editor") && !pad { selectedBlock = "0:1" }
+                if arguments.contains("--demo") || arguments.contains("--screenshots") {
+                    if arguments.contains("--screenshots") { model.loadScreenshotFixture() }
+                    else { model.loadDemo() }
+                    if arguments.contains("--duo-editor") {
+                        duoSelected = "0:1"
+                        duoEditing = true
+                    }
+                    if arguments.contains("--editor") {
+                        if duo == .inner { duoSelected = "0:1"; duoEditing = true }
+                        else if !pad { selectedBlock = "0:1" }
+                    }
                     if ProcessInfo.processInfo.arguments.contains("--daylight") { appearance = "Daylight" }
                     if arguments.contains("--live-tuner") { tuner.setLive(true) }
                     if arguments.contains("--tuner") { tuner.setOpen(true) }
+                }
+                #endif
+            }
+            .task {
+                #if DEBUG
+                if model.screenshotFixture, !pad, duo == nil,
+                   ProcessInfo.processInfo.arguments.contains("--save-confirmation") {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    requestSave()
                 }
                 #endif
             }

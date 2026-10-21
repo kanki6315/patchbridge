@@ -76,6 +76,22 @@ struct DuoWorkspaceView: View {
             .onAppear {
                 if !snapshot.blocks.contains(where: { $0.id == selected }) { editing = false }
             }
+            .task {
+                #if DEBUG
+                // The first root geometry can still describe the folded window at launch.
+                // Select the deck only once this actual inner workspace has appeared.
+                if model.screenshotFixture, screen == .inner,
+                   ProcessInfo.processInfo.arguments.contains("--editor") {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    selected = "0:1"
+                    editing = true
+                }
+                if model.screenshotFixture, ProcessInfo.processInfo.arguments.contains("--save-confirmation") {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    requestSave()
+                }
+                #endif
+            }
             .onChange(of: snapshot) { _, value in
                 if editing, !value.blocks.contains(where: { $0.id == selected }) { editing = false }
                 if let target = typingTarget, !value.blocks.contains(where: { $0.id == target.block }) { typingTarget = nil }

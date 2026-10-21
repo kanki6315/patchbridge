@@ -50,6 +50,15 @@ struct PadWorkspaceView: View {
                 .padding(.horizontal, 20).padding(.top, 8)
                 .animation(reduceMotion ? nil : .timingCurve(0.22, 1, 0.36, 1, duration: 0.25), value: tuner.live)
                 .onAppear { selectDefault(snapshot) }
+                .task {
+                    #if DEBUG
+                    if model.screenshotFixture, ProcessInfo.processInfo.arguments.contains("--save-confirmation") {
+                        try? await Task.sleep(for: .milliseconds(600))
+                        saveContext = model.snapshot
+                        confirmSave = true
+                    }
+                    #endif
+                }
                 .onChange(of: snapshot) { _, value in selectDefault(value) }
             }
         }
