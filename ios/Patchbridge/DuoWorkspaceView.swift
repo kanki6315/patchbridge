@@ -193,7 +193,7 @@ struct DuoWorkspaceView: View {
                     chip(block, size: 40)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.name(block)).font(.title3.bold()).lineLimit(1).minimumScaleFactor(0.7)
-                        Text("\(kind(block)) · slot \(block.position[1] + 1)").font(.subheadline).foregroundStyle(theme.muted).lineLimit(1)
+                        Text("\(model.kind(block)) · slot \(block.position[1] + 1)").font(.subheadline).foregroundStyle(theme.muted).lineLimit(1)
                     }
                     Spacer(minLength: 8)
                     saveButton(snapshot, short: true)
@@ -332,7 +332,7 @@ struct DuoWorkspaceView: View {
                     chip(block, size: 44)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.name(block)).font(.title3.bold()).lineLimit(1).minimumScaleFactor(0.7)
-                        Text(sheet ? "\(kind(block)) · \(slot)" : slot).font(.subheadline).foregroundStyle(theme.muted).lineLimit(1)
+                        Text(sheet ? "\(model.kind(block)) · \(slot)" : slot).font(.subheadline).foregroundStyle(theme.muted).lineLimit(1)
                     }
                     Spacer(minLength: 4)
                     Button { closeEditor() } label: {
@@ -495,7 +495,6 @@ struct DuoWorkspaceView: View {
             .foregroundStyle(category.darkInk ? Color(hex: 0x161611) : .white)
             .frame(width: size, height: size).background(category.color, in: RoundedRectangle(cornerRadius: size * 0.27))
     }
-    private func kind(_ block: PresetSnapshot.Block) -> String { model.editor.catalog?.models[block.model_id]?.category ?? "Block" }
     private var unsaved: some View {
         HStack(spacing: 5) { Circle().frame(width: 7, height: 7); Text("Unsaved") }
             .foregroundStyle(theme.signal).accessibilityElement(children: .combine)
