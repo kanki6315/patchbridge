@@ -142,7 +142,7 @@ def main():
         shutil.copy2(matches[0], extensions / matches[0].name)
     helper = resources / 'Helper' / 'patchbridge'
     helper.mkdir(parents=True)
-    for name in ('__init__.py', 'adapter.py', 'helper.py', 'simulator.py', 'usb.py', 'metadata.py', 'offline_usb_check.py', 'read_only.py', 'captured.py'):
+    for name in ('__init__.py', 'adapter.py', 'helper.py', 'simulator.py', 'usb.py', 'metadata.py', 'offline_usb_check.py', 'read_only.py', 'captured.py', 'tuner.py'):
         shutil.copy2(ROOT / 'src' / 'patchbridge' / name, helper / name)
     (resources / 'Licenses').mkdir()
     shutil.copy2(stdlib / 'LICENSE.txt', resources / 'Licenses' / 'Python-LICENSE.txt')
