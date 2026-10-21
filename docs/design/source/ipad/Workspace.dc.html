@@ -24,6 +24,14 @@
     <sc-if value="{{demo}}" hint-placeholder-val="{{false}}">
       <span style="height: 30px; padding: 0 12px; display: flex; align-items: center; border-radius: 999px; border: 1.5px solid {{t.caution}}; color: {{t.caution}}; font-size: 13px; font-weight: 600;">Demo</span>
     </sc-if>
+    <sc-if value="{{tn.band}}" hint-placeholder-val="{{false}}">
+      <button type="button" aria-label="{{tn.aria}}. Open the tuner" style="width: 360px; height: 52px; flex: none; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 18px; background: {{t.surface}}; box-shadow: {{t.panelEdge}}; color: inherit; font: inherit; text-align: left; cursor: pointer;">
+        <span style="display: inline-flex; align-items: baseline; font-size: 26px; font-weight: {{tn.noteWeight}}; letter-spacing: -0.02em; line-height: 1; color: {{tn.noteColor}}; min-width: 40px;">{{tn.note}}<span style="margin-left: 2px; font-size: 12px; font-weight: 600; letter-spacing: 0; color: {{t.muted}};">{{tn.oct}}</span></span><span aria-hidden="true" style="{{tn.bandBar.barStyle}}"><span style="{{tn.zoneSlim}}"></span><sc-for list="{{tn.ticks}}" as="k" hint-placeholder-count="10"><span style="{{k.style}}"></span></sc-for><span style="{{tn.bandBar.markerStyle}}"></span></span><span style="width: 44px; flex: none; text-align: right; font-size: 17px; font-weight: 600; line-height: 1.2; color: {{tn.centsColor}};">{{tn.cents}}</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{tn.button}}" hint-placeholder-val="{{false}}">
+      <button type="button" aria-label="Tuner" aria-pressed="{{tn.livePressed}}" style="{{tn.buttonStyle}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 2v7a4 4 0 0 0 8 0V2M12 13v9"></path></svg></button>
+    </sc-if>
     <button type="button" aria-label="Connection details: Studio Mac, QC connected" aria-expanded="{{detailsOpen}}" style="{{pillStyle}}">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{t.signal}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
       Studio Mac
@@ -39,6 +47,24 @@
       {{saveLabel}}
     </button>
   </header>
+
+  <!-- Portrait has no free space in the top bar, so the band takes a full-width row there. -->
+  <sc-if value="{{tn.bandRow}}" hint-placeholder-val="{{false}}">
+    <button type="button" aria-label="{{tn.aria}}. Open the tuner" style="width: 100%; height: 52px; flex: none; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 18px; background: {{t.surface}}; box-shadow: {{t.panelEdge}}; color: inherit; font: inherit; text-align: left; cursor: pointer;">
+      <span style="display: inline-flex; align-items: baseline; font-size: 26px; font-weight: {{tn.noteWeight}}; letter-spacing: -0.02em; line-height: 1; color: {{tn.noteColor}}; min-width: 40px;">{{tn.note}}<span style="margin-left: 2px; font-size: 12px; font-weight: 600; letter-spacing: 0; color: {{t.muted}};">{{tn.oct}}</span></span><span aria-hidden="true" style="{{tn.bandBar.barStyle}}"><span style="{{tn.zoneSlim}}"></span><sc-for list="{{tn.ticks}}" as="k" hint-placeholder-count="10"><span style="{{k.style}}"></span></sc-for><span style="{{tn.bandBar.markerStyle}}"></span></span><span style="width: 44px; flex: none; text-align: right; font-size: 17px; font-weight: 600; line-height: 1.2; color: {{tn.centsColor}};">{{tn.cents}}</span>
+    </button>
+  </sc-if>
+
+  <sc-if value="{{tn.panel}}" hint-placeholder-val="{{false}}">
+    <section aria-label="Live tuner" style="height: 84px; flex: none; box-sizing: border-box; padding: 0 12px 0 20px; display: flex; align-items: center; gap: 14px; border-radius: 20px; background: {{t.surface}}; box-shadow: {{t.panelEdge}};">
+      <span role="img" aria-label="{{tn.aria}}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px;">
+        <span style="display: inline-flex; align-items: baseline; font-size: 36px; font-weight: {{tn.noteWeight}}; letter-spacing: -0.02em; line-height: 1; color: {{tn.noteColor}}; min-width: 52px;">{{tn.note}}<span style="margin-left: 2px; font-size: 15px; font-weight: 600; letter-spacing: 0; color: {{t.muted}};">{{tn.oct}}</span></span><span aria-hidden="true" style="width: 18px; flex: none; text-align: center; font-size: 22px; color: {{t.muted}};">♭</span><span aria-hidden="true" style="{{tn.panelBar.barStyle}}"><span style="{{tn.zoneStyle}}"></span><sc-for list="{{tn.ticks}}" as="k" hint-placeholder-count="10"><span style="{{k.style}}"></span></sc-for><span style="{{tn.panelBar.markerStyle}}"></span></span><span aria-hidden="true" style="width: 18px; flex: none; text-align: center; font-size: 22px; color: {{t.muted}};">♯</span><span style="width: 56px; flex: none; text-align: right; font-size: 22px; font-weight: 600; line-height: 1.2; color: {{tn.centsColor}};">{{tn.cents}}</span>
+      </span>
+      <span aria-hidden="true" style="width: 1px; align-self: stretch; margin: 18px 0; background: {{t.divider}};"></span>
+      <span style="display: flex; align-items: center; gap: 10px; font-size: 15px; white-space: nowrap;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M23 9l-6 6M17 9l6 6"></path></svg>Mute<button type="button" role="switch" aria-checked="{{tn.muteSwitch.checked}}" aria-label="Mute output" style="{{tn.muteSwitch.track}}"><span style="{{tn.muteSwitch.knob}}"></span></button></span>
+      <button type="button" aria-label="Turn off live tuner" style="width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: {{t.fill}}; color: inherit; cursor: pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </section>
+  </sc-if>
 
   <div style="{{bodyStyle}}">
 
@@ -330,9 +356,23 @@
       </section>
     </div>
   </sc-if>
+
+  <sc-if value="{{tn.popover}}" hint-placeholder-val="{{false}}">
+    <div role="dialog" aria-label="Tuner" style="{{tn.popStyle}}">
+      <span aria-hidden="true" style="{{tn.popArrow}}"></span>
+      <div style="position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700;">Tuner</h2>
+        <sc-if value="{{tn.muted}}" hint-placeholder-val="{{false}}"><span role="status" style="height: 30px; box-sizing: border-box; padding: 0 12px; display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; background: {{t.fill}}; font-size: 13px; font-weight: 600;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M23 9l-6 6M17 9l6 6"></path></svg>Output muted</span></sc-if>
+      </div>
+      <section aria-label="{{tn.aria}}" style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0 4px;">
+        <span style="display: inline-flex; align-items: baseline; font-size: 96px; font-weight: {{tn.noteWeight}}; letter-spacing: -0.02em; line-height: 1; color: {{tn.noteColor}};">{{tn.note}}<span style="margin-left: 2px; font-size: 34px; font-weight: 600; letter-spacing: 0; color: {{t.muted}};">{{tn.oct}}</span></span><span style="min-height: 34px; display: flex;"><span style="text-align: center; font-size: 28px; font-weight: 600; line-height: 1.2; color: {{tn.centsColor}};">{{tn.cents}}</span></span><span style="align-self: stretch; display: flex; align-items: center; gap: 8px;"><span aria-hidden="true" style="width: 18px; flex: none; text-align: center; font-size: 22px; color: {{t.muted}};">♭</span><span aria-hidden="true" style="{{tn.popBar.barStyle}}"><span style="{{tn.zoneStyle}}"></span><sc-for list="{{tn.ticks}}" as="k" hint-placeholder-count="10"><span style="{{k.style}}"></span></sc-for><span style="{{tn.popBar.markerStyle}}"></span></span><span aria-hidden="true" style="width: 18px; flex: none; text-align: center; font-size: 22px; color: {{t.muted}};">♯</span></span><span aria-hidden="true" style="align-self: stretch; display: flex; justify-content: space-between; padding: 0 26px; font-size: 13px; color: {{t.muted}};"><span>−50</span><span>0</span><span>+50</span></span><span style="font-size: 15px; color: {{t.muted}};">{{tn.hz}}</span>
+      </section>
+      <div style="position: relative;"><div style="border-radius: 18px; background: {{t.group}}; box-shadow: {{t.panelEdge}}; overflow: hidden;"><div style="min-height: 56px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 17px;"><span style="display: inline-flex; align-items: center; gap: 10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M23 9l-6 6M17 9l6 6"></path></svg>Mute output</span><button type="button" role="switch" aria-checked="{{tn.muteSwitch.checked}}" aria-label="Mute output" style="{{tn.muteSwitch.track}}"><span style="{{tn.muteSwitch.knob}}"></span></button></div><div style="min-height: 56px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 17px; border-top: 1px solid {{t.divider}};"><span>Live tuner</span><button type="button" role="switch" aria-checked="{{tn.liveSwitch.checked}}" aria-label="Live tuner" style="{{tn.liveSwitch.track}}"><span style="{{tn.liveSwitch.knob}}"></span></button></div></div></div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"orientation":{"editor":"enum","options":["landscape","portrait"],"default":"landscape","section":"Screen"},"blockKey":{"editor":"enum","options":["comp","capture","chorus"],"default":"comp","section":"Screen"},"heroIndex":{"editor":"enum","options":["auto","0","1"],"default":"auto","section":"Screen"},"state":{"editor":"enum","options":["idle","fine","pending","confirmed","adjusted","rejected","typing","typingInvalid","device"],"default":"idle","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details","appearance"],"default":"none","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"$preview":{"width":1180,"height":820}}'>
+<script type="text/x-dc" data-dc-script data-props='{"tuner":{"editor":"enum","options":["none","button","popover","band","panel"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"orientation":{"editor":"enum","options":["landscape","portrait"],"default":"landscape","section":"Screen"},"blockKey":{"editor":"enum","options":["comp","capture","chorus"],"default":"comp","section":"Screen"},"heroIndex":{"editor":"enum","options":["auto","0","1"],"default":"auto","section":"Screen"},"state":{"editor":"enum","options":["idle","fine","pending","confirmed","adjusted","rejected","typing","typingInvalid","device"],"default":"idle","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details","appearance"],"default":"none","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"$preview":{"width":1180,"height":820}}'>
 class Component extends DCLogic {
   renderVals() {
     const portrait = (this.props.orientation ?? 'landscape') === 'portrait';
@@ -558,8 +598,52 @@ class Component extends DCLogic {
 
     const pillRight = 20 + saveW + 12;
     const glow = key === 'capture' ? 'oklch(0.3 0.01 110 / 0.6)' : 'oklch(0.32 0.07 ' + c.hue + ' / 0.75)';
+
+    // Tuner. The QC streams pitch in Hz about ten times a second while a note rings, and nothing while it is quiet.
+    const tunerMode = this.props.tuner ?? 'none';
+    const READINGS = { sharp: { note: 'D', oct: 2, cents: 6, hz: 73.67 }, tuned: { note: 'D', oct: 2, cents: 0, hz: 73.42 }, flat: { note: 'G', oct: 3, cents: -14, hz: 194.42 }, silent: null };
+    const rd = READINGS[this.props.reading ?? 'sharp'] ?? null;
+    const tMuted = !!this.props.muted, tLive = !!this.props.live;
+    const tDark = t.dark !== false;
+    const inTune = !!rd && Math.abs(rd.cents) <= 2;
+    const markAt = rd ? 50 + Math.max(-50, Math.min(50, rd.cents)) : 50;
+    const tLine = (a) => tDark ? 'oklch(1 0 0 / ' + a + ')' : 'oklch(0.2 0.01 110 / ' + a + ')';
+    const barOf = (h, r, mw, w) => ({
+      barStyle: { position: 'relative', display: 'block', flex: w ? 'none' : '1', width: w ? w + 'px' : 'auto', minWidth: '0', height: h + 'px', borderRadius: r + 'px', background: tLine(0.06), overflow: 'hidden' },
+      markerStyle: { position: 'absolute', top: '12%', bottom: '12%', left: markAt + '%', width: mw + 'px', marginLeft: (-mw / 2) + 'px', borderRadius: '999px', background: inTune ? t.signalInk : t.ink, opacity: rd ? 1 : 0 }
+    });
+    const switchOf = (on) => ({ checked: on ? 'true' : 'false',
+      track: { position: 'relative', width: '51px', height: '31px', flex: 'none', padding: '0', border: '0', borderRadius: '999px', background: on ? t.signal : tLine(0.18), cursor: 'pointer' },
+      knob: { position: 'absolute', top: '2px', left: on ? '22px' : '2px', width: '27px', height: '27px', borderRadius: '50%', background: '#ffffff', boxShadow: '0 2px 6px oklch(0 0 0 / 0.3)' } });
+    const tn = {
+      note: rd ? rd.note : '–', oct: rd ? String(rd.oct) : '',
+      cents: rd ? (rd.cents === 0 ? '0¢' : (rd.cents > 0 ? '+' : '−') + Math.abs(rd.cents) + '¢') : '',
+      hz: rd ? rd.hz.toFixed(2) + ' Hz · Input 1' : 'No signal · Input 1',
+      aria: rd ? 'Tuner, ' + rd.note + rd.oct + ', ' + (inTune ? 'in tune' : Math.abs(rd.cents) + ' cents ' + (rd.cents > 0 ? 'sharp' : 'flat')) : 'Tuner, no signal',
+      noteColor: rd ? t.ink : t.muted, centsColor: inTune ? t.signal : t.muted,
+      zoneStyle: { position: 'absolute', top: '0', bottom: '0', left: '50%', width: '8%', marginLeft: '-4%', background: inTune ? t.signal : tLine(0.08), boxShadow: inTune ? 'none' : 'inset 1px 0 0 ' + tLine(0.3) + ', inset -1px 0 0 ' + tLine(0.3) },
+      ticks: [-50, -40, -30, -20, -10, 10, 20, 30, 40, 50].map((c) => ({ style: { position: 'absolute', left: (50 + c) + '%', top: c % 50 === 0 ? '18%' : '30%', bottom: c % 50 === 0 ? '18%' : '30%', width: '1px', background: tLine(c % 50 === 0 ? 0.3 : 0.18) } })),
+      muted: tMuted, muteSwitch: switchOf(tMuted), liveSwitch: switchOf(tLive)
+    };
+    const tunerButtonStyle = (on) => ({ width: '44px', height: '44px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', border: '0', borderRadius: '999px', background: on ? t.signal : t.glass, color: on ? t.signalInk : t.ink, backdropFilter: on ? 'none' : 'blur(20px) saturate(1.6)', WebkitBackdropFilter: on ? 'none' : 'blur(20px) saturate(1.6)', boxShadow: on ? 'inset 0 1px 0 oklch(1 0 0 / 0.4)' : t.glassEdge, cursor: 'pointer' });
+    Object.assign(tn, {
+      button: tunerMode !== 'none', popover: tunerMode === 'popover', band: tunerMode === 'band' && !portrait, bandRow: tunerMode === 'band' && portrait, panel: tunerMode === 'panel',
+      livePressed: ['band', 'panel'].includes(tunerMode) || (tunerMode === 'popover' && tLive) ? 'true' : 'false',
+      bandBar: barOf(30, 9, 4), panelBar: barOf(44, 12, 5), popBar: barOf(56, 12, 6)
+    });
+    // Slim bars (line, band, crease) light along their length in tune; tall ones fill the centre zone.
+    const signalA = (a) => t.signal.replace(')', ' / ' + a + ')');
+    tn.noteWeight = rd ? 700 : 300;
+    tn.zoneSlim = { ...tn.zoneStyle, background: inTune ? 'transparent' : tLine(0.08), boxShadow: inTune ? 'none' : tn.zoneStyle.boxShadow };
+    for (const key of ['lineBar', 'bandBar']) if (tn[key]) tn[key].barStyle = { ...tn[key].barStyle, background: inTune ? signalA(0.4) : tn[key].barStyle.background };
+    if (tn.creaseBar) tn.creaseBar = { ...tn.creaseBar, background: inTune ? signalA(0.4) : tn.creaseBar.background };
+    tn.buttonStyle = tunerButtonStyle(['band', 'panel'].includes(tunerMode) || (tunerMode === 'popover' && tLive));
+    // The popover hangs from the tuner button, which sits left of the status pill.
+    const tunerCenter = 20 + saveW + 12 + pillW + 12 + 22;
+    tn.popStyle = { ...popBase, zIndex: 40, top: '94px', right: (tunerCenter - 200) + 'px', width: '400px', padding: '18px 16px 16px', gap: '14px' };
+    tn.popArrow = arrow('right', (200 - 9) + 'px');
     return {
-      t, demo, grid, lane, scenes, sceneAria, b, hero, g, st, tiles, keys, v, typing, fine, isOptions, isGauge: !isOptions, arcColor, saving, saved, toast, detailGroups, legend, themeCards,
+      t, tn, demo, grid, lane, scenes, sceneAria, b, hero, g, st, tiles, keys, v, typing, fine, isOptions, isGauge: !isOptions, arcColor, saving, saved, toast, detailGroups, legend, themeCards,
       showSteppers: !locked && !isOptions, heroZoom,
       typingAttr: typing ? 'true' : 'false',
       pop: { save: overlay === 'saveSheet', details: overlay === 'details', appearance: overlay === 'appearance' },
