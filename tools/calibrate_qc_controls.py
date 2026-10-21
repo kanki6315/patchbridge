@@ -80,6 +80,8 @@ def group(raw, control):
 
 
 def points_for(target):
+    if target['group'] == 'conditional':
+        return [0, 1]
     if target['group'] == 'toggle':
         return [option['value'] for option in target['control']['options']]
     if target['group'] in ('combo', 'unlabeled_switch'):
@@ -95,6 +97,10 @@ def points_for(target):
 def predict(target, normalized):
     """Display values implied by a linear reading and by the declared mapping."""
     control, raw = target['control'], target['raw']
+    if target['group'] == 'conditional':
+        # toggleOn controls are active while the switch is 1, toggleOff controls while it is 0; inactive ones are greyed out.
+        return {'active': sorted(d['name'] for d in target['dependents']
+                                  if (d['when'] == 'on') == (normalized == 1))}
     if target['group'] == 'toggle':
         # The QC's button text is the action: it offers the other option.
         label = next(o['label'] for o in control['options'] if abs(o['value'] - normalized) > 1e-9)
@@ -167,6 +173,40 @@ def choose(described, models, per_group, groups, names=()):
     return chosen
 
 
+def conditional_targets(described, models, per_group, names=()):
+    """Two-step switches that show or hide other controls through toggleOn/toggleOff."""
+    chosen = []
+    for row, chain in enumerate(described['chains']):
+        for column, block in enumerate(chain['models']):
+            model = models.get(str(block['hash'])) if block['hash'] else None
+            if not model or (names and not any(n.lower() in model['name'].lower() for n in names)):
+                continue
+            dependents = {}
+            for index, raw in model['parameters'].items():
+                ref = raw.get('toggleOn') or raw.get('toggleOff')
+                if raw.get('hidden') != 'true' and ref and ref.strip().isdigit():
+                    dependents.setdefault(int(ref), []).append({
+                        'index': int(index), 'name': raw.get('name', ''),
+                        'when': 'on' if raw.get('toggleOn') else 'off'})
+            for index, deps in sorted(dependents.items()):
+                raw = model['parameters'].get(str(index), {})
+                param = block['params'][index] if index < len(block['params']) else None
+                if (raw.get('type') not in ('switch', 'toggleButton') or raw.get('steps') != '2' or param is None
+                        or param['scene_mode'] or param['expression'] or any(v[0] is None for v in param['values'])):
+                    continue
+                chosen.append({'group': 'conditional', 'row': row, 'column': column, 'index': index,
+                               'model_id': str(block['hash']), 'model': block_name(block, model),
+                               'category': model['category'], 'name': raw.get('name', ''), 'unit': '',
+                               'raw': raw, 'control': normalize_parameter(raw), 'dependents': deps})
+    return chosen[:per_group]
+
+
+def visible_names(target, answer):
+    """Dependent names from the numbers the user typed ("1 3", "none")."""
+    numbers = {int(n) for n in re.findall(r'\d+', answer)}
+    return sorted(d['name'] for i, d in enumerate(target['dependents'], 1) if i in numbers)
+
+
 def suggestions(models, groups, limit=3):
     """Models that would cover each group, for groups the loaded preset can't."""
     found = {}
@@ -211,11 +251,17 @@ def probe(qc, describe, target, ask, settle):
             time.sleep(settle)
             _, after = current()
             readback = after['chains'][row]['models'][column]['params'][index]['values'][0][0]
-            answer = ask(f"  QC shows for {target['name']} at {normalized:.4f}: ")
+            if target['group'] == 'conditional':
+                answer = ask(f"  With {target['name']} at {normalized:g}, which numbers are active (not greyed out)? ")
+            else:
+                answer = ask(f"  QC shows for {target['name']} at {normalized:.4f}: ")
             if answer.strip().lower() == 'q':
                 raise KeyboardInterrupt
-            readings.append({'normalized': normalized, 'readback': readback, 'shown': answer.strip(),
-                             'shown_number': parse_reading(answer), 'predicted': predict(target, normalized)})
+            reading = {'normalized': normalized, 'readback': readback, 'shown': answer.strip(),
+                       'shown_number': parse_reading(answer), 'predicted': predict(target, normalized)}
+            if target['group'] == 'conditional':
+                reading['active'] = visible_names(target, answer)
+            readings.append(reading)
     finally:
         qc.set_param_typed(row, column, index, original)
         _, restored = current()
@@ -227,6 +273,12 @@ def analyze(record):
     """Largest gap between readings and each prediction, as a share of the parameter's range."""
     t, readings = record['target'], record['readings']
     held = all(abs(r['readback'] - r['normalized']) < 1e-6 for r in readings if r['readback'] is not None)
+    if t['group'] == 'conditional':
+        everything = sorted(d['name'] for d in t['dependents'])
+        expected = [r['predicted'].get('active', r['predicted'].get('visible')) for r in readings]
+        matches = all(r['active'] == e for r, e in zip(readings, expected))
+        inverted = all(r['active'] == sorted(set(everything) - set(e)) for r, e in zip(readings, expected))
+        return {'rule_matches': matches, 'inverted_matches': inverted, 'latched': held}
     if t['group'] in ('toggle', 'combo'):
         shown = [r['shown'].upper() for r in readings]
         expected = [r['predicted']['declared'].upper() for r in readings]
@@ -285,6 +337,8 @@ def main(argv=None, connect=None, ask=input):
         models = catalog_from_xml((CAPTURED / 'live-ModelRepo.xml').read_bytes())
         described = json.loads((CAPTURED / 'initial-preset.json').read_text())
         targets = choose(described, models, args.per_group, groups, names)
+        if 'conditional' in groups:
+            targets += conditional_targets(described, models, args.per_group, names)
         for t in targets:
             print(f"{describe_target(t)}: {len(points_for(t))} points")
         missing = [g for g in groups if g not in {t['group'] for t in targets}]
@@ -312,10 +366,16 @@ def main(argv=None, connect=None, ask=input):
         if described['name'] != DISPOSABLE:
             raise SystemExit(f'Loaded preset is "{described["name"]}", not "{DISPOSABLE}"; nothing was written.')
         targets = choose(described, models, args.per_group, groups, names)
+        if 'conditional' in groups:
+            targets += conditional_targets(described, models, args.per_group, names)
         print(f'{len(targets)} parameters. Type what the QC screen shows, blank to skip, q to stop.')
         for number, target in enumerate(targets, 1):
             target['preset'] = DISPOSABLE
             print(f'\n[{number}/{len(targets)}] {describe_target(target)}. Open this block on the QC.')
+            if target['group'] == 'conditional':
+                print('  Open this block on the QC. Inactive controls are greyed out. For each setting, type the numbers that are active:')
+                for i, d in enumerate(target['dependents'], 1):
+                    print(f"    {i}. {d['name']}")
             hint = {'toggle': 'Type the button text, and note whether it stays on or springs back.',
                     'combo': 'Type the option name shown.',
                     'unlabeled_switch': 'Type what the switch shows, for example on, off, lit or unlit.',

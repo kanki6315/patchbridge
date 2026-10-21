@@ -142,6 +142,25 @@ class CalibrationTests(unittest.TestCase):
             {'shown': ['off', 'on'], 'latched': True})
         self.assertIsNone(calibrate.group({'type': 'switch', 'steps': '2', 'toggleOn': '3'}, {'editable': False}))
 
+    def test_conditional_switch_shows_which_controls_appear(self):
+        models = {'9': {'name': 'Sync Delay', 'category': 'Delay', 'parameters': {
+            '0': {'type': 'switch', 'name': 'SYNC', 'steps': '2', 'stepNames': 'Off,On'},
+            '1': {'type': 'float', 'name': 'SYNC NOTE', 'min': '0', 'max': '1', 'toggleOn': '0'},
+            '2': {'type': 'float', 'name': 'DELAY TIME', 'min': '0', 'max': '1', 'toggleOff': '0'},
+            '3': {'type': 'float', 'name': 'MIX', 'min': '0', 'max': '100'}}}}
+        qc = FakeQC()
+        qc.state['chains'][0]['models'][0] = {'hash': 9, 'params': [param(0.0), param(0.2), param(0.3), param(0.5)]}
+        answers = iter(['yes', '2', '1'])
+        with tempfile.TemporaryDirectory() as tmp, redirect_stdout(io.StringIO()):
+            output = Path(tmp) / 'probe.json'
+            calibrate.main(['--groups', 'conditional', '--settle', '0', '--output', str(output)],
+                           connect=lambda: (qc, deepcopy, models), ask=lambda prompt: next(answers))
+            record, = json.loads(output.read_text())['results']
+        self.assertEqual([d['name'] for d in record['target']['dependents']], ['SYNC NOTE', 'DELAY TIME'])
+        self.assertEqual([r['active'] for r in record['readings']], [['DELAY TIME'], ['SYNC NOTE']])
+        self.assertEqual(calibrate.analyze(record), {'rule_matches': True, 'inverted_matches': False, 'latched': True})
+        self.assertEqual(qc.state['chains'][0]['models'][0]['params'][0]['values'], values(0.0))
+
     def test_capture_blocks_use_the_capture_name(self):
         model = {'name': 'Eltron 30', 'parameters': {'0': {'name': 'BASS'}, '1': {'name': 'file_name'}}}
         block = {'params': [param(0.5), {'values': [[None, None, '1e64c27a1335d9061530283b7c6b22c16f1a7abe0398ba36dfc77e6f462be2c2OG TS808']]}]}
