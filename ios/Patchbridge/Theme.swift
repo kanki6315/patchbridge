@@ -53,22 +53,14 @@ struct GlassSurface: ViewModifier {
         else { content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: radius)) }
     }
 }
-/// A full-width bottom bar surface that continues under the home indicator.
-struct BarSurface: ViewModifier {
-    let theme: PhoneTheme
-    @Environment(\.accessibilityReduceTransparency) private var solid
-    func body(content: Content) -> some View {
-        content.background {
-            Group {
-                if solid { theme.raised }
-                else if #available(iOS 26, *) { Color.clear.glassEffect(.regular, in: Rectangle()) }
-                else { Rectangle().fill(.regularMaterial) }
-            }.ignoresSafeArea(edges: .bottom)
-        }
-    }
-}
 extension View {
-    func phoneBar(_ theme: PhoneTheme) -> some View { modifier(BarSurface(theme: theme)) }
+    /// Bottom buttons float over scrolling content with no bar behind them. A note beside one
+    /// carries its own glass so it stays readable over whatever scrolls under it.
+    func floatingNote(_ theme: PhoneTheme) -> some View { padding(.horizontal, 12).padding(.vertical, 8).phoneGlass(theme, radius: 16) }
+    /// A floating button's dimmed state, on a solid capsule so content never shows through it.
+    func floatingDimmed(_ dimmed: Bool, _ theme: PhoneTheme) -> some View {
+        disabled(dimmed).opacity(dimmed ? 0.45 : 1).background(theme.ground, in: Capsule())
+    }
     @ViewBuilder func parameterMaterial(_ theme: PhoneTheme, enabled: Bool) -> some View {
         if enabled { phoneGlass(theme, radius: 18) } else { self }
     }
