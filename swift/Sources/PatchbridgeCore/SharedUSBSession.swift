@@ -1,28 +1,69 @@
 #if os(macOS)
 import Foundation
+import Security
 
-/// "Trusted until Patchbridge quits" entries. Owned by the bridge, so trust outlives a
-/// device's connection but never the bridge: Stop, Quit or helper failure clears it.
+/// Where a `TrustRegistry` keeps its entries between launches. `nil` data means none.
+public protocol TrustStorage {
+    func load() -> Data?
+    func save(_ data: Data?)
+}
+
+/// Trusted devices, kept in the Mac's Keychain so trust survives Stop and Quit.
+public struct KeychainTrustStorage: TrustStorage {
+    private let query: [String: Any]
+    public init(service: String = "com.arjunakankipati.patchbridge.bridge-trust") {
+        query = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+                 kSecAttrAccount as String: "devices"]
+    }
+    public func load() -> Data? {
+        var item: CFTypeRef?
+        var search = query; search[kSecReturnData as String] = true
+        guard SecItemCopyMatching(search as CFDictionary, &item) == errSecSuccess else { return nil }
+        return item as? Data
+    }
+    public func save(_ data: Data?) {
+        SecItemDelete(query as CFDictionary)
+        guard let data else { return }
+        var item = query; item[kSecValueData as String] = data
+        SecItemAdd(item as CFDictionary, nil)
+    }
+}
+
+/// Devices trusted to reconnect without a code. Owned by the bridge, so trust outlives a
+/// device's connection; with `storage` it also outlives Stop, Quit and helper failure, and
+/// only Revoke Trust (or eviction past `limit`) ends it.
 public final class TrustRegistry {
     public static let limit = 8
     /// `id` names an entry in the UI; the token never leaves the bridge and its devices.
-    private var entries: [(id: UUID, token: String, name: String)] = []
+    private struct Entry: Codable { var id: UUID; var token: String; var name: String }
+    private var entries: [Entry] = [] { didSet { persist() } }
+    private let storage: TrustStorage?
+    public init(storage: TrustStorage? = nil) {
+        self.storage = storage
+        if let data = storage?.load(), let saved = try? JSONDecoder().decode([Entry].self, from: data) {
+            entries = Array(saved.suffix(Self.limit))
+        }
+    }
     public var names: [String] { entries.map(\.name) }
     public var list: [(id: UUID, name: String)] { entries.map { ($0.id, $0.name) } }
     func add(name: String) -> String {
         let token = UUID().uuidString + UUID().uuidString
-        entries.append((UUID(), token, name))
+        entries.append(Entry(id: UUID(), token: token, name: name))
         if entries.count > Self.limit { entries.removeFirst() }
         return token
     }
     func name(for token: String) -> String? { entries.first { $0.token == token }?.name }
     func id(for token: String) -> UUID? { entries.first { $0.token == token }?.id }
     func rename(_ token: String, to name: String) {
-        if let index = entries.firstIndex(where: { $0.token == token }) { entries[index].name = name }
+        if let index = entries.firstIndex(where: { $0.token == token }), entries[index].name != name { entries[index].name = name }
     }
     func remove(_ token: String) { entries.removeAll { $0.token == token } }
     func remove(id: UUID) { entries.removeAll { $0.id == id } }
     func removeAll() { entries.removeAll() }
+    private func persist() {
+        guard let storage else { return }
+        storage.save(entries.isEmpty ? nil : try? JSONEncoder().encode(entries))
+    }
 }
 
 /// The bridge's one helper session, shared by every admitted device. A device joins by
@@ -32,7 +73,7 @@ public final class TrustRegistry {
 public final class SharedUSBSession {
     public let deviceLimit: Int
     public let macName: String
-    public let trust = TrustRegistry()
+    public let trust: TrustRegistry
     /// Called only for forwarded or refused mutations, with the sending device's name.
     var onMutation: ((String, [String: Any], [String: Any]?) -> Void)?
     public private(set) var generation = 0
@@ -56,9 +97,9 @@ public final class SharedUSBSession {
     private var retryAt: TimeInterval = 0
     private var retryDelay: TimeInterval = 1
     public init(helper: HelperClient, requestTimeout: TimeInterval = 5, allowsRecovery: Bool = false,
-                deviceLimit: Int = 4, macName: String = DeviceIdentity.macName,
+                deviceLimit: Int = 4, macName: String = DeviceIdentity.macName, trust: TrustRegistry = TrustRegistry(),
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
-        self.helper = helper; self.requestTimeout = requestTimeout
+        self.helper = helper; self.trust = trust; self.requestTimeout = requestTimeout
         self.allowsRecovery = allowsRecovery; self.now = now; self.deviceLimit = deviceLimit
         self.macName = DeviceIdentity.name(macName, fallback: "Mac")
     }
@@ -163,13 +204,13 @@ public final class SharedUSBSession {
         _ = try? helper.request(["operation": "disconnect", "session_id": session])
         helperSession = nil; recovering = false; retryDelay = 1; retryAt = 0
     }
-    /// The helper's transport failed: no approval or trust survives.
+    /// The helper's transport failed: no approval survives. Trust belongs to the devices, not
+    /// the helper, so trusted devices reconnect without a code once the bridge is back.
     private func failAll() {
         let all = devices; joined.removeAll(); helperSession = nil
         if !all.isEmpty { helper.diagnostics.record(.bridgeRevoked) }
         recovering = false; retryDelay = 1; retryAt = 0
         for device in all { device.endConnection() }
-        trust.removeAll()
     }
 }
 #endif

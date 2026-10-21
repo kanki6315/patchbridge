@@ -378,7 +378,7 @@ struct EditorView: View {
                 if model.editor.supports("set_parameter") { Label("Edit supported parameters", systemImage: "checkmark") }
                 if model.editor.supports("save") { Label("Save the current preset", systemImage: "checkmark") }
                 if !model.demo && model.coordinator.trusted {
-                    LabeledContent("Trusted", value: "Until the Mac app quits").foregroundStyle(theme.ink)
+                    LabeledContent("Trusted", value: "Until revoked on the Mac").foregroundStyle(theme.ink)
                 }
                 if !model.demo { ConnectionStatusSettings(model: model, theme: theme) }
                 Button { self.sheet = .appearance } label: { Label("Appearance", systemImage: "circle.lefthalf.filled").frame(minHeight: 44) }

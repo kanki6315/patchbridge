@@ -59,7 +59,7 @@ Record:
 | Edits from each | Edit gain on the iPhone; wait 3 s; edit on the iPad | Each edit confirms; the other device shows "Changed on …" within about 2 s; recent edits name the sender | Not run |
 | Simultaneous edits | Edit the same control on both within about 1 s | One confirms; the other says "Not applied. … changed it first." and reloads; both converge on the confirmed value | Not run |
 | Disconnect one | On the Mac, Disconnect the iPhone | The iPhone shows "Disconnected on your Mac"; the iPad keeps editing | Not run |
-| Trusted reconnect | Approve the iPhone with Trust; quit and reopen its app; reconnect | No code; the Mac lists it as Trusted · connected. Revoke Trust; the next reconnect needs a code | Not run |
+| Trusted reconnect | Approve the iPhone with Trust; quit and reopen its app; reconnect. Then quit and reopen Patchbridge on the Mac, start the bridge, and reconnect | No code either time; the Mac lists it as Trusted · connected. Revoke Trust; the next reconnect needs a code | Not run |
 | USB loss, one backgrounded | Background the iPad; unplug USB on the Mac; wait; replug; foreground the iPad | The iPhone pauses and recovers; the iPad recovers on return without a manual reconnect; no edit is replayed | Not run |
 | Quit mid-edit | Start an edit on the iPad and force-quit the app at once | The Mac drops the iPad; the iPhone is unaffected; the edit is either confirmed or absent, never applied later | Not run |
 | Slow request | During a save on one device, edit repeatedly on the other | The other device's edits confirm or say the bridge was busy; no device disconnects; nothing confirms after its device gave up | Not run |
