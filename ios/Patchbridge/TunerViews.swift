@@ -417,6 +417,94 @@ struct TunerCrease: View {
     }
 }
 
+/// The Duo's outer screen in portrait, where the status bar runs down the trailing edge: the tuner
+/// lives in that column. The scale stays straight, sharp up toward the camera, so the cents read
+/// honestly; only the light wraps, spreading from the camera along the top edge and down the status
+/// bar's edge as the string closes in, and running the whole way around in tune. Nothing here takes a tap.
+struct TunerColumn: View {
+    @ObservedObject var readout: TunerReadout
+    let theme: PhoneTheme
+    /// The whole window, the column's width at its trailing edge, and where the system's items end.
+    let window: CGSize
+    let column: CGFloat
+    let top: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    static let readoutHeight: CGFloat = 58, end: CGFloat = 26, track: CGFloat = 220
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            light
+            VStack(spacing: 0) {
+                VStack(spacing: 2) {
+                    TunerNote(pitch: readout.pitch, theme: theme, size: 26)
+                    TunerCents(pitch: readout.pitch, theme: theme, size: 15).frame(height: 18)
+                }.frame(height: Self.readoutHeight)
+                Text("♯").frame(height: Self.end)
+                TunerBar(pitch: readout.pitch, theme: theme, height: 6, markerWidth: 4, overshoot: 9)
+                    .frame(width: Self.track).rotationEffect(.degrees(-90)).frame(width: 24, height: Self.track)
+                Text("♭").frame(height: Self.end)
+            }
+            .font(.system(size: 17, weight: .semibold)).foregroundStyle(theme.muted)
+            .frame(width: column)
+            .tunerAccessibility(readout.pitch).tunerHaptic(readout.pitch)
+            .offset(x: window.width - column, y: top)
+        }
+        .frame(width: window.width, height: window.height, alignment: .topLeading)
+        .allowsHitTesting(false)
+    }
+    private var light: some View {
+        let pitch = readout.pitch
+        let inTune = pitch?.inTune == true
+        let x = window.width - column / 2
+        let trackTop = top + Self.readoutHeight + Self.end
+        let marker = trackTop + Self.track * CGFloat(50 - min(50, max(-50, pitch?.cents ?? 0))) / 100
+        let closeness = max(0, 1 - abs(pitch?.cents ?? 50) / 50)
+        let color = inTune ? theme.signal : theme.ink
+        // Reduce Motion keeps the light at the camera; color and opacity still confirm tuning.
+        let corner = reduceMotion || inTune
+        // The edge light spreads from the camera along both arms; in tune it runs their whole length.
+        let full = max(window.width, window.height) * 1.5
+        let reach = inTune ? full : (reduceMotion ? 220 : 90 + 300 * closeness)
+        let edge = Self.edge(window)
+        return ZStack(alignment: .topLeading) {
+            TunerGlow(pitch: pitch, theme: theme,
+                      far: CGSize(width: 110, height: 150), near: CGSize(width: 200, height: 300),
+                      tuned: CGSize(width: 460, height: 380))
+                .position(x: x, y: corner ? 24 : marker)
+                .animation(reduceMotion ? nil : tunerEase, value: pitch?.cents)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.24), value: inTune)
+            ZStack {
+                edge.stroke(color.opacity(theme.daylight ? 0.22 : 0.3), style: StrokeStyle(lineWidth: 16, lineCap: .round)).blur(radius: 8)
+                edge.stroke(color, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+            }
+            .frame(width: window.width, height: window.height)
+            .mask(alignment: .topLeading) {
+                EllipticalGradient(colors: [.white, .white, .clear], center: .center, startRadiusFraction: 0, endRadiusFraction: 0.5)
+                    .frame(width: reach * 2, height: reach * 2)
+                    .position(x: x, y: 24)
+            }
+            .opacity(pitch == nil ? 0 : (inTune ? 1 : 0.4 + 0.35 * closeness))
+            .animation(reduceMotion ? nil : tunerEase, value: pitch?.cents)
+            .animation(reduceMotion ? .easeOut(duration: 0.15) : .timingCurve(0.22, 1, 0.36, 1, duration: 0.36), value: inTune)
+            .animation(.easeOut(duration: 0.15), value: pitch == nil)
+        }
+        .frame(width: window.width, height: window.height, alignment: .topLeading)
+        .accessibilityHidden(true)
+    }
+    /// The display's corner radius isn't public; this follows the outer screen's rounding closely
+    /// enough that the line stays on the glass around the corner.
+    static let screenCorner: CGFloat = 52
+    /// Along the top edge, around the camera's corner and down the status bar's edge.
+    static func edge(_ window: CGSize) -> Path {
+        let r = screenCorner, inset: CGFloat = 1.5
+        var path = Path()
+        path.move(to: CGPoint(x: r, y: inset))
+        path.addLine(to: CGPoint(x: window.width - r, y: inset))
+        path.addArc(center: CGPoint(x: window.width - r, y: r), radius: r - inset, startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
+        path.addLine(to: CGPoint(x: window.width - inset, y: window.height - r))
+        return path
+    }
+}
+
 /// The crease's light, placed at the marker on a screen `width` wide with the fold at `foldY`.
 struct TunerCreaseLight: View {
     @ObservedObject var readout: TunerReadout
