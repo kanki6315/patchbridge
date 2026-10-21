@@ -121,7 +121,8 @@ fold. The outer screen leads with the grid: in landscape a one-line header
 holds status, name, scenes and Save, and tapping a block opens the block menu
 (first four controls with − value + and Open editor) as a side panel; in
 portrait the grid uses codes, scenes are a 4 × 2 set and the menu rises from
-the bottom without dimming. The row, selected block and open block menu or
+the bottom without dimming; the status bar runs down the trailing edge there,
+and the tuner and connection buttons sit low in that column, level with Save. The row, selected block and open block menu or
 deck editor carry across folding and rotating; a full editor opened from the
 outer screen closes on unfolding, and the deck shows that block instead. iOS doesn't report hinge posture to apps, so the
 half-folded view (scenes fold into the header strip, the grid grows, the
@@ -137,7 +138,10 @@ the status bar, above the navigation stack so it persists into the block editor,
 with ambient light rising around the Dynamic Island and a short highlight
 that opens across the bar in tune, without a fitted ring. Both fade when quiet
 (stationary feedback with Reduce Motion); on iPad a band in the top bar (its own row in portrait); on the
-Duo's inner screen the crease itself, whose light spills into both halves. The
+Duo's inner screen the crease itself, whose light spills into both halves; on
+the outer screen in portrait a vertical scale in the status column (sharp up,
+toward the camera), with light reaching along the top edge as the string
+closes in and gathering at the camera in tune. The
 readout publishes from its own object, so only the tuner redraws ten times a
 second. Demo mode plays simulated strings. Debug builds accept `--live-tuner`
 and `--tuner` with `--demo`.

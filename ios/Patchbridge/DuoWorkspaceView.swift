@@ -70,7 +70,9 @@ struct DuoWorkspaceView: View {
                 switch screen {
                 case .inner: inner(snapshot)
                 case .outerLandscape: VStack(spacing: 0) { outerLine; outerLandscape(snapshot) }
-                case .outerPortrait: VStack(spacing: 0) { outerLine; outerPortrait(snapshot) }
+                case .outerPortrait:
+                    VStack(spacing: 0) { if column == 0 { outerLine }; outerPortrait(snapshot) }
+                        .overlay { if column > 0 { statusColumn } }
                 }
             }
             .onAppear {
@@ -305,8 +307,10 @@ struct DuoWorkspaceView: View {
                         }.font(.subheadline.weight(.medium))
                     }.layoutPriority(1)
                     Spacer(minLength: 8)
-                    tunerButton
-                    statusButton(compact: false)
+                    if column == 0 {
+                        tunerButton
+                        statusButton(compact: false)
+                    }
                 }
                 grid(snapshot, style: .code, band: false, cellHeight: 66)
                 sceneGrid(snapshot)
@@ -324,6 +328,27 @@ struct DuoWorkspaceView: View {
             }
         }
         .animation(motion, value: editing)
+    }
+    /// Portrait's status bar runs down the trailing edge and leaves most of that column empty.
+    /// The live tuner and the tuner and connection buttons move into it, so the content keeps its width.
+    private var column: CGFloat { screen == .outerPortrait && insets.trailing >= 60 ? insets.trailing : 0 }
+    /// The camera, clock and Wi-Fi sit at the top of the column; nothing goes above this.
+    private let systemReach: CGFloat = 168
+    private var statusColumn: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .bottomTrailing) {
+                if tuner.live {
+                    TunerColumn(readout: tuner.readout, theme: theme, window: geometry.size, column: column, top: systemReach)
+                        .transition(.opacity)
+                }
+                // Level with the Save button, within thumb reach.
+                VStack(spacing: 12) { tunerButton; statusButton(compact: true) }
+                    .frame(width: column).padding(.bottom, insets.bottom + 15)
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottomTrailing)
+        }
+        .ignoresSafeArea()
+        .animation(motion, value: tuner.live)
     }
     private func saveBar(_ snapshot: PresetSnapshot) -> some View {
         VStack(spacing: 8) {
