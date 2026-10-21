@@ -117,8 +117,22 @@ struct EditorView: View {
                 }
                 #endif
             }
+            #if DEBUG
+            .onChange(of: model.previewStep) { _, step in
+                if step == 1 {
+                    if duo == .inner { duoSelected = "0:1"; duoEditing = true }
+                    else if duo != nil || !pad { selectedBlock = "0:1" }
+                }
+                if step == 6 { selectedBlock = nil; duoEditing = false }
+                if !pad && duo == nil {
+                    if step == 9 { requestSave() }
+                    if step == 10 { confirmSave = false; confirmCurrentSave() }
+                }
+            }
+            #endif
             .task {
                 #if DEBUG
+                Task { await model.runPreviewStory() }
                 if model.screenshotFixture, !pad, duo == nil,
                    ProcessInfo.processInfo.arguments.contains("--save-confirmation") {
                     try? await Task.sleep(for: .milliseconds(600))

@@ -59,6 +59,16 @@ struct PadWorkspaceView: View {
                     }
                     #endif
                 }
+                #if DEBUG
+                .onChange(of: model.previewStep) { _, step in
+                    if step == 1 { selected = "0:1"; row = 0 }
+                    if step == 9 { saveContext = model.snapshot; confirmSave = true }
+                    if step == 10 {
+                        confirmSave = false
+                        if saveContext == model.snapshot { model.save() }
+                    }
+                }
+                #endif
                 .onChange(of: snapshot) { _, value in selectDefault(value) }
             }
         }

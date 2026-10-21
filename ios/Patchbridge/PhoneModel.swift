@@ -6,6 +6,30 @@ final class PhoneModel: ObservableObject {
     @Published private(set) var demo = false
     #if DEBUG
     @Published private(set) var screenshotFixture = false
+    @Published private(set) var previewStep = 0
+    private var previewStarted = false
+
+    /// Shared native App Store story. Only the offline Debug fixture may run it.
+    @MainActor func runPreviewStory() async {
+        guard screenshotFixture, !previewStarted,
+              ProcessInfo.processInfo.arguments.contains("--preview-story") else { return }
+        previewStarted = true
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            scene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+        }
+        // Three seconds of launch handles, then 28 seconds of usable footage.
+        let cues: [(Double, Int)] = [(7, 1), (11, 2), (12, 3), (13, 4), (14, 5),
+                                    (17, 6), (19, 7), (23, 8), (25, 9), (28, 10)]
+        var previous = 0.0
+        for (time, step) in cues {
+            do { try await Task.sleep(for: .seconds(time - previous)) } catch { return }
+            guard screenshotFixture else { return }
+            previewStep = step
+            if step == 7 { tuner.setOpen(true) }
+            if step == 8 { tuner.setLive(true); tuner.setOpen(false) }
+            previous = time
+        }
+    }
     #endif
     /// Both offline transports confirm edits locally; screenshot fixtures use the normal UI.
     var usesLocalFixture: Bool {

@@ -66,7 +66,14 @@ final class TunerModel: ObservableObject {
     /// Demo mode has no QC: strings are plucked off pitch, settle while they ring, then go quiet.
     private func demoPitch(_ t: TimeInterval) -> TunerPitch? {
         #if DEBUG
-        if phone?.screenshotFixture == true { return TunerPitch(hz: 110 * pow(2, 2.0 / 1200)) }
+        if phone?.screenshotFixture == true {
+            if ProcessInfo.processInfo.arguments.contains("--preview-story") {
+                // A simulated A string settles from flat to in tune; still captures stay fixed.
+                let cents = t < 2.8 ? -19 * pow(max(0, 1 - t / 2.8), 1.6) : 0
+                return TunerPitch(hz: 110 * pow(2, cents / 1200))
+            }
+            return TunerPitch(hz: 110 * pow(2, 2.0 / 1200))
+        }
         #endif
         let strings: [(Double, Double)] = [(82.41, 22), (110, -16), (146.83, 9), (196, -26), (246.94, 12), (329.63, -8)]
         let ring = 4.5, cycle = 6.0

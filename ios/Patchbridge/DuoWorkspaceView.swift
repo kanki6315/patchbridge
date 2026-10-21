@@ -92,6 +92,15 @@ struct DuoWorkspaceView: View {
                 }
                 #endif
             }
+            #if DEBUG
+            .onChange(of: model.previewStep) { _, step in
+                if step == 9 { requestSave() }
+                if step == 10 {
+                    confirmSave = false
+                    if saveContext == model.snapshot { model.save() }
+                }
+            }
+            #endif
             .onChange(of: snapshot) { _, value in
                 if editing, !value.blocks.contains(where: { $0.id == selected }) { editing = false }
                 if let target = typingTarget, !value.blocks.contains(where: { $0.id == target.block }) { typingTarget = nil }
