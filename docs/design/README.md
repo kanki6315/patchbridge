@@ -88,6 +88,20 @@ The dial in every edit state, typing, read-only and option parameters.
 <tr><td align="center" valign="top"><a href="html/screens/e-capture.html"><img src="screens/e-capture.png" width="180" alt="Editor · read-only capture"></a><br><sub>Editor · read-only capture</sub></td><td align="center" valign="top"><a href="html/screens/e-chorus.html"><img src="screens/e-chorus.png" width="180" alt="Editor · option parameter"></a><br><sub>Editor · option parameter</sub></td></tr>
 </table>
 
+## Scene parameters
+
+How the editor handles parameters that have their own value in each scene. They're drawn on the Dual Chorus, with Mix and Tone assigned per scene, Width global and Depth on Expression 1. The per-scene values are illustrative.
+
+- **Edit the active scene only.** A scene marker (the scene's dot and letter) sits on the dial above the value, and the same marker follows the label on the parameter's tile. Global parameters carry no marker. The status line says "Edits scene F only" or, for a global parameter, "Applies to all scenes".
+- **Other scenes stay visible.** Under the dial, a flat read-only strip lists all eight scenes' values in A–H order. The active scene keeps its slot, outlined in its own color, so nothing moves when you switch. A global parameter shows a "Same in every scene" row in the same space, so the tiles never shift.
+- **Switching scene keeps your place.** The scene pill in the header switches the scene on the QC and keeps the block and parameter selected. The dial shows "—" and pauses input until the bridge returns the new scene's value, then confirms "Now editing scene G". Scene switching stays hidden until the bridge advertises it.
+- **Expression is a different lock.** Expression-controlled parameters stay read-only, with a pedal glyph instead of the padlock and the heel-to-toe sweep shown on the arc and beside it. The padlock stays for the other reasons (meter, unknown scale, depends on Sync).
+
+<table>
+<tr><td align="center" valign="top"><a href="html/screens/s-idle.html"><img src="screens/s-idle.png" width="180" alt="Scene parameter · editing scene F"></a><br><sub>Scene parameter · editing scene F</sub></td><td align="center" valign="top"><a href="html/screens/s-pending.html"><img src="screens/s-pending.png" width="180" alt="Sending to scene F"></a><br><sub>Sending to scene F</sub></td><td align="center" valign="top"><a href="html/screens/s-menu.html"><img src="screens/s-menu.png" width="180" alt="Choosing a scene"></a><br><sub>Choosing a scene</sub></td><td align="center" valign="top"><a href="html/screens/s-loading.html"><img src="screens/s-loading.png" width="180" alt="Switched to G, dial reloading"></a><br><sub>Switched to G, dial reloading</sub></td></tr>
+<tr><td align="center" valign="top"><a href="html/screens/s-loaded.html"><img src="screens/s-loaded.png" width="180" alt="Editing scene G"></a><br><sub>Editing scene G</sub></td><td align="center" valign="top"><a href="html/screens/s-global.html"><img src="screens/s-global.png" width="180" alt="Global parameter · all scenes"></a><br><sub>Global parameter · all scenes</sub></td><td align="center" valign="top"><a href="html/screens/s-expression.html"><img src="screens/s-expression.png" width="180" alt="Expression parameter · read-only"></a><br><sub>Expression parameter · read-only</sub></td><td align="center" valign="top"><a href="html/screens/s-daylight.html"><img src="screens/s-daylight.png" width="180" alt="Daylight · scene parameter"></a><br><sub>Daylight · scene parameter</sub></td></tr>
+</table>
+
 ## Themes
 
 Appearance settings and the Daylight theme.

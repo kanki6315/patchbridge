@@ -15,6 +15,14 @@
       "name": "iPhone PoC"
     },
     {
+      "id": "scenes",
+      "name": "Scene parameters"
+    },
+    {
+      "id": "switching",
+      "name": "Scene switching"
+    },
+    {
       "id": "ipad",
       "name": "iPad PoC"
     },
@@ -33,10 +41,6 @@
     {
       "id": "live",
       "name": "Live Activity"
-    },
-    {
-      "id": "switching",
-      "name": "Scene switching"
     },
     {
       "id": "components",
@@ -1344,6 +1348,78 @@
       "page": "mac",
       "radius": 18
     },
+    "poc/s-idle.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Scene parameter · editing scene F",
+      "page": "scenes"
+    },
+    "poc/s-pending.dc.html": {
+      "x": 482,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Scene parameter · sending to scene F",
+      "page": "scenes"
+    },
+    "poc/s-menu.dc.html": {
+      "x": 964,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Scene parameter · choosing a scene",
+      "page": "scenes"
+    },
+    "poc/s-loading.dc.html": {
+      "x": 1446,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Scene parameter · switched to G, dial reloading",
+      "page": "scenes"
+    },
+    "poc/s-loaded.dc.html": {
+      "x": 1928,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Scene parameter · editing scene G",
+      "page": "scenes"
+    },
+    "poc/s-expression.dc.html": {
+      "x": 482,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Expression parameter · read-only",
+      "page": "scenes"
+    },
+    "poc/s-daylight.dc.html": {
+      "x": 964,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Daylight · scene parameter",
+      "page": "scenes"
+    },
+    "poc/s-global.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Global parameter · applies to all scenes",
+      "page": "scenes"
+    },
+    "poc/SceneEditor.dc.html": {
+      "x": 3442,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Scene parameter editor (Tweaks: state, theme)",
+      "page": "components"
+    },
     "poc/sc-idle.dc.html": {
       "x": 0,
       "y": 0,
@@ -1624,6 +1700,15 @@
     "duo/tn-crease-close.dc.html",
     "duo/tn-crease-tuned.dc.html",
     "duo/tn-crease-half.dc.html",
+    "poc/s-idle.dc.html",
+    "poc/s-pending.dc.html",
+    "poc/s-menu.dc.html",
+    "poc/s-loading.dc.html",
+    "poc/s-loaded.dc.html",
+    "poc/s-expression.dc.html",
+    "poc/s-daylight.dc.html",
+    "poc/s-global.dc.html",
+    "poc/SceneEditor.dc.html",
     "poc/sc-idle.dc.html",
     "poc/sc-pending.dc.html",
     "poc/sc-confirmed.dc.html",
@@ -1816,6 +1901,30 @@
       "maxW": 3450,
       "page": "tuner",
       "text": "iPhone Duo inner screen: the tuner is the crease"
+    },
+    "scenesEdit": {
+      "x": 0,
+      "y": -280,
+      "kind": "title1",
+      "maxW": 2330,
+      "page": "scenes",
+      "text": "Scene-assigned parameters: edit the active scene, see the rest"
+    },
+    "scenesLocks": {
+      "x": 0,
+      "y": 1040,
+      "kind": "title1",
+      "maxW": 1366,
+      "page": "scenes",
+      "text": "Global and expression parameters, and Daylight"
+    },
+    "scenesRules": {
+      "x": 1446,
+      "y": 1320,
+      "w": 440,
+      "page": "scenes",
+      "color": "teal",
+      "text": "How scene parameters work\n\n• Editable for the active scene only. The dial carries a scene marker (dot + letter) above the value; the tile carries the same marker after its label. Global parameters carry no marker, so the marker itself says \"this one changes per scene\".\n• The other seven scenes sit under the dial as a flat, read-only strip in A–H order. The active scene keeps its slot, outlined in its own color, so positions never move when you switch.\n• Switching scene from the header pill changes the scene on the QC. Block and parameter stay selected. The dial clears to \"—\", steppers and typing pause, and the status reads \"Loading scene G from the QC…\" until the bridge answers. Then the arc sweeps from 0 to the new value (280 ms, ease-out-quint; Reduce Motion: instant) and the status confirms \"Now editing scene G\".\n• Global parameters (Width, Mode, Sync here) edit as before, with no marker. The status says \"Applies to all scenes\" and, in place of the scene strip, a row reads \"Same in every scene\" with all eight scene dots, so the tiles never shift when you move between parameter kinds.\n• A pending edit belongs to the scene it was sent to. If the QC changes scene first, the existing \"Not applied · scene changed\" state applies.\n• Expression-controlled parameters stay read-only. They use a pedal glyph, never the padlock, and show the heel and toe sweep on the arc and beside it. The padlock stays for other reasons (meter, unknown scale, depends on Sync).\n• Scene switching stays hidden until the bridge advertises it; without it the pill is a static label and the strip still shows every scene's value."
     },
     "switchPhone": {
       "x": 0,
