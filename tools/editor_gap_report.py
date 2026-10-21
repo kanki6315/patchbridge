@@ -31,7 +31,9 @@ def classify(xml):
                 control = normalize_parameter(raw, parameters)
                 rows.append({'category': category.get('name'), 'model': model.get('name'),
                              'model_id': model.get('id'), 'index': index, 'name': raw.get('name', ''),
-                             'type': raw.get('type', ''), 'hidden': control.get('hidden', False),
+                             'type': raw.get('type', ''),
+                             # Meters are shown read-only on the phone but aren't controls, so the report skips them too.
+                             'hidden': control.get('hidden', False) or control['kind'] == 'meter',
                              'status': EDITABLE if control['editable'] else control['reason'],
                              'mapping': control.get('mapping') or control['kind']})
     return rows

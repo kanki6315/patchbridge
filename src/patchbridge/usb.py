@@ -123,8 +123,10 @@ class USBAdapter:
                 for index, param in enumerate(model.params):
                     definition = definitions.get(str(index), {})
                     numeric = all(v.WhichOneof('value') == 'float_value' for v in param.param_values)
+                    # Hidden and unsupported controls are never written, whatever the phone sends.
                     if (numeric and param.param_values and not param.scene_mode and not param.expression
-                            and definition.get('type') in WRITABLE_TYPES):
+                            and definition.get('type') in WRITABLE_TYPES
+                            and definition.get('control', {}).get('editable')):
                         editable.append(str(index))
                     for s in range(8):
                         if not param.param_values:
@@ -163,7 +165,7 @@ class USBAdapter:
             block = next((b for b in current['blocks'] if b['id'] == payload.get('block_id')), None)
             parameter = payload.get('parameter_id')
             if block is None or not isinstance(parameter, str) or parameter not in block['editable_parameters']:
-                raise BridgeError('unsupported_parameter', 'Parameter is unknown, scene-assigned, expression-controlled or inactive.')
+                raise BridgeError('unsupported_parameter', 'Parameter is unknown, hidden, unsupported, scene-assigned, expression-controlled or inactive.')
             value = payload.get('value')
             if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
                 raise BridgeError('invalid_value', 'USB values must be normalized numbers in [0, 1].')

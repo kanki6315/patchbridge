@@ -50,7 +50,7 @@ class SnapshotTests(unittest.TestCase):
         }[name]
         self.adapter = USBAdapter()
         self.adapter.qc = self.qc
-        self.adapter.metadata = {'models': {'1': {'parameters': {'0': {'type': 'float'}}}}}
+        self.adapter.metadata = {'models': {'1': {'parameters': {'0': {'type': 'float', 'control': {'editable': True}}}}}}
 
     def test_recorded_snapshot_uses_array_addresses_and_scene(self):
         state = self.adapter.snapshot()
@@ -66,8 +66,8 @@ class SnapshotTests(unittest.TestCase):
     def test_conditional_control_is_writable_only_while_active(self):
         # Treat Myth Drive's second parameter as the switch that GAIN depends on.
         self.adapter.metadata = {'models': {'1': {'parameters': {
-            '0': {'type': 'float', 'control': {'active_when': {'parameter': '1', 'values': [1.0]}}},
-            '1': {'type': 'switch', 'steps': '2'}}}}}
+            '0': {'type': 'float', 'control': {'editable': True, 'active_when': {'parameter': '1', 'values': [1.0]}}},
+            '1': {'type': 'switch', 'steps': '2', 'control': {'editable': True}}}}}}
         block = next(m for m in self.spec['chains'][0]['models'] if m['hash'] == 1)
         for position, expected in [(1.0, True), (0.0, False)]:
             block['params'][1]['values'] = [[position, None, None]] * 8
@@ -76,6 +76,17 @@ class SnapshotTests(unittest.TestCase):
             self.assertIn('1', editable)
         with self.assertRaisesRegex(BridgeError, 'inactive'):
             self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
+        self.qc.set_param.assert_not_called()
+
+    def test_hidden_and_unsupported_parameters_are_never_writable(self):
+        # Transpose's hidden MIX is a valid float; the QC never shows it, so the bridge never writes it.
+        for control in ({'editable': False, 'hidden': True, 'reason': 'Hidden on the QC.'},
+                        {'editable': False, 'reason': 'Missing, symbolic, or invalid range.'}):
+            self.adapter.metadata = {'models': {'1': {'parameters': {'0': {'type': 'float', 'control': control}}}}}
+            block = next(b for b in self.adapter.snapshot()['blocks'] if b['id'] == '0:3')
+            self.assertNotIn('0', block['editable_parameters'])
+            with self.assertRaisesRegex(BridgeError, 'hidden'):
+                self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
         self.qc.set_param.assert_not_called()
 
     def test_control_is_inactive_while_its_switch_is_inactive(self):

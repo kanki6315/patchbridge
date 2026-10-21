@@ -40,6 +40,8 @@ public struct ParameterControl: Codable {
     public let options: [Option]?
     public let verification: String?
     public var active_when: ActiveWhen? = nil
+    /// An internal value the QC never shows (hidden="true" or an empty layout slot). Never listed or written.
+    public var hidden: Bool? = nil
 
     /// Raw QC normalized -> declared display units. Unknown metadata returns nil.
     public func displayValue(_ raw: ParameterValue) -> Double? {
@@ -177,6 +179,19 @@ public final class GenericEditor {
     public func control(blockID: String, parameterID: String) -> ParameterControl? {
         guard let block = snapshot?.blocks.first(where: { $0.id == blockID }) else { return nil }
         return catalog?.models[block.model_id]?.parameters[parameterID]?.control
+    }
+    /// Parameters the QC shows for this block, in index order. Hidden parameters and values the
+    /// block's catalog model doesn't define are left out; unsupported ones stay, read-only.
+    /// A block whose model is missing from the catalog lists every value, read-only.
+    public func visibleParameters(blockID: String) -> [String] {
+        guard let snapshot, let block = snapshot.blocks.first(where: { $0.id == blockID }) else { return [] }
+        let ids = (block.scenes[snapshot.scene]?.parameters.keys).map(Array.init) ?? []
+        let definitions = catalog?.models[block.model_id]?.parameters
+        return ids.filter { id in
+            guard let definitions else { return true }
+            guard let control = definitions[id]?.control else { return false }
+            return control.hidden != true
+        }.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
     public func value(blockID: String, parameterID: String) -> ParameterValue? {
         guard let snapshot else { return nil }
