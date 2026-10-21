@@ -256,10 +256,10 @@ class Component extends DCLogic {
     const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
     // Positions and models from the captured preset (tests/fixtures/qc-editor.json).
     const rows = [
-      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'OG TS808', 'Eltron 30 capture', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
+      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'OG TS808', RO, true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
       [null, null, null, null, null, null, null, null],
-      [null, B('cap', 'Paul\'s MT16 7', 'Eltron 30 capture', true), null, B('cap', 'Paul\'s MT16 6', 'Eltron 30 capture', true), B('cab', '412 CA Trad S', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms')],
-      [null, B('cap', 'Paul\'s MT16 7', 'Eltron 30 capture', true), null, B('cap', 'Bogna Uber 1', 'Eltron 30 capture', true), B('cab', '412 CA Trad S', 'Cab', true), null, null, null]
+      [null, B('cap', 'Paul\'s MT16 7', RO, true), null, B('cap', 'Paul\'s MT16 6', RO, true), B('cab', '412 CA Trad S', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms')],
+      [null, B('cap', 'Paul\'s MT16 7', RO, true), null, B('cap', 'Bogna Uber 1', RO, true), B('cab', '412 CA Trad S', 'Cab', true), null, null, null]
     ];
     const cellBase = { minWidth: '0', boxSizing: 'border-box', padding: '7px 5px 7px 6px', borderRadius: '12px', border: '0', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', font: 'inherit', textAlign: 'left', cursor: 'pointer' };
     const grid = rows.map((row, ri) => ({

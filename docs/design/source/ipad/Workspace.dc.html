@@ -127,7 +127,7 @@
         <span aria-hidden="true" style="{{chipStyle}}">{{b.code}}</span>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: 2px;">
           <h2 style="margin: 0; font-size: 24px; line-height: 1.1; font-weight: 700; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.title}}</h2>
-          <span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.where}}</span>
+          <span style="font-size: 13px; line-height: 1.3; color: {{t.muted}};">{{b.where}}</span>
         </div>
       </div>
 
@@ -408,10 +408,10 @@ class Component extends DCLogic {
     const RO = 'Read-only';
     const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
     const rows = [
-      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'OG TS808', 'Eltron 30 capture', true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
+      [B('wah', 'Bad Horse', RO, true), B('cmp', 'Opto Comp (M)', 'Threshold −34.2 dB · Ratio 4.0'), B('cap', 'OG TS808', RO, true), B('drv', 'Myth Drive', RO, true), B('pit', 'Transpose', 'Semitones −1.0 · Mix 100.0%'), B('pit', 'Poly Octaver', 'Oct 50.0% · Sub 50.0%'), B('utl', 'Adaptive Gate', RO, true), null],
       [null, null, null, null, null, null, null, null],
-      [null, B('cap', 'Paul\'s MT16 7', 'Eltron 30 capture', true), null, B('cap', 'Paul\'s MT16 6', 'Eltron 30 capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2% · Depth 50.0%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms · Trails On')],
-      [null, B('cap', 'Paul\'s MT16 7', 'Eltron 30 capture', true), null, B('cap', 'Bogna Uber 1', 'Eltron 30 capture', true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, null, null]
+      [null, B('cap', 'Paul\'s MT16 7', RO, true), null, B('cap', 'Paul\'s MT16 6', RO, true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, B('mod', 'Dual Chorus', 'Chorus · Mix 73.2% · Depth 50.0%'), B('rev', 'Plate Tight', 'Pre Delay 60.0 ms · Trails On')],
+      [null, B('cap', 'Paul\'s MT16 7', RO, true), null, B('cap', 'Bogna Uber 1', RO, true), B('cab', '412 CA Trad S UKV30 90s (M)', 'Cab', true), null, null, null]
     ];
     const SEL = { comp: [0, 1], capture: [0, 2], chorus: [2, 6] }[key];
     const [selRow, selSlot] = SEL;
@@ -470,17 +470,17 @@ class Component extends DCLogic {
     const lockReason = { taper: 'Scale unknown', meter: 'Meter', dep: 'Depends on Sync' };
     const P = (label, value, unit, pos, extra = {}) => ({ label, value, unit, pos, ...extra });
     const blocks = {
-      comp: { code: 'CMP', title: 'Opto Comp (M)', where: 'Compressor · Row 1, slot 2 · Scene F', hero: 0, params: [
+      comp: { code: 'CMP', title: 'Opto Comp (M)', where: 'Compressor · Row 1, slot 2 · Scene\u00a0F', hero: 0, params: [
         P('Threshold', '−34.2', 'dB', 0.359, { min: '−60', max: '+12', range: '−60.0 to +12.0 dB' }),
         P('Ratio', '4.0', '', 0.268), P('Attack', '15.0', 'ms', 0.178), P('Release', '400.0', 'ms', 0.49),
         P('Makeup', '+8.0', 'dB', 0.583), P('Mix', '100.0', '%', 1),
         P('Gain Reduction', '—', '', 0, { locked: 'meter' })
       ] },
-      capture: { code: 'CAP', title: 'OG TS808', where: 'Eltron 30 capture · Row 1, slot 3 · Scene F', hero: 0, params: [
+      capture: { code: 'CAP', title: 'OG TS808', where: 'Neural Capture · Eltron 30 · Row 1, slot 3 · Scene\u00a0F', hero: 0, params: [
         P('Gain', '50', '%', 0.5, { locked: 'taper' }), P('Bass', '—', '', 0.5, { locked: 'taper' }),
         P('Mid', '—', '', 0.5, { locked: 'taper' }), P('Treble', '—', '', 0.5, { locked: 'taper' }), P('Volume', '—', '', 0.5, { locked: 'taper' })
       ] },
-      chorus: { code: 'MOD', title: 'Dual Chorus', where: 'Modulation · Row 3, slot 7 · Scene F', hero: 1, params: [
+      chorus: { code: 'MOD', title: 'Dual Chorus', where: 'Modulation · Row 3, slot 7 · Scene\u00a0F', hero: 1, params: [
         P('Mix', '73.2', '%', 0.732, { min: '0', max: '100' }), P('Mode', 'Chorus', '', 0, { options: ['Chorus', 'Vibe'] }), P('Rate', '—', '', 0.418, { locked: 'dep' }),
         P('Depth', '50.0', '%', 0.5), P('Width', '70.0', '%', 0.7), P('Tone', '49.5', '', 0.495),
         P('Sync', 'Off', '', 0, { options: ['Off', 'On'] }), P('Sync Note', '—', '', 0.46, { locked: 'dep' })

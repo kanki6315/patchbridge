@@ -2,7 +2,7 @@
 
 Design boards for the first iPhone build, its iPad layout and its Mac bridge, exported from the design canvas so they can be read without it. The visual system and its rules live in [DESIGN.md](../../DESIGN.md); product intent is in [PRODUCT.md](../../PRODUCT.md).
 
-All screens use the captured preset in `tests/fixtures/qc-editor.json` (scene F) and the scene names and colors from `hardware-results/2026-10-20/initial-preset.json`. For the boards it is renamed **Dirty Riffage**, its row 2 Volume utility is left out, and capture blocks are titled by their capture name (from `file_name`). iPhone screens are drawn at iPhone 17 Pro size (402 × 874 pt). All boards use the default **Stage** theme unless marked **Daylight**. iPad screens are drawn at iPad 11" size and are [further down](#ipad). The iPhone Duo boards use the Duo's own screen sizes.
+All screens use the captured preset in `tests/fixtures/qc-editor.json` (scene F) and the scene names and colors from `hardware-results/2026-10-20/initial-preset.json`. For the boards it is renamed **Dirty Riffage** and its row 2 Volume utility is left out. Capture blocks go by their capture name, as in the app. iPhone screens are drawn at iPhone 17 Pro size (402 × 874 pt). All boards use the default **Stage** theme unless marked **Daylight**. iPad screens are drawn at iPad 11" size and are [further down](#ipad). The iPhone Duo boards use the Duo's own screen sizes.
 
 ## What's here
 
