@@ -163,30 +163,8 @@ struct BridgeWindow: View {
             }.frame(maxWidth: .infinity, alignment: .leading)
             }
             if settingUp { setupActions } else {
-            actions
             Divider()
-            HStack {
-                Button("Export report…", action: exportReport)
-                Spacer()
-                if active {
-                    Button("Stop bridge") { model.stop() }.disabled(model.busy)
-                    if model.phase == .connected && model.isSimulation {
-                        Menu {
-                            Button("Simulate gain edit") { model.simulateEdit() }
-                            if model.presentation.connected.count < 2 {
-                                Button("Simulate another device") { model.requestSecondDevice() }
-                            } else {
-                                Button("Simulate edit from other device") { model.simulateOtherDeviceEdit() }
-                            }
-                            Button("Simulate rejected edit") { model.simulateEdit(rejected: true) }
-                            Button("Check connection") { model.refresh() }
-                            Button("Simulate USB interruption") { model.simulateUSBRemoval() }
-                            Button("Simulate helper failure") { model.simulateFailure() }
-                        } label: { Image(systemName: "ellipsis.circle").accessibilityLabel("Simulation actions") }
-                        .menuStyle(.borderlessButton).fixedSize().disabled(model.busy)
-                    }
-                }
-            }.font(.callout)
+            footer
             if !menuActions.isEmpty {
                 HStack {
                     ForEach(menuActions.indices, id: \.self) { index in
@@ -374,20 +352,55 @@ struct BridgeWindow: View {
             }
         }.controlSize(.large)
     }
-    @ViewBuilder private var actions: some View {
+    /// Export report on the left, bridge actions on the right, as one row of same-size buttons.
+    /// The menu bar popover fits the row by showing Export report as an icon.
+    private var footer: some View {
         HStack {
+            if compact {
+                Button(action: exportReport) { Image(systemName: "square.and.arrow.up") }
+                    .help("Export report…").accessibilityLabel("Export report…")
+            } else {
+                Button("Export report…", action: exportReport)
+            }
+            Spacer()
+            bridgeActions
+            primaryActions
+        }.controlSize(.large)
+    }
+    @ViewBuilder private var primaryActions: some View {
+        Group {
             if model.phase == .awaitingApproval || model.phase == .approving {
                 Button(model.phase == .approving ? "Disconnect" : "Deny") { model.disconnectPhone() }
-                Spacer()
                 Button(model.phase == .approving ? "Approved" : "Approve") { model.approve(trust: trustPhone) }.buttonStyle(.borderedProminent).disabled(model.phase == .approving)
             } else if model.phase == .running && model.isSimulation {
-                Spacer()
-                Button("Simulate phone connection") { model.requestPhone() }.buttonStyle(.borderedProminent)
+                Button("Simulate phone") { model.requestPhone() }.buttonStyle(.borderedProminent)
             } else if model.phase == .stopped || model.phase == .failed {
-                Spacer()
                 Button(model.phase == .failed ? "Restart bridge" : "Start bridge") { model.start() }.buttonStyle(.borderedProminent)
             }
-        }.controlSize(.large).disabled(model.busy)
+        }.disabled(model.busy)
+    }
+    @ViewBuilder private var bridgeActions: some View {
+        if active {
+            // Approval shows only Deny and Approve, so the row fits.
+            if ![.awaitingApproval, .approving].contains(model.phase) {
+                Button("Stop bridge") { model.stop() }.disabled(model.busy)
+            }
+            if model.phase == .connected && model.isSimulation {
+                Menu {
+                    Button("Simulate gain edit") { model.simulateEdit() }
+                    if model.presentation.connected.count < 2 {
+                        Button("Simulate another device") { model.requestSecondDevice() }
+                    } else {
+                        Button("Simulate edit from other device") { model.simulateOtherDeviceEdit() }
+                    }
+                    Button("Simulate rejected edit") { model.simulateEdit(rejected: true) }
+                    Button("Check connection") { model.refresh() }
+                    Button("Simulate USB interruption") { model.simulateUSBRemoval() }
+                    Button("Simulate helper failure") { model.simulateFailure() }
+                } label: { Image(systemName: "ellipsis.circle").accessibilityLabel("Simulation actions") }
+                .menuStyle(.borderlessButton).fixedSize().disabled(model.busy)
+            }
+        }
     }
 }
 

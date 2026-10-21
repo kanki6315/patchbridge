@@ -56,7 +56,7 @@ the one USB connection. A fifth is told the Mac is already connected to four dev
 Enable **Use simulation** while stopped. This mode never opens USB or Bluetooth.
 
 1. Choose **Start bridge** to launch the bundled simulation helper.
-2. Choose **Simulate phone connection** to create a local approval request.
+2. Choose **Simulate phone** to create a local approval request.
 3. Choose **Deny** to return to the ready state, or **Approve connection** to
    connect and confirm a snapshot through the helper.
 4. Use **Check connection** to request another confirmed snapshot, or
