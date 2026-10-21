@@ -14,6 +14,7 @@ targets:
     platform: macOS
     sources:
       - main.swift
+      - ScreenshotPreview.swift
       - ../swift/Sources/PatchbridgeCore
       - path: ../ios/Patchbridge/AppIcon.icon
         buildPhase: resources
