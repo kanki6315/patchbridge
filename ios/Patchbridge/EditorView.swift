@@ -40,8 +40,8 @@ struct EditorView: View {
         let showLine = model.ready && model.snapshot != nil && tuner.live && !pad && duoWindow == nil
         VStack(spacing: 0) {
         if showLine {
-            TunerLine(readout: tuner.readout, theme: theme, topInset: outer.safeAreaInsets.top) { tuner.setOpen(true) }
-                .zIndex(1).transition(.move(edge: .top).combined(with: .opacity))
+            TunerLine(readout: tuner.readout, theme: theme) { tuner.setOpen(true) }
+                .zIndex(1).transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
         }
         NavigationStack {
         GeometryReader { geometry in

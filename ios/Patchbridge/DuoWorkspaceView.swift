@@ -133,7 +133,7 @@ struct DuoWorkspaceView: View {
     /// The folded screens are phone-sized, so they use the iPhone's tuner line.
     @ViewBuilder private var outerLine: some View {
         if tuner.live {
-            TunerLine(readout: tuner.readout, theme: theme, topInset: 0) { tuner.setOpen(true) }
+            TunerLine(readout: tuner.readout, theme: theme) { tuner.setOpen(true) }
                 .transition(.move(edge: .top).combined(with: .opacity))
         }
     }
