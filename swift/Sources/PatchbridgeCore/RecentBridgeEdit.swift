@@ -5,7 +5,7 @@ import Foundation
 struct RecentBridgeEdit: Identifiable {
     enum Outcome: String { case confirmed = "Confirmed", adjusted = "Adjusted by device", rejected = "Not applied", unknown = "Outcome unknown" }
     let id = UUID()
-    let date = Date()
+    let date: Date
     let title: String
     let context: String
     let value: String?
@@ -14,7 +14,8 @@ struct RecentBridgeEdit: Identifiable {
     /// The device that sent the edit, when the bridge knows it.
     let device: String?
 
-    init(request: [String: Any], response: [String: Any]?, snapshot: [String: Any]?, catalog: [String: Any]?, device: String? = nil) {
+    init(request: [String: Any], response: [String: Any]?, snapshot: [String: Any]?, catalog: [String: Any]?, device: String? = nil, date: Date = Date()) {
+        self.date = date
         self.device = device
         let operation = request["operation"] as? String ?? ""
         let payload = request["payload"] as? [String: Any] ?? [:]

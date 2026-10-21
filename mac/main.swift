@@ -592,6 +592,17 @@ func verify(_ helper: HelperClient) throws {
     else { throw BridgeFailure.protocolError }
 }
 
+#if DEBUG
+if let recordingFixture = Bundle.main.url(forResource: "recording-fixture", withExtension: "json") {
+    do { try MacScreenshotPreview.render(fixture: recordingFixture.path, output: NSTemporaryDirectory() + "patchbridge-recording-fixture", replay: true); exit(0) }
+    catch { fputs("Recording fixture failed: \(error)\n", stderr); exit(1) }
+}
+if CommandLine.arguments.count == 4 && ["--render-screenshots", "--replay-screenshots"].contains(CommandLine.arguments[1]) {
+    do { try MacScreenshotPreview.render(fixture: CommandLine.arguments[2], output: CommandLine.arguments[3], replay: CommandLine.arguments[1] == "--replay-screenshots"); exit(0) }
+    catch { fputs("Screenshot rendering failed: \(error)\n", stderr); exit(1) }
+}
+#endif
+
 if CommandLine.arguments.count == 3 && CommandLine.arguments[1] == "--export-report" {
     do {
         do {

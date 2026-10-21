@@ -48,3 +48,6 @@ Patchbridge-Troubleshooting*.json
 
 # Generated from mac/project.yml for release archives
 /mac/PatchbridgeMac.xcodeproj/
+
+# Generated marketing screenshots and preview videos
+/output/
