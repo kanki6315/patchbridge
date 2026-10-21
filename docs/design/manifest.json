@@ -1708,5 +1708,155 @@
     "h": 890,
     "png": "tuner/duo-tn-crease-half.png",
     "html": "html/tuner/duo-tn-crease-half.html"
+  },
+  {
+    "key": "poc/pb-entry.dc.html",
+    "slug": "poc-pb-entry",
+    "page": "Preset browser",
+    "title": "Entry · tap the preset name",
+    "w": 402,
+    "h": 874,
+    "png": "presets/poc-pb-entry.png",
+    "html": "html/presets/poc-pb-entry.html"
+  },
+  {
+    "key": "poc/pb-loading.dc.html",
+    "slug": "poc-pb-loading",
+    "page": "Preset browser",
+    "title": "First listing · about 12 s",
+    "w": 402,
+    "h": 874,
+    "png": "presets/poc-pb-loading.png",
+    "html": "html/presets/poc-pb-loading.html"
+  },
+  {
+    "key": "poc/pb-cached.dc.html",
+    "slug": "poc-pb-cached",
+    "page": "Preset browser",
+    "title": "Cached list · Refresh",
+    "w": 402,
+    "h": 874,
+    "png": "presets/poc-pb-cached.png",
+    "html": "html/presets/poc-pb-cached.html"
+  },
+  {
+    "key": "poc/pb-refreshing.dc.html",
+    "slug": "poc-pb-refreshing",
+    "page": "Preset browser",
+    "title": "Refreshing · list stays usable",
+    "w": 402,
+    "h": 874,
+    "png": "presets/poc-pb-refreshing.png",
+    "html": "html/presets/poc-pb-refreshing.html"
+  },
+  {
+    "key": "poc/pb-confirm.dc.html",
+    "slug": "poc-pb-confirm",
+    "page": "Preset browser",
+    "title": "Unsaved edits · what will be lost",
+    "w": 402,
+    "h": 874,
+    "png": "presets/poc-pb-confirm.png",
+    "html": "html/presets/poc-pb-confirm.html"
+  },
+  {
+    "key": "poc/pb-switching.dc.html",
+    "slug": "poc-pb-switching",
+    "page": "Preset browser",
+    "title": "Saved, now loading 15 on the QC",
+    "w": 402,
+    "h": 874,
+    "png": "presets/poc-pb-switching.png",
+    "html": "html/presets/poc-pb-switching.html"
+  },
+  {
+    "key": "poc/pb-reloading.dc.html",
+    "slug": "poc-pb-reloading",
+    "page": "Preset browser",
+    "title": "Overview reloading after the switch",
+    "w": 402,
+    "h": 874,
+    "png": "presets/poc-pb-reloading.png",
+    "html": "html/presets/poc-pb-reloading.html"
+  },
+  {
+    "key": "ipad/ipb-loading.dc.html",
+    "slug": "ipad-ipb-loading",
+    "page": "Preset browser",
+    "title": "First listing · about 12 s",
+    "w": 1180,
+    "h": 820,
+    "png": "presets/ipad-ipb-loading.png",
+    "html": "html/presets/ipad-ipb-loading.html"
+  },
+  {
+    "key": "ipad/ipb-cached.dc.html",
+    "slug": "ipad-ipb-cached",
+    "page": "Preset browser",
+    "title": "Cached list · Refresh",
+    "w": 1180,
+    "h": 820,
+    "png": "presets/ipad-ipb-cached.png",
+    "html": "html/presets/ipad-ipb-cached.html"
+  },
+  {
+    "key": "ipad/ipb-confirm.dc.html",
+    "slug": "ipad-ipb-confirm",
+    "page": "Preset browser",
+    "title": "Unsaved edits · what will be lost",
+    "w": 1180,
+    "h": 820,
+    "png": "presets/ipad-ipb-confirm.png",
+    "html": "html/presets/ipad-ipb-confirm.html"
+  },
+  {
+    "key": "ipad/ipb-reloading.dc.html",
+    "slug": "ipad-ipb-reloading",
+    "page": "Preset browser",
+    "title": "Overview reloading after the switch",
+    "w": 1180,
+    "h": 820,
+    "png": "presets/ipad-ipb-reloading.png",
+    "html": "html/presets/ipad-ipb-reloading.html"
+  },
+  {
+    "key": "duo/dpb-loading.dc.html",
+    "slug": "duo-dpb-loading",
+    "page": "Preset browser",
+    "title": "First listing · about 12 s",
+    "w": 626,
+    "h": 890,
+    "png": "presets/duo-dpb-loading.png",
+    "html": "html/presets/duo-dpb-loading.html"
+  },
+  {
+    "key": "duo/dpb-cached.dc.html",
+    "slug": "duo-dpb-cached",
+    "page": "Preset browser",
+    "title": "Cached list · Refresh",
+    "w": 626,
+    "h": 890,
+    "png": "presets/duo-dpb-cached.png",
+    "html": "html/presets/duo-dpb-cached.html"
+  },
+  {
+    "key": "duo/dpb-confirm.dc.html",
+    "slug": "duo-dpb-confirm",
+    "page": "Preset browser",
+    "title": "Unsaved edits · what will be lost",
+    "w": 626,
+    "h": 890,
+    "png": "presets/duo-dpb-confirm.png",
+    "html": "html/presets/duo-dpb-confirm.html"
+  },
+  {
+    "key": "duo/dpb-reloading.dc.html",
+    "slug": "duo-dpb-reloading",
+    "page": "Preset browser",
+    "title": "View reloads, deck shows the QC’s new slot",
+    "w": 626,
+    "h": 890,
+    "png": "presets/duo-dpb-reloading.png",
+    "html": "html/presets/duo-dpb-reloading.html"
   }
 ]

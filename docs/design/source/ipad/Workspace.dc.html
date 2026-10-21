@@ -15,7 +15,12 @@
 
   <header style="height: 52px; flex: none; display: flex; align-items: center; gap: 12px;">
     <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
-      <h1 style="margin: 0; font-size: 28px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dirty Riffage</h1>
+      <sc-if value="{{pm.on}}" hint-placeholder-val="{{false}}">
+        <h1 style="margin: 0; font-size: 28px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap;"><button type="button" aria-haspopup="dialog" aria-expanded="{{pm.expanded}}" aria-label="Dirty Riffage, My Presets 16. Browse presets" style="{{pm.btnStyle}}"><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dirty Riffage</span><span aria-hidden="true" style="{{pm.chevStyle}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></span></button></h1>
+      </sc-if>
+      <sc-if value="{{pm.off}}" hint-placeholder-val="{{true}}">
+        <h1 style="margin: 0; font-size: 28px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dirty Riffage</h1>
+      </sc-if>
       <span style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: {{t.muted}};">
         My Presets · 16
         <span style="{{savedStyle}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>{{savedText}}</span>
@@ -391,8 +396,15 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"tuner":{"editor":"enum","options":["none","button","popover","band","panel"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"orientation":{"editor":"enum","options":["landscape","portrait"],"default":"landscape","section":"Screen"},"blockKey":{"editor":"enum","options":["comp","capture","chorus"],"default":"comp","section":"Screen"},"heroIndex":{"editor":"enum","options":["auto","0","1"],"default":"auto","section":"Screen"},"state":{"editor":"enum","options":["idle","fine","pending","confirmed","adjusted","rejected","typing","typingInvalid","device"],"default":"idle","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details","appearance"],"default":"none","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"scene":{"editor":"enum","options":["idle","pending","confirmed","rejected","readonly"],"default":"idle","section":"Scenes"},"dirty":{"editor":"boolean","default":true,"section":"Scenes"},"$preview":{"width":1180,"height":820}}'>
+<script type="text/x-dc" data-dc-script data-props='{"presetMenu":{"editor":"boolean","default":false,"section":"Presets"},"presetMenuOpen":{"editor":"boolean","default":false,"section":"Presets"},"tuner":{"editor":"enum","options":["none","button","popover","band","panel"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"orientation":{"editor":"enum","options":["landscape","portrait"],"default":"landscape","section":"Screen"},"blockKey":{"editor":"enum","options":["comp","capture","chorus"],"default":"comp","section":"Screen"},"heroIndex":{"editor":"enum","options":["auto","0","1"],"default":"auto","section":"Screen"},"state":{"editor":"enum","options":["idle","fine","pending","confirmed","adjusted","rejected","typing","typingInvalid","device"],"default":"idle","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details","appearance"],"default":"none","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"scene":{"editor":"enum","options":["idle","pending","confirmed","rejected","readonly"],"default":"idle","section":"Scenes"},"dirty":{"editor":"boolean","default":true,"section":"Scenes"},"$preview":{"width":1180,"height":820}}'>
 class Component extends DCLogic {
+  // Preset browser entry (Presets page). Off by default, so boards elsewhere are unchanged.
+  presetMenu(t) {
+    const on = !!this.props.presetMenu, open = !!this.props.presetMenuOpen;
+    return { on, off: !on, expanded: open ? 'true' : 'false',
+      btnStyle: { maxWidth: 'calc(100% + 16px)', margin: '-4px -8px', padding: '4px 8px', boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', gap: '8px', border: '0', borderRadius: '12px', background: open ? t.fill : 'transparent', color: 'inherit', font: 'inherit', letterSpacing: 'inherit', textAlign: 'left', cursor: 'pointer' },
+      chevStyle: { width: '26px', height: '26px', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: open ? t.signal : t.fill, color: open ? t.signalInk : t.ink } };
+  }
   renderVals() {
     const portrait = (this.props.orientation ?? 'landscape') === 'portrait';
     const key = this.props.blockKey ?? 'comp';
@@ -693,7 +705,7 @@ class Component extends DCLogic {
     tn.popStyle = { ...popBase, zIndex: 40, top: '94px', right: (tunerCenter - 200) + 'px', width: '400px', padding: '18px 16px 16px', gap: '14px' };
     tn.popArrow = arrow('right', (200 - 9) + 'px');
     return {
-      t, tn, demo, grid, lane, scenes, sceneAria, sc, b, hero, g, st, tiles, keys, v, typing, fine, isOptions, isGauge: !isOptions, arcColor, saving, saved, toast, detailGroups, legend, themeCards,
+      t, tn, demo, grid, lane, scenes, sceneAria, sc, b, hero, pm: this.presetMenu(t), g, st, tiles, keys, v, typing, fine, isOptions, isGauge: !isOptions, arcColor, saving, saved, toast, detailGroups, legend, themeCards,
       showSteppers: !locked && !isOptions, heroZoom,
       typingAttr: typing ? 'true' : 'false',
       pop: { save: overlay === 'saveSheet', details: overlay === 'details', appearance: overlay === 'appearance' },

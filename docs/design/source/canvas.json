@@ -23,6 +23,10 @@
       "name": "Scene switching"
     },
     {
+      "id": "presets",
+      "name": "Preset browser"
+    },
+    {
       "id": "ipad",
       "name": "iPad PoC"
     },
@@ -1539,6 +1543,150 @@
       "h": 890,
       "title": "Read-only connection",
       "page": "switching"
+    },
+    "poc/pb-entry.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Entry · tap the preset name",
+      "page": "presets"
+    },
+    "poc/pb-loading.dc.html": {
+      "x": 482,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "First listing · about 12 s",
+      "page": "presets"
+    },
+    "poc/pb-cached.dc.html": {
+      "x": 964,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Cached list · Refresh",
+      "page": "presets"
+    },
+    "poc/pb-refreshing.dc.html": {
+      "x": 1446,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Refreshing · list stays usable",
+      "page": "presets"
+    },
+    "poc/pb-confirm.dc.html": {
+      "x": 1928,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Unsaved edits · what will be lost",
+      "page": "presets"
+    },
+    "poc/pb-switching.dc.html": {
+      "x": 2410,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Saved, now loading 15 on the QC",
+      "page": "presets"
+    },
+    "poc/pb-reloading.dc.html": {
+      "x": 2892,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Overview reloading after the switch",
+      "page": "presets"
+    },
+    "ipad/ipb-loading.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "First listing · about 12 s",
+      "page": "presets"
+    },
+    "ipad/ipb-cached.dc.html": {
+      "x": 1260,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Cached list · Refresh",
+      "page": "presets"
+    },
+    "ipad/ipb-confirm.dc.html": {
+      "x": 2520,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Unsaved edits · what will be lost",
+      "page": "presets"
+    },
+    "ipad/ipb-reloading.dc.html": {
+      "x": 3780,
+      "y": 1320,
+      "w": 1180,
+      "h": 820,
+      "title": "Overview reloading after the switch",
+      "page": "presets"
+    },
+    "duo/dpb-loading.dc.html": {
+      "x": 0,
+      "y": 2580,
+      "w": 626,
+      "h": 890,
+      "title": "First listing · about 12 s",
+      "page": "presets"
+    },
+    "duo/dpb-cached.dc.html": {
+      "x": 706,
+      "y": 2580,
+      "w": 626,
+      "h": 890,
+      "title": "Cached list · Refresh",
+      "page": "presets"
+    },
+    "duo/dpb-confirm.dc.html": {
+      "x": 1412,
+      "y": 2580,
+      "w": 626,
+      "h": 890,
+      "title": "Unsaved edits · what will be lost",
+      "page": "presets"
+    },
+    "duo/dpb-reloading.dc.html": {
+      "x": 2118,
+      "y": 2580,
+      "w": 626,
+      "h": 890,
+      "title": "View reloads, deck shows the QC’s new slot",
+      "page": "presets"
+    },
+    "poc/PresetBrowser.dc.html": {
+      "x": 0,
+      "y": 4524,
+      "w": 402,
+      "h": 874,
+      "title": "Preset browser, iPhone (Tweaks: state)",
+      "page": "components"
+    },
+    "ipad/PadPresets.dc.html": {
+      "x": 482,
+      "y": 4524,
+      "w": 1180,
+      "h": 820,
+      "title": "Preset browser, iPad (Tweaks: state)",
+      "page": "components"
+    },
+    "duo/DuoPresets.dc.html": {
+      "x": 1742,
+      "y": 4524,
+      "w": 626,
+      "h": 890,
+      "title": "Preset browser, Duo inner (Tweaks: state)",
+      "page": "components"
     }
   },
   "order": [
@@ -1723,7 +1871,25 @@
     "duo/sc-pending.dc.html",
     "duo/sc-confirmed.dc.html",
     "duo/sc-rejected.dc.html",
-    "duo/sc-readonly.dc.html"
+    "duo/sc-readonly.dc.html",
+    "poc/pb-entry.dc.html",
+    "poc/pb-loading.dc.html",
+    "poc/pb-cached.dc.html",
+    "poc/pb-refreshing.dc.html",
+    "poc/pb-confirm.dc.html",
+    "poc/pb-switching.dc.html",
+    "poc/pb-reloading.dc.html",
+    "ipad/ipb-loading.dc.html",
+    "ipad/ipb-cached.dc.html",
+    "ipad/ipb-confirm.dc.html",
+    "ipad/ipb-reloading.dc.html",
+    "duo/dpb-loading.dc.html",
+    "duo/dpb-cached.dc.html",
+    "duo/dpb-confirm.dc.html",
+    "duo/dpb-reloading.dc.html",
+    "poc/PresetBrowser.dc.html",
+    "ipad/PadPresets.dc.html",
+    "duo/DuoPresets.dc.html"
   ],
   "notes": {
     "pocConnect": {
@@ -1949,6 +2115,38 @@
       "maxW": 3450,
       "page": "switching",
       "text": "iPhone Duo, unfolded: the named scene row"
+    },
+    "presetsPhone": {
+      "x": 0,
+      "y": -280,
+      "kind": "title1",
+      "maxW": 3296,
+      "page": "presets",
+      "text": "iPhone: the preset name opens My Presets; a switch never drops unsaved edits silently"
+    },
+    "presetsPad": {
+      "x": 0,
+      "y": 1040,
+      "kind": "title1",
+      "maxW": 4960,
+      "page": "presets",
+      "text": "iPad: a popover from the name, with the sources down the side"
+    },
+    "presetsDuo": {
+      "x": 0,
+      "y": 2300,
+      "kind": "title1",
+      "maxW": 2744,
+      "page": "presets",
+      "text": "iPhone Duo: the browser lives in the deck, below the fold"
+    },
+    "presetsRules": {
+      "x": 3500,
+      "y": 2580,
+      "w": 460,
+      "page": "presets",
+      "color": "teal",
+      "text": "How the preset browser works\n\n• Entry: the preset name in the header is a button with a chevron. It opens My Presets scrolled to the loaded slot.\n• My Presets is the QC's fixed 256-slot table. Every used slot shows its number and name. Empty slots between presets are shown as “Empty” and can't be tapped; the trailing run collapses into one row (“Slots 19–256 are empty”).\n• The loaded slot is marked with a check, “Loaded” and a tint, plus “unsaved edits” when the preset has them. It stays marked until the QC confirms a switch.\n• First listing: the bridge's directory read takes about 12 s and arrives in one piece, so there is no per-row progress. The loaded slot shows at once; the rest is a skeleton under an indeterminate bar. Closing the browser doesn't stop the read.\n• After that the list is cached and says when it was read (“Listed at 9:41 PM”). Refresh re-reads it in place; the old list stays usable meanwhile.\n• Tapping a preset loads it on the QC. With unsaved edits, the app first asks, listing each edit with its saved value (QC tag for edits made on the unit): Save and switch (saves to the current slot, then loads), Switch anyway (in Danger), Cancel.\n• While loading, the target row gets the dashed pending outline. Then the overview redraws as a skeleton under the new name and slot until the QC reports the preset.\n• Factory Presets, Downloads and Plugin presets are out of scope: their headers are shown, disabled, with “Not yet”."
     }
   },
   "designSystems": []

@@ -37,7 +37,12 @@
         </div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 4px;">
-        <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Dirty Riffage</h1>
+        <sc-if value="{{pm.on}}" hint-placeholder-val="{{false}}">
+          <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;"><button type="button" aria-haspopup="dialog" aria-expanded="{{pm.expanded}}" aria-label="Dirty Riffage, My Presets 16. Browse presets" style="{{pm.btnStyle}}"><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dirty Riffage</span><span aria-hidden="true" style="{{pm.chevStyle}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></span></button></h1>
+        </sc-if>
+        <sc-if value="{{pm.off}}" hint-placeholder-val="{{true}}">
+          <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Dirty Riffage</h1>
+        </sc-if>
         <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: {{t.muted}};">
           My Presets · 16
           <span style="{{savedStyle}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>{{savedText}}</span>
@@ -228,8 +233,15 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"tuner":{"editor":"enum","options":["none","button","island","strip","takeover","pill","sheet"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"selectedRow":{"editor":"enum","options":["1","2","3","4"],"default":"1","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details"],"default":"none","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"scene":{"editor":"enum","options":["idle","pending","confirmed","rejected","readonly"],"default":"idle","section":"Scenes"},"dirty":{"editor":"boolean","default":true,"section":"Scenes"},"$preview":{"width":402,"height":874}}'>
+<script type="text/x-dc" data-dc-script data-props='{"presetMenu":{"editor":"boolean","default":false,"section":"Presets"},"presetMenuOpen":{"editor":"boolean","default":false,"section":"Presets"},"tuner":{"editor":"enum","options":["none","button","island","strip","takeover","pill","sheet"],"default":"none","section":"Tuner"},"reading":{"editor":"enum","options":["sharp","tuned","flat","silent"],"default":"sharp","section":"Tuner"},"muted":{"editor":"boolean","default":false,"section":"Tuner"},"live":{"editor":"boolean","default":false,"section":"Tuner"},"selectedRow":{"editor":"enum","options":["1","2","3","4"],"default":"1","section":"Screen"},"overlay":{"editor":"enum","options":["none","saveSheet","saving","saved","deviceChange","details"],"default":"none","section":"Screen"},"theme":{"editor":"enum","options":["stage","daylight"],"default":"stage","section":"Screen"},"demo":{"editor":"boolean","default":false,"section":"Screen"},"scene":{"editor":"enum","options":["idle","pending","confirmed","rejected","readonly"],"default":"idle","section":"Scenes"},"dirty":{"editor":"boolean","default":true,"section":"Scenes"},"$preview":{"width":402,"height":874}}'>
 class Component extends DCLogic {
+  // Preset browser entry (Presets page). Off by default, so boards elsewhere are unchanged.
+  presetMenu(t) {
+    const on = !!this.props.presetMenu, open = !!this.props.presetMenuOpen;
+    return { on, off: !on, expanded: open ? 'true' : 'false',
+      btnStyle: { maxWidth: 'calc(100% + 16px)', margin: '-4px -8px', padding: '4px 8px', boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', gap: '8px', border: '0', borderRadius: '12px', background: open ? t.fill : 'transparent', color: 'inherit', font: 'inherit', letterSpacing: 'inherit', textAlign: 'left', cursor: 'pointer' },
+      chevStyle: { width: '26px', height: '26px', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: open ? t.signal : t.fill, color: open ? t.signalInk : t.ink } };
+  }
   renderVals() {
     const sel = Number(this.props.selectedRow ?? '1') - 1;
     const overlay = this.props.overlay ?? 'none';
@@ -408,7 +420,7 @@ class Component extends DCLogic {
     if (tn.creaseBar) tn.creaseBar = { ...tn.creaseBar, background: inTune ? signalA(0.4) : tn.creaseBar.background };
     tn.buttonStyle = tunerButtonStyle(['island', 'strip', 'takeover'].includes(tunerMode) || (tunerMode === 'sheet' && tLive));
     return {
-      t, tn, demo, grid, lane, scenes, sc, saving, saved, toast, detailGroups, sceneAria,
+      t, tn, demo, grid, lane, scenes, sc, saving, saved, toast, detailGroups, sceneAria, pm: this.presetMenu(t),
       active: { title: titleOf(ACTIVE), color: QC_SCENES[ACTIVE][1] },
       sheet: { save: overlay === 'saveSheet', details: overlay === 'details' },
       laneTitle: 'Row ' + (sel + 1),
