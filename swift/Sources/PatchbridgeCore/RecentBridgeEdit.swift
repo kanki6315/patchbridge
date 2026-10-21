@@ -26,7 +26,11 @@ struct RecentBridgeEdit: Identifiable {
         let definition = (model?["parameters"] as? [String: [String: Any]])?[parameterID ?? ""]
         let control = definition?["control"] as? [String: Any]
         let parameter = DeviceIdentity.name(control?["name"] as? String, fallback: "Parameter")
-        let blockName = DeviceIdentity.name(model?["name"] as? String, fallback: "Block")
+        // A Neural Capture goes by its capture name, read for display from its hidden file_name.
+        let fileName = (model?["parameters"] as? [String: [String: Any]])?.first { ($0.value["control"] as? [String: Any])?["name"] as? String == "file_name" }?.key
+        let scenes = block?["scenes"] as? [String: [String: Any]]
+        let raw = ((scenes?[snapshot?["scene"] as? String ?? ""]?["parameters"] as? [String: Any])?[fileName ?? ""]) as? String
+        let blockName = raw.flatMap(GenericEditor.captureName(fileName:)) ?? DeviceIdentity.name(model?["name"] as? String, fallback: "Block")
         title = operation == "save" ? "Save preset" : "\(parameter.capitalized) · \(blockName)"
         context = "\(DeviceIdentity.name(snapshot?["name"] as? String, fallback: "Preset")) · Scene \(snapshot?["scene"] as? String ?? "—")"
         let state = (response?["result"] as? [String: Any])?["state"] as? [String: Any]
