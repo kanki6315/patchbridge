@@ -17,7 +17,10 @@ import sysconfig
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / 'dist' / 'Patchbridge.app'
 QC_COMMIT = 'f634ecd3dcf426090b90bc4cc176e4b500494b9e'
-QC_SOURCE = Path('/private/tmp/patchbridge-qc-mcp')
+QC_SOURCE = ROOT / 'vendor' / 'qc-mcp'
+# Generated locally from Cortex Control and kept out of Git (vendor/qc-mcp/VENDORED.md).
+# The digest is upstream's file at QC_COMMIT, so a different schema fails the build.
+QC_DESCRIPTORS = {'qc_descriptors-4.1.pb': 'eed223846169c1beb7a62b76c288d04d541fd1d5fd1853d0a2d8f68660f530c7'}
 PROTOBUF_VERSION = '7.36.2'
 # Built by tools/build_runtime.py with debug information and matching dSYMs.
 RUNTIME = ROOT / 'build/runtime'
@@ -27,21 +30,20 @@ PROTOBUF_EXTENSION = 'google/_upb/_message.cpython-314-darwin.so'
 
 
 def bundle_usb(resources):
-    # Read Git objects, not mutable working files. Missing local inputs fail without fetching.
-    if output('git', '-C', QC_SOURCE, 'rev-parse', QC_COMMIT).strip() != QC_COMMIT:
-        raise SystemExit('Pinned qc-mcp commit is unavailable locally.')
+    # The vendored qc-mcp at QC_COMMIT with Patchbridge's local changes; nothing is fetched.
+    package = QC_SOURCE / 'src' / 'qc_mcp'
     destination = resources / 'Helper' / 'qc_mcp'
-    destination.mkdir()
-    names = ['__init__.py', 'transport.py', 'protocol.py', 'backend.py', 'iohid.py', 'preset.py', 'directory.py']
-    paths = ['src/qc_mcp/' + name for name in names]
-    paths += output('git', '-C', QC_SOURCE, 'ls-tree', '-r', '--name-only', QC_COMMIT,
-                    'src/qc_mcp/descriptors').splitlines()
-    for path in paths:
-        target = resources / 'Helper' / path.removeprefix('src/')
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(subprocess.check_output(['git', '-C', str(QC_SOURCE), 'show', QC_COMMIT + ':' + path]))
-    (resources / 'Licenses/qc-mcp-LICENSE.txt').write_bytes(
-        subprocess.check_output(['git', '-C', str(QC_SOURCE), 'show', QC_COMMIT + ':LICENSE']))
+    (destination / 'descriptors').mkdir(parents=True)
+    for name in ['__init__.py', 'transport.py', 'protocol.py', 'backend.py', 'iohid.py', 'preset.py', 'directory.py']:
+        shutil.copy2(package / name, destination / name)
+    for name, digest in QC_DESCRIPTORS.items():
+        source = package / 'descriptors' / name
+        if not source.is_file():
+            raise SystemExit(f'Missing {name}; generate it as vendor/qc-mcp/VENDORED.md describes.')
+        if hashlib.sha256(source.read_bytes()).hexdigest() != digest:
+            raise SystemExit(f'{name} differs from the schema qc-mcp {QC_COMMIT[:7]} shipped.')
+        shutil.copy2(source, destination / 'descriptors' / name)
+    shutil.copy2(QC_SOURCE / 'LICENSE', resources / 'Licenses' / 'qc-mcp-LICENSE.txt')
     dist = SITE / f'protobuf-{PROTOBUF_VERSION}.dist-info'
     if f'Version: {PROTOBUF_VERSION}\n' not in (dist / 'METADATA').read_text():
         raise SystemExit('Unexpected protobuf version.')

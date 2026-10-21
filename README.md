@@ -71,7 +71,9 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 
 ## Direct USB development
 
-Install the optional pinned dependency into a virtual environment:
+The QC transport is vendored from qc-mcp in `vendor/qc-mcp`. Generate its protocol
+descriptors from your installed Cortex Control once (see
+[VENDORED.md](vendor/qc-mcp/VENDORED.md)), then install into a virtual environment:
 
 ```sh
 python3 -m venv .venv

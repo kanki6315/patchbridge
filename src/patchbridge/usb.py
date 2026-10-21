@@ -31,6 +31,21 @@ def active(definitions, parameter, values, depth=0):
             and active(definitions, rule['parameter'], values, depth + 1))
 
 
+def drop_broadcasts(qc, protocol):
+    """qc-mcp queues every message a read doesn't consume, and the QC streams some on its
+    own (GlobalTempo about four times a second), so a long session's queue grows without
+    end and every read scans it. Nothing here reads them; drop them after each read."""
+    original = qc.request
+
+    def request(*args, **kwargs):
+        with qc._io_lock:
+            result = original(*args, **kwargs)
+            commands = protocol().COMMANDS
+            qc._pending = [t for t in qc._pending if commands.get(t[0]) not in STREAMED]
+            return result
+    qc.request = request
+
+
 class USBAdapter:
     operations = OPERATIONS
 
@@ -50,6 +65,7 @@ class USBAdapter:
             self.factory = QuadCortex
         self.qc = self.factory()
         try:
+            drop_broadcasts(self.qc, self._protocol)
             # ctypes returns a signed IOReturn; accept both representations.
             self.qc.io.BENIGN_WRITE_CODES = frozenset({0, 0xe0005000, -536850432})
             self.qc.open()

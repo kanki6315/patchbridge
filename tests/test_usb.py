@@ -1,5 +1,6 @@
 from copy import deepcopy
-from unittest import TestCase
+from pathlib import Path
+from unittest import TestCase, skipUnless
 from unittest.mock import Mock
 
 from patchbridge.adapter import BridgeError
@@ -137,3 +138,41 @@ class USBWriteTests(TestCase):
                 self.adapter.execute('save', {})
             self.assertEqual(self.adapter.state, original)
         self.assertFalse(self.adapter.qc.mock_calls)
+
+
+VENDORED = Path(__file__).resolve().parents[1] / 'vendor' / 'qc-mcp' / 'src'
+try:
+    import google.protobuf  # noqa: F401
+    PROTOBUF = True
+except ImportError:
+    PROTOBUF = False
+
+
+class RequestQueueTests(TestCase):
+    def test_reads_drop_streamed_broadcasts_and_keep_the_rest(self):
+        import threading
+        from types import SimpleNamespace
+        from patchbridge.usb import drop_broadcasts
+        tempo, undo, reply = (33, None, b't', b''), (40, None, b'u', b''), (2, object(), b'r', b'pb')
+        qc = SimpleNamespace(_io_lock=threading.RLock(), _pending=[tempo, undo, tempo])
+        qc.request = lambda command: reply[:3]
+        drop_broadcasts(qc, lambda: SimpleNamespace(COMMANDS={2: 'PresetDirty', 33: 'GlobalTempo', 40: 'UndoRedo'}))
+        self.assertEqual(qc.request('PresetDirty'), reply[:3])
+        self.assertEqual(qc._pending, [undo])
+
+    @skipUnless(PROTOBUF, 'The vendored qc-mcp transport needs protobuf')
+    def test_vendored_request_neither_copies_the_queue_nor_keeps_the_reply(self):
+        """Upstream qc-mcp f634ecd doubled its queue on every read."""
+        import sys
+        import threading
+        from types import SimpleNamespace
+        sys.path.insert(0, str(VENDORED))
+        from qc_mcp.transport import QuadCortex
+        qc = QuadCortex.__new__(QuadCortex)
+        qc._io_lock, qc._pending = threading.RLock(), [(40, None, b'u', b'')]
+        sent = []
+        qc.send = lambda command, message=None, data=None: sent.append(message.request_id)
+        qc._collect = lambda seconds: qc._pending.append((2, SimpleNamespace(request_id=sent[-1]), b'r', b'reply'))
+        for i in range(1, 9):
+            qc.request(2, SimpleNamespace(request_id=i))
+        self.assertEqual(qc._pending, [(40, None, b'u', b'')])

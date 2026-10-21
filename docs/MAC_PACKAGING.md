@@ -45,11 +45,12 @@ tools/check_offline.sh
 
 The packager re-runs itself under the built runtime. It copies the matching dSYMs
 into `dist/dSYMs` next to the helper launcher's, and fails if any bundled binary's
-UUID has no matching dSYM. Another local build input is the already captured qc-mcp
-checkout at `/private/tmp/patchbridge-qc-mcp`. The builder reads
-qc-mcp Git objects at `f634ecd3dcf426090b90bc4cc176e4b500494b9e`, never mutable working
-files, and verifies protobuf files against the RECORD of the wheel it built from source.
-Missing inputs fail the build without fetching anything. Unrelated MCP-server,
+UUID has no matching dSYM. The QC transport comes from the qc-mcp copy vendored at
+`f634ecd3dcf426090b90bc4cc176e4b500494b9e` in `vendor/qc-mcp`, with its local changes.
+Its protocol descriptors aren't committed: generate them from Cortex Control as
+[VENDORED.md](../vendor/qc-mcp/VENDORED.md) describes, and the builder checks them
+against upstream's SHA-256. It verifies protobuf files against the RECORD of the
+wheel it built from source. Missing inputs fail the build without fetching anything. Unrelated MCP-server,
 bridge/FIFO, Windows, and audio modules/dependencies are not included. Protobuf's
 extension is given a relocatable library ID before signing. Its wheel bytes are
 verified before modification. Native audit

@@ -16,7 +16,7 @@ sent. --live adds one phase that sends the start sequence, listens, then always
 sends ShowTuner without show, as Cortex Control does when its tuner closes, plus a
 Tuner UPDATE clearing enable_meter, since ShowTuner alone left pitch streaming.
 --print-writes shows those messages and exits without opening USB.
-Run with qc-mcp installed (the usb extra) or its src on PYTHONPATH.
+Run with the usb extra installed or vendor/qc-mcp/src on PYTHONPATH.
 """
 import argparse
 from collections import Counter
