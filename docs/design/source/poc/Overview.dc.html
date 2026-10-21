@@ -251,7 +251,7 @@ class Component extends DCLogic {
     const B = (cat, title, summary, locked = false) => ({ cat, title, summary, locked });
     // Positions and models from the captured preset (tests/fixtures/qc-editor.json); summaries and locks follow the app for scene F.
     const rows = [
-      [B('wah', 'Bad Horse', 'Bypassed', true), B('cmp', 'Opto Comp (M)', 'Bypassed'), B('cap', 'OG TS808', 'Bass 0.0 dB · Mid 0.0 dB'), B('drv', 'Myth Drive', 'Bypassed'), B('pit', 'Transpose', 'Semitones -1.0 Semitones'), B('pit', 'Poly Octaver', 'Bypassed'), B('utl', 'Adaptive Gate', 'Noise Reduction 16.1 %'), null],
+      [B('wah', 'Bad Horse', 'Bypassed', true), B('cmp', 'Opto Comp (M)', 'Bypassed'), B('cap', 'OG TS808', 'Bass 0.0 dB · Mid 0.0 dB'), B('drv', 'Myth Drive', 'Bypassed'), B('pit', 'Transpose', 'Semitones -1.0'), B('pit', 'Poly Octaver', 'Bypassed'), B('utl', 'Adaptive Gate', 'Noise Reduction 16.1 %'), null],
       [null, null, null, null, null, null, null, null],
       [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Paul\'s MT16 6', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S UKV30 90s (M)', RO, true), null, B('mod', 'Dual Chorus', 'Bypassed'), B('rev', 'Plate Tight', 'Mix 24.4 % · Decay 43.2 %')],
       [null, B('cap', 'Paul\'s MT16 7', 'Bypassed'), null, B('cap', 'Bogna Uber 1', 'Gain 0.0 dB · Bass 0.0 dB'), B('cab', '412 CA Trad S UKV30 90s (M)', RO, true), null, null, null]

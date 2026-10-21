@@ -21,6 +21,10 @@ final class PhoneFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Tremonti w Mic"].waitForExistence(timeout: 10))
         if duoScreen(app) != nil { throw XCTSkip("iPhone Duo layouts; see testDuoWorkspace") }
         capture("Stage overview")
+        // Transpose's SEMITONES control has the unit "Semitones"; its row summary says it once.
+        let transpose = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Semitones -1.0")).firstMatch
+        XCTAssertTrue(transpose.exists)
+        XCTAssertFalse(transpose.label.contains("-1.0 Semitones"))
         app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Opto Comp")).firstMatch.tap()
         XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))
         capture("Stage editor")

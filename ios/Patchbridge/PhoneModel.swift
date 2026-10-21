@@ -119,12 +119,17 @@ final class PhoneModel: ObservableObject {
         if block.scenes[snapshot?.scene ?? ""]?.bypass == true { return "Bypassed" }
         let editable = parameters(block).filter { editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }
         if editable.isEmpty { return "Read-only" }
-        return editable.prefix(2).map { (editor.control(blockID: block.id, parameterID: $0)?.name.capitalized ?? "Value") + " " + valueText(block.id, $0) }.joined(separator: " · ")
+        return editable.prefix(2).map { id in
+            let name = editor.control(blockID: block.id, parameterID: id)?.name.capitalized ?? "Value"
+            // A unit that repeats the name says it once: "Semitones -1.0", not "Semitones -1.0 Semitones".
+            let unit = editor.control(blockID: block.id, parameterID: id)?.unit.caseInsensitiveCompare(name) != .orderedSame
+            return name + " " + valueText(block.id, id, unit: unit)
+        }.joined(separator: " · ")
     }
-    func valueText(_ block: String, _ parameter: String) -> String {
+    func valueText(_ block: String, _ parameter: String, unit: Bool = true) -> String {
         guard let value = editor.value(blockID: block, parameterID: parameter) else { return "Unavailable" }
         let control = editor.control(blockID: block, parameterID: parameter)
-        if let n = control?.displayValue(value) { return String(format: "%.1f", n) + (control?.unit.isEmpty == false ? " \(control!.unit)" : "") }
+        if let n = control?.displayValue(value) { return String(format: "%.1f", n) + (unit && control?.unit.isEmpty == false ? " \(control!.unit)" : "") }
         if case .number(let n) = value, let option = control?.options?.first(where: { abs($0.value - n) < 0.000001 }) { return option.label }
         switch value {
         case .number(let n):
