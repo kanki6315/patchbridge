@@ -47,10 +47,8 @@ final class PhoneModel: ObservableObject {
     func background() { coordinator.setBackgrounded(true) }
     func foreground() { coordinator.setBackgrounded(false) }
     func loadDemo() {
-        struct Fixture: Decodable { let catalog: EditorCatalog; let snapshot: PresetSnapshot }
         do {
-            guard let url = Bundle.main.url(forResource: "qc-editor", withExtension: "json") else { throw EditorFailure.invalidState }
-            let fixture = try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))
+            let fixture = try DemoFixture.load()
             liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0
             try demoEditor.load(snapshot: fixture.snapshot, catalog: fixture.catalog, session: "demo", connection: "demo", revision: 0, operations: ["set_parameter", "save"])
             demo = true; notice = nil; liveActivity.sync(self); version += 1

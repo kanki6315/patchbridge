@@ -20,12 +20,13 @@ struct EditorView: View {
     @State private var confirmSave = false
     @State private var saveContext: PresetSnapshot?
     @State private var didConfigurePreview = false
-    @State private var linkCopied = false
+    @State private var renaming = false
+    @FocusState private var nameFocused: Bool
     enum Sheet: String, Identifiable { case connection, appearance, getMac; var id: String { rawValue } }
     private var theme: PhoneTheme { PhoneTheme(daylight: matchSystem ? systemScheme == .light : appearance == "Daylight") }
     /// Regular width uses the iPad workspace; accessibility text sizes keep the roomier iPhone layout.
     private var pad: Bool { sizeClass == .regular && !dynamicTypeSize.isAccessibilitySize }
-    private let macURL = URL(string: "https://patchbridge.arjunakankipati.com/appstorelink")!
+    private let macURL = macAppURL
 
     var body: some View {
         NavigationStack {
@@ -282,22 +283,17 @@ struct EditorView: View {
     private var connection: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 26) {
-                Text(connectionTitle).font(.largeTitle.bold()).padding(.top, pad ? 72 : 32)
-                    .frame(maxWidth: .infinity, alignment: pad ? .center : .leading)
-                HStack {
-                    connectionNode(deviceName == "iPad" ? "ipad" : "iphone", deviceName)
-                    Text("Bluetooth").font(.caption).foregroundStyle(theme.muted)
-                    connectionNode("laptopcomputer", "Mac")
-                    Text("USB").font(.caption).foregroundStyle(theme.muted)
-                    connectionNode("square.grid.3x2.fill", "QC")
-                }.padding(.vertical, 16)
+                Group {
+                    if model.coordinator.phase == .disconnected { Wordmark(theme: theme) }
+                    else { Text(connectionTitle).font(.largeTitle.bold()) }
+                }.padding(.top, pad ? 72 : 24).frame(maxWidth: .infinity, alignment: pad ? .center : .leading)
+                if model.coordinator.phase == .disconnected && model.error == nil { demoPreview }
+                connectionRail
                 if model.coordinator.phase == .awaitingApproval {
-                    Text("Approve this \(deviceName) in Patchbridge on your Mac.").foregroundStyle(theme.muted)
                     if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
                     if let code = model.coordinator.approvalCode { Text(code.prefix(3) + " · " + code.suffix(3)).font(.largeTitle.bold().monospacedDigit()).frame(maxWidth: .infinity).padding(24).phoneGlass(theme) }
                     PrimaryButton(title: "I’ve approved it", theme: theme) { model.coordinator.authorize() }.disabled(model.busy)
                 } else if model.coordinator.phase == .recovering {
-                    ProgressView("QC disconnected · waiting for USB recovery").tint(theme.signal)
                     Text("Editing is paused. Reconnect the QC cable; uncertain edits will not be retried.").foregroundStyle(theme.muted)
                     Button("Disconnect") { model.disconnect() }
                 } else if model.coordinator.phase == .connecting || model.coordinator.phase == .loading {
@@ -306,18 +302,11 @@ struct EditorView: View {
                             Label(model.coordinator.nearbyMacs[id] ?? "Mac", systemImage: "laptopcomputer").font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(20)
                         }.phoneGlass(theme)
                     }
-                    if model.coordinator.nearbyMacs.isEmpty { ProgressView(model.coordinator.phase == .loading ? "Reading the preset…" : model.coordinator.status).tint(theme.signal) }
                     Button("Cancel") { model.disconnect() }.frame(minHeight: 44)
                 } else if let error = model.error {
                     Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(theme.caution)
                     PrimaryButton(title: "Reconnect", theme: theme) { model.reconnect() }
-                } else {
-                    TextField("Phone name (optional)", text: $phoneName).textFieldStyle(.roundedBorder)
-                    Text("Shown on your Mac. Leave blank to use iPhone.").font(.footnote).foregroundStyle(theme.muted)
-                    Label("Open Patchbridge on your Mac.", systemImage: "1.circle.fill")
-                    Label("Plug in the QC. Close Cortex Control.", systemImage: "2.circle.fill")
                 }
-                Button { sheet = .getMac } label: { Label("Get Patchbridge for Mac", systemImage: "square.and.arrow.down").font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(20) }.phoneGlass(theme, radius: 20)
                 if let notice = model.notice { Text(notice).foregroundStyle(theme.caution) }
                 if pad { connectActions.padding(.top, 8) }
             }.padding(20)
@@ -330,8 +319,72 @@ struct EditorView: View {
         if model.coordinator.phase == .disconnected || model.coordinator.phase == .failed {
             VStack(spacing: 10) {
                 PrimaryButton(title: "Find my Mac", theme: theme) { model.start() }
-                Button("Try the demo preset") { model.loadDemo() }.font(.headline).frame(maxWidth: .infinity).padding(17).background(theme.raised, in: Capsule())
+                SecondaryButton(title: "Try the demo preset", theme: theme) { model.loadDemo() }
             }
+        }
+    }
+    /// The demo preset's chain, so the first screen shows what Patchbridge is before anything is plugged in.
+    private var demoPreview: some View {
+        Button { model.loadDemo() } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                DemoGrid(theme: theme)
+                HStack {
+                    Text("Tremonti w Mic · demo").font(.footnote).foregroundStyle(theme.muted)
+                    Spacer()
+                    HStack(spacing: 3) { Text("Play with it"); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }
+                        .font(.footnote.weight(.semibold)).foregroundStyle(theme.signal)
+                }
+            }.padding(10).background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line))
+                .contentShape(RoundedRectangle(cornerRadius: 20))
+        }.buttonStyle(.plain).accessibilityLabel("Open the demo preset")
+    }
+    /// iPhone → Mac → QC. The links fill in as the connection gets further, so the picture is also the progress.
+    private var connectionRail: some View {
+        let phase = model.coordinator.phase
+        let macFound = [.awaitingApproval, .loading, .recovering].contains(phase)
+        let macApproved = phase == .loading || phase == .recovering
+        let bluetooth: RailLink.State = phase == .connecting ? .searching : (macFound ? .live : .idle)
+        let usb: RailLink.State = macApproved ? .searching : .idle
+        return VStack(alignment: .leading, spacing: 0) {
+            RailStep(icon: deviceName == "iPad" ? "ipad" : "iphone", title: "This \(deviceName)", done: macFound, below: bluetooth, theme: theme) { phoneNameField }
+            RailLink(label: "Bluetooth", state: bluetooth, theme: theme)
+            RailStep(icon: "laptopcomputer", title: macFound ? (model.coordinator.macName ?? "Your Mac") : "Open Patchbridge on your Mac", done: macApproved, below: usb, theme: theme) {
+                switch phase {
+                case .awaitingApproval: Text("Approve this \(deviceName) on your Mac.").font(.footnote).foregroundStyle(theme.muted)
+                case .loading, .recovering: EmptyView()
+                default:
+                    if phase == .connecting && model.coordinator.nearbyMacs.isEmpty {
+                        Text(model.coordinator.status).font(.footnote).foregroundStyle(theme.muted)
+                    }
+                    RailAction(title: "Not installed? Get the Mac app", theme: theme) { sheet = .getMac }
+                }
+            }
+            RailLink(label: "USB", state: usb, theme: theme)
+            RailStep(icon: "square.grid.3x2.fill", title: macApproved ? "Your Quad Cortex" : "Plug in the QC", theme: theme) {
+                Text(phase == .loading ? "Reading the preset…" : (phase == .recovering ? "Waiting for the USB cable" : "Close Cortex Control first."))
+                    .font(.footnote).foregroundStyle(phase == .recovering ? theme.caution : theme.muted)
+            }
+        }
+    }
+    /// What the Mac will call this device. It's sent when the search starts, so it's only editable before then.
+    @ViewBuilder private var phoneNameField: some View {
+        let editable = model.coordinator.phase == .disconnected || model.coordinator.phase == .failed
+        if renaming && editable {
+            TextField(deviceName, text: $phoneName).font(.subheadline).focused($nameFocused).submitLabel(.done)
+                .onSubmit { renaming = false }.padding(.horizontal, 12).frame(height: 36)
+                .background(theme.surface, in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(theme.signal, lineWidth: 1.5))
+                .onAppear { nameFocused = true }
+                .onChange(of: nameFocused) { _, focused in if !focused { renaming = false } }
+        } else {
+            let name = phoneName.trimmingCharacters(in: .whitespaces).isEmpty ? deviceName : phoneName
+            Button { renaming = true } label: {
+                HStack(spacing: 5) {
+                    Text("Shown on your Mac as “\(name)”").foregroundStyle(theme.muted)
+                    if editable { Image(systemName: "pencil").foregroundStyle(theme.signal) }
+                }.font(.footnote).frame(minHeight: 28).contentShape(Rectangle())
+            }.buttonStyle(.plain).disabled(!editable).accessibilityHint(editable ? "Rename" : "")
         }
     }
     private var connectionTitle: String {
@@ -349,36 +402,43 @@ struct EditorView: View {
         default: return "Patchbridge"
         }
     }
-    private func connectionNode(_ icon: String, _ title: String) -> some View {
-        VStack(spacing: 10) { Image(systemName: icon).font(.title).frame(maxWidth: .infinity).frame(height: 64).phoneGlass(theme, radius: 40); Text(title).font(.subheadline).foregroundStyle(theme.muted) }
-    }
     @ViewBuilder private func sheetContent(_ sheet: Sheet) -> some View {
         switch sheet {
         case .getMac:
+            GetMacSheet(theme: theme, url: macURL) { self.sheet = nil; model.disconnect(); model.start() }
+        case .connection where model.demo:
             VStack(alignment: .leading, spacing: 24) {
-                Text("Get Patchbridge for Mac").font(.largeTitle.bold())
-                Text("Install Patchbridge on your Mac, then connect your Quad Cortex over USB.").foregroundStyle(theme.muted)
-                Link(destination: macURL) { Label("Get the Mac app", systemImage: "arrow.up.right.square").font(.headline).frame(maxWidth: .infinity).padding(17).background(theme.signal, in: Capsule()).foregroundStyle(theme.signalInk) }
-                ShareLink(item: macURL) { Label("Send to my Mac", systemImage: "square.and.arrow.up").frame(minHeight: 44) }
-                Button { UIPasteboard.general.url = macURL; linkCopied = true } label: { Label(linkCopied ? "Link copied" : "Copy link", systemImage: linkCopied ? "checkmark" : "doc.on.doc").frame(minHeight: 44) }
-                Text("Use AirDrop to open the link on your Mac.").font(.footnote).foregroundStyle(theme.muted)
+                Text("Demo preset").font(.largeTitle.bold())
+                DemoExit(theme: theme, getMac: { self.sheet = .getMac },
+                         connect: { self.sheet = nil; model.disconnect(); model.start() },
+                         leave: { model.disconnect(); self.sheet = nil })
+                Button { self.sheet = .appearance } label: {
+                    HStack {
+                        Label("Appearance", systemImage: "circle.lefthalf.filled")
+                        Spacer()
+                        Text(matchSystem ? "Match \(deviceName)" : appearance).foregroundStyle(theme.muted)
+                        Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
+                    }.padding(.horizontal, 16).frame(minHeight: 52).contentShape(Rectangle())
+                }.buttonStyle(.plain).background(theme.surface, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
+                    .accessibilityLabel("Appearance")
             }
         case .connection:
             VStack(alignment: .leading, spacing: 22) {
                 Text("Connection details").font(.title.bold())
-                Label(model.demo ? "Demo · no QC connected" : "Connected over Bluetooth", systemImage: model.demo ? "play.circle" : "checkmark.circle")
-                Text(model.demo ? "Edits and saves affect this demo only." : model.coordinator.status).foregroundStyle(theme.muted)
+                Label("Connected over Bluetooth", systemImage: "checkmark.circle")
+                Text(model.coordinator.status).foregroundStyle(theme.muted)
                 Text("Available now").font(.headline)
                 Label("Read preset and parameter values", systemImage: "checkmark")
                 if model.editor.supports("set_parameter") { Label("Edit supported parameters", systemImage: "checkmark") }
                 if model.editor.supports("save") { Label("Save the current preset", systemImage: "checkmark") }
-                if !model.demo && model.coordinator.trusted {
+                if model.coordinator.trusted {
                     LabeledContent("Trusted", value: "Until revoked on the Mac").foregroundStyle(theme.ink)
                 }
-                if !model.demo { ConnectionStatusSettings(model: model, theme: theme) }
+                ConnectionStatusSettings(model: model, theme: theme)
                 Button { self.sheet = .appearance } label: { Label("Appearance", systemImage: "circle.lefthalf.filled").frame(minHeight: 44) }
-                if !model.demo { Button("Refresh from Mac") { model.coordinator.refresh() }.disabled(model.busy) }
-                Button(model.demo ? "Leave demo" : "Disconnect", role: .destructive) { model.disconnect(); self.sheet = nil }.foregroundStyle(theme.danger).frame(minHeight: 44)
+                Button("Refresh from Mac") { model.coordinator.refresh() }.disabled(model.busy)
+                Button("Disconnect", role: .destructive) { model.disconnect(); self.sheet = nil }.foregroundStyle(theme.danger).frame(minHeight: 44)
             }
         case .appearance:
             AppearanceSettings(theme: theme)
