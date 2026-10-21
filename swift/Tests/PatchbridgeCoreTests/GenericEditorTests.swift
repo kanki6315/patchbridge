@@ -220,6 +220,31 @@ extension GenericEditorTests {
             XCTAssertNil(model.snapshot)
         }
     }
+    func testHiddenAndUndefinedParametersAreNotListed() throws {
+        let f = try fixture(); let model = try editor(f)
+        // Transpose shows only SEMITONES on the QC: MIX and PITCH COARSE/FINE are hidden, and 4 has no definition.
+        XCTAssertEqual(model.visibleParameters(blockID: "0:4"), ["3"])
+        XCTAssertEqual(model.control(blockID: "0:4", parameterID: "0")?.name, "MIX")
+        XCTAssertEqual(model.readOnlyReason(blockID: "0:4", parameterID: "0"), "Hidden on the QC.")
+        XCTAssertThrowsError(try model.propose(blockID: "0:4", parameterID: "0", value: .number(0.5)))
+        XCTAssertNil(model.readOnlyReason(blockID: "0:4", parameterID: "3"))
+        // The QC draws Opto Comp's gain reduction meter, so it stays listed, read-only.
+        XCTAssertEqual(model.visibleParameters(blockID: "0:1"), ["0", "1", "2", "3", "4", "5", "6"])
+        XCTAssertEqual(model.readOnlyReason(blockID: "0:1", parameterID: "6"), "Meter, not a control.")
+        XCTAssertEqual(model.visibleParameters(blockID: "unknown"), [])
+    }
+    func testBlockWithoutCatalogModelListsEveryValueReadOnly() throws {
+        let f = try fixture()
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(f.snapshot)) as! [String: Any]
+        var blocks = object["blocks"] as! [[String: Any]]
+        let index = blocks.firstIndex { $0["id"] as? String == "0:4" }!
+        blocks[index]["model_id"] = "unknown"; object["blocks"] = blocks
+        let state = try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
+        let model = GenericEditor()
+        try model.load(snapshot: state, catalog: f.catalog, session: "s", connection: "c", revision: 0, operations: ["set_parameter"])
+        XCTAssertEqual(model.visibleParameters(blockID: "0:4"), ["0", "1", "2", "3", "4"])
+        XCTAssertTrue(model.visibleParameters(blockID: "0:4").allSatisfy { model.readOnlyReason(blockID: "0:4", parameterID: $0) != nil })
+    }
     func testCapturedUnknownModelMissingSceneAndTypedValuesRemainReadOnly() throws {
         let f = try fixture()
         for variant in ["unknownModel", "missingScene", "text", "boolean", "null", "permissions"] {

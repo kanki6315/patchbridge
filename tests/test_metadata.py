@@ -77,12 +77,27 @@ class MetadataTests(unittest.TestCase):
         decay = normalize_parameter({'type': 'float', 'min': '0', 'max': '100', 'skew': ''})
         self.assertEqual((decay['exponent'], decay['mapping_source']), (1.0, 'hardware_calibration'))
 
-    def test_meters_placeholders_and_hidden_parameters_are_hidden(self):
-        for raw in [{'type': 'grMeter', 'name': 'GAIN REDUCTION'}, {'type': 'empty', 'name': 'DUMMY1'},
-                    {'type': 'float', 'min': '0', 'max': '1', 'hidden': 'true'}]:
-            self.assertTrue(normalize_parameter(raw)['hidden'], raw)
-        self.assertNotIn('hidden', normalize_parameter({'type': 'float', 'min': '0', 'max': '1'}))
-        self.assertFalse(normalize_parameter({'type': 'meter'})['editable'])
+    def test_hidden_parameters_are_never_editable(self):
+        # Transpose's MIX: a valid float the QC never shows.
+        mix = {'type': 'float', 'name': 'MIX', 'min': '0', 'max': '100', 'skew': 'LIN_SKEW', 'hidden': 'true'}
+        for raw in [mix, {'type': 'empty', 'name': 'DUMMY1'}]:
+            control = normalize_parameter(raw)
+            self.assertEqual((control['hidden'], control['editable'], control['reason']),
+                             (True, False, 'Hidden on the QC.'), raw)
+        self.assertNotIn('hidden', normalize_parameter(dict(mix, hidden='false')))
+        switch = {'type': 'switch', 'steps': '2'}
+        rate = normalize_parameter({'type': 'float', 'min': '0', 'max': '1', 'toggleOff': '0', 'hidden': 'true'},
+                                   {'0': switch})
+        self.assertNotIn('active_when', rate)
+
+    def test_meters_are_shown_read_only_and_unsupported_controls_stay_visible(self):
+        for raw in [{'type': 'grMeter', 'name': 'GAIN REDUCTION'}, {'type': 'meter'}]:
+            control = normalize_parameter(raw)
+            self.assertEqual((control['kind'], control['editable']), ('meter', False), raw)
+            self.assertNotIn('hidden', control)
+        cab = normalize_parameter({'type': 'float', 'min': 'MIN_CABSIM_DB', 'max': '0'})
+        self.assertFalse(cab['editable'])
+        self.assertNotIn('hidden', cab)
 
     def test_int_commands_stay_read_only(self):
         c = normalize_parameter({'type': 'int', 'name': 'EXPORT MODEL', 'min': '0', 'max': '1', 'steps': '2'})

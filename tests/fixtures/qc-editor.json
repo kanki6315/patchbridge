@@ -223,15 +223,14 @@
             "type": "grMeter",
             "units": "dB",
             "control": {
-              "kind": "unknown",
+              "kind": "meter",
               "encoding": "qc_normalized",
               "name": "GAIN REDUCTION",
               "unit": "dB",
               "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
-              "reason": "Meter or placeholder, not a control.",
-              "hidden": true
+              "reason": "Meter, not a control."
             }
           }
         }
@@ -929,7 +928,7 @@
               "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
-              "reason": "String writes are not validated.",
+              "reason": "Hidden on the QC.",
               "hidden": true
             }
           }
@@ -1115,14 +1114,15 @@
               "encoding": "qc_normalized",
               "name": "MIX",
               "unit": "%",
-              "editable": true,
+              "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
               "minimum": 0.0,
               "maximum": 100.0,
               "mapping": "power",
               "exponent": 1.0,
-              "hidden": true
+              "hidden": true,
+              "reason": "Hidden on the QC."
             }
           },
           "1": {
@@ -1141,14 +1141,15 @@
               "encoding": "qc_normalized",
               "name": "PITCH COARSE",
               "unit": "Semitones",
-              "editable": true,
+              "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
               "minimum": -24.0,
               "maximum": 24.0,
               "mapping": "power",
               "exponent": 1.0,
-              "hidden": true
+              "hidden": true,
+              "reason": "Hidden on the QC."
             }
           },
           "2": {
@@ -1167,14 +1168,15 @@
               "encoding": "qc_normalized",
               "name": "PITCH FINE",
               "unit": "Cents",
-              "editable": true,
+              "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
               "minimum": -100.0,
               "maximum": 100.0,
               "mapping": "power",
               "exponent": 1.0,
-              "hidden": true
+              "hidden": true,
+              "reason": "Hidden on the QC."
             }
           },
           "3": {
@@ -1710,9 +1712,6 @@
           }
         },
         "editable_parameters": [
-          "0",
-          "1",
-          "2",
           "3"
         ]
       },

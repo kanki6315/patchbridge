@@ -91,9 +91,7 @@ final class PhoneModel: ObservableObject {
     }
     func name(_ block: PresetSnapshot.Block) -> String { editor.catalog?.models[block.model_id]?.name ?? "Unknown block" }
     func category(_ block: PresetSnapshot.Block) -> BlockCategory { BlockCategory(editor.catalog?.models[block.model_id]?.category ?? "") }
-    func parameters(_ block: PresetSnapshot.Block) -> [String] {
-        (block.scenes[snapshot?.scene ?? ""]?.parameters.keys.map { $0 } ?? []).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
-    }
+    func parameters(_ block: PresetSnapshot.Block) -> [String] { editor.visibleParameters(blockID: block.id) }
     func location(_ snapshot: PresetSnapshot) -> String {
         if snapshot.preset_id.hasPrefix("captured:") { return snapshot.preset_id.replacingOccurrences(of: "captured:", with: "").replacingOccurrences(of: ":", with: " · ") }
         return "Current preset"

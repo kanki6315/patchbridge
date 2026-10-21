@@ -28,17 +28,19 @@ for row, chain in enumerate(spec['chains']):
             scenes[chr(65+scene)]['bypass'] = value
         editable = []
         definitions = models.get(str(block['hash']), {}).get('parameters', {})
+        controls = {i: {'control': normalize_parameter(d, definitions)} for i, d in definitions.items()}
         for index, param in enumerate(block['params']):
             values = param['values']
+            # Like the live adapter: hidden and unsupported controls are never writable.
             if (values and all(v[0] is not None for v in values) and not param['scene_mode']
-                    and not param['expression'] and definitions.get(str(index), {}).get('type') in WRITABLE_TYPES):
+                    and not param['expression'] and definitions.get(str(index), {}).get('type') in WRITABLE_TYPES
+                    and controls[str(index)]['control']['editable']):
                 editable.append(str(index))
             for scene in range(8):
                 value_index = scene if param['scene_mode'] else 0
                 if value_index < len(values):
                     scenes[chr(65+scene)]['parameters'][str(index)] = next((v for v in values[value_index] if v is not None), None)
         # Like the live adapter: conditional controls are writable only while active in scene F.
-        controls = {i: {'control': normalize_parameter(d, definitions)} for i, d in definitions.items()}
         editable = [p for p in editable if active(controls, p, scenes['F']['parameters'])]
         blocks.append({'id': f'{row}:{column}', 'model_id': str(block['hash']), 'position': [row, column],
                        'scenes': scenes, 'editable_parameters': editable})

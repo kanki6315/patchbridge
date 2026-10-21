@@ -79,15 +79,22 @@ def _controller(raw, parameters):
     return ref.strip(), [step / (count - 1) for step in sorted(active)]
 
 
-# Displays and placeholders the player never edits.
-DISPLAY_TYPES = ('grMeter', 'meter', 'empty')
+# Meters the QC draws but the player never edits.
+METER_TYPES = ('grMeter', 'meter')
 
 
 def normalize_parameter(raw, parameters=None):
-    """parameters: the model's raw parameters by index, needed to resolve conditional controls."""
+    """parameters: the model's raw parameters by index, needed to resolve conditional controls.
+
+    Three cases stay distinct. Hidden parameters (hidden="true", or an empty layout slot)
+    are internal values the QC never shows: they are marked hidden, never editable, and the
+    phone leaves them out. Meters are shown read-only. Anything else the QC shows but we
+    can't edit yet is unsupported: listed, read-only, with a reason.
+    """
     control = _normalize(raw, parameters)
-    if raw.get('hidden') == 'true' or raw.get('type') in DISPLAY_TYPES:
-        control['hidden'] = True  # Not a control the player edits; reports leave it out. The editor still lists it.
+    if raw.get('hidden') == 'true' or raw.get('type') == 'empty':
+        control.pop('active_when', None)
+        control.update(hidden=True, editable=False, reason='Hidden on the QC.')
     return control
 
 
@@ -109,8 +116,8 @@ def _normalize(raw, parameters):
         # Every int in CorOS 4.1.1 is a device command, routing or calibration setting, or hidden.
         control['reason'] = 'Device command or internal setting, not a tone control.'
         return control
-    if kind in DISPLAY_TYPES:
-        control['reason'] = 'Meter or placeholder, not a control.'
+    if kind in METER_TYPES:
+        control.update(kind='meter', reason='Meter, not a control.')
         return control
     if kind not in WRITABLE_TYPES:
         control['reason'] = 'Unsupported parameter type.'

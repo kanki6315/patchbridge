@@ -31,7 +31,8 @@ type (number, boolean, string, null).
 | toggleOn/toggleOff naming one switch, with toggleStep | Editable while active: toggleOn at the listed steps, toggleOff at the others (`active_when.values`) |
 | toggleOn/toggleOff naming a two-step switch, no toggleStep | toggleOn active at 1, toggleOff at 0 |
 | toggleOn/toggleOff naming a float, several controllers, or a multi-step switch without toggleStep | Read-only until those semantics are measured |
-| grMeter, meter, empty, or hidden="true" | Read-only and marked `hidden`; the gap report leaves them out, but the editor still lists them |
+| hidden="true", or an empty layout slot | Marked `hidden` and never editable: the QC never shows it, the phone leaves it out and the bridge refuses writes (Transpose MIX, PITCH COARSE, PITCH FINE) |
+| grMeter, meter | `kind: meter`, read-only; the phone lists it as a meter because the QC shows it |
 | int | Read-only: in CorOS 4.1.1 every int is a device command (Neural Capture, ZenLink), a calibration setting or hidden |
 | Unknown/meter/string type | Read-only |
 
@@ -155,7 +156,23 @@ categories and models have the largest gaps. Hidden parameters are counted
 separately. `--model NAME` lists one model's parameters and `--json` prints data.
 On the CorOS 4.1.1 capture, 3,336 of 3,837 visible parameters (87%) are editable
 (conditional controls count while active), up from 1,233 (32%) before calibration.
-Meters and placeholders no longer count toward that total, though the phone still shows them as read-only.
+Meters and placeholders no longer count toward that total, though the phone still shows meters as read-only.
+
+## What the phone lists
+
+Each block lists the parameters the QC shows, in index order, in three groups:
+
+- **Editable**: everything in the table above that maps cleanly, while the bridge also
+  reports it in `editable_parameters`.
+- **Unsupported**: shown on the QC but not editable here yet (unmeasured range constant,
+  missing labels, scene-assigned, inactive). Listed read-only with the reason.
+- **Not listed**: hidden parameters, empty layout slots, and preset values past the end of
+  the model's catalog definition (most captured blocks carry one, the cab 20). A block whose
+  model is missing from the catalog lists every value, read-only.
+
+The bridge's `editable_parameters` requires the control itself to be editable, so a hidden
+or unsupported parameter can't be written even if a phone sends it. `displayPos` ordering
+isn't applied yet: two models (Plugin Parametric-4, Minivoicer) repeat positions.
 
 `tools/calibrate_qc_controls.py` answers that question on hardware. It picks
 parameters from the loaded disposable preset in six groups: no declared taper,
