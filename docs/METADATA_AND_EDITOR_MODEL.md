@@ -20,15 +20,19 @@ type (number, boolean, string, null).
 | --- | --- |
 | float + finite ordered range + LIN_SKEW | Numeric control with explicit linear conversion |
 | float + finite range + positive numeric skew | Numeric control with declared power conversion |
-| float or fader + finite range + no skew | Linear (power exponent 1), from hardware calibration |
+| float, fader or floatWithLed + finite range + no or empty skew | Linear (power exponent 1), from hardware calibration |
 | Measured range constant (MIN/MAX_EQ_DB, _FXLOOP_OUT_GAIN_DB, _FXLOOP_IN_GAIN_DB) | Resolved to the value read on the QC; other constants stay read-only |
 | float + finite range + LOG_SKEW | Power conversion with skew 0.3, from hardware calibration |
 | float + finite range + xValues/yValues table | Numeric control interpolated linearly between the declared points |
 | switch/rotarySwitch/toggleButton/comboBox + matching steps and stepNames | Named enumeration; normalized option values i/(count−1) |
 | Two-step switch without stepNames | Off/On, from hardware calibration |
-| Empty or unknown skew, symbolic/invalid range | Read-only; no guessed taper/range |
+| Unknown skew, unmeasured symbolic/invalid range | Read-only; no guessed taper/range |
 | Missing or inconsistent option labels | Read-only; never fabricate labels |
-| toggleOn/toggleOff dependency | Read-only until dependency semantics are implemented |
+| toggleOn/toggleOff naming one switch, with toggleStep | Editable while active: toggleOn at the listed steps, toggleOff at the others (`active_when.values`) |
+| toggleOn/toggleOff naming a two-step switch, no toggleStep | toggleOn active at 1, toggleOff at 0 |
+| toggleOn/toggleOff naming a float, several controllers, or a multi-step switch without toggleStep | Read-only until those semantics are measured |
+| hidden="true", or an empty layout slot | Marked `hidden` and never editable: the QC never shows it, the phone leaves it out and the bridge refuses writes (Transpose MIX, PITCH COARSE, PITCH FINE) |
+| grMeter, meter | `kind: meter`, read-only; the phone lists it as a meter because the QC shows it |
 | int | Read-only: in CorOS 4.1.1 every int is a device command (Neural Capture, ZenLink), a calibration setting or hidden |
 | Unknown/meter/string type | Read-only |
 
@@ -45,6 +49,12 @@ the points, midpoints included. `toggleButton` controls (FREEZE, TRIGGER) share 
 switch encoding: 1 is active and the value latches. The QC's button text is the action
 it offers, so it reads FREEZE while released and RELEASE while frozen. A `min_string`
 such as OFF is carried as `minimum_label`: the QC shows it instead of the minimum value.
+
+Conditional controls carry `active_when: {parameter, values}`. While the switch holds
+another value, or the switch is itself inactive, the QC greys the control out but keeps
+its value. The USB adapter
+leaves inactive controls out of `editable_parameters` and refuses writes to them, and
+`readOnlyReason` reports "Inactive while SYNC is Off." so the phone greys them out too.
 
 Calibrated rules carry `mapping_source: hardware_calibration` rather than
 `device_metadata`. Captured Myth Drive gain declares no skew, so it uses the
@@ -144,8 +154,25 @@ read-only in the generic model. QC controls continue to use normalized values.
 these rules and reports what is editable, why the rest is read-only, and which
 categories and models have the largest gaps. Hidden parameters are counted
 separately. `--model NAME` lists one model's parameters and `--json` prints data.
-On the CorOS 4.1.1 capture, 3,118 of 3,888 visible parameters (80%) are editable,
-up from 1,233 (32%) before calibration.
+On the CorOS 4.1.1 capture, 3,336 of 3,837 visible parameters (87%) are editable
+(conditional controls count while active), up from 1,233 (32%) before calibration.
+Meters and placeholders no longer count toward that total, though the phone still shows meters as read-only.
+
+## What the phone lists
+
+Each block lists the parameters the QC shows, in index order, in three groups:
+
+- **Editable**: everything in the table above that maps cleanly, while the bridge also
+  reports it in `editable_parameters`.
+- **Unsupported**: shown on the QC but not editable here yet (unmeasured range constant,
+  missing labels, scene-assigned, inactive). Listed read-only with the reason.
+- **Not listed**: hidden parameters, empty layout slots, and preset values past the end of
+  the model's catalog definition (most captured blocks carry one, the cab 20). A block whose
+  model is missing from the catalog lists every value, read-only.
+
+The bridge's `editable_parameters` requires the control itself to be editable, so a hidden
+or unsupported parameter can't be written even if a phone sends it. `displayPos` ordering
+isn't applied yet: two models (Plugin Parametric-4, Minivoicer) repeat positions.
 
 `tools/calibrate_qc_controls.py` answers that question on hardware. It picks
 parameters from the loaded disposable preset in six groups: no declared taper,
@@ -176,6 +203,15 @@ Saved in `hardware-results/2026-10-20/calibration-probe*.json`, all values resto
 | fader | Graphic-9 65, 125, 250 and 500 Hz | Linear, exact |
 | Unlabeled two-step switch | UK C30 BRIGHT, FX Loop 1 TRAILS, Parametric-8 1 and 2 BYPASS | 0 is Off, 1 is On |
 | Range constants | Parametric-8 1 and 2 GAIN, FX Loop 1 SEND and RET LEV | EQ −12…12 dB, loop send −40…0 dB, return −40…12 dB, all linear; OFF shown at the minimum |
+
+| Conditional controls | Simple Delay SYNC, SLO-100 CHANNEL, Dual Chorus SYNC | toggleOff controls active at 0, toggleOn at 1; inactive ones greyed out |
+| Multi-step conditionals | Phase Doctor Ø ADJUST and STEREO LINK, Micro Processor MOD SOURCE and SYNC, Pitch Correction MODE, Reverse Delay SYNC | toggleOn active at the toggleStep positions, toggleOff at the others; a control under a greyed-out switch is greyed out too (Ø ADJUST R) |
+| floatWithLed | Reverse Delay TRIG THRESHOLD | Linear −40…0 dB, OFF at the minimum |
+| Empty skew | Cory Wong Wash Shimmer and Petrucci Reverb Shimmer DECAY | Linear 0…100% |
+
+Pass 5 ran on the "Dirty Honey" preset with `--preset`. A split row's Splitter and Mixer
+don't appear among the preset's blocks over USB, so the Mixer level range and Splitter
+TYPE switch remain unmeasured.
 
 Three readings were mistyped at the prompt and corrected afterwards; each keeps
 `corrected_from` and a note. `MIN_CABSIM_DB` (14 parameters) and `MIN_MIXER_DB` (8)

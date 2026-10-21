@@ -60,16 +60,20 @@ def group(raw, control):
         return 'combo'
     if kind in ('switch', 'rotarySwitch') and steps(raw) and not labels:
         return 'unlabeled_switch'
-    if kind not in ('float', 'fader'):
+    if kind not in ('float', 'fader', 'floatWithLed'):
         return None
     if numeric_range(raw) is None:
         # Named range constants such as MIN_EQ_DB; readings at 0 and 1 reveal their values.
         return 'symbolic' if raw.get('min') and raw.get('max') else None
     if kind == 'fader':
         return 'fader'
+    if kind == 'floatWithLed':
+        return 'led'
     if control.get('mapping') == 'table':
         return 'table'
     skew = raw.get('skew')
+    if skew is not None and not skew.strip():
+        return 'empty_skew'
     if skew is None:
         return 'no_taper'
     if skew == 'LOG_SKEW':
@@ -80,6 +84,9 @@ def group(raw, control):
 
 
 def points_for(target):
+    if target['group'] == 'conditional':
+        count = steps(target['raw']) or 2
+        return [i / (count - 1) for i in range(count)]
     if target['group'] == 'toggle':
         return [option['value'] for option in target['control']['options']]
     if target['group'] in ('combo', 'unlabeled_switch'):
@@ -95,6 +102,15 @@ def points_for(target):
 def predict(target, normalized):
     """Display values implied by a linear reading and by the declared mapping."""
     control, raw = target['control'], target['raw']
+    if target['group'] == 'conditional':
+        # toggleOn controls are active while the switch is 1, toggleOff controls while it is 0; inactive ones are greyed out.
+        # With toggleStep, toggleOn controls are active at the listed steps and toggleOff ones at the others.
+        step = round(normalized * ((steps(raw) or 2) - 1))
+        def is_active(d):
+            if d.get('steps') is not None:
+                return (step in d['steps']) == (d['when'] == 'on')
+            return (d['when'] == 'on') == (normalized == 1)
+        return {'active': sorted(d['name'] for d in target['dependents'] if is_active(d))}
     if target['group'] == 'toggle':
         # The QC's button text is the action: it offers the other option.
         label = next(o['label'] for o in control['options'] if abs(o['value'] - normalized) > 1e-9)
@@ -167,6 +183,48 @@ def choose(described, models, per_group, groups, names=()):
     return chosen
 
 
+def conditional_targets(described, models, per_group, names=()):
+    """Switches that activate other controls through toggleOn/toggleOff (and toggleStep for multi-step ones)."""
+    chosen = []
+    for row, chain in enumerate(described['chains']):
+        for column, block in enumerate(chain['models']):
+            model = models.get(str(block['hash'])) if block['hash'] else None
+            if not model or (names and not any(n.lower() in model['name'].lower() for n in names)):
+                continue
+            dependents = {}
+            for index, raw in model['parameters'].items():
+                ref = raw.get('toggleOn') or raw.get('toggleOff')
+                if raw.get('hidden') != 'true' and ref and ref.strip().isdigit():
+                    listed = raw.get('toggleStep')
+                    dependents.setdefault(int(ref), []).append({
+                        'index': int(index), 'name': raw.get('name', ''),
+                        'when': 'on' if raw.get('toggleOn') else 'off',
+                        'steps': [int(n) for n in listed.split(',')] if listed else None})
+            for index, deps in sorted(dependents.items()):
+                raw = model['parameters'].get(str(index), {})
+                param = block['params'][index] if index < len(block['params']) else None
+                if param is None or param['scene_mode'] or param['expression'] or any(v[0] is None for v in param['values']):
+                    continue
+                two_step = raw.get('type') in ('switch', 'toggleButton') and raw.get('steps') == '2'
+                listed = [d for d in deps if d['steps'] is not None]
+                if not two_step:
+                    # A multi-step controller is testable only for dependents that list their steps.
+                    if raw.get('type') not in ('switch', 'rotarySwitch', 'comboBox') or not steps(raw) or not listed:
+                        continue
+                    deps = listed
+                chosen.append({'group': 'conditional', 'row': row, 'column': column, 'index': index,
+                               'model_id': str(block['hash']), 'model': block_name(block, model),
+                               'category': model['category'], 'name': raw.get('name', ''), 'unit': '',
+                               'raw': raw, 'control': normalize_parameter(raw), 'dependents': deps})
+    return chosen[:per_group]
+
+
+def visible_names(target, answer):
+    """Dependent names from the numbers the user typed ("1 3", "none")."""
+    numbers = {int(n) for n in re.findall(r'\d+', answer)}
+    return sorted(d['name'] for i, d in enumerate(target['dependents'], 1) if i in numbers)
+
+
 def suggestions(models, groups, limit=3):
     """Models that would cover each group, for groups the loaded preset can't."""
     found = {}
@@ -211,11 +269,20 @@ def probe(qc, describe, target, ask, settle):
             time.sleep(settle)
             _, after = current()
             readback = after['chains'][row]['models'][column]['params'][index]['values'][0][0]
-            answer = ask(f"  QC shows for {target['name']} at {normalized:.4f}: ")
+            if target['group'] == 'conditional':
+                labels = [l.strip() for l in target['raw'].get('stepNames', '').split(',')]
+                step = round(normalized * (len(points_for(target)) - 1))
+                setting = labels[step] if len(labels) == len(points_for(target)) else f'{normalized:g}'
+                answer = ask(f"  With {target['name']} at {setting}, which numbers are active (not greyed out)? ")
+            else:
+                answer = ask(f"  QC shows for {target['name']} at {normalized:.4f}: ")
             if answer.strip().lower() == 'q':
                 raise KeyboardInterrupt
-            readings.append({'normalized': normalized, 'readback': readback, 'shown': answer.strip(),
-                             'shown_number': parse_reading(answer), 'predicted': predict(target, normalized)})
+            reading = {'normalized': normalized, 'readback': readback, 'shown': answer.strip(),
+                       'shown_number': parse_reading(answer), 'predicted': predict(target, normalized)}
+            if target['group'] == 'conditional':
+                reading['active'] = visible_names(target, answer)
+            readings.append(reading)
     finally:
         qc.set_param_typed(row, column, index, original)
         _, restored = current()
@@ -227,6 +294,12 @@ def analyze(record):
     """Largest gap between readings and each prediction, as a share of the parameter's range."""
     t, readings = record['target'], record['readings']
     held = all(abs(r['readback'] - r['normalized']) < 1e-6 for r in readings if r['readback'] is not None)
+    if t['group'] == 'conditional':
+        everything = sorted(d['name'] for d in t['dependents'])
+        expected = [r['predicted'].get('active', r['predicted'].get('visible')) for r in readings]
+        matches = all(r['active'] == e for r, e in zip(readings, expected))
+        inverted = all(r['active'] == sorted(set(everything) - set(e)) for r, e in zip(readings, expected))
+        return {'rule_matches': matches, 'inverted_matches': inverted, 'latched': held}
     if t['group'] in ('toggle', 'combo'):
         shown = [r['shown'].upper() for r in readings]
         expected = [r['predicted']['declared'].upper() for r in readings]
@@ -269,12 +342,13 @@ def main(argv=None, connect=None, ask=input):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--plan', action='store_true', help='List targets from the captured preset without USB')
     parser.add_argument('--analyze', type=Path, help='Summarize a saved calibration file')
-    parser.add_argument('--groups', default='no_taper,log,power,linear,table,toggle,combo,fader,unlabeled_switch,symbolic',
+    parser.add_argument('--groups', default='no_taper,log,power,linear,table,toggle,combo,fader,unlabeled_switch,symbolic,led,empty_skew',
                         help='Comma-separated groups to probe')
     parser.add_argument('--per-group', type=int, default=3)
     parser.add_argument('--models', default='', help='Comma-separated model names to limit targets to')
     parser.add_argument('--settle', type=float, default=0.3, help='Seconds to wait after each write')
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--preset', default=DISPOSABLE, help='Name of the preset to probe; values are restored, never saved')
     args = parser.parse_args(argv)
     groups = args.groups.split(',')
     names = [n.strip() for n in args.models.split(',') if n.strip()]
@@ -285,6 +359,8 @@ def main(argv=None, connect=None, ask=input):
         models = catalog_from_xml((CAPTURED / 'live-ModelRepo.xml').read_bytes())
         described = json.loads((CAPTURED / 'initial-preset.json').read_text())
         targets = choose(described, models, args.per_group, groups, names)
+        if 'conditional' in groups:
+            targets += conditional_targets(described, models, args.per_group, names)
         for t in targets:
             print(f"{describe_target(t)}: {len(points_for(t))} points")
         missing = [g for g in groups if g not in {t['group'] for t in targets}]
@@ -292,7 +368,9 @@ def main(argv=None, connect=None, ask=input):
             print(f"No {name} parameters in this preset. Add one of: {', '.join(examples)}")
         return
     print('Use the disposable preset with Cortex Control closed. Values are restored, never saved.')
-    if ask(f'Is "{DISPOSABLE}" loaded on the QC? Type yes to continue: ').strip().lower() != 'yes':
+    answer = ask(f'Is "{args.preset}" loaded on the QC? Type yes to continue: ')
+    if answer.strip().lower().strip('.!') not in ('yes', 'y'):
+        print(f'Stopped: the answer was {answer.strip()!r}, not yes. Nothing was written.')
         return
     if connect is None:
         from patchbridge.usb import USBAdapter
@@ -309,17 +387,25 @@ def main(argv=None, connect=None, ask=input):
     try:
         bp = qc.get_current_preset()
         described = describe(bp)
-        if described['name'] != DISPOSABLE:
-            raise SystemExit(f'Loaded preset is "{described["name"]}", not "{DISPOSABLE}"; nothing was written.')
+        if described['name'] != args.preset:
+            raise SystemExit(f'Loaded preset is "{described["name"]}", not "{args.preset}"; nothing was written.')
         targets = choose(described, models, args.per_group, groups, names)
+        if 'conditional' in groups:
+            targets += conditional_targets(described, models, args.per_group, names)
         print(f'{len(targets)} parameters. Type what the QC screen shows, blank to skip, q to stop.')
         for number, target in enumerate(targets, 1):
-            target['preset'] = DISPOSABLE
+            target['preset'] = args.preset
             print(f'\n[{number}/{len(targets)}] {describe_target(target)}. Open this block on the QC.')
+            if target['group'] == 'conditional':
+                print('  Open this block on the QC. Inactive controls are greyed out. For each setting, type the numbers that are active:')
+                for i, d in enumerate(target['dependents'], 1):
+                    print(f"    {i}. {d['name']}")
             hint = {'toggle': 'Type the button text, and note whether it stays on or springs back.',
                     'combo': 'Type the option name shown.',
                     'unlabeled_switch': 'Type what the switch shows, for example on, off, lit or unlit.',
-                    'symbolic': 'This range is unknown; type the exact value and unit shown.'}.get(target['group'])
+                    'symbolic': 'This range is unknown; type the exact value and unit shown.',
+                    'led': 'Type the value shown, or OFF.',
+                    'empty_skew': 'Type the value and unit shown.'}.get(target['group'])
             if hint:
                 print(f'  {hint}')
             try:
@@ -332,7 +418,7 @@ def main(argv=None, connect=None, ask=input):
                     if not target['restored']:
                         print('  WARNING: the original value did not read back; check this parameter on the QC.')
             results.append({'target': target, 'readings': readings})
-            output.write_text(json.dumps({'firmware': '4.1.1', 'preset': DISPOSABLE, 'results': results}, indent=2) + '\n')
+            output.write_text(json.dumps({'firmware': '4.1.1', 'preset': args.preset, 'results': results}, indent=2) + '\n')
     finally:
         qc.close()
     if results:

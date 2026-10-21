@@ -102,8 +102,16 @@ struct BlockEditorView: View {
         parameter = model.parameters(block).first(where: { model.editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }) ?? model.parameters(block).first ?? ""
         draft = nil
     }
+    private func tileValue(_ id: String) -> String {
+        switch model.editor.control(blockID: block.id, parameterID: id)?.kind {
+        case "meter": return "Meter"
+        case "unknown" where model.editor.readOnlyReason(blockID: block.id, parameterID: id) != nil: return "Scale unknown"
+        default: return model.valueText(block.id, id)
+        }
+    }
     private var readOnlyText: String {
         if control?.kind == "unknown" { return "Read-only · scale unknown" }
+        if control?.kind == "meter" { return "Read-only · meter on the QC" }
         return model.editor.readOnlyReason(blockID: block.id, parameterID: parameter) ?? "Read-only"
     }
     private func position(_ value: Double?) -> Double {
@@ -225,7 +233,7 @@ struct BlockEditorView: View {
                             if locked { Image(systemName: "lock").font(.caption) }
                             Text(model.editor.control(blockID: block.id, parameterID: id)?.name.capitalized ?? "Parameter \(id)").font(.footnote).lineLimit(1)
                         }.foregroundStyle(theme.muted)
-                        Text(locked && model.editor.control(blockID: block.id, parameterID: id)?.kind == "unknown" ? "Scale unknown" : model.valueText(block.id, id)).font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.75)
+                        Text(tileValue(id)).font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.75)
                     }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(10)
                         .background(parameter == id ? category.color.opacity(0.22) : (locked ? theme.raised.opacity(0.35) : .clear), in: RoundedRectangle(cornerRadius: 18))
                         .parameterMaterial(theme, enabled: !locked)

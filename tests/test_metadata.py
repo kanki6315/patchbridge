@@ -19,7 +19,7 @@ class MetadataTests(unittest.TestCase):
 
     def test_unknown_mapping_never_gets_guessed(self):
         base = {'type': 'float', 'min': '0', 'max': '10'}
-        for patch in [{'skew': ''}, {'skew': 'CUSTOM_SKEW'}, {'skew': '-1'}, {'skew': 'nan'},
+        for patch in [{'skew': 'CUSTOM_SKEW'}, {'skew': '-1'}, {'skew': 'nan'},
                       {'skew': 'LIN_SKEW', 'min': 'MIN_GAIN'}, {'skew': 'LIN_SKEW', 'max': '0'}]:
             self.assertFalse(normalize_parameter(base | patch)['editable'])
 
@@ -47,6 +47,57 @@ class MetadataTests(unittest.TestCase):
         self.assertEqual((send['minimum'], send['maximum'], send['minimum_label']), (-40, 0, 'OFF'))
         for unmeasured in ['MIN_CABSIM_DB', 'MIN_MIXER_DB']:
             self.assertFalse(normalize_parameter({'type': 'float', 'min': unmeasured, 'max': unmeasured.replace('MIN', 'MAX')})['editable'])
+
+    def test_conditional_controls_follow_their_two_step_switch(self):
+        params = {'0': {'type': 'switch', 'name': 'SYNC', 'steps': '2', 'stepNames': 'Off,On'},
+                  '1': {'type': 'float', 'name': 'SYNC NOTE', 'min': '0', 'max': '1', 'toggleOn': '0'},
+                  '2': {'type': 'float', 'name': 'DELAY TIME', 'min': '0', 'max': '1', 'toggleOff': '0'},
+                  '3': {'type': 'comboBox', 'name': 'KEY', 'steps': '3', 'stepNames': 'A,B,C'},
+                  '4': {'type': 'float', 'name': 'TAP', 'min': '0', 'max': '1', 'toggleOn': '3'},
+                  '5': {'type': 'float', 'name': 'PAN', 'min': '0', 'max': '1', 'toggleOn': '0,3'},
+                  '6': {'type': 'float', 'name': 'LEVEL', 'min': 'MIN_MIXER_DB', 'max': 'MAX_MIXER_DB', 'toggleOn': '0'}}
+        self.assertEqual(normalize_parameter(params['1'], params)['active_when'], {'parameter': '0', 'values': [1.0]})
+        self.assertEqual(normalize_parameter(params['2'], params)['active_when'], {'parameter': '0', 'values': [0.0]})
+        for index in ('4', '5', '6'):
+            self.assertFalse(normalize_parameter(params[index], params)['editable'], index)
+        self.assertFalse(normalize_parameter(params['1'])['editable'])  # Without the model, the switch is unknown.
+
+    def test_multi_step_conditionals_use_toggle_step(self):
+        params = {'0': {'type': 'comboBox', 'name': 'MOD SOURCE', 'steps': '4', 'stepNames': 'LFO,LFO St,+Env,-Env'},
+                  '1': {'type': 'float', 'name': 'LFO RATE', 'min': '0', 'max': '1', 'toggleOn': '0', 'toggleStep': '0,1'},
+                  '2': {'type': 'float', 'name': 'ROOT', 'min': '0', 'max': '1', 'toggleOff': '0', 'toggleStep': '2'},
+                  '3': {'type': 'float', 'name': 'BAD', 'min': '0', 'max': '1', 'toggleOn': '0', 'toggleStep': '7'}}
+        self.assertEqual(normalize_parameter(params['1'], params)['active_when']['values'], [0, 1 / 3])
+        self.assertEqual(normalize_parameter(params['2'], params)['active_when']['values'], [0, 1 / 3, 1])
+        self.assertFalse(normalize_parameter(params['3'], params)['editable'])
+
+    def test_led_float_and_empty_skew_are_linear(self):
+        led = normalize_parameter({'type': 'floatWithLed', 'min': '-40', 'max': '0', 'min_string': 'OFF', 'steps': '401'})
+        self.assertEqual((led['editable'], led['exponent'], led['minimum_label']), (True, 1.0, 'OFF'))
+        decay = normalize_parameter({'type': 'float', 'min': '0', 'max': '100', 'skew': ''})
+        self.assertEqual((decay['exponent'], decay['mapping_source']), (1.0, 'hardware_calibration'))
+
+    def test_hidden_parameters_are_never_editable(self):
+        # Transpose's MIX: a valid float the QC never shows.
+        mix = {'type': 'float', 'name': 'MIX', 'min': '0', 'max': '100', 'skew': 'LIN_SKEW', 'hidden': 'true'}
+        for raw in [mix, {'type': 'empty', 'name': 'DUMMY1'}]:
+            control = normalize_parameter(raw)
+            self.assertEqual((control['hidden'], control['editable'], control['reason']),
+                             (True, False, 'Hidden on the QC.'), raw)
+        self.assertNotIn('hidden', normalize_parameter(dict(mix, hidden='false')))
+        switch = {'type': 'switch', 'steps': '2'}
+        rate = normalize_parameter({'type': 'float', 'min': '0', 'max': '1', 'toggleOff': '0', 'hidden': 'true'},
+                                   {'0': switch})
+        self.assertNotIn('active_when', rate)
+
+    def test_meters_are_shown_read_only_and_unsupported_controls_stay_visible(self):
+        for raw in [{'type': 'grMeter', 'name': 'GAIN REDUCTION'}, {'type': 'meter'}]:
+            control = normalize_parameter(raw)
+            self.assertEqual((control['kind'], control['editable']), ('meter', False), raw)
+            self.assertNotIn('hidden', control)
+        cab = normalize_parameter({'type': 'float', 'min': 'MIN_CABSIM_DB', 'max': '0'})
+        self.assertFalse(cab['editable'])
+        self.assertNotIn('hidden', cab)
 
     def test_int_commands_stay_read_only(self):
         c = normalize_parameter({'type': 'int', 'name': 'EXPORT MODEL', 'min': '0', 'max': '1', 'steps': '2'})

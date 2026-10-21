@@ -270,7 +270,7 @@ public final class EditorCoordinator {
                 if !required {
                     trusted = true; phase = .loading; status = "Trusted · connecting"; send("connect"); return
                 }
-                // The Mac no longer trusts this phone (it quit or trust was revoked).
+                // The Mac no longer trusts this phone (trust was revoked or evicted).
                 if offeredTrust, let macID { trustTokens[macID] = nil }
                 approvalCode = DeviceIdentity.approvalCode(token)
                 phase = .awaitingApproval; status = "Approve on Mac, then authorize"

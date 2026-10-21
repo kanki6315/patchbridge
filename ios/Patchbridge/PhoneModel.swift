@@ -51,10 +51,8 @@ final class PhoneModel: ObservableObject {
     func background() { coordinator.setBackgrounded(true) }
     func foreground() { coordinator.setBackgrounded(false) }
     func loadDemo() {
-        struct Fixture: Decodable { let catalog: EditorCatalog; let snapshot: PresetSnapshot }
         do {
-            guard let url = Bundle.main.url(forResource: "qc-editor", withExtension: "json") else { throw EditorFailure.invalidState }
-            let fixture = try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))
+            let fixture = try DemoFixture.load()
             tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0
             try demoEditor.load(snapshot: fixture.snapshot, catalog: fixture.catalog, session: "demo", connection: "demo", revision: 0, operations: ["set_parameter", "save"])
             demo = true; notice = nil; liveActivity.sync(self); version += 1
@@ -95,9 +93,7 @@ final class PhoneModel: ObservableObject {
     }
     func name(_ block: PresetSnapshot.Block) -> String { editor.catalog?.models[block.model_id]?.name ?? "Unknown block" }
     func category(_ block: PresetSnapshot.Block) -> BlockCategory { BlockCategory(editor.catalog?.models[block.model_id]?.category ?? "") }
-    func parameters(_ block: PresetSnapshot.Block) -> [String] {
-        (block.scenes[snapshot?.scene ?? ""]?.parameters.keys.map { $0 } ?? []).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
-    }
+    func parameters(_ block: PresetSnapshot.Block) -> [String] { editor.visibleParameters(blockID: block.id) }
     func location(_ snapshot: PresetSnapshot) -> String {
         if snapshot.preset_id.hasPrefix("captured:") { return snapshot.preset_id.replacingOccurrences(of: "captured:", with: "").replacingOccurrences(of: ":", with: " · ") }
         return "Current preset"

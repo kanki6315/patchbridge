@@ -14,7 +14,7 @@ struct BridgeDevice: Identifiable, Equatable {
     var trustID: UUID?
     var trusted: Bool { trustID != nil }
 }
-/// A device trusted to reconnect without a code until the bridge stops or quits.
+/// A device trusted to reconnect without a code until its trust is revoked.
 struct TrustedDevice: Identifiable, Equatable {
     let id: UUID
     let name: String
@@ -240,14 +240,16 @@ final class MacBridgeModel: ObservableObject {
     private let queue = DispatchQueue(label: "patchbridge.mac-host")
     @Published private(set) var isSimulation = false
     private var generation = UUID()
+    /// The live bridge's trusted devices, shared by every live backend this app creates.
+    private static let trust = TrustRegistry(storage: KeychainTrustStorage())
     init(backend: OfflineBridgeBackend? = nil) {
-        self.backend = backend ?? LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue))
+        self.backend = backend ?? LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue), trust: Self.trust)
         isSimulation = !self.backend.isLive
         detail = isSimulation ? "Start the bridge to try a simulated phone connection." : "Connect your QC over USB and close Cortex Control. Start the bridge to connect your iPhone."
     }
     func setSimulation(_ enabled: Bool) {
         guard phase == .stopped, !busy else { return }
-        backend = enabled ? BundledOfflineBackend() : LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue))
+        backend = enabled ? BundledOfflineBackend() : LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue), trust: Self.trust)
         isSimulation = enabled
         presentation = MacBridgePresentation()
         detail = enabled ? "Simulation uses no Bluetooth or USB." : "Connect your QC over USB and close Cortex Control. Start the bridge to connect your iPhone."

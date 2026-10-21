@@ -21,6 +21,16 @@ STREAMED = {'KeepAlive', 'CPULoad', 'GlobalTempo', 'IOMeter', 'GridModelMeter', 
 MUTE_TIMEOUT = 1.5
 
 
+def active(definitions, parameter, values, depth=0):
+    """False while a conditional control's switch is elsewhere, or that switch is itself inactive."""
+    rule = definitions.get(parameter, {}).get('control', {}).get('active_when')
+    if not rule:
+        return True
+    value = values.get(rule['parameter'])
+    return (depth < 8 and type(value) in (int, float) and any(abs(value - v) < 1e-6 for v in rule['values'])
+            and active(definitions, rule['parameter'], values, depth + 1))
+
+
 class USBAdapter:
     operations = OPERATIONS
 
@@ -228,8 +238,10 @@ class USBAdapter:
                 for index, param in enumerate(model.params):
                     definition = definitions.get(str(index), {})
                     numeric = all(v.WhichOneof('value') == 'float_value' for v in param.param_values)
+                    # Hidden and unsupported controls are never written, whatever the phone sends.
                     if (numeric and param.param_values and not param.scene_mode and not param.expression
-                            and definition.get('type') in WRITABLE_TYPES):
+                            and definition.get('type') in WRITABLE_TYPES
+                            and definition.get('control', {}).get('editable')):
                         editable.append(str(index))
                     for s in range(8):
                         if not param.param_values:
@@ -239,6 +251,9 @@ class USBAdapter:
                         v = param.param_values[s if param.scene_mode else 0]
                         field = v.WhichOneof('value')
                         scenes[chr(65+s)]['parameters'][str(index)] = getattr(v, field) if field else None
+                # A conditional control is writable only while its switch makes it active.
+                current = scenes[chr(65+scene.selected_scene)]['parameters']
+                editable = [p for p in editable if active(definitions, p, current)]
                 blocks.append({'id': f'{row}:{column}', 'position': [row, column],
                                'model_id': str(model.hash), 'scenes': scenes,
                                'editable_parameters': editable})
@@ -265,7 +280,7 @@ class USBAdapter:
             block = next((b for b in current['blocks'] if b['id'] == payload.get('block_id')), None)
             parameter = payload.get('parameter_id')
             if block is None or not isinstance(parameter, str) or parameter not in block['editable_parameters']:
-                raise BridgeError('unsupported_parameter', 'Parameter is unknown, scene-assigned or expression-controlled.')
+                raise BridgeError('unsupported_parameter', 'Parameter is unknown, hidden, unsupported, scene-assigned, expression-controlled or inactive.')
             value = payload.get('value')
             if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
                 raise BridgeError('invalid_value', 'USB values must be normalized numbers in [0, 1].')

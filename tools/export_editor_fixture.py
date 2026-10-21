@@ -3,7 +3,8 @@ import hashlib
 import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
-from patchbridge.metadata import WRITABLE_TYPES, normalize_models
+from patchbridge.metadata import WRITABLE_TYPES, normalize_models, normalize_parameter
+from patchbridge.usb import active
 
 root = Path(__file__).resolve().parents[1]
 source = root / 'hardware-results/2026-10-20'
@@ -27,15 +28,20 @@ for row, chain in enumerate(spec['chains']):
             scenes[chr(65+scene)]['bypass'] = value
         editable = []
         definitions = models.get(str(block['hash']), {}).get('parameters', {})
+        controls = {i: {'control': normalize_parameter(d, definitions)} for i, d in definitions.items()}
         for index, param in enumerate(block['params']):
             values = param['values']
+            # Like the live adapter: hidden and unsupported controls are never writable.
             if (values and all(v[0] is not None for v in values) and not param['scene_mode']
-                    and not param['expression'] and definitions.get(str(index), {}).get('type') in WRITABLE_TYPES):
+                    and not param['expression'] and definitions.get(str(index), {}).get('type') in WRITABLE_TYPES
+                    and controls[str(index)]['control']['editable']):
                 editable.append(str(index))
             for scene in range(8):
                 value_index = scene if param['scene_mode'] else 0
                 if value_index < len(values):
                     scenes[chr(65+scene)]['parameters'][str(index)] = next((v for v in values[value_index] if v is not None), None)
+        # Like the live adapter: conditional controls are writable only while active in scene F.
+        editable = [p for p in editable if active(controls, p, scenes['F']['parameters'])]
         blocks.append({'id': f'{row}:{column}', 'model_id': str(block['hash']), 'position': [row, column],
                        'scenes': scenes, 'editable_parameters': editable})
 used = {b['model_id'] for b in blocks}

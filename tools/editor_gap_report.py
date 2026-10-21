@@ -3,7 +3,7 @@
 
 Reads a captured ModelRepo.xml offline and classifies every parameter with the same
 rules the bridge uses. Parameters marked hidden in the catalog aren't shown on the QC,
-so they're counted separately. Never opens USB.
+and meters and placeholders aren't controls, so both are counted separately. Never opens USB.
 """
 import argparse
 from collections import Counter, defaultdict
@@ -25,12 +25,15 @@ def classify(xml):
     rows = []
     for category in ET.fromstring(xml).findall('Category'):
         for model in category.findall('Model'):
+            parameters = {str(i): dict(p.attrib) for i, p in enumerate(model.findall('Parameter'))}
             for index, parameter in enumerate(model.findall('Parameter')):
                 raw = dict(parameter.attrib)
-                control = normalize_parameter(raw)
+                control = normalize_parameter(raw, parameters)
                 rows.append({'category': category.get('name'), 'model': model.get('name'),
                              'model_id': model.get('id'), 'index': index, 'name': raw.get('name', ''),
-                             'type': raw.get('type', ''), 'hidden': raw.get('hidden') == 'true',
+                             'type': raw.get('type', ''),
+                             # Meters are shown read-only on the phone but aren't controls, so the report skips them too.
+                             'hidden': control.get('hidden', False) or control['kind'] == 'meter',
                              'status': EDITABLE if control['editable'] else control['reason'],
                              'mapping': control.get('mapping') or control['kind']})
     return rows
@@ -70,7 +73,7 @@ def markdown(summary):
     lines = [
         '# Editor gap report', '',
         f"{s['visible']} visible parameters across {s['models']} models "
-        f"({s['hidden']} more are hidden on the QC and not counted).", '',
+        f"({s['hidden']} more are hidden on the QC or are meters and placeholders, and not counted).", '',
         f"- Editable: **{s['editable']} ({percent(s['editable'], s['visible'])})**",
         f"- Fully editable models: {s['fully_editable_models']} of {s['models']}", '',
         '## Why parameters are read-only', '', '| Parameters | Share | Status |', '|---:|---:|---|',

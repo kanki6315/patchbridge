@@ -112,6 +112,54 @@ extension GenericEditorTests {
             XCTAssertFalse(bad.accepts(.number(0.5)), corrupt)
         }
     }
+    func testConditionalControlIsReadOnlyWhileItsSwitchIsInTheOtherPosition() throws {
+        func editor(sync: Double) throws -> GenericEditor {
+            let json = """
+            {"catalog": {"id": "c", "metadata_version": 1, "models": {"9": {"name": "Simple Delay", "parameters": {
+               "0": {"control": {"kind": "enum", "encoding": "qc_normalized", "name": "SYNC", "unit": "", "editable": true,
+                     "options": [{"label": "Off", "value": 0}, {"label": "On", "value": 1}]}},
+               "1": {"control": {"kind": "number", "encoding": "qc_normalized", "name": "SYNC NOTE", "unit": "", "editable": true,
+                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "0", "values": [1]}}},
+               "2": {"control": {"kind": "number", "encoding": "qc_normalized", "name": "DELAY TIME", "unit": "ms", "editable": true,
+                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "0", "values": [0]}}}}}}},
+             "snapshot": {"preset_id": "p", "catalog_id": "c", "name": "Test", "scene": "A", "dirty": false,
+               "blocks": [{"id": "0:0", "model_id": "9", "position": [0, 0], "editable_parameters": ["0", "1", "2"],
+                 "scenes": {"A": {"parameters": {"0": \(sync), "1": 0.25, "2": 0.5}}}}]}}
+            """
+            let f = try JSONDecoder().decode(Fixture.self, from: Data(json.utf8))
+            return try self.editor(f)
+        }
+        let free = try editor(sync: 0)
+        XCTAssertEqual(free.readOnlyReason(blockID: "0:0", parameterID: "1"), "Inactive while SYNC is Off.")
+        XCTAssertNil(free.readOnlyReason(blockID: "0:0", parameterID: "2"))
+        XCTAssertThrowsError(try free.propose(blockID: "0:0", parameterID: "1", value: .number(0.5)))
+        let synced = try editor(sync: 1)
+        XCTAssertNil(synced.readOnlyReason(blockID: "0:0", parameterID: "1"))
+        XCTAssertEqual(synced.readOnlyReason(blockID: "0:0", parameterID: "2"), "Inactive while SYNC is On.")
+        XCTAssertNil(synced.readOnlyReason(blockID: "0:0", parameterID: "0"))
+    }
+    func testConditionalControlFollowsStepsAndItsSwitchsOwnState() throws {
+        func editor(link: Double, adjust: Double) throws -> GenericEditor {
+            let json = """
+            {"catalog": {"id": "c", "metadata_version": 1, "models": {"9": {"name": "Phase Doctor", "parameters": {
+               "0": {"control": {"kind": "enum", "encoding": "qc_normalized", "name": "STEREO LINK", "unit": "", "editable": true,
+                     "options": [{"label": "Unlinked", "value": 0}, {"label": "Linked", "value": 1}]}},
+               "1": {"control": {"kind": "enum", "encoding": "qc_normalized", "name": "ADJUST R", "unit": "", "editable": true,
+                     "options": [{"label": "Bypass", "value": 0}, {"label": "90", "value": 0.5}, {"label": "180", "value": 1}],
+                     "active_when": {"parameter": "0", "values": [0]}}},
+               "2": {"control": {"kind": "number", "encoding": "qc_normalized", "name": "SHIFT R", "unit": "", "editable": true,
+                     "minimum": 0, "maximum": 1, "mapping": "power", "exponent": 1, "active_when": {"parameter": "1", "values": [0.5, 1]}}}}}}},
+             "snapshot": {"preset_id": "p", "catalog_id": "c", "name": "Test", "scene": "A", "dirty": false,
+               "blocks": [{"id": "0:0", "model_id": "9", "position": [0, 0], "editable_parameters": ["0", "1", "2"],
+                 "scenes": {"A": {"parameters": {"0": \(link), "1": \(adjust), "2": 0.25}}}}]}}
+            """
+            return try self.editor(try JSONDecoder().decode(Fixture.self, from: Data(json.utf8)))
+        }
+        XCTAssertNil(try editor(link: 0, adjust: 0.5).readOnlyReason(blockID: "0:0", parameterID: "2"))
+        XCTAssertEqual(try editor(link: 0, adjust: 0).readOnlyReason(blockID: "0:0", parameterID: "2"), "Inactive while ADJUST R is Bypass.")
+        XCTAssertEqual(try editor(link: 1, adjust: 1).readOnlyReason(blockID: "0:0", parameterID: "2"), "Inactive while ADJUST R is inactive.")
+        XCTAssertEqual(try editor(link: 1, adjust: 1).readOnlyReason(blockID: "0:0", parameterID: "1"), "Inactive while STEREO LINK is Linked.")
+    }
     func testExternalStateCancelsPendingEdit() throws {
         let f = try fixture(); let model = try editor(f)
         let edit = try model.propose(blockID: "0:1", parameterID: "0", value: .number(0.5))
@@ -171,6 +219,31 @@ extension GenericEditorTests {
             XCTAssertThrowsError(try model.load(snapshot: invalid, catalog: f.catalog, session: "s", connection: "c", revision: 0, operations: ["set_parameter"]), variant)
             XCTAssertNil(model.snapshot)
         }
+    }
+    func testHiddenAndUndefinedParametersAreNotListed() throws {
+        let f = try fixture(); let model = try editor(f)
+        // Transpose shows only SEMITONES on the QC: MIX and PITCH COARSE/FINE are hidden, and 4 has no definition.
+        XCTAssertEqual(model.visibleParameters(blockID: "0:4"), ["3"])
+        XCTAssertEqual(model.control(blockID: "0:4", parameterID: "0")?.name, "MIX")
+        XCTAssertEqual(model.readOnlyReason(blockID: "0:4", parameterID: "0"), "Hidden on the QC.")
+        XCTAssertThrowsError(try model.propose(blockID: "0:4", parameterID: "0", value: .number(0.5)))
+        XCTAssertNil(model.readOnlyReason(blockID: "0:4", parameterID: "3"))
+        // The QC draws Opto Comp's gain reduction meter, so it stays listed, read-only.
+        XCTAssertEqual(model.visibleParameters(blockID: "0:1"), ["0", "1", "2", "3", "4", "5", "6"])
+        XCTAssertEqual(model.readOnlyReason(blockID: "0:1", parameterID: "6"), "Meter, not a control.")
+        XCTAssertEqual(model.visibleParameters(blockID: "unknown"), [])
+    }
+    func testBlockWithoutCatalogModelListsEveryValueReadOnly() throws {
+        let f = try fixture()
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(f.snapshot)) as! [String: Any]
+        var blocks = object["blocks"] as! [[String: Any]]
+        let index = blocks.firstIndex { $0["id"] as? String == "0:4" }!
+        blocks[index]["model_id"] = "unknown"; object["blocks"] = blocks
+        let state = try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
+        let model = GenericEditor()
+        try model.load(snapshot: state, catalog: f.catalog, session: "s", connection: "c", revision: 0, operations: ["set_parameter"])
+        XCTAssertEqual(model.visibleParameters(blockID: "0:4"), ["0", "1", "2", "3", "4"])
+        XCTAssertTrue(model.visibleParameters(blockID: "0:4").allSatisfy { model.readOnlyReason(blockID: "0:4", parameterID: $0) != nil })
     }
     func testCapturedUnknownModelMissingSceneAndTypedValuesRemainReadOnly() throws {
         let f = try fixture()

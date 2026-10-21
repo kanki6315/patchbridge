@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 /// Mac-issued trust tokens by Mac ID, kept in the Keychain on this device only.
-/// A token stops working when its Mac quits Patchbridge or revokes trust.
+/// A token stops working when its Mac revokes trust.
 enum TrustStore {
     private static let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                                kSecAttrService as String: "com.arjunakankipati.patchbridge.trust",

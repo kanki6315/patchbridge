@@ -223,14 +223,14 @@
             "type": "grMeter",
             "units": "dB",
             "control": {
-              "kind": "unknown",
+              "kind": "meter",
               "encoding": "qc_normalized",
               "name": "GAIN REDUCTION",
               "unit": "dB",
               "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
-              "reason": "Unsupported parameter type."
+              "reason": "Meter, not a control."
             }
           }
         }
@@ -306,14 +306,23 @@
             "type": "float",
             "units": "Hz",
             "control": {
-              "kind": "unknown",
+              "kind": "number",
               "encoding": "qc_normalized",
               "name": "RATE",
               "unit": "Hz",
-              "editable": false,
+              "editable": true,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
-              "reason": "Conditional control dependencies are not yet implemented."
+              "minimum": 0.5,
+              "maximum": 6.5,
+              "mapping": "power",
+              "exponent": 0.6,
+              "active_when": {
+                "parameter": "6",
+                "values": [
+                  0.0
+                ]
+              }
             }
           },
           "3": {
@@ -432,14 +441,77 @@
             "type": "rotarySwitch",
             "units": "",
             "control": {
-              "kind": "unknown",
+              "kind": "enum",
               "encoding": "qc_normalized",
               "name": "SYNC NOTE",
               "unit": "",
-              "editable": false,
+              "editable": true,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
-              "reason": "Conditional control dependencies are not yet implemented."
+              "options": [
+                {
+                  "label": "1/16",
+                  "value": 0.0
+                },
+                {
+                  "label": "1/8T",
+                  "value": 0.07692307692307693
+                },
+                {
+                  "label": "1/16D",
+                  "value": 0.15384615384615385
+                },
+                {
+                  "label": "1/8",
+                  "value": 0.23076923076923078
+                },
+                {
+                  "label": "1/4T",
+                  "value": 0.3076923076923077
+                },
+                {
+                  "label": "1/8D",
+                  "value": 0.38461538461538464
+                },
+                {
+                  "label": "1/4",
+                  "value": 0.46153846153846156
+                },
+                {
+                  "label": "1/2T",
+                  "value": 0.5384615384615384
+                },
+                {
+                  "label": "1/4D",
+                  "value": 0.6153846153846154
+                },
+                {
+                  "label": "1/2",
+                  "value": 0.6923076923076923
+                },
+                {
+                  "label": "1/1T",
+                  "value": 0.7692307692307693
+                },
+                {
+                  "label": "1/2D",
+                  "value": 0.8461538461538461
+                },
+                {
+                  "label": "1/1",
+                  "value": 0.9230769230769231
+                },
+                {
+                  "label": "1/1D",
+                  "value": 1.0
+                }
+              ],
+              "active_when": {
+                "parameter": "6",
+                "values": [
+                  1.0
+                ]
+              }
             }
           }
         }
@@ -856,7 +928,8 @@
               "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
-              "reason": "String writes are not validated."
+              "reason": "Hidden on the QC.",
+              "hidden": true
             }
           }
         }
@@ -1041,13 +1114,15 @@
               "encoding": "qc_normalized",
               "name": "MIX",
               "unit": "%",
-              "editable": true,
+              "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
               "minimum": 0.0,
               "maximum": 100.0,
               "mapping": "power",
-              "exponent": 1.0
+              "exponent": 1.0,
+              "hidden": true,
+              "reason": "Hidden on the QC."
             }
           },
           "1": {
@@ -1066,13 +1141,15 @@
               "encoding": "qc_normalized",
               "name": "PITCH COARSE",
               "unit": "Semitones",
-              "editable": true,
+              "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
               "minimum": -24.0,
               "maximum": 24.0,
               "mapping": "power",
-              "exponent": 1.0
+              "exponent": 1.0,
+              "hidden": true,
+              "reason": "Hidden on the QC."
             }
           },
           "2": {
@@ -1091,13 +1168,15 @@
               "encoding": "qc_normalized",
               "name": "PITCH FINE",
               "unit": "Cents",
-              "editable": true,
+              "editable": false,
               "mapping_source": "device_metadata",
               "verification": "not_hardware_calibrated",
               "minimum": -100.0,
               "maximum": 100.0,
               "mapping": "power",
-              "exponent": 1.0
+              "exponent": 1.0,
+              "hidden": true,
+              "reason": "Hidden on the QC."
             }
           },
           "3": {
@@ -1633,9 +1712,6 @@
           }
         },
         "editable_parameters": [
-          "0",
-          "1",
-          "2",
           "3"
         ]
       },
@@ -2453,8 +2529,7 @@
           "3",
           "4",
           "5",
-          "6",
-          "7"
+          "6"
         ]
       },
       {

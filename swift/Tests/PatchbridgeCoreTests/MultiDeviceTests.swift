@@ -188,10 +188,11 @@ final class MultiDeviceTests: XCTestCase {
         XCTAssertThrowsError(try send(refused, "connect"))
     }
 
-    func testHelperFailureEndsEveryDeviceAndClearsTrust() throws {
+    func testHelperFailureEndsEveryDeviceButKeepsTrust() throws {
         let helper = try launch(); defer { helper.stop() }
         let shared = SharedUSBSession(helper: helper)
         let (phone, first) = try join(shared, name: "iPhone", trusting: true)
+        let token = try XCTUnwrap(first["trust_token"] as? String)
         let (pad, _) = try join(shared, name: "iPad")
         let session = try XCTUnwrap(first["session_id"])
         helper.stop()
@@ -199,6 +200,35 @@ final class MultiDeviceTests: XCTestCase {
         XCTAssertThrowsError(try send(pad, "snapshot", ["session_id": session])) { error in
             guard case BridgeFailure.unauthorized = error else { return XCTFail("Wrong error: \(error)") }
         }
-        XCTAssertTrue(shared.trust.names.isEmpty)
+        XCTAssertEqual(shared.trust.names, ["iPhone"])
+        // The phone's next hello is trusted again; only its connection ended.
+        XCTAssertEqual(try send(phone, "hello", ["device_name": "iPhone", "trust_token": token])["authorization_required"] as? Bool, false)
+    }
+
+    func testStoredTrustSurvivesANewRegistryAndRevokeClearsIt() throws {
+        final class Memory: TrustStorage {
+            var data: Data?
+            func load() -> Data? { data }
+            func save(_ data: Data?) { self.data = data }
+        }
+        let storage = Memory()
+        let helper = try launch(); defer { helper.stop() }
+        let first = SharedUSBSession(helper: helper, trust: TrustRegistry(storage: storage))
+        let (pad, connected) = try join(first, name: "iPad", trusting: true)
+        let token = try XCTUnwrap(connected["trust_token"] as? String)
+        first.remove(pad)
+        XCTAssertNotNil(storage.data)
+
+        // As after quitting and reopening Patchbridge: a fresh registry loads the entry.
+        let reopened = TrustRegistry(storage: storage)
+        XCTAssertEqual(reopened.names, ["iPad"])
+        let second = SharedUSBSession(helper: helper, trust: reopened)
+        let returning = try XCTUnwrap(second.admit())
+        XCTAssertEqual(try send(returning, "hello", ["device_name": "Studio iPad", "trust_token": token])["authorization_required"] as? Bool, false)
+        XCTAssertEqual(TrustRegistry(storage: storage).names, ["Studio iPad"]) // Renames are kept too.
+
+        second.revokeTrust(id: try XCTUnwrap(returning.trustEntryID))
+        XCTAssertNil(storage.data)
+        XCTAssertTrue(TrustRegistry(storage: storage).names.isEmpty)
     }
 }

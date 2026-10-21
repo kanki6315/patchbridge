@@ -300,25 +300,31 @@ struct PadConnectionDetails: View {
     let dismiss: () -> Void
     @AppStorage("appearance") private var appearance = "Stage"
     @AppStorage("matchSystem") private var matchSystem = false
+    @State private var showGetMac = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Connection").font(.title.bold()).padding(.bottom, 4)
-                    section("Bridge") {
-                        row("Mac", model.demo ? "Demo · no QC" : (model.coordinator.macName ?? "Connected"))
-                        row("Link", model.demo ? "None" : "Bluetooth", ok: !model.demo)
-                        if !model.demo { row("Status", model.coordinator.status) }
-                        if !model.demo && model.coordinator.trusted { row("Trusted", "Until the Mac app quits") }
+                    Text(model.demo ? "Demo preset" : "Connection").font(.title.bold()).padding(.bottom, 4)
+                    if model.demo {
+                        DemoExit(theme: theme, getMac: { showGetMac = true },
+                                 connect: { model.disconnect(); dismiss(); model.start() },
+                                 leave: { model.disconnect(); dismiss() })
+                    } else {
+                        section("Bridge") {
+                            row("Mac", model.coordinator.macName ?? "Connected")
+                            row("Link", "Bluetooth", ok: true)
+                            row("Status", model.coordinator.status)
+                            if model.coordinator.trusted { row("Trusted", "Until revoked on the Mac") }
+                        }
+                        section("Available right now") {
+                            row("Edit parameters", model.editor.supports("set_parameter") ? "Supported ones" : "Not yet", ok: model.editor.supports("set_parameter"))
+                            row("Save to this slot", model.editor.supports("save") ? "Yes" : "Not yet", ok: model.editor.supports("save"))
+                            row("Scenes, bypass, Save As", "Not yet")
+                        }
+                        ConnectionStatusSettings(model: model, theme: theme).padding(.horizontal, 4)
                     }
-                    section("Available right now") {
-                        row("Edit parameters", model.editor.supports("set_parameter") ? "Supported ones" : "Not yet", ok: model.editor.supports("set_parameter"))
-                        row("Save to this slot", model.editor.supports("save") ? "Yes" : "Not yet", ok: model.editor.supports("save"))
-                        row("Scenes, bypass, Save As", "Not yet")
-                    }
-                    if model.demo { Text("Edits and saves affect this demo only.").font(.footnote).foregroundStyle(theme.muted) }
-                    if !model.demo { ConnectionStatusSettings(model: model, theme: theme).padding(.horizontal, 4) }
                     section("App") {
                         NavigationLink {
                             AppearanceSettings(theme: theme).padding(20)
@@ -335,15 +341,20 @@ struct PadConnectionDetails: View {
                     }
                     if !model.demo {
                         Button("Refresh from Mac") { model.coordinator.refresh() }.disabled(model.busy).frame(minHeight: 44)
+                        Button(role: .destructive) { model.disconnect(); dismiss() } label: {
+                            Text("Disconnect").font(.headline).foregroundStyle(theme.danger)
+                                .frame(maxWidth: .infinity).frame(minHeight: 52).background(theme.raised, in: Capsule())
+                        }.buttonStyle(.plain).padding(.top, 8)
                     }
-                    Button(role: .destructive) { model.disconnect(); dismiss() } label: {
-                        Text(model.demo ? "Leave demo" : "Disconnect").font(.headline).foregroundStyle(theme.danger)
-                            .frame(maxWidth: .infinity).frame(minHeight: 52).background(theme.raised, in: Capsule())
-                    }.buttonStyle(.plain).padding(.top, 8)
                 }.padding(20)
             }
             .background(theme.surface.opacity(0.95))
             .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(isPresented: $showGetMac) {
+                GetMacSheet(theme: theme, url: macAppURL) { model.disconnect(); dismiss(); model.start() }.padding(20)
+                    .background(theme.surface.opacity(0.95)).foregroundStyle(theme.ink)
+                    .navigationBarTitleDisplayMode(.inline)
+            }
         }
         .frame(width: 400, height: 620)
         .foregroundStyle(theme.ink).tint(theme.signal)
