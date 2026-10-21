@@ -41,6 +41,29 @@ final class MultiDeviceTests: XCTestCase {
         XCTAssertEqual(code(late), "stale_context")
     }
 
+    private func tunerMode(_ reply: [String: Any]) -> String? {
+        ((reply["result"] as? [String: Any])?["tuner"] as? [String: Any])?["mode"] as? String
+    }
+
+    func testTheQCGetsTheStrongestTunerModeAnyDeviceWants() throws {
+        let helper = try launch(); defer { helper.stop() }
+        let shared = SharedUSBSession(helper: helper)
+        let (phone, first) = try join(shared, name: "iPhone")
+        let (pad, _) = try join(shared, name: "iPad")
+        let session = try XCTUnwrap(first["session_id"])
+        func tuner(_ device: DeviceSession, _ mode: String) throws -> String? {
+            tunerMode(try send(device, "tuner", ["session_id": session, "payload": ["mode": mode]]))
+        }
+        XCTAssertEqual(try tuner(pad, "live"), "live")
+        XCTAssertEqual(try tuner(phone, "open"), "open")
+        XCTAssertEqual(try tuner(phone, "off"), "live", "Closing one tuner must not stop another device's")
+        XCTAssertEqual(shared.tunerMode, "live")
+        shared.remove(pad)
+        XCTAssertEqual(shared.tunerMode, "off")
+        let read = try send(phone, "tuner_read", ["session_id": session, "payload": ["after": 0]])
+        XCTAssertEqual(tunerMode(read), "off")
+    }
+
     func testHelperSessionClosesOnlyWhenTheLastDeviceLeaves() throws {
         let helper = try launch(); defer { helper.stop() }
         let shared = SharedUSBSession(helper: helper)

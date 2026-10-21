@@ -7,6 +7,7 @@ final class PhoneModel: ObservableObject {
     @Published var notice: String?
     let coordinator = EditorCoordinator()
     let liveActivity = ConnectionActivityController()
+    let tuner = TunerModel()
     private let demoEditor = GenericEditor()
     private var demoRevision = 0
     var editor: GenericEditor { demo ? demoEditor : coordinator.editor }
@@ -19,9 +20,12 @@ final class PhoneModel: ObservableObject {
     /// Reconnect finds the last Mac directly instead of listing nearby ones.
     var canReconnect: Bool { coordinator.macID != nil && !demo }
     init() {
+        tuner.phone = self
         coordinator.trustTokens = TrustStore.load()
         coordinator.onChange = { [weak self] in
             guard let self else { return }
+            // A connection that ended takes the tuner with it; recovery keeps it.
+            if !self.demo, [.disconnected, .failed].contains(self.coordinator.phase), self.tuner.open || self.tuner.live { self.tuner.reset() }
             if self.coordinator.trustTokens != self.savedTrust { self.savedTrust = self.coordinator.trustTokens; TrustStore.save(self.savedTrust) }
             self.liveActivity.sync(self)
             self.version += 1
@@ -41,7 +45,7 @@ final class PhoneModel: ObservableObject {
         coordinator.setPhoneName(UserDefaults.standard.string(forKey: "patchbridge.phoneName") ?? "")
         notice = nil; liveActivity.willReconnect(); coordinator.start(reconnecting: true)
     }
-    func disconnect() { liveActivity.willDisconnect(); coordinator.disconnect(); demoEditor.disconnect(); demo = false; notice = nil; version += 1 }
+    func disconnect() { tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoEditor.disconnect(); demo = false; notice = nil; version += 1 }
     /// Settings changed: start, update or end the activity to match.
     func connectionStatusPreferenceChanged() { liveActivity.sync(self) }
     func background() { coordinator.setBackgrounded(true) }
@@ -51,7 +55,7 @@ final class PhoneModel: ObservableObject {
         do {
             guard let url = Bundle.main.url(forResource: "qc-editor", withExtension: "json") else { throw EditorFailure.invalidState }
             let fixture = try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))
-            liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0
+            tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0
             try demoEditor.load(snapshot: fixture.snapshot, catalog: fixture.catalog, session: "demo", connection: "demo", revision: 0, operations: ["set_parameter", "save"])
             demo = true; notice = nil; liveActivity.sync(self); version += 1
         } catch { notice = "The demo preset could not be loaded." }

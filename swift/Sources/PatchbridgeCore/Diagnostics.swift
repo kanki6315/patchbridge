@@ -37,8 +37,8 @@ public final class Diagnostics {
     private var sequence = 0
     private var dropped = 0
     public init(capacity: Int = 256) { self.capacity = min(1024, max(1, capacity)) }
-    private static let operations: Set<String> = ["hello", "connect", "disconnect", "identify", "capabilities", "snapshot", "catalog", "subscribe", "recover", "set_parameter", "set_bypass", "select_scene", "select_preset", "save", "save_as"]
-    private static let codes: Set<String> = ["timeout", "disconnected", "protocol_error", "unauthorized", "stale_session", "stale_context", "read_only", "overflow", "invalid_value", "invalid_request", "unsupported_operation", "unsupported_parameter", "unsupported_firmware", "adapter_failure", "already_connected", "transport_failure", "bridge_full", "revoked", "busy"]
+    private static let operations: Set<String> = ["hello", "connect", "disconnect", "identify", "capabilities", "snapshot", "catalog", "subscribe", "recover", "set_parameter", "set_bypass", "select_scene", "select_preset", "save", "save_as", "tuner", "tuner_read", "set_tuner_mute"]
+    private static let codes: Set<String> = ["timeout", "disconnected", "protocol_error", "unauthorized", "stale_session", "stale_context", "read_only", "overflow", "invalid_value", "invalid_request", "unsupported_operation", "unsupported_parameter", "unsupported_firmware", "adapter_failure", "already_connected", "transport_failure", "bridge_full", "revoked", "busy", "tuner_closed", "not_confirmed"]
     public func record(_ event: Event, operation: String? = nil, code: String? = nil, duration: TimeInterval? = nil, device: Int? = nil) {
         lock.lock(); defer { lock.unlock() }
         sequence += 1

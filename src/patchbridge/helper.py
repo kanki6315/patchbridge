@@ -10,12 +10,13 @@ from uuid import uuid4
 from .adapter import Adapter, BridgeError
 from .simulator import SimulatedAdapter
 from .read_only import READ_OPERATIONS, ReadOnlyAdapter
+from . import tuner as tuning
 
 VERSION = 1
 MAX_FRAME_BYTES = 65536
 WRITES = {"set_parameter", "set_bypass", "select_scene", "select_preset", "save", "save_as"}
 OPERATIONS = {"connect", "disconnect", "identify", "capabilities", "snapshot", "catalog",
-              "subscribe"} | WRITES
+              "subscribe"} | WRITES | tuning.OPERATIONS
 
 
 class Coordinator:
@@ -104,6 +105,17 @@ class Coordinator:
                 elif operation == "subscribe":
                     self.subscribed = True
                     result = {"state": self.state}
+                elif operation in tuning.OPERATIONS:
+                    # The tuner doesn't touch the preset, so it needs no revision context.
+                    if operation not in getattr(self.adapter, "operations", OPERATIONS):
+                        raise BridgeError("unsupported_operation", "This adapter has no tuner.")
+                    if operation == "tuner":
+                        tuner = self.adapter.tuner(payload.get("mode"))
+                    elif operation == "tuner_read":
+                        tuner = self.adapter.tuner_read(payload.get("after", 0))
+                    else:
+                        tuner = self.adapter.set_tuner_mute(payload.get("value"))
+                    result = {"tuner": tuner}
                 elif operation == "snapshot":
                     state = self.adapter.snapshot()
                     if state != self.state:

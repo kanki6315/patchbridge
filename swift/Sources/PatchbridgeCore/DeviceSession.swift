@@ -82,7 +82,8 @@ public final class DeviceSession {
         }
         guard authorized else { helper.diagnostics.record(.requestRejected, operation: operation, code: "unauthorized", device: index); throw BridgeFailure.unauthorized }
         guard message["connection_id"] as? String == token else { helper.diagnostics.record(.requestRejected, operation: operation, code: "stale_session", device: index); throw BridgeFailure.staleSession }
-        if helper.readOnly && !["connect", "disconnect", "identify", "capabilities", "snapshot", "catalog", "subscribe", "recover"].contains(operation) {
+        // Starting and reading the tuner are reads; its mute is a QC setting, so read-only refuses it.
+        if helper.readOnly && !["connect", "disconnect", "identify", "capabilities", "snapshot", "catalog", "subscribe", "recover", "tuner", "tuner_read"].contains(operation) {
             helper.diagnostics.record(.writeBlocked, operation: operation, code: "read_only", device: index)
             throw BridgeFailure.readOnly
         }
@@ -119,6 +120,7 @@ public final class DeviceSession {
             switch operation {
             case "connect", "recover": result = try shared.join(self, message)
             case "disconnect": result = (try shared.leave(self, forwarding: message), false)
+            case "tuner": result = try shared.tuner(self, message)
             default: result = try shared.forward(message, for: self)
             }
         } catch {

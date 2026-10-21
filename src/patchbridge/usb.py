@@ -3,25 +3,36 @@ from copy import deepcopy
 import hashlib
 import io
 import json
+import logging
 import math
 import tarfile
+import threading
 import xml.etree.ElementTree as ET
 
 from .adapter import BridgeError
 from .metadata import OPTION_TYPES, WRITABLE_TYPES, normalize_models
+from . import tuner as tuning
 
 OPERATIONS = {'connect', 'disconnect', 'identify', 'capabilities', 'snapshot',
-              'catalog', 'subscribe', 'set_parameter', 'save'}
+              'catalog', 'subscribe', 'set_parameter', 'save'} | tuning.OPERATIONS
+# Broadcasts the QC streams on its own while a session is live. The tuner reader drops them
+# so they don't pile up between requests; anything else stays queued for the next request.
+STREAMED = {'KeepAlive', 'CPULoad', 'GlobalTempo', 'IOMeter', 'GridModelMeter', 'ModuleStats'}
+MUTE_TIMEOUT = 1.5
 
 
 class USBAdapter:
     operations = OPERATIONS
 
-    def __init__(self, factory=None):
+    def __init__(self, factory=None, protocol=None):
         self.factory = factory
+        self.protocol = protocol
         self.qc = None
         self.state = None
         self.metadata = None
+        self.tuning = tuning.TunerBuffer()
+        self.reader = None
+        self.reader_stop = None
 
     def connect(self):
         if self.factory is None:
@@ -61,11 +72,115 @@ class USBAdapter:
             raise
 
     def disconnect(self):
+        if self.qc is not None and self.tuning.state()['mode'] != 'off':
+            try:
+                self.tuner('off')
+            except Exception:
+                logging.exception('Could not turn the tuner off before closing USB')
+        self._stop_reader()
         qc, self.qc = self.qc, None
         self.state = None
         self.metadata = None
+        self.tuning.reset()
         if qc is not None:
             qc.close()
+
+    # Tuner. Captured from Cortex Control on CorOS 4.1.1: ShowTuner show, then Tuner UPDATE
+    # enable_meter, then Tuner READ starts a stream of pitch in Tuner.meter (Hz, about ten a
+    # second while a note rings). ShowTuner without show alone leaves it streaming, so stopping
+    # also clears enable_meter. The QC's own screen never changes.
+    def _protocol(self):
+        if self.protocol is None:
+            import qc_mcp.protocol as protocol
+            self.protocol = protocol
+        return self.protocol
+
+    def _send(self, name, **fields):
+        P = self._protocol()
+        self.qc.send(name, P.message_class(name)(**fields))
+
+    def tuner(self, mode):
+        if self.qc is None:
+            raise BridgeError('disconnected', 'No USB session.')
+        tuning.validate_mode(mode)
+        P = self._protocol()
+        update, read = P.ACTION['UPDATE'], P.ACTION['READ']
+        # Mute only applies while the tuner is shown; the live tuner never shows it, so it never mutes.
+        self._send('ShowTuner', action=update, request_id=self.qc.next_request_id(), show=mode == 'open')
+        self._send('Tuner', action=update, request_id=self.qc.next_request_id(), enable_meter=mode != 'off')
+        if mode == 'off':
+            self._stop_reader()
+            self.tuning.reset()
+        else:
+            self._send('Tuner', action=read)
+            self.tuning.set_mode(mode)
+            self._start_reader()
+        return self.tuning.state()
+
+    def tuner_read(self, after):
+        if self.qc is None:
+            raise BridgeError('disconnected', 'No USB session.')
+        return self.tuning.state(tuning.validate_after(after))
+
+    def set_tuner_mute(self, value):
+        if self.qc is None:
+            raise BridgeError('disconnected', 'No USB session.')
+        if type(value) is not bool:
+            raise BridgeError('invalid_value', 'Mute must be a boolean.')
+        if self.tuning.state()['mode'] != 'open':
+            raise BridgeError('tuner_closed', 'Open the tuner before changing mute.')
+        before = self.tuning.reports
+        P = self._protocol()
+        self._send('Tuner', action=P.ACTION['UPDATE'], request_id=self.qc.next_request_id(), mute=value)
+        # The QC echoes every mute change; only that echo confirms it.
+        if not self.tuning.wait_for_mute(value, before, MUTE_TIMEOUT):
+            raise BridgeError('not_confirmed', 'The QC did not confirm the mute change.')
+        return self.tuning.state()
+
+    def _start_reader(self):
+        if self.reader is not None:
+            return
+        self.reader_stop = threading.Event()
+        self.reader = threading.Thread(target=self._read_tuner, args=(self.qc, self.reader_stop),
+                                       name='tuner-reader', daemon=True)
+        self.reader.start()
+
+    def _stop_reader(self):
+        reader, stop = self.reader, self.reader_stop
+        self.reader = self.reader_stop = None
+        if stop is not None:
+            stop.set()
+        if reader is not None and reader is not threading.current_thread():
+            reader.join(timeout=1)
+
+    def _read_tuner(self, qc, stop):
+        """Pumps USB between requests. Holding the transport's lock only per pass lets requests
+        interleave, and a request's replies arrive while it holds the lock, never here."""
+        P = self._protocol()
+        while not stop.is_set():
+            try:
+                with qc._io_lock:
+                    qc._collect(0.05)
+                    kept = []
+                    for item in qc._pending:
+                        name = P.COMMANDS.get(item[0])
+                        if name == 'Tuner':
+                            if item[1] is not None:
+                                self._tuner_message(item[1])
+                        elif name not in STREAMED:
+                            kept.append(item)
+                    qc._pending = kept
+            except Exception:
+                logging.exception('Tuner reader stopped')
+                return
+            stop.wait(0.01)
+
+    def _tuner_message(self, message):
+        fields = {field.name: value for field, value in message.ListFields()}
+        if 'meter' in fields:
+            self.tuning.add(fields['meter'])
+        elif 'mute' in fields or 'input_port_id' in fields:
+            self.tuning.report(muted=fields.get('mute'), input_port=fields.get('input_port_id'))
 
     def catalog(self):
         if self.qc is None:

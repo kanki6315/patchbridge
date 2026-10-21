@@ -13,6 +13,7 @@
 		0BD868FE5FC0C45B458D122F /* PatchbridgeWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */; };
 		184795C273F446AC30468366 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */; };
+		2BC0C6312B4C87438B651749 /* TunerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFE7BE427D998DC25CF9AD22 /* TunerViews.swift */; };
 		31876869DBD5740176721AEB /* PadWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */; };
 		444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EB72B83CCED483250AEC0C /* Theme.swift */; };
 		47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */; };
@@ -20,6 +21,7 @@
 		5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */; };
 		5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */; };
 		65F0DF151692770297348421 /* Chunks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F75207A678F28257EA105F3 /* Chunks.swift */; };
+		7221B70D0FD21ED4F5DD5597 /* Tuner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C63A6F4CA999A8014567F2A6 /* Tuner.swift */; };
 		8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */; };
 		935F95CD7F754CD972C43AAC /* ConnectionActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F9F5091A58713B6AB66672 /* ConnectionActivityWidget.swift */; };
 		A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */; };
@@ -84,6 +86,7 @@
 		AA318B3E68E63CA3046061E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PatchbridgeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
+		C63A6F4CA999A8014567F2A6 /* Tuner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tuner.swift; sourceTree = "<group>"; };
 		D1060EC516FC395E41ABB898 /* qc-editor.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "qc-editor.json"; sourceTree = "<group>"; };
 		D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneModel.swift; sourceTree = "<group>"; };
 		D296E6B8332175985BB77130 /* TrustStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustStore.swift; sourceTree = "<group>"; };
@@ -94,6 +97,7 @@
 		EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoWorkspaceView.swift; sourceTree = "<group>"; };
 		EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Patchbridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F59B2D058255097DC58ED315 /* EditorCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorCoordinator.swift; sourceTree = "<group>"; };
+		FFE7BE427D998DC25CF9AD22 /* TunerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -140,6 +144,7 @@
 				9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */,
 				81EB72B83CCED483250AEC0C /* Theme.swift */,
 				D296E6B8332175985BB77130 /* TrustStore.swift */,
+				FFE7BE427D998DC25CF9AD22 /* TunerViews.swift */,
 			);
 			path = Patchbridge;
 			sourceTree = "<group>";
@@ -176,6 +181,7 @@
 				F59B2D058255097DC58ED315 /* EditorCoordinator.swift */,
 				E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */,
 				42253D1C8C450F010DE25BCD /* GenericEditor.swift */,
+				C63A6F4CA999A8014567F2A6 /* Tuner.swift */,
 			);
 			name = PatchbridgeCore;
 			path = ../swift/Sources/PatchbridgeCore;
@@ -345,6 +351,8 @@
 				47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */,
 				444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */,
 				07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */,
+				7221B70D0FD21ED4F5DD5597 /* Tuner.swift in Sources */,
+				2BC0C6312B4C87438B651749 /* TunerViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

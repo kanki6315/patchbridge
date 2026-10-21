@@ -4,6 +4,8 @@ import SwiftUI
 /// Compact width (Split View, Slide Over, iPhone) keeps the iPhone layout in `EditorView`.
 struct PadWorkspaceView: View {
     @ObservedObject var model: PhoneModel
+    @ObservedObject var tuner: TunerModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let theme: PhoneTheme
     @State private var row = 0
     @State private var selected: String?
@@ -17,7 +19,12 @@ struct PadWorkspaceView: View {
             let portrait = geometry.size.height > geometry.size.width
             if let snapshot = model.snapshot {
                 VStack(alignment: .leading, spacing: 16) {
-                    topBar(snapshot)
+                    topBar(snapshot, portrait: portrait)
+                    // Portrait has no free space in the top bar, so the band takes a row of its own.
+                    if portrait && tuner.live {
+                        TunerBand(readout: tuner.readout, theme: theme, wide: true) { tuner.setOpen(true) }
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                     if portrait {
                         VStack(alignment: .leading, spacing: 16) {
                             scenes(snapshot)
@@ -41,6 +48,7 @@ struct PadWorkspaceView: View {
                     }
                 }
                 .padding(.horizontal, 20).padding(.top, 8)
+                .animation(reduceMotion ? nil : .timingCurve(0.22, 1, 0.36, 1, duration: 0.25), value: tuner.live)
                 .onAppear { selectDefault(snapshot) }
                 .onChange(of: snapshot) { _, value in selectDefault(value) }
             }
@@ -58,7 +66,7 @@ struct PadWorkspaceView: View {
 
     // MARK: Top bar
 
-    private func topBar(_ snapshot: PresetSnapshot) -> some View {
+    private func topBar(_ snapshot: PresetSnapshot, portrait: Bool) -> some View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(snapshot.name).font(.largeTitle.bold()).lineLimit(1).minimumScaleFactor(0.7)
@@ -68,11 +76,21 @@ struct PadWorkspaceView: View {
                 }.font(.subheadline.weight(.medium))
             }.layoutPriority(1)
             Spacer(minLength: 8)
-            toast
+            // Landscape: the live tuner takes the free space and notices move just below the bar.
+            if tuner.live && !portrait { TunerBand(readout: tuner.readout, theme: theme) { tuner.setOpen(true) } } else { toast }
             Spacer(minLength: 8)
-            statusPill
-            saveButton(snapshot)
+            if tuner.available {
+                TunerButton(tuner: tuner, theme: theme, size: 48) { tuner.setOpen(true) }
+                    .popover(isPresented: Binding(get: { tuner.open }, set: { if !$0 { tuner.setOpen(false) } }), arrowEdge: .top) {
+                        TunerPopover(tuner: tuner, theme: theme)
+                    }
+            }
+            // The pill and Save keep their size; the band gives way.
+            statusPill.fixedSize()
+            saveButton(snapshot).fixedSize()
         }
+        .overlay(alignment: .bottom) { if tuner.live && !portrait { toast.offset(y: 60).allowsHitTesting(false) } }
+        .zIndex(1)
     }
     /// Notices sit in the top bar's free space, between the preset name and the status pill.
     @ViewBuilder private var toast: some View {

@@ -56,6 +56,36 @@ final class PhoneFlowTests: XCTestCase {
         capture("iPhone landscape")
         XCUIDevice.shared.orientation = .portrait
     }
+    /// Taps the switch itself; a tap on its label doesn't always flip it.
+    private func flip(_ toggle: XCUIElement) {
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+    }
+    func testLiveTunerStaysOnEveryScreen() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else { throw XCTSkip("iPhone tuner line only") }
+        let app = XCUIApplication()
+        app.launchArguments = ["--demo", "--stage"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Tremonti w Mic"].waitForExistence(timeout: 10))
+        if duoScreen(app) != nil { throw XCTSkip("iPhone Duo layouts; see testDuoWorkspace") }
+        XCTAssertFalse(app.buttons["tuner-line"].exists)
+        app.buttons["tuner-button"].tap()
+        XCTAssertTrue(app.switches["Mute output"].waitForExistence(timeout: 5))
+        capture("Full tuner")
+        flip(app.switches["Live tuner"])
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.buttons["tuner-line"].waitForExistence(timeout: 5))
+        capture("Live tuner line")
+        app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Opto Comp")).firstMatch.tap()
+        XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["tuner-line"].waitForExistence(timeout: 2), "The line stays in the block editor")
+        capture("Live tuner in the editor")
+        app.buttons["tuner-line"].tap()
+        XCTAssertTrue(app.switches["Live tuner"].waitForExistence(timeout: 5))
+        flip(app.switches["Live tuner"])
+        app.buttons["Done"].tap()
+        XCTAssertFalse(app.buttons["tuner-line"].waitForExistence(timeout: 2))
+    }
     func testWelcomeAndReadOnlyBlock() {
         let app = XCUIApplication()
         app.launchArguments = ["--stage"]

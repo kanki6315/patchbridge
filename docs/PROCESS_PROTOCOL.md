@@ -30,6 +30,9 @@ context. Even saves and scene/preset selection require this context.
 | select_preset | preset_id | confirmed state |
 | save | `{}` | confirmed state |
 | save_as | preset_id | confirmed state |
+| tuner | mode: off, live or open | tuner state |
+| tuner_read | after: last reading number seen | tuner state with newer readings |
+| set_tuner_mute | boolean value | tuner state, once the QC echoes it |
 
 `catalog.payload.model_ids` accepts at most 128 nonempty strings of at most
 128 characters each. Omission returns the full catalog; an empty list returns no
@@ -55,6 +58,33 @@ The simulator has no asynchronous physical-device events (capabilities explicitl
 reports `device_events: false`). The Swift editor coordinator provides bounded snapshot polling through the same
 serialized request path. Subscription alone
 does not currently detect external changes.
+
+## Tuner
+
+The tuner doesn't touch the preset, so its requests need a session but no
+revision, preset or scene context. Every tuner result is `{"tuner": {mode, muted,
+input, seq}}`; `tuner_read` adds `readings`, each `{seq, hz, ms}`, newer than
+`after` (at most 32). Readings carry increasing numbers so several readers can
+share one stream. `hz` is the QC's detected pitch; 0 means it heard no note,
+and it sends nothing at all while the strings are quiet.
+
+- `open` shows the QC's tuner, so mute applies. The QC's own screen doesn't change.
+- `live` streams pitch without showing the tuner, so it never mutes.
+- `off` stops the stream.
+
+The USB adapter sends Cortex Control's sequence, captured on CorOS 4.1.1:
+ShowTuner with `show`, Tuner UPDATE `enable_meter`, then Tuner READ. Stopping
+sends ShowTuner without `show` and clears `enable_meter`; ShowTuner alone left
+pitch streaming. While the tuner is on, a reader thread collects pitch between
+requests. `set_tuner_mute` requires `open` and is confirmed only by the QC's
+echo; otherwise it fails with `not_confirmed`. Read-only sessions can start and
+read the tuner but not change mute, which the QC keeps as a setting.
+Disconnecting turns the tuner off. Verified on hardware: open and off, mute from
+Cortex Control. Not yet verified: starting straight into `live`, and that `live`
+stays unmuted when mute is on.
+
+The Mac bridge gives the QC the strongest mode any device asks for (open, then
+live, then off), so one device closing its tuner never stops another's.
 
 Stale contexts and sessions fail before adapter writes. Disconnection or an
 unexpected adapter failure invalidates the session; reconnect and fetch state.

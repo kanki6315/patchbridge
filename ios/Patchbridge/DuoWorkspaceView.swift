@@ -22,6 +22,7 @@ enum DuoScreen: Equatable {
 /// selected block and open editor carry across folding, unfolding and rotating.
 struct DuoWorkspaceView: View {
     @ObservedObject var model: PhoneModel
+    @ObservedObject var tuner: TunerModel
     let theme: PhoneTheme
     let screen: DuoScreen
     /// The safe-area frame's size and the window's safe-area insets, to place the hinge.
@@ -45,6 +46,8 @@ struct DuoWorkspaceView: View {
     private let letters = Array("ABCDEFGH").map(String.init)
     /// Nothing interactive sits within this distance of the fold.
     private let foldGap: CGFloat = 14
+    /// With the live tuner on, the crease gets room of its own; the same in both postures, so folding still moves nothing.
+    private let creaseGap: CGFloat = 31
 
     struct MenuTarget: Identifiable {
         let block: String
@@ -66,8 +69,8 @@ struct DuoWorkspaceView: View {
             Group {
                 switch screen {
                 case .inner: inner(snapshot)
-                case .outerLandscape: outerLandscape(snapshot)
-                case .outerPortrait: outerPortrait(snapshot)
+                case .outerLandscape: VStack(spacing: 0) { outerLine; outerLandscape(snapshot) }
+                case .outerPortrait: VStack(spacing: 0) { outerLine; outerPortrait(snapshot) }
                 }
             }
             .onAppear {
@@ -114,10 +117,37 @@ struct DuoWorkspaceView: View {
     /// The view above the hinge and the control deck below it. Only the view changes with the fold.
     private func inner(_ snapshot: PresetSnapshot) -> some View {
         let hinge = (size.height + insets.top + insets.bottom) / 2 - insets.top
+        let gap = tuner.live ? creaseGap : foldGap
         return VStack(spacing: 0) {
-            innerView(snapshot).frame(height: max(0, hinge - foldGap))
-            fold.frame(height: foldGap * 2)
+            innerView(snapshot).frame(height: max(0, hinge - gap))
+            fold.frame(height: gap * 2)
+                .overlay { if tuner.live { TunerCrease(readout: tuner.readout, theme: theme).transition(.opacity) } }
             deck(snapshot).frame(maxHeight: .infinity, alignment: .top)
+        }
+        // The crease's light spills over both halves; it never takes a tap.
+        .overlay {
+            if tuner.live { TunerCreaseLight(readout: tuner.readout, theme: theme, width: size.width, foldY: hinge).transition(.opacity) }
+        }
+        .animation(motion, value: tuner.live)
+    }
+    /// The folded screens are phone-sized, so they use the iPhone's tuner line.
+    @ViewBuilder private var outerLine: some View {
+        if tuner.live {
+            TunerLine(readout: tuner.readout, theme: theme, topInset: 0) { tuner.setOpen(true) }
+                .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+    /// Opens the full tuner: a popover on the inner screen, the iPhone's sheet when folded.
+    @ViewBuilder private var tunerButton: some View {
+        if tuner.available {
+            if screen == .inner {
+                TunerButton(tuner: tuner, theme: theme) { tuner.setOpen(true) }
+                    .popover(isPresented: Binding(get: { tuner.open }, set: { if !$0 { tuner.setOpen(false) } }), arrowEdge: .top) {
+                        TunerPopover(tuner: tuner, theme: theme)
+                    }
+            } else {
+                TunerButton(tuner: tuner, theme: theme) { tuner.setOpen(true) }
+            }
         }
     }
     private func innerView(_ snapshot: PresetSnapshot) -> some View {
@@ -132,6 +162,7 @@ struct DuoWorkspaceView: View {
                 }.layoutPriority(1)
                 Spacer(minLength: 8)
                 if halfFolded { sceneStrip(snapshot, stacked: true).transition(stripTransition) }
+                tunerButton
                 statusButton(compact: halfFolded)
             }
             if !halfFolded { namedScenes(snapshot).transition(.opacity) }
@@ -211,6 +242,7 @@ struct DuoWorkspaceView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
                 statusButton(compact: true)
+                tunerButton
                 VStack(alignment: .leading, spacing: 0) {
                     Text(snapshot.name).font(.title3.bold()).lineLimit(1).minimumScaleFactor(0.7)
                     if snapshot.dirty { unsaved.font(.subheadline.weight(.semibold)) }
@@ -250,6 +282,7 @@ struct DuoWorkspaceView: View {
                             }.font(.subheadline.weight(.medium))
                         }.layoutPriority(1)
                         Spacer(minLength: 8)
+                        tunerButton
                         statusButton(compact: false)
                     }
                     grid(snapshot, style: .code, band: false, cellHeight: 66)
