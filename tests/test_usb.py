@@ -77,6 +77,23 @@ class USBWriteTests(TestCase):
             })
         self.adapter.qc.set_param.assert_called_once_with(0, 3, 0, 0.39)
 
+    def test_toggle_button_writes_only_declared_steps(self):
+        block = {'id': '0:3', 'position': [0, 3], 'model_id': '1', 'editable_parameters': ['0'],
+                 'scenes': {'F': {'parameters': {'0': 0.0}}}}
+        self.state['blocks'] = [block]
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.metadata = {'models': {'1': {'parameters': {'0': {
+            'type': 'toggleButton', 'steps': '2', 'stepNames': 'RELEASE,FREEZE'}}}}}
+        frozen = deepcopy(self.state); frozen['blocks'][0]['scenes']['F']['parameters']['0'] = 1.0
+        self.adapter.snapshot = Mock(side_effect=[self.state, frozen])
+        self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 1.0})
+        self.adapter.qc.set_param.assert_called_once_with(0, 3, 0, 1.0)
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.snapshot = Mock(return_value=self.state)
+        with self.assertRaises(BridgeError):
+            self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
+        self.adapter.qc.set_param.assert_called_once()
+
     def test_failed_preflight_does_not_advance_accepted_state(self):
         original = deepcopy(self.adapter.state)
         def refresh():

@@ -33,6 +33,8 @@ public struct ParameterControl: Codable {
     public let maximum: Double?
     public let mapping: String?
     public let exponent: Double?
+    /// Declared [normalized, display] points for mapping "table", interpolated linearly.
+    public let points: [[Double]]?
     public let options: [Option]?
     public let verification: String?
 
@@ -41,6 +43,10 @@ public struct ParameterControl: Codable {
         if kind == "number", encoding == "native", mapping == "identity",
            case .number(let n) = raw, n.isFinite, let lo = minimum, let hi = maximum,
            lo.isFinite, hi.isFinite, hi > lo, (lo...hi).contains(n) { return n }
+        if mapping == "table" {
+            guard case .number(let n) = raw, n.isFinite, (0...1).contains(n), let table else { return nil }
+            return Self.interpolate(n, table.map { ($0[0], $0[1]) })
+        }
         guard kind == "number", encoding == "qc_normalized", mapping == "power",
               case .number(let n) = raw, n.isFinite, (0...1).contains(n),
               let lo = minimum, let hi = maximum, lo.isFinite, hi.isFinite, hi > lo,
@@ -50,10 +56,30 @@ public struct ParameterControl: Codable {
     }
     public func wireValue(display: Double) -> ParameterValue? {
         if editable, encoding == "native", displayValue(.number(display)) != nil { return .number(display) }
+        if mapping == "table" {
+            guard editable, display.isFinite, let table else { return nil }
+            return Self.interpolate(display, table.map { ($0[1], $0[0]) }).map { .number($0) }
+        }
         guard editable, kind == "number", encoding == "qc_normalized", mapping == "power",
               display.isFinite, let lo = minimum, let hi = maximum, lo.isFinite, hi.isFinite,
               hi > lo, (lo...hi).contains(display), let skew = exponent, skew.isFinite, skew > 0 else { return nil }
         return .number(pow((display - lo) / (hi - lo), skew))
+    }
+    /// Points with both coordinates strictly increasing, spanning 0...1 and the declared range.
+    private var table: [[Double]]? {
+        guard kind == "number", encoding == "qc_normalized", let points, (2...64).contains(points.count),
+              points.allSatisfy({ $0.count == 2 && $0[0].isFinite && $0[1].isFinite }),
+              points.first?[0] == 0, points.last?[0] == 1,
+              let lo = minimum, let hi = maximum, points.first?[1] == lo, points.last?[1] == hi,
+              zip(points, points.dropFirst()).allSatisfy({ $1[0] > $0[0] && $1[1] > $0[1] }) else { return nil }
+        return points
+    }
+    private static func interpolate(_ x: Double, _ points: [(Double, Double)]) -> Double? {
+        guard let first = points.first, let last = points.last, (first.0...last.0).contains(x) else { return nil }
+        for (a, b) in zip(points, points.dropFirst()) where x <= b.0 {
+            return a.1 + (b.1 - a.1) * (x - a.0) / (b.0 - a.0)
+        }
+        return last.1
     }
     public func accepts(_ value: ParameterValue) -> Bool {
         guard editable else { return false }

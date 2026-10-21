@@ -3,7 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
-from patchbridge.metadata import normalize_models
+from patchbridge.metadata import WRITABLE_TYPES, normalize_models
 
 root = Path(__file__).resolve().parents[1]
 source = root / 'hardware-results/2026-10-20'
@@ -30,7 +30,7 @@ for row, chain in enumerate(spec['chains']):
         for index, param in enumerate(block['params']):
             values = param['values']
             if (values and all(v[0] is not None for v in values) and not param['scene_mode']
-                    and not param['expression'] and definitions.get(str(index), {}).get('type') in ('float', 'switch', 'rotarySwitch')):
+                    and not param['expression'] and definitions.get(str(index), {}).get('type') in WRITABLE_TYPES):
                 editable.append(str(index))
             for scene in range(8):
                 value_index = scene if param['scene_mode'] else 0

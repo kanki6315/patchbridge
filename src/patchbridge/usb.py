@@ -8,7 +8,7 @@ import tarfile
 import xml.etree.ElementTree as ET
 
 from .adapter import BridgeError
-from .metadata import normalize_models
+from .metadata import OPTION_TYPES, WRITABLE_TYPES, normalize_models
 
 OPERATIONS = {'connect', 'disconnect', 'identify', 'capabilities', 'snapshot',
               'catalog', 'subscribe', 'set_parameter', 'save'}
@@ -114,7 +114,7 @@ class USBAdapter:
                     definition = definitions.get(str(index), {})
                     numeric = all(v.WhichOneof('value') == 'float_value' for v in param.param_values)
                     if (numeric and param.param_values and not param.scene_mode and not param.expression
-                            and definition.get('type') in ('float', 'switch', 'rotarySwitch')):
+                            and definition.get('type') in WRITABLE_TYPES):
                         editable.append(str(index))
                     for s in range(8):
                         if not param.param_values:
@@ -155,7 +155,7 @@ class USBAdapter:
             if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
                 raise BridgeError('invalid_value', 'USB values must be normalized numbers in [0, 1].')
             definition = self.metadata['models'][block['model_id']]['parameters'][parameter]
-            if definition.get('type') in ('switch', 'rotarySwitch'):
+            if definition.get('type') in OPTION_TYPES:
                 steps = int(definition.get('steps', '0'))
                 if steps < 2 or abs(value*(steps-1)-round(value*(steps-1))) > 1e-5:
                     raise BridgeError('invalid_value', 'Value must select a declared option step.')

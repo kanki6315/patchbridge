@@ -33,7 +33,9 @@ final class GenericEditorTests: XCTestCase {
         XCTAssertFalse(model.supports("select_scene"))
         XCTAssertEqual(model.control(blockID: "0:1", parameterID: "0")?.name, "THRESHOLD")
         XCTAssertNil(model.readOnlyReason(blockID: "0:1", parameterID: "0"))
-        XCTAssertNotNil(model.readOnlyReason(blockID: "0:3", parameterID: "0")) // Myth gain has no declared skew.
+        // Myth gain declares no skew; hardware calibration showed such controls are linear.
+        XCTAssertNil(model.readOnlyReason(blockID: "0:3", parameterID: "0"))
+        XCTAssertEqual(try XCTUnwrap(model.control(blockID: "0:3", parameterID: "0")?.displayValue(.number(0.25))), 2.5, accuracy: 1e-9)
         XCTAssertNotNil(model.readOnlyReason(blockID: "unknown", parameterID: "0"))
     }
     func testDeclaredConversionRoundTripsAndRejectsOutOfRange() throws {
@@ -85,6 +87,30 @@ extension GenericEditorTests {
         XCTAssertEqual(mode.options?.map(\.label), ["Chorus", "Vibe"])
         XCTAssertFalse(mode.accepts(.number(0.5)))
         XCTAssertTrue(mode.accepts(.number(1)))
+    }
+    func testDeclaredLookupTableInterpolatesBothWays() throws {
+        func control(_ points: String, editable: Bool = true) throws -> ParameterControl {
+            try JSONDecoder().decode(ParameterControl.self, from: Data("""
+            {"kind":"number","encoding":"qc_normalized","name":"LO FREQ","unit":"Hz","editable":\(editable),
+             "minimum":20,"maximum":200,"mapping":"table","points":\(points)}
+            """.utf8))
+        }
+        let frequency = try control("[[0,20],[0.5,60],[1,200]]")
+        XCTAssertEqual(try XCTUnwrap(frequency.displayValue(.number(0.25))), 40, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(frequency.displayValue(.number(0.75))), 130, accuracy: 1e-9)
+        for display in [20.0, 40, 60, 130, 200] {
+            let wire = try XCTUnwrap(frequency.wireValue(display: display))
+            XCTAssertEqual(try XCTUnwrap(frequency.displayValue(wire)), display, accuracy: 1e-9)
+        }
+        XCTAssertNil(frequency.wireValue(display: 19)); XCTAssertNil(frequency.wireValue(display: 201))
+        XCTAssertNil(frequency.displayValue(.number(1.01)))
+        XCTAssertNil(try control("[[0,20],[0.5,60],[1,200]]", editable: false).wireValue(display: 60))
+        for corrupt in ["[[0,20],[0.5,10],[1,200]]", "[[0,20],[1,150]]", "[[0.1,20],[1,200]]", "[[0,20,1],[1,200]]", "[]"] {
+            let bad = try control(corrupt)
+            XCTAssertNil(bad.displayValue(.number(0.5)), corrupt)
+            XCTAssertNil(bad.wireValue(display: 60), corrupt)
+            XCTAssertFalse(bad.accepts(.number(0.5)), corrupt)
+        }
     }
     func testExternalStateCancelsPendingEdit() throws {
         let f = try fixture(); let model = try editor(f)
