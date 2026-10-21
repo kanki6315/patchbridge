@@ -41,20 +41,17 @@ struct EditorView: View {
                 } else if model.ready, model.snapshot != nil, pad {
                     PadWorkspaceView(model: model, theme: theme)
                 } else if model.ready, let snapshot = model.snapshot {
-                    VStack(spacing: 0) {
-                        if landscape {
-                            landscapeOverview(snapshot)
-                        } else {
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 14) {
-                                    header(snapshot)
-                                    scenes(snapshot)
-                                    grid(snapshot)
-                                    rowList(snapshot)
-                                }.padding(16)
-                            }
-                        }
-                        if !landscape { saveBar(snapshot) }
+                    if landscape {
+                        landscapeOverview(snapshot)
+                    } else {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 14) {
+                                header(snapshot)
+                                scenes(snapshot)
+                                grid(snapshot)
+                                rowList(snapshot)
+                            }.padding(16)
+                        }.safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot) }
                     }
                 } else if pad && duo == nil && model.coordinator.phase == .loading {
                     PadLoadingView(theme: theme) { model.disconnect() }
@@ -100,10 +97,8 @@ struct EditorView: View {
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: $selectedBlock) { id in
             if let snapshot = model.snapshot, let block = snapshot.blocks.first(where: { $0.id == id }) {
-                VStack(spacing: 0) {
-                    BlockEditorView(model: model, block: block, theme: theme)
-                    saveBar(snapshot)
-                }
+                BlockEditorView(model: model, block: block, theme: theme)
+                .safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot) }
                 .background(theme.ground.ignoresSafeArea()).foregroundStyle(theme.ink).tint(theme.signal)
                 .navigationTitle(snapshot.name).navigationBarTitleDisplayMode(.inline)
                 .toolbar(.visible, for: .navigationBar)
@@ -283,7 +278,7 @@ struct EditorView: View {
                         .disabled(model.busy || !snapshot.dirty).opacity(model.busy || !snapshot.dirty ? 0.45 : 1)
                 }
             } else { Label("Read-only connection", systemImage: "lock").font(.footnote).foregroundStyle(theme.muted) }
-        }.padding(.horizontal, 16).padding(.vertical, 12).phoneGlass(theme, radius: 0)
+        }.padding(.horizontal, 16).padding(.vertical, 12).phoneBar(theme)
     }
     private var connection: some View {
         ScrollView {

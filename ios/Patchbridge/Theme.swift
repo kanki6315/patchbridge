@@ -53,7 +53,22 @@ struct GlassSurface: ViewModifier {
         else { content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: radius)) }
     }
 }
+/// A full-width bottom bar surface that continues under the home indicator.
+struct BarSurface: ViewModifier {
+    let theme: PhoneTheme
+    @Environment(\.accessibilityReduceTransparency) private var solid
+    func body(content: Content) -> some View {
+        content.background {
+            Group {
+                if solid { theme.raised }
+                else if #available(iOS 26, *) { Color.clear.glassEffect(.regular, in: Rectangle()) }
+                else { Rectangle().fill(.regularMaterial) }
+            }.ignoresSafeArea(edges: .bottom)
+        }
+    }
+}
 extension View {
+    func phoneBar(_ theme: PhoneTheme) -> some View { modifier(BarSurface(theme: theme)) }
     @ViewBuilder func parameterMaterial(_ theme: PhoneTheme, enabled: Bool) -> some View {
         if enabled { phoneGlass(theme, radius: 18) } else { self }
     }
