@@ -9,12 +9,24 @@ spec = importlib.util.spec_from_file_location('watch_qc_tuner', ROOT / 'tools/wa
 watch = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(watch)
 
-NAMES = {6: 'Tuner', 26: 'CPULoad'}
+NAMES = {6: 'Tuner', 26: 'CPULoad', 27: 'ShowTuner'}
 
 
-def tuner(frequency, mute=False, meter=0.5):
-    return SimpleNamespace(action=1, input_port_id=0, frequency=frequency, mute=mute,
-                           enable_meter=True, meter=meter)
+class Message:
+    """Stands in for a protobuf message: ListFields() returns only what was set."""
+    def __init__(self, **fields):
+        self.fields = fields
+
+    def ListFields(self):
+        return [(SimpleNamespace(name=k), v) for k, v in self.fields.items()]
+
+
+def pitch(hz):
+    return Message(action=1, meter=hz)
+
+
+def state(mute=False):
+    return Message(action=1, input_port_id=1, frequency=0.0, mute=mute)
 
 
 class FakeQC:
@@ -32,36 +44,53 @@ class FakeQC:
 
 
 class TunerProbeTests(unittest.TestCase):
-    def test_capture_keeps_tuner_rows_and_counts_other_streams(self):
+    def test_capture_splits_state_from_pitch_and_counts_other_streams(self):
         qc = FakeQC([
-            [(6, tuner(110.0), b'', b''), (26, object(), b'', b'')],
-            [(6, None, b'', b''), (6, tuner(0.0, mute=True, meter=0.1), b'', b'')],
-            [(6, tuner(82.4, mute=False, meter=0.9), b'', b'')],
-            [(6, tuner(82.5), b'', b'')],
+            [(6, state(), b'', b''), (26, object(), b'', b'')],
+            [(6, None, b'', b''), (6, pitch(73.4), b'', b''), (6, state(mute=True), b'', b'')],
+            [(6, pitch(0.0), b'', b'')],
+            [(6, pitch(196.07), b'', b''), (27, Message(action=1, show=True), b'', b'')],
         ])
-        qc._pending = [(6, tuner(999.0), b'', b'')]  # stale, queued before listening
+        qc._pending = [(6, pitch(999.0), b'', b'')]  # stale, queued before listening
         phase = watch.capture(qc, 1.0, NAMES, clock=qc.clock)
-        self.assertEqual(phase['counts'], {'Tuner': 5, 'CPULoad': 1})
-        self.assertEqual([r['frequency'] for r in phase['tuner']], [110.0, 0.0, 82.4, 82.5])
-        self.assertEqual(phase['tuner'][0]['t'], 0.25)
+        self.assertEqual(phase['counts'], {'Tuner': 6, 'CPULoad': 1, 'ShowTuner': 1})
+        self.assertEqual(phase['show_tuner'], [{'t': 1.0, 'action': 1, 'show': True}])
+        self.assertEqual(phase['tuner'][1], {'t': 0.5, 'action': 1, 'meter': 73.4})
 
         summary = watch.summarize(phase)
-        self.assertEqual(summary['tuner_messages'], 4)
         self.assertEqual(summary['tuner_undecoded'], 1)
-        self.assertEqual(summary['rate_hz'], 4.0)
-        self.assertEqual(summary['frequency_range'], [82.4, 110.0])
-        self.assertEqual(summary['zero_frequency_messages'], 1)
-        self.assertEqual(summary['meter_range'], [0.1, 0.9])
-        self.assertEqual(summary['mute_values'], [False, True])
-        self.assertEqual(summary['mute_changes'], 2)
-        self.assertEqual(summary['other_streams'], {'CPULoad': 1})
+        self.assertEqual((summary['pitch_messages'], summary['state_messages']), (3, 2))
+        self.assertEqual(summary['pitch_rate_hz'], 3.0)
+        self.assertEqual(summary['pitch_range_hz'], [73.4, 196.07])
+        self.assertEqual(summary['zero_pitch_messages'], 1)
+        self.assertEqual(summary['largest_pitch_gap_s'], 0.25)
+        self.assertEqual(summary['frequency_values'], [0.0])
+        self.assertEqual((summary['mute_values'], summary['mute_changes']), ([False, True], 1))
+        self.assertEqual(summary['input_ports'], [1])
+        self.assertEqual(summary['other_streams'], {'CPULoad': 1, 'ShowTuner': 1})
 
-    def test_silent_phase_reports_no_tuner_stream(self):
+    def test_silent_phase_reports_no_pitch(self):
         qc = FakeQC([[(26, object(), b'', b'')]])
         summary = watch.summarize(watch.capture(qc, 0.5, NAMES, clock=qc.clock))
-        self.assertEqual(summary['tuner_messages'], 0)
-        self.assertIsNone(summary['frequency_range'])
-        self.assertIsNone(summary['largest_gap_s'])
+        self.assertEqual(summary['pitch_messages'], 0)
+        self.assertIsNone(summary['pitch_range_hz'])
+        self.assertIsNone(summary['largest_pitch_gap_s'])
+
+    def test_live_sequence_matches_cortex_control(self):
+        P = SimpleNamespace(ACTION={'UPDATE': 1, 'READ': 3},
+                            message_class=lambda name: lambda **fields: (name, fields))
+        ids = iter(range(8, 20))
+        start = watch.live_tuner(P, lambda: next(ids), True)
+        stop = watch.live_tuner(P, lambda: next(ids), False)
+        self.assertEqual([m for _, m in start], [
+            ('ShowTuner', {'action': 1, 'request_id': 8, 'show': True}),
+            ('Tuner', {'action': 1, 'request_id': 9, 'enable_meter': True}),
+            ('Tuner', {'action': 3}),
+        ])
+        self.assertEqual([m for _, m in stop], [
+            ('ShowTuner', {'action': 1, 'request_id': 10, 'show': False}),
+            ('Tuner', {'action': 1, 'request_id': 11, 'enable_meter': False}),
+        ])
 
 
 if __name__ == '__main__':
