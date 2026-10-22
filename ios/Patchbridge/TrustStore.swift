@@ -22,4 +22,16 @@ enum TrustStore {
         item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         SecItemAdd(item as CFDictionary, nil)
     }
+    /// This phone's ID for Macs, made once and kept in the Keychain so it survives reinstalls.
+    static func deviceID() -> String {
+        var search = query; search[kSecAttrAccount as String] = "device"; search[kSecReturnData as String] = true
+        var item: CFTypeRef?
+        if SecItemCopyMatching(search as CFDictionary, &item) == errSecSuccess, let data = item as? Data,
+           let id = String(data: data, encoding: .utf8), !id.isEmpty { return id }
+        let id = UUID().uuidString
+        var add = query; add[kSecAttrAccount as String] = "device"; add[kSecValueData as String] = Data(id.utf8)
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        SecItemAdd(add as CFDictionary, nil)
+        return id
+    }
 }

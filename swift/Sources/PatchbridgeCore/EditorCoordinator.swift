@@ -13,6 +13,8 @@ public final class EditorCoordinator {
     public private(set) var macID: String?
     /// Mac-issued trust tokens by Mac ID. A matching token lets that Mac skip the approval code.
     public var trustTokens = [String: String]()
+    /// This phone's stable ID, so a Mac keeps one trust entry for it even if its token is lost.
+    public var deviceID: String?
     /// The Mac accepted this phone's trust token, or issued one on approval.
     public private(set) var trusted = false
     private var preferredMac: String?
@@ -241,6 +243,7 @@ public final class EditorCoordinator {
         if let payload { message["payload"] = payload }
         if operation == "hello" {
             message["device_name"] = phoneName
+            if let deviceID { message["device_id"] = deviceID }
             if let macID, let token = trustTokens[macID] { message["trust_token"] = token }
         }
         if let connection { message["connection_id"] = connection }

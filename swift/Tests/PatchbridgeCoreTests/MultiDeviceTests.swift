@@ -188,6 +188,27 @@ final class MultiDeviceTests: XCTestCase {
         XCTAssertThrowsError(try send(refused, "connect"))
     }
 
+    func testOnePhoneKeepsOneTrustEntryByDeviceID() throws {
+        let helper = try launch(); defer { helper.stop() }
+        let shared = SharedUSBSession(helper: helper)
+        // Trusted once, then the phone lost its token and was approved again under a new name.
+        let first = try XCTUnwrap(shared.admit())
+        _ = try send(first, "hello", ["device_name": "AJ phone", "device_id": "phone-1"]); first.approve(trusting: true)
+        shared.remove(first)
+        let again = try XCTUnwrap(shared.admit())
+        _ = try send(again, "hello", ["device_name": "iPhone", "device_id": "phone-1"]); again.approve(trusting: true)
+        let other = try XCTUnwrap(shared.admit())
+        _ = try send(other, "hello", ["device_name": "iPad", "device_id": "pad-1"]); other.approve(trusting: true)
+        XCTAssertEqual(shared.trust.names, ["iPhone", "iPad"])
+
+        // An entry from before device IDs is folded in when its token comes back with one.
+        let legacy = shared.trust.add(name: "Old iPhone"), stale = shared.trust.add(name: "Stale", device: "phone-2")
+        let returning = try XCTUnwrap(shared.admit())
+        XCTAssertEqual(try send(returning, "hello", ["device_name": "Stage", "device_id": "phone-2", "trust_token": legacy])["authorization_required"] as? Bool, false)
+        XCTAssertEqual(shared.trust.names, ["iPhone", "iPad", "Stage"])
+        XCTAssertNil(shared.trust.name(for: stale))
+    }
+
     func testHelperFailureEndsEveryDeviceButKeepsTrust() throws {
         let helper = try launch(); defer { helper.stop() }
         let shared = SharedUSBSession(helper: helper)
