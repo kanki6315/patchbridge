@@ -196,3 +196,202 @@ extension PhoneModel {
         }
     }
 }
+
+/// An expression pedal from the side: the base, the tilted treadle and its hinge.
+struct PedalGlyph: View {
+    var size: CGFloat = 16
+    var body: some View {
+        Canvas { context, size in
+            let s = min(size.width, size.height) / 24
+            var path = Path()
+            path.move(to: CGPoint(x: 3 * s, y: 20 * s)); path.addLine(to: CGPoint(x: 21 * s, y: 20 * s))
+            path.move(to: CGPoint(x: 5.5 * s, y: 16.5 * s)); path.addLine(to: CGPoint(x: 19 * s, y: 9.5 * s))
+            path.move(to: CGPoint(x: 17 * s, y: 15 * s)); path.addLine(to: CGPoint(x: 17 * s, y: 20 * s))
+            path.addEllipse(in: CGRect(x: 3.9 * s, y: 15.4 * s, width: 3.2 * s, height: 3.2 * s))
+            context.stroke(path, with: .foreground, style: StrokeStyle(lineWidth: 2 * s, lineCap: .round, lineJoin: .round))
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Under the dial: every scene's value for a scene parameter, one shared row for a global one,
+/// or the pedal's sweep. The rows are about the same height, so the tiles below barely move.
+struct SceneScopeRow: View {
+    @ObservedObject var model: PhoneModel
+    let block: PresetSnapshot.Block
+    let parameter: String
+    let theme: PhoneTheme
+    let scope: GenericEditor.Scope
+    /// The active scene, or the one being switched to.
+    let editingScene: String
+    let loading: Bool
+    /// The value on its way to the QC for the editing scene.
+    let proposed: ParameterValue?
+    private var control: ParameterControl? { model.editor.control(blockID: block.id, parameterID: parameter) }
+    private var name: String { control?.name.capitalized ?? "Value" }
+
+    var body: some View {
+        switch scope {
+        case .scene: strip
+        case .global:
+            card(title: "Same in every scene", detail: "Switching scene keeps this value") {
+                HStack(spacing: 5) { ForEach(0..<8, id: \.self) { SceneDot(color: model.sceneColor(theme, $0), size: 9, theme: theme) } }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(name) is shared by all eight scenes")
+        case .expression(let pedal):
+            card(title: "Expression \(pedal.pedal)", detail: "Assigned on the QC") {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("Heel"); Text(sweep(pedal.heel)).font(.headline).foregroundStyle(theme.ink)
+                    Image(systemName: "arrow.right").font(.caption)
+                    Text("Toe"); Text(sweep(pedal.toe)).font(.headline).foregroundStyle(theme.ink)
+                }.font(.footnote).foregroundStyle(theme.muted).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Expression \(pedal.pedal) sweep, heel \(sweep(pedal.heel)) to toe \(sweep(pedal.toe)). Edit the assignment on the QC")
+        case .unknown: EmptyView()
+        }
+    }
+    private func sweep(_ wire: Double) -> String { model.format(.number(wire), control: control, unit: false) }
+
+    private var strip: some View {
+        let values = model.editor.sceneValues(blockID: block.id, parameterID: parameter)
+        let unit = control?.unit ?? ""
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("\(name) in each scene" + (unit.isEmpty ? "" : " · \(unit)")).fontWeight(.semibold)
+                Spacer(minLength: 8)
+                Text("Switch scene to edit another").lineLimit(1).minimumScaleFactor(0.8)
+            }.font(.caption).foregroundStyle(theme.muted).padding(.horizontal, 2)
+            HStack(spacing: 4) {
+                ForEach(PresetSnapshot.sceneLetters, id: \.self) { letter in
+                    cell(letter, value: values[letter])
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(name) in each scene, read-only. Switch scene to edit another")
+    }
+    private func cell(_ letter: String, value: ParameterValue?) -> some View {
+        let index = PresetSnapshot.sceneLetters.firstIndex(of: letter) ?? 0
+        let on = letter == editingScene
+        let shown = on && loading ? nil : (on ? proposed ?? value : value)
+        let text = shown.map { model.format($0, control: control, unit: false) } ?? "—"
+        let shape = RoundedRectangle(cornerRadius: 12)
+        let sceneName = model.sceneName(index)
+        return VStack(spacing: 4) {
+            HStack(spacing: 3) {
+                SceneDot(color: model.sceneColor(theme, index), size: 7, theme: theme)
+                Text(letter).font(.caption2.weight(on ? .bold : .medium)).foregroundStyle(on ? theme.ink : theme.muted)
+            }
+            Text(text).font(.footnote.weight(on ? .bold : .medium)).monospacedDigit()
+                .foregroundStyle(on ? theme.ink : theme.muted).lineLimit(1).minimumScaleFactor(0.6)
+        }
+        .frame(maxWidth: .infinity, minHeight: 44)
+        .background(on ? theme.ink.opacity(0.07) : .clear, in: shape)
+        .overlay {
+            if on && proposed != nil { shape.stroke(theme.signal, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])) }
+            else if on { shape.stroke(model.sceneColor(theme, index), lineWidth: 1.5) }
+        }
+        .overlay(alignment: .bottom) { if !on { theme.line.frame(height: 1).padding(.horizontal, 6) } }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Scene \(letter)\(sceneName.isEmpty ? "" : " \(sceneName)"), \(on && loading ? "loading" : text)\(on ? ", editing" : "")")
+    }
+    private func card<Trailing: View>(title: String, detail: String, @ViewBuilder trailing: () -> Trailing) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.subheadline.weight(.semibold))
+                Text(detail).font(.caption).foregroundStyle(theme.muted)
+            }
+            Spacer(minLength: 8)
+            trailing()
+        }
+        .padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 64)
+        .overlay(RoundedRectangle(cornerRadius: 15).stroke(theme.line))
+    }
+}
+
+/// iPhone: the scene in the block editor's navigation bar. It opens a list of the scenes with
+/// the selected parameter's value in each; choosing one switches the QC and keeps the block and
+/// parameter selected.
+struct ScenePill: View {
+    @ObservedObject var model: PhoneModel
+    let snapshot: PresetSnapshot
+    let theme: PhoneTheme
+    let blockID: String
+    let parameterID: String
+    @State private var open = false
+    private var scene: String {
+        if case .pending(let target)? = model.sceneSwitch { return target }
+        return snapshot.scene
+    }
+    private var scoped: Bool { model.editor.scope(blockID: blockID, parameterID: parameterID) == .scene }
+    private var failure: (mark: String, label: String)? {
+        switch model.sceneSwitch {
+        case .notApplied(let target)?: return ("!", model.sceneAccessibilityLabel(target))
+        case .unknown(let target)?: return ("?", "Switch to \(model.sceneTitle(target)): outcome unknown. Showing \(model.sceneTitle(snapshot.scene))")
+        default: return nil
+        }
+    }
+    private var control: ParameterControl? { model.editor.control(blockID: blockID, parameterID: parameterID) }
+
+    var body: some View {
+        let index = PresetSnapshot.sceneLetters.firstIndex(of: scene) ?? 0
+        Button { open = true } label: {
+            HStack(spacing: 6) {
+                SceneDot(color: model.sceneColor(theme, index), size: 10, theme: theme)
+                Text(scene).fontWeight(.bold)
+                let name = model.sceneName(index)
+                if !name.isEmpty { Text(name.uppercased()).foregroundStyle(theme.muted).lineLimit(1) }
+                Image(systemName: "chevron.down").font(.caption.weight(.bold)).foregroundStyle(theme.muted)
+            }
+            .font(.subheadline).padding(.horizontal, 6)
+            .overlay(alignment: .topTrailing) {
+                // A refused or unanswered switch stays marked, as on the overview strip.
+                if let failure {
+                    Text(failure.mark).font(.caption2.weight(.heavy)).foregroundStyle(theme.signalInk)
+                        .frame(width: 18, height: 18).background(theme.caution, in: Circle())
+                        .offset(x: 10, y: -10).accessibilityHidden(true)
+                }
+            }
+        }
+        .accessibilityLabel(failure?.label ?? model.sceneAccessibilityLabel(scene))
+        .accessibilityHint("Shows the scenes. Choosing one switches the QC.")
+        .popover(isPresented: $open, arrowEdge: .top) {
+            menu.presentationCompactAdaptation(.popover).presentationBackground(theme.surface.opacity(0.95))
+        }
+    }
+    private var menu: some View {
+        let values = model.editor.sceneValues(blockID: blockID, parameterID: parameterID)
+        let unit = control?.unit ?? ""
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Scene").fontWeight(.semibold)
+                Spacer()
+                if scoped { Text((control?.name.capitalized ?? "Value") + (unit.isEmpty ? "" : " \(unit)")) }
+            }.font(.caption).foregroundStyle(theme.muted).padding(.horizontal, 10).padding(.top, 8).padding(.bottom, 6)
+            ForEach(Array(PresetSnapshot.sceneLetters.enumerated()), id: \.offset) { index, letter in
+                Button { open = false; model.selectScene(letter) } label: {
+                    HStack(spacing: 12) {
+                        SceneDot(color: model.sceneColor(theme, index), size: 10, theme: theme)
+                        Text(letter).fontWeight(.bold).frame(width: 16, alignment: .leading)
+                        Text(model.sceneName(index).uppercased()).foregroundStyle(theme.muted).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                        if scoped { Text(values[letter].map { model.format($0, control: control, unit: false) } ?? "—").font(.subheadline).foregroundStyle(theme.muted).monospacedDigit() }
+                        Image(systemName: "checkmark").font(.subheadline.weight(.bold)).foregroundStyle(theme.signal)
+                            .frame(width: 18).opacity(letter == snapshot.scene ? 1 : 0)
+                    }
+                    .padding(.horizontal, 10).frame(minHeight: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(model.sceneTitle(letter) + (scoped ? ", \(values[letter].map { model.format($0, control: control) } ?? "no value")" : ""))
+                .accessibilityAddTraits(letter == snapshot.scene ? .isSelected : [])
+            }
+            Divider().padding(.top, 4)
+            Text("Switches the scene on the QC. \(model.editor.blockName(blockID: blockID) ?? "This block") and \(control?.name.capitalized ?? "this parameter") stay selected.")
+                .font(.footnote).foregroundStyle(theme.muted).fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 10).padding(.top, 10).padding(.bottom, 6)
+        }
+        .padding(6).frame(width: 300).foregroundStyle(theme.ink)
+    }
+}

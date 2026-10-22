@@ -86,6 +86,33 @@ class USBWriteTests(TestCase):
         self.assertEqual(caught.exception.code, 'not_confirmed')
         self.adapter.qc.set_param.assert_called_once_with(0, 3, 0, 0.39)
 
+    def scene_block(self, values):
+        return {'id': '0:3', 'position': [0, 3], 'model_id': '1', 'editable_parameters': ['0'],
+                'scene_parameters': ['0'], 'expression_parameters': {},
+                'scenes': {s: {'parameters': {'0': v}} for s, v in zip('ABCDEFGH', values)}}
+
+    def test_scene_assigned_write_changes_only_the_active_scene(self):
+        self.state['blocks'] = [self.scene_block([0.1] * 8)]
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.metadata = {'models': {'1': {'parameters': {'0': {'type': 'float'}}}}}
+        after = deepcopy(self.state); after['blocks'] = [self.scene_block([0.1] * 5 + [0.8] + [0.1] * 2)]
+        self.adapter.snapshot = Mock(side_effect=[self.state, after])
+        self.assertEqual(self.adapter.execute('set_parameter', {
+            'block_id': '0:3', 'parameter_id': '0', 'value': 0.8}), after)
+        self.adapter.qc.set_param.assert_called_once_with(0, 3, 0, 0.8)
+
+    def test_scene_assigned_write_that_reaches_other_scenes_is_not_confirmed(self):
+        self.state['blocks'] = [self.scene_block([0.1] * 8)]
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.metadata = {'models': {'1': {'parameters': {'0': {'type': 'float'}}}}}
+        for wide in (self.scene_block([0.8] * 8), dict(self.scene_block([0.1] * 5 + [0.8] + [0.1] * 2), scene_parameters=[])):
+            self.adapter.state = deepcopy(self.state)
+            after = deepcopy(self.state); after['blocks'] = [wide]
+            self.adapter.snapshot = Mock(side_effect=[self.state, after])
+            with self.assertRaises(BridgeError) as caught:
+                self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.8})
+            self.assertEqual(caught.exception.code, 'not_confirmed')
+
     def test_toggle_button_writes_only_declared_steps(self):
         block = {'id': '0:3', 'position': [0, 3], 'model_id': '1', 'editable_parameters': ['0'],
                  'scenes': {'F': {'parameters': {'0': 0.0}}}}

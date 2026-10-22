@@ -1299,7 +1299,15 @@
             "bypass": false
           }
         },
-        "editable_parameters": []
+        "editable_parameters": [],
+        "scene_parameters": [],
+        "expression_parameters": {
+          "0": {
+            "pedal": 2,
+            "heel": 0.0,
+            "toe": 1.0
+          }
+        }
       },
       {
         "id": "0:1",
@@ -1421,7 +1429,9 @@
           "3",
           "4",
           "5"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "0:2",
@@ -1529,11 +1539,16 @@
           }
         },
         "editable_parameters": [
+          "0",
           "1",
           "2",
           "3",
           "4"
-        ]
+        ],
+        "scene_parameters": [
+          "0"
+        ],
+        "expression_parameters": {}
       },
       {
         "id": "0:3",
@@ -1620,7 +1635,9 @@
           "0",
           "1",
           "2"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "0:4",
@@ -1713,7 +1730,9 @@
         },
         "editable_parameters": [
           "3"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "0:5",
@@ -1800,7 +1819,9 @@
           "0",
           "1",
           "2"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "0:6",
@@ -1869,7 +1890,9 @@
         },
         "editable_parameters": [
           "0"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "1:2",
@@ -1947,7 +1970,9 @@
         "editable_parameters": [
           "0",
           "1"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "2:1",
@@ -2055,11 +2080,16 @@
           }
         },
         "editable_parameters": [
+          "0",
           "1",
           "2",
           "3",
           "4"
-        ]
+        ],
+        "scene_parameters": [
+          "0"
+        ],
+        "expression_parameters": {}
       },
       {
         "id": "2:3",
@@ -2172,7 +2202,9 @@
           "2",
           "3",
           "4"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "2:4",
@@ -2399,7 +2431,9 @@
             "bypass": false
           }
         },
-        "editable_parameters": []
+        "editable_parameters": [],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "2:6",
@@ -2530,7 +2564,9 @@
           "4",
           "5",
           "6"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "2:7",
@@ -2671,7 +2707,9 @@
           "6",
           "7",
           "8"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "3:1",
@@ -2779,11 +2817,16 @@
           }
         },
         "editable_parameters": [
+          "0",
           "1",
           "2",
           "3",
           "4"
-        ]
+        ],
+        "scene_parameters": [
+          "0"
+        ],
+        "expression_parameters": {}
       },
       {
         "id": "3:3",
@@ -2896,7 +2939,9 @@
           "2",
           "3",
           "4"
-        ]
+        ],
+        "scene_parameters": [],
+        "expression_parameters": {}
       },
       {
         "id": "3:4",
@@ -3123,7 +3168,9 @@
             "bypass": false
           }
         },
-        "editable_parameters": []
+        "editable_parameters": [],
+        "scene_parameters": [],
+        "expression_parameters": {}
       }
     ]
   }

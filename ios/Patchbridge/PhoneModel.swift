@@ -123,6 +123,15 @@ final class PhoneModel: ObservableObject {
         UISelectionFeedbackGenerator().selectionChanged()
         if usesLocalFixture {
             guard let pending = try? editor.proposeScene(scene) else { return }
+            #if DEBUG
+            // --refuse-scene=D and --unknown-scene=E stand in for a QC that refuses or never answers.
+            let arguments = ProcessInfo.processInfo.arguments
+            if let failure = [("--refuse-scene=", EditorCoordinator.SceneSwitch.notApplied(scene)), ("--unknown-scene=", .unknown(scene))]
+                .first(where: { arguments.contains($0.0 + scene) })?.1 {
+                editor.reject(id: pending.id, message: nil); demoSceneSwitch = failure
+                sceneSwitchChanged(); version += 1; return
+            }
+            #endif
             do { try confirmDemo(pending); demoSceneSwitch = .confirmed(scene) }
             catch { editor.reject(id: pending.id, message: nil); demoSceneSwitch = .notApplied(scene) }
             sceneSwitchChanged(); version += 1
@@ -232,8 +241,13 @@ final class PhoneModel: ObservableObject {
             var blocks = object["blocks"] as! [[String: Any]]
             let index = blocks.firstIndex { $0["id"] as? String == block }!
             var scenes = blocks[index]["scenes"] as! [String: [String: Any]]
-            var parameters = scenes[snapshot.scene]!["parameters"] as! [String: Any]
-            parameters[parameter] = value.json; scenes[snapshot.scene]!["parameters"] = parameters
+            // A scene-assigned value changes in the active scene only; any other in every scene.
+            let targets = editor.scope(blockID: block, parameterID: parameter) == .scene ? [snapshot.scene] : Array(scenes.keys)
+            for scene in targets where scenes[scene] != nil {
+                var parameters = scenes[scene]!["parameters"] as! [String: Any]
+                guard parameters[parameter] != nil else { continue }
+                parameters[parameter] = value.json; scenes[scene]!["parameters"] = parameters
+            }
             blocks[index]["scenes"] = scenes; object["blocks"] = blocks
         } else if pending.operation == "set_bypass", let block = pending.blockID, case .boolean(let bypassed)? = pending.proposedValue {
             var blocks = object["blocks"] as! [[String: Any]]

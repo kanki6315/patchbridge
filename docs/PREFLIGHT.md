@@ -48,8 +48,9 @@ and hardware writes, designed screen integration, and distribution signing.
 The original captured files remain unchanged. Tests derive synthetic edge cases
 from them; these variants are software tests, not new hardware evidence.
 
-- All eight scene-assigned values remain distinct and read-only; missing scene
-  values are never borrowed from another scene.
+- All eight scene-assigned values remain distinct and only the active one is
+  writable; missing scene values are never borrowed from another scene, and a
+  parameter missing any scene's value stays read-only.
 - Unknown models, string values, missing scene data, missing permissions, boolean
   and null values remain visible where supported but cannot enable numeric writes.
 - Malformed scenes, out-of-grid positions, duplicate IDs/positions, empty model IDs,

@@ -35,6 +35,8 @@ class SimulatedAdapter:
             "blocks": [{
                 "id": "amp-1", "model_id": "sim-amp", "position": [0, 0],
                 "editable_parameters": ["gain", "frequency"],
+                # Gain has its own value per scene; frequency is shared by both.
+                "scene_parameters": ["gain"], "expression_parameters": {},
                 "scenes": {scene: {"bypass": False, "parameters": {
                     "gain": 5.0, "bright": False, "mode": "clean",
                     "frequency": 440.0,
@@ -161,7 +163,9 @@ class SimulatedAdapter:
                 )
                 if not valid:
                     raise BridgeError("invalid_value", "Value does not match parameter metadata.")
-                scene["parameters"][parameter] = value
+                targets = [scene] if parameter in block["scene_parameters"] else block["scenes"].values()
+                for target in targets:
+                    target["parameters"][parameter] = value
             self.state["dirty"] = True
         elif operation == "select_scene":
             if payload.get("scene") not in ("A", "B"):

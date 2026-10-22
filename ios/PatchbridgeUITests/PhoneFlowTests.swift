@@ -161,6 +161,25 @@ final class PhoneFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["Scene C, active"].waitForExistence(timeout: 5))
     }
 
+    func testFailedSceneSwitchIsShownInTheBlockEditor() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--demo", "--stage", "--editor", "--block=2:6", "--refuse-scene=D", "--unknown-scene=E"]
+        app.launch()
+        if duoScreen(app) != nil || UIDevice.current.userInterfaceIdiom != .phone { throw XCTSkip("The iPhone block editor's scene pill") }
+        let pill = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Scene F")).firstMatch
+        XCTAssertTrue(pill.waitForExistence(timeout: 10))
+        pill.tap()
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Scene D")).firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Scene D not applied · the QC stayed on F"].waitForExistence(timeout: 5)
+                      || app.descendants(matching: .any)["Scene D not applied. The QC stayed on Scene F · RHYTHM."].exists)
+        XCTAssertTrue(app.staticTexts["Edits scene F only"].exists, "The dial keeps editing the QC's scene")
+        capture("Scene not applied in the editor")
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Scene D not applied")).firstMatch.tap()
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Scene E")).firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Switch to scene E: outcome unknown · showing F"].waitForExistence(timeout: 5))
+        capture("Scene outcome unknown in the editor")
+    }
+
     func testDuoWorkspace() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--demo", "--stage"]

@@ -451,9 +451,11 @@ extension PhoneModel {
         case nil: return loaded ? "\(base), loaded\(snapshot?.dirty == true ? ", unsaved edits" : "")" : base
         }
     }
-    /// "Threshold −30.0 dB · saved −34.2 dB", or "Bypassed · saved on". Other scenes say which.
+    /// "Threshold −30.0 dB · saved −34.2 dB", or "Bypassed · saved on". Other scenes say which,
+    /// and so does every row of a scene-assigned value, which has one row per scene.
     func unsavedEditText(_ edit: UnsavedEdit) -> String {
-        let scene = edit.scene == snapshot?.scene ? "" : "Scene \(edit.scene) · "
+        let perScene = edit.parameterID.map { editor.scope(blockID: edit.blockID, parameterID: $0) == .scene } ?? false
+        let scene = edit.scene == snapshot?.scene && !perScene ? "" : "Scene \(edit.scene) · "
         guard let parameter = edit.parameterID else {
             func state(_ value: ParameterValue?) -> String { value == .boolean(true) ? "bypassed" : "on" }
             return scene + state(edit.current).capitalized + " · saved " + state(edit.saved)

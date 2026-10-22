@@ -30,9 +30,11 @@ None of the live phone → Mac → USB path has run against the QC yet.
   edits and saves are never replayed. A local demo mode loads the captured fixture
   without a bridge. The old `amp-1` 0–10 simulation editor is no longer the phone UI.
 - **Editable controls.** A parameter is editable only when the device marks it
-  editable, it is not scene- or expression-assigned, and it has a declared conversion
+  editable, it is not expression-assigned, and it has a declared conversion
   (explicit range with valid skew, or normalized enum steps). Everything else is
-  shown read-only with a reason. The simulator's 0–10 range is never reused.
+  shown read-only with a reason. A scene-assigned parameter is written with the same
+  plain `set_param`, which the QC routes to the active scene; readback must show the
+  other seven scenes unchanged, or the write is reported as outcome unknown. The simulator's 0–10 range is never reused.
 
 ## Offline coverage
 
@@ -48,7 +50,7 @@ None of the live phone → Mac → USB path has run against the QC yet.
   changes that the parameter UI does not display. Missing scene values stay
   absent instead of borrowing another scene's data.
 - Catalog option labels and symbolic ranges remain intact. Unsupported firmware,
-  unknown controls, scene assignments, and expression assignments fail closed.
+  unknown controls, expression assignments and incomplete scene data fail closed.
 - Read-only captured sessions, helper crash, timeout, removal, and preset-change
   recovery pass through the packaged runtime. See [read-only QC mode](READ_ONLY_QC.md).
 
@@ -130,7 +132,8 @@ To check on hardware, with the disposable preset backed up:
 
 ## Still unverified after that run
 
-- Scene-specific parameter writes and amp-model controls.
+- Scene-specific parameter writes (Eltron 30 GAIN in scenes F and H, say) and
+  amp-model controls. Check on the QC that only the active scene changed.
 - Display accuracy of nonlinear (skewed) conversions against the QC's own readout,
   until step 9 has run.
 - Switching to another slot and back and preset selection, until the steps above run;

@@ -38,6 +38,64 @@ final class GenericEditorTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(model.control(blockID: "0:3", parameterID: "0")?.displayValue(.number(0.25))), 2.5, accuracy: 1e-9)
         XCTAssertNotNil(model.readOnlyReason(blockID: "unknown", parameterID: "0"))
     }
+    func testScopeSaysWhereAValueLives() throws {
+        let model = try editor(fixture())
+        // Eltron 30's GAIN is assigned to scenes on the captured preset; scene H differs.
+        XCTAssertEqual(model.scope(blockID: "0:2", parameterID: "0"), .scene)
+        XCTAssertNil(model.readOnlyReason(blockID: "0:2", parameterID: "0"))
+        let values = model.sceneValues(blockID: "0:2", parameterID: "0")
+        XCTAssertEqual(values.count, 8)
+        XCTAssertNotEqual(values["H"], values["F"])
+        XCTAssertEqual(model.scope(blockID: "0:2", parameterID: "1"), .global)
+        // The wah follows Expression 2 across its whole range, so the pedal owns it.
+        XCTAssertEqual(model.scope(blockID: "0:0", parameterID: "0"), .expression(.init(pedal: 2, heel: 0, toe: 1)))
+        XCTAssertEqual(model.readOnlyReason(blockID: "0:0", parameterID: "0"), "Set by Expression 2.")
+        XCTAssertThrowsError(try model.propose(blockID: "0:0", parameterID: "0", value: .number(0.5)))
+    }
+    /// The fixture with Eltron 30 (0:2) values changed: `values[scene][parameter]`.
+    func changed(_ snapshot: PresetSnapshot, dirty: Bool, _ values: [String: [String: Double]]) throws -> PresetSnapshot {
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(snapshot)) as! [String: Any]
+        var blocks = object["blocks"] as! [[String: Any]]
+        let i = blocks.firstIndex { $0["id"] as? String == "0:2" }!
+        var scenes = blocks[i]["scenes"] as! [String: [String: Any]]
+        for (scene, changes) in values {
+            var parameters = scenes[scene]!["parameters"] as! [String: Any]
+            for (id, value) in changes { parameters[id] = value }
+            scenes[scene]!["parameters"] = parameters
+        }
+        blocks[i]["scenes"] = scenes; object["blocks"] = blocks; object["dirty"] = dirty
+        return try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
+    }
+    func testUnsavedEditsListEachSceneOfASceneParameter() throws {
+        let f = try fixture()
+        let clean = try changed(f.snapshot, dirty: false, [:])
+        let model = GenericEditor()
+        try model.load(snapshot: clean, catalog: f.catalog, session: "s", connection: "c", revision: 0, operations: ["set_parameter"])
+        // The phone edits GAIN in scene F; the QC then changes it in scene H too.
+        let edit = try model.propose(blockID: "0:2", parameterID: "0", value: .number(0.7))
+        try model.confirm(id: edit.id, snapshot: changed(clean, dirty: true, ["F": ["0": 0.7]]), session: "s", connection: "c", revision: 1)
+        // BASS is global: one edit, although every scene shows it.
+        let all = Dictionary(uniqueKeysWithValues: PresetSnapshot.sceneLetters.map { ($0, ["1": 0.9]) })
+        var values = all; values["F"]!["0"] = 0.7; values["H"]!["0"] = 0.2
+        try model.refresh(changed(clean, dirty: true, values), session: "s", connection: "c", revision: 2)
+        let gain = model.unsavedEdits.filter { $0.blockID == "0:2" && $0.parameterID == "0" }
+        XCTAssertEqual(gain.map(\.scene), ["F", "H"])
+        XCTAssertEqual(gain.map(\.onQC), [false, true])
+        XCTAssertEqual(gain.map(\.current), [.number(0.7), .number(0.2)])
+        XCTAssertEqual(model.unsavedEdits.filter { $0.blockID == "0:2" && $0.parameterID == "1" }.map(\.scene), ["F"])
+    }
+    func testBridgeThatDoesNotReportScopeIsUnknownNotGlobal() throws {
+        let f = try fixture()
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(f.snapshot)) as! [String: Any]
+        object["blocks"] = (object["blocks"] as! [[String: Any]]).map {
+            var block = $0; block["scene_parameters"] = nil; block["expression_parameters"] = nil; return block
+        }
+        let old = try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
+        let model = GenericEditor()
+        try model.load(snapshot: old, catalog: f.catalog, session: "s", connection: "c", revision: 0, operations: ["set_parameter"])
+        XCTAssertEqual(model.scope(blockID: "0:2", parameterID: "1"), .unknown)
+        XCTAssertEqual(model.scope(blockID: "0:0", parameterID: "0"), .unknown)
+    }
     func testDeclaredConversionRoundTripsAndRejectsOutOfRange() throws {
         let model = try editor(fixture())
         let control = try XCTUnwrap(model.control(blockID: "0:1", parameterID: "0"))

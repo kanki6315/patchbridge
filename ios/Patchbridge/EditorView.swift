@@ -118,8 +118,10 @@ struct EditorView: View {
                         duoEditing = true
                     }
                     if arguments.contains("--editor") {
-                        if duo == .inner { duoSelected = "0:1"; duoEditing = true }
-                        else if !pad { selectedBlock = "0:1" }
+                        // --block=2:6 opens another block, such as the Dual Chorus's scene values.
+                        let id = arguments.first { $0.hasPrefix("--block=") }.map { String($0.dropFirst(8)) } ?? "0:1"
+                        if duo == .inner { duoSelected = id; duoEditing = true }
+                        else if !pad { selectedBlock = id }
                     }
                     if ProcessInfo.processInfo.arguments.contains("--daylight") { appearance = "Daylight" }
                     if arguments.contains("--live-tuner") { tuner.setLive(true) }
@@ -154,7 +156,7 @@ struct EditorView: View {
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: $selectedBlock) { id in
             if let snapshot = model.snapshot, let block = snapshot.blocks.first(where: { $0.id == id }) {
-                BlockEditorView(model: model, block: block, theme: theme)
+                BlockEditorView(model: model, block: block, theme: theme, scenePill: true)
                 .safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot, pushed: true) }
                 .background(theme.ground.ignoresSafeArea()).foregroundStyle(theme.ink).tint(theme.signal)
                 .navigationTitle(snapshot.name).navigationBarTitleDisplayMode(.inline)

@@ -27,13 +27,18 @@ for row, chain in enumerate(spec['chains']):
         bypass = spec['bypass'][row]['cols'][column]['scene_bypass']
         for scene, value in enumerate(bypass[:8]):
             scenes[chr(65+scene)]['bypass'] = value
-        editable = []
+        editable, assigned, pedals = [], [], {}
         definitions = models.get(str(block['hash']), {}).get('parameters', {})
         controls = {i: {'control': normalize_parameter(d, definitions)} for i, d in definitions.items()}
         for index, param in enumerate(block['params']):
             values = param['values']
-            # Like the live adapter: hidden and unsupported controls are never writable.
-            if (values and all(v[0] is not None for v in values) and not param['scene_mode']
+            if param['scene_mode']:
+                assigned.append(str(index))
+            if param['expression']:
+                pedals[str(index)] = {'pedal': param['expression'], 'heel': param['expr_min'], 'toe': param['expr_max']}
+            # Like the live adapter: hidden, unsupported and expression controls are never writable.
+            if (values and all(v[0] is not None for v in values)
+                    and (not param['scene_mode'] or len(values) >= 8)
                     and not param['expression'] and definitions.get(str(index), {}).get('type') in WRITABLE_TYPES
                     and controls[str(index)]['control']['editable']):
                 editable.append(str(index))
@@ -44,7 +49,8 @@ for row, chain in enumerate(spec['chains']):
         # Like the live adapter: conditional controls are writable only while active in scene F.
         editable = [p for p in editable if active(controls, p, scenes['F']['parameters'])]
         blocks.append({'id': f'{row}:{column}', 'model_id': str(block['hash']), 'position': [row, column],
-                       'scenes': scenes, 'editable_parameters': editable})
+                       'scenes': scenes, 'editable_parameters': editable,
+                       'scene_parameters': assigned, 'expression_parameters': pedals})
 used = {b['model_id'] for b in blocks}
 fixture = {'catalog': {'id': catalog_id, 'metadata_version': 1,
                        'models': normalize_models({key: value for key, value in models.items() if key in used})},

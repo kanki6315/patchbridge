@@ -119,6 +119,14 @@ public struct PresetSnapshot: Codable, Equatable {
         public let position: [Int]
         public let scenes: [String: Scene]
         public let editable_parameters: [String]?
+        /// The pedal driving a parameter and its sweep, in the parameter's own wire units.
+        public struct Expression: Codable, Equatable {
+            public let pedal: Int; public let heel: Double; public let toe: Double
+            public init(pedal: Int, heel: Double, toe: Double) { self.pedal = pedal; self.heel = heel; self.toe = toe }
+        }
+        /// Parameters with their own value in each scene. nil from a bridge that doesn't say.
+        public var scene_parameters: [String]? = nil
+        public var expression_parameters: [String: Expression]? = nil
     }
     public let preset_id: String
     public let catalog_id: String?
@@ -211,7 +219,8 @@ public final class GenericEditor {
     /// The preset as last saved on the QC: seen clean on load, or confirmed by Save. nil when the
     /// preset was already dirty when it arrived, so its saved values aren't known.
     public private(set) var saved: PresetSnapshot?
-    /// Values this phone changed since `saved`, as "block/parameter" or "block/bypass".
+    /// Values this phone changed since `saved`, as "block/parameter", "block/parameter/scene" for
+    /// a scene-assigned value, or "block/bypass".
     private var ownEdits = Set<String>()
     private var session: String?
     private var connection: String?
@@ -278,10 +287,29 @@ public final class GenericEditor {
         guard let snapshot else { return nil }
         return snapshot.blocks.first { $0.id == blockID }?.scenes[snapshot.scene]?.parameters[parameterID]
     }
+    /// Where a parameter's value lives: one per scene, one for all scenes, or on a pedal.
+    public enum Scope: Equatable {
+        case scene, global, expression(PresetSnapshot.Block.Expression)
+        /// The bridge didn't say, so nothing can be claimed about other scenes.
+        case unknown
+    }
+    public func scope(blockID: String, parameterID: String) -> Scope {
+        guard let block = snapshot?.blocks.first(where: { $0.id == blockID }) else { return .unknown }
+        if let pedal = block.expression_parameters?[parameterID] { return .expression(pedal) }
+        guard let assigned = block.scene_parameters else { return .unknown }
+        return assigned.contains(parameterID) ? .scene : .global
+    }
+    /// A parameter's value in each scene the QC reported, keyed by scene letter.
+    public func sceneValues(blockID: String, parameterID: String) -> [String: ParameterValue] {
+        guard let block = snapshot?.blocks.first(where: { $0.id == blockID }) else { return [:] }
+        return block.scenes.compactMapValues { $0.parameters[parameterID] }
+    }
     public func readOnlyReason(blockID: String, parameterID: String) -> String? {
         guard let snapshot, let block = snapshot.blocks.first(where: { $0.id == blockID }),
               let control = control(blockID: blockID, parameterID: parameterID) else { return "Unknown block or metadata." }
         guard operations.contains("set_parameter") else { return "Adapter does not support parameter edits." }
+        // The pedal owns the value; the assignment is changed on the QC.
+        if let pedal = block.expression_parameters?[parameterID] { return "Set by Expression \(pedal.pedal)." }
         guard control.editable else { return control.reason ?? "Unsupported control." }
         if let reason = inactiveReason(block: block, scene: snapshot.scene, parameterID: parameterID) { return reason }
         guard block.editable_parameters?.contains(parameterID) == true else { return "Device marks this parameter read-only." }
@@ -382,9 +410,15 @@ public final class GenericEditor {
             let scenes = [snapshot.scene] + PresetSnapshot.sceneLetters.filter { $0 != snapshot.scene }
             let ids = Set(block.scenes.values.flatMap(\.parameters.keys)).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
             for id in ids where control(blockID: block.id, parameterID: id)?.hidden != true {
-                guard let scene = scenes.first(where: { block.scenes[$0]?.parameters[id] != before.scenes[$0]?.parameters[id] }) else { continue }
-                edits.append(UnsavedEdit(blockID: block.id, parameterID: id, scene: scene, current: block.scenes[scene]?.parameters[id],
-                                         saved: before.scenes[scene]?.parameters[id], onQC: !ownEdits.contains("\(block.id)/\(id)")))
+                let changed = scenes.filter { block.scenes[$0]?.parameters[id] != before.scenes[$0]?.parameters[id] }
+                guard let first = changed.first else { continue }
+                // A scene-assigned value is a separate edit in each scene; any other is one edit,
+                // however many scenes show it.
+                for scene in block.scene_parameters?.contains(id) == true ? changed : [first] {
+                    let own = ownEdits.contains("\(block.id)/\(id)") || ownEdits.contains("\(block.id)/\(id)/\(scene)")
+                    edits.append(UnsavedEdit(blockID: block.id, parameterID: id, scene: scene, current: block.scenes[scene]?.parameters[id],
+                                             saved: before.scenes[scene]?.parameters[id], onQC: !own))
+                }
             }
             if let scene = scenes.first(where: { block.scenes[$0]?.bypass != before.scenes[$0]?.bypass }) {
                 edits.append(UnsavedEdit(blockID: block.id, parameterID: nil, scene: scene, current: block.scenes[scene]?.bypass.map { .boolean($0) },
@@ -452,7 +486,12 @@ public final class GenericEditor {
             guard !newState.dirty, newState.blocks == snapshot?.blocks, newState.name == snapshot?.name else { throw EditorFailure.invalidState }
         }
         if let block = pending.blockID {
-            ownEdits.insert("\(block)/\(pending.operation == "set_bypass" ? "bypass" : pending.parameterID ?? "")")
+            if pending.operation == "set_parameter", let parameter = pending.parameterID,
+               scope(blockID: block, parameterID: parameter) == .scene, let scene = snapshot?.scene {
+                ownEdits.insert("\(block)/\(parameter)/\(scene)")
+            } else {
+                ownEdits.insert("\(block)/\(pending.operation == "set_bypass" ? "bypass" : pending.parameterID ?? "")")
+            }
         }
         // Readback is authoritative, including a valid value adjusted by the device.
         snapshot = newState; self.revision = revision; self.pending = nil; lastError = nil; track(newState)

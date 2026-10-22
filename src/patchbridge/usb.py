@@ -311,13 +311,22 @@ class USBAdapter:
                     raise RuntimeError('Active-scene bypass state is missing; reconnect required.')
                 for s, flag in enumerate(bypass[:8]):
                     scenes[chr(65+s)]['bypass'] = flag.bypass
-                editable = []
+                editable, assigned, pedals = [], [], {}
                 definitions = self.metadata['models'].get(str(model.hash), {}).get('parameters', {})
                 for index, param in enumerate(model.params):
                     definition = definitions.get(str(index), {})
                     numeric = all(v.WhichOneof('value') == 'float_value' for v in param.param_values)
                     # Hidden and unsupported controls are never written, whatever the phone sends.
-                    if (numeric and param.param_values and not param.scene_mode and not param.expression
+                    # A scene-assigned value is written to the active scene only; an expression
+                    # owns its value, so it stays read-only.
+                    if param.scene_mode:
+                        assigned.append(str(index))
+                    if param.expression:
+                        pedals[str(index)] = {'pedal': int(param.expression),
+                                              'heel': float(param.expression_min),
+                                              'toe': float(param.expression_max)}
+                    complete = not param.scene_mode or len(param.param_values) >= 8
+                    if (numeric and param.param_values and complete and not param.expression
                             and definition.get('type') in WRITABLE_TYPES
                             and definition.get('control', {}).get('editable')):
                         editable.append(str(index))
@@ -334,7 +343,8 @@ class USBAdapter:
                 editable = [p for p in editable if active(definitions, p, current)]
                 blocks.append({'id': f'{row}:{column}', 'position': [row, column],
                                'model_id': str(model.hash), 'scenes': scenes,
-                               'editable_parameters': editable})
+                               'editable_parameters': editable,
+                               'scene_parameters': assigned, 'expression_parameters': pedals})
         state = {'preset_id': json.dumps(self.position, separators=(',', ':')),
                  'scene_labels': list(getattr(bp, 'scene_labels', [])),
                  'scene_colors': list(getattr(bp, 'scene_colors', [])),
@@ -465,7 +475,7 @@ class USBAdapter:
             block = next((b for b in current['blocks'] if b['id'] == payload.get('block_id')), None)
             parameter = payload.get('parameter_id')
             if block is None or not isinstance(parameter, str) or parameter not in block['editable_parameters']:
-                raise BridgeError('unsupported_parameter', 'Parameter is unknown, hidden, unsupported, scene-assigned, expression-controlled or inactive.')
+                raise BridgeError('unsupported_parameter', 'Parameter is unknown, hidden, unsupported, expression-controlled or inactive.')
             value = payload.get('value')
             if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
                 raise BridgeError('invalid_value', 'USB values must be normalized numbers in [0, 1].')
@@ -474,12 +484,20 @@ class USBAdapter:
                 steps = int(definition.get('steps', '0'))
                 if steps < 2 or abs(value*(steps-1)-round(value*(steps-1))) > 1e-5:
                     raise BridgeError('invalid_value', 'Value must select a declared option step.')
+            # A plain write lands on the active scene once a parameter is scene-assigned, and on
+            # every scene otherwise. No scene_mode flag, as in Cortex Control.
             self.qc.set_param(*block['position'], int(parameter), value)
             after = self._readback()
             actual = next((b for b in after['blocks'] if b['id'] == block['id']), None)
+            scoped = parameter in block.get('scene_parameters', [])
             if (after['preset_id'] != current['preset_id'] or after['scene'] != current['scene']
                     or actual is None or actual['model_id'] != block['model_id']
-                    or abs(actual['scenes'][after['scene']]['parameters'][parameter]-value) > 1e-5):
+                    or scoped != (parameter in actual.get('scene_parameters', []))
+                    or abs(actual['scenes'][after['scene']]['parameters'][parameter]-value) > 1e-5
+                    # Other scenes keep their own values; a change there means the write went wide.
+                    or (scoped and any(actual['scenes'][s]['parameters'].get(parameter)
+                                       != block['scenes'][s]['parameters'].get(parameter)
+                                       for s in SCENES if s != current['scene']))):
                 # A scene or preset change on the QC can land mid-write. Keep the session; the
                 # caller resyncs and the edit is never retried.
                 raise BridgeError('not_confirmed', 'Write could not be confirmed; its outcome is unknown.')
