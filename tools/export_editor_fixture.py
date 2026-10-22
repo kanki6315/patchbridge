@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
 from patchbridge.metadata import WRITABLE_TYPES, normalize_models, normalize_parameter
-from patchbridge.usb import active
+from patchbridge.usb import active, compact
 import export_demo_fixture
 
 root = Path(__file__).resolve().parents[1]
@@ -45,7 +45,7 @@ for row, chain in enumerate(spec['chains']):
             for scene in range(8):
                 value_index = scene if param['scene_mode'] else 0
                 if value_index < len(values):
-                    scenes[chr(65+scene)]['parameters'][str(index)] = next((v for v in values[value_index] if v is not None), None)
+                    scenes[chr(65+scene)]['parameters'][str(index)] = compact(next((v for v in values[value_index] if v is not None), None))
         # Like the live adapter: conditional controls are writable only while active in scene F.
         editable = [p for p in editable if active(controls, p, scenes['F']['parameters'])]
         blocks.append({'id': f'{row}:{column}', 'model_id': str(block['hash']), 'position': [row, column],
