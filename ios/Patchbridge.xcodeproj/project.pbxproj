@@ -21,6 +21,7 @@
 		5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */; };
 		5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */; };
 		65F0DF151692770297348421 /* Chunks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F75207A678F28257EA105F3 /* Chunks.swift */; };
+		6F75739514A0FD504BBE2F24 /* DebugBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A51CF2F8046CF029BD206D /* DebugBridge.swift */; };
 		7221B70D0FD21ED4F5DD5597 /* Tuner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C63A6F4CA999A8014567F2A6 /* Tuner.swift */; };
 		8476F1A6BB746C32FD575EE1 /* SetupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */; };
 		8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */; };
@@ -30,13 +31,12 @@
 		AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E68459E6EE63B03631133E9 /* EditorView.swift */; };
 		ADBCD09A0A9B55D2F6F247C4 /* ConnectionActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031C04AFD778DDE0C3BF77D2 /* ConnectionActivityController.swift */; };
 		B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 025A144248FD7B2C1307731E /* AppIcon.icon */; };
+		B25F8D8D57876C46C9D29A51 /* PresetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836D6DBEB9760BBBEC40A0F6 /* PresetViews.swift */; };
 		B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42253D1C8C450F010DE25BCD /* GenericEditor.swift */; };
 		B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E125DD1594C135E050EF4E8 /* BLECentral.swift */; };
 		B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59B2D058255097DC58ED315 /* EditorCoordinator.swift */; };
 		CCB8F3B7D3AB5BBCEAFF5B6E /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
 		EA6177919C4E44F0C8375500 /* SceneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E237C5A44F146DC9CAC103E /* SceneViews.swift */; };
-		EA6177919C4E44F0C8375501 /* PresetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E237C5A44F146DC9CAC1040 /* PresetViews.swift */; };
-		EA6177919C4E44F0C8375502 /* DebugBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E237C5A44F146DC9CAC1041 /* DebugBridge.swift */; };
 		F97C260A660F2DC435857133 /* demo-preset.json in Resources */ = {isa = PBXBuildFile; fileRef = 86359669B935F031597CF377 /* demo-preset.json */; };
 /* End PBXBuildFile section */
 
@@ -85,11 +85,10 @@
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
 		67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PadWorkspaceView.swift; sourceTree = "<group>"; };
 		6E237C5A44F146DC9CAC103E /* SceneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneViews.swift; sourceTree = "<group>"; };
-		6E237C5A44F146DC9CAC1040 /* PresetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetViews.swift; sourceTree = "<group>"; };
-		6E237C5A44F146DC9CAC1041 /* DebugBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugBridge.swift; sourceTree = "<group>"; };
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
 		7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupViews.swift; sourceTree = "<group>"; };
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		836D6DBEB9760BBBEC40A0F6 /* PresetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetViews.swift; sourceTree = "<group>"; };
 		86359669B935F031597CF377 /* demo-preset.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "demo-preset.json"; sourceTree = "<group>"; };
 		9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA318B3E68E63CA3046061E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -105,6 +104,7 @@
 		EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoWorkspaceView.swift; sourceTree = "<group>"; };
 		EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Patchbridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F59B2D058255097DC58ED315 /* EditorCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorCoordinator.swift; sourceTree = "<group>"; };
+		F6A51CF2F8046CF029BD206D /* DebugBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugBridge.swift; sourceTree = "<group>"; };
 		FFE7BE427D998DC25CF9AD22 /* TunerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -143,16 +143,16 @@
 				025A144248FD7B2C1307731E /* AppIcon.icon */,
 				D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */,
 				031C04AFD778DDE0C3BF77D2 /* ConnectionActivityController.swift */,
+				F6A51CF2F8046CF029BD206D /* DebugBridge.swift */,
 				EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */,
 				3E68459E6EE63B03631133E9 /* EditorView.swift */,
 				AA318B3E68E63CA3046061E9 /* Info.plist */,
 				67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */,
 				17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */,
 				D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */,
+				836D6DBEB9760BBBEC40A0F6 /* PresetViews.swift */,
 				9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */,
 				6E237C5A44F146DC9CAC103E /* SceneViews.swift */,
-				6E237C5A44F146DC9CAC1040 /* PresetViews.swift */,
-				6E237C5A44F146DC9CAC1041 /* DebugBridge.swift */,
 				7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */,
 				81EB72B83CCED483250AEC0C /* Theme.swift */,
 				D296E6B8332175985BB77130 /* TrustStore.swift */,
@@ -351,6 +351,7 @@
 				0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */,
 				029A4F9E5A319FB2B53A06CD /* ConnectionActivity.swift in Sources */,
 				ADBCD09A0A9B55D2F6F247C4 /* ConnectionActivityController.swift in Sources */,
+				6F75739514A0FD504BBE2F24 /* DebugBridge.swift in Sources */,
 				1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */,
 				5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */,
 				A4988E90372F49BAA73D7245 /* DuoWorkspaceView.swift in Sources */,
@@ -361,9 +362,8 @@
 				31876869DBD5740176721AEB /* PadWorkspaceView.swift in Sources */,
 				8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */,
 				47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */,
+				B25F8D8D57876C46C9D29A51 /* PresetViews.swift in Sources */,
 				EA6177919C4E44F0C8375500 /* SceneViews.swift in Sources */,
-				EA6177919C4E44F0C8375501 /* PresetViews.swift in Sources */,
-				EA6177919C4E44F0C8375502 /* DebugBridge.swift in Sources */,
 				8476F1A6BB746C32FD575EE1 /* SetupViews.swift in Sources */,
 				444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */,
 				07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */,
