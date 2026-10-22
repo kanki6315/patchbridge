@@ -20,8 +20,9 @@ hardware. Simulation is development scaffolding, not hardware compatibility evid
 **Python helper.** Versioned process messages, serialized writes, confirmed-state
 responses, session/preset/scene/revision guards, and explicit save. Adapters:
 simulated, captured read-only, and direct USB. The USB adapter accepts only
-verified 4.1.1 and exposes `set_parameter` and File CREATE `save`; Save As,
-bypass, scene and preset selection are not exposed. See
+verified 4.1.1 and exposes `set_parameter`, `set_bypass`, `select_scene`,
+`list_presets`, `select_preset` (My Presets only) and File CREATE `save`; Save As
+is not exposed. Bypass, scenes and presets are not yet verified on hardware. See
 [USB results](docs/USB_RESULTS_2026-10-20.md) and [README.md](README.md).
 
 **Mac bridge.** A native app bundles an isolated arm64 CPython runtime (macOS 26+)

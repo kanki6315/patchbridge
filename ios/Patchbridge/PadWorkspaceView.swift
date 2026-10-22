@@ -12,6 +12,7 @@ struct PadWorkspaceView: View {
     @State private var confirmSave = false
     @State private var saveContext: PresetSnapshot?
     @State private var details = false
+    @State private var browsing = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -69,6 +70,12 @@ struct PadWorkspaceView: View {
                 }
                 #endif
                 .onChange(of: snapshot) { _, value in selectDefault(value) }
+                #if DEBUG
+                .task {
+                    guard ProcessInfo.processInfo.arguments.contains("--presets") else { return }
+                    try? await Task.sleep(for: .milliseconds(600)); browsing = true
+                }
+                #endif
             }
         }
     }
@@ -87,7 +94,14 @@ struct PadWorkspaceView: View {
     private func topBar(_ snapshot: PresetSnapshot, portrait: Bool) -> some View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(snapshot.name).font(.largeTitle.bold()).lineLimit(1).minimumScaleFactor(0.7)
+                PresetNameButton(model: model, snapshot: snapshot, theme: theme, chevron: 32) { browsing = true }
+                    .popover(isPresented: $browsing, arrowEdge: .top) {
+                        PresetBrowser(model: model, theme: theme, layout: .popover) { browsing = false }
+                            .padding(24).frame(width: 720, height: 640)
+                            .background(theme.surface.opacity(0.97))
+                            .presentationBackground(theme.surface.opacity(0.97))
+                            .preferredColorScheme(theme.daylight ? .light : .dark)
+                    }
                 HStack(spacing: 10) {
                     Text(model.location(snapshot)).foregroundStyle(theme.muted)
                     if snapshot.dirty { Label("Unsaved", systemImage: "circle.fill").labelStyle(SmallDotLabel()).foregroundStyle(theme.signal) }
@@ -159,10 +173,7 @@ struct PadWorkspaceView: View {
             PadConnectionDetails(model: model, theme: theme) { details = false }
         }
     }
-    private func slotName(_ snapshot: PresetSnapshot) -> String? {
-        guard snapshot.preset_id.hasPrefix("captured:") else { return nil }
-        return model.location(snapshot).replacingOccurrences(of: " · ", with: " ")
-    }
+    private func slotName(_ snapshot: PresetSnapshot) -> String? { model.slotName(snapshot) }
     @ViewBuilder private func saveButton(_ snapshot: PresetSnapshot) -> some View {
         if model.editor.supports("save") {
             let disabled = model.busy || !snapshot.dirty
@@ -340,6 +351,8 @@ struct PadConnectionDetails: View {
                             row("Save to this slot", model.editor.supports("save") ? "Yes" : "Not yet", ok: model.editor.supports("save"))
                             row("Turn blocks on or off", model.editor.supports("set_bypass") ? "Yes" : "Not yet", ok: model.editor.supports("set_bypass"))
                             row("Switch scenes", model.editor.supports("select_scene") ? "Yes" : "Not yet", ok: model.editor.supports("select_scene"))
+                            let presets = model.editor.supports("select_preset") && model.editor.supports("list_presets")
+                            row("Load presets", presets ? "My Presets" : "Not yet", ok: presets)
                             row("Save As", "Not yet")
                         }
                         ConnectionStatusSettings(model: model, theme: theme).padding(.horizontal, 4)

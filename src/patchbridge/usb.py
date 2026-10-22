@@ -15,7 +15,8 @@ from .metadata import OPTION_TYPES, WRITABLE_TYPES, normalize_models
 from . import tuner as tuning
 
 OPERATIONS = {'connect', 'disconnect', 'identify', 'capabilities', 'snapshot',
-              'catalog', 'subscribe', 'set_parameter', 'set_bypass', 'select_scene', 'save'} | tuning.OPERATIONS
+              'catalog', 'subscribe', 'list_presets', 'set_parameter', 'set_bypass', 'select_scene',
+              'select_preset', 'save'} | tuning.OPERATIONS
 # Broadcasts the QC streams on its own while a session is live. The tuner reader drops them
 # so they don't pile up between requests; anything else stays queued for the next request.
 STREAMED = {'KeepAlive', 'CPULoad', 'GlobalTempo', 'IOMeter', 'GridModelMeter', 'ModuleStats'}
@@ -29,6 +30,10 @@ SETTLE_PAUSE = 0.25
 UNSETTLED_LIMIT = 20.0
 SCENE_TIMEOUT = 3.0
 SCENES = 'ABCDEFGH'
+# Loading a preset takes longer than a scene: the QC rebuilds the whole grid.
+PRESET_TIMEOUT = 8.0
+MY_PRESETS = '/media/p4/Presets/My Presets'
+MY_PRESETS_SLOTS = 256
 
 
 class Unsettled(Exception):
@@ -72,6 +77,8 @@ class USBAdapter:
         self.qc = None
         self.state = None
         self.metadata = None
+        # The last My Presets listing, by wire position. Only a listed, named slot can be loaded.
+        self.listed = None
         self.tuning = tuning.TunerBuffer()
         self.reader = None
         self.reader_stop = None
@@ -124,6 +131,7 @@ class USBAdapter:
         qc, self.qc = self.qc, None
         self.state = None
         self.metadata = None
+        self.listed = None
         self.unsettled_since = None
         self.tuning.reset()
         if qc is not None:
@@ -331,11 +339,56 @@ class USBAdapter:
                  'scene_labels': list(getattr(bp, 'scene_labels', [])),
                  'scene_colors': list(getattr(bp, 'scene_colors', [])),
                  'name': bp.name, 'scene': chr(65+scene.selected_scene),
+                 **({'location': {'source': 'My Presets', 'number': self.position[1] + 1}}
+                    if self._in_my_presets(self.position) else {}),
                  'dirty': dirty.is_dirty, 'blocks': blocks, 'value_encoding': 'qc_normalized',
                  'catalog_id': self.metadata.get('id'),
                  'content_hash': hashlib.sha256(bp.SerializeToString()).hexdigest()}
         self.state = deepcopy(state)
         return state
+
+    @staticmethod
+    def _in_my_presets(position):
+        folder, _, factory, downloads, plugin = position
+        return folder == MY_PRESETS and not (factory or downloads or plugin)
+
+    @staticmethod
+    def preset_id(position):
+        """The preset_id a snapshot reports for a My Presets slot, by wire position."""
+        return json.dumps((MY_PRESETS, position, False, False, False), separators=(',', ':'))
+
+    def list_presets(self):
+        """My Presets, read from the QC's directory in one File READ (about 12 s). Every named
+        slot is listed with the preset_id a snapshot reports once it is loaded. Display numbers
+        are the wire position plus one, unverified against the QC's own screen."""
+        if self.qc is None:
+            raise BridgeError('disconnected', 'No USB session.')
+        directory = self.qc.list_directory()
+        folders = directory.get('presets', []) if isinstance(directory, dict) else []
+        folder = next((f for f in folders if f.get('key') == MY_PRESETS), None) or next(
+            (f for f in folders if f.get('name') == 'My Presets'
+             and not f.get('is_factory') and not f.get('is_downloads')), None)
+        if folder is None:
+            raise BridgeError('not_confirmed', 'The QC did not list My Presets. Try again.')
+        files = folder.get('files', [])[:MY_PRESETS_SLOTS]
+        self.listed = {f['index']: f['name'] for f in files
+                       if isinstance(f.get('index'), int) and isinstance(f.get('name'), str) and f['name'].strip()}
+        return {'source': 'My Presets', 'slots': MY_PRESETS_SLOTS,
+                'entries': [{'preset_id': self.preset_id(index), 'number': index + 1, 'name': name}
+                            for index, name in sorted(self.listed.items())]}
+
+    def _await_preset(self, position):
+        """SetlistPosition READ until the QC reports the recalled slot."""
+        deadline = self.clock() + PRESET_TIMEOUT
+        while self.clock() < deadline:
+            try:
+                pos = self._read(self.qc.read_state, 'SetlistPosition')
+                if (pos.folder_key, pos.position, pos.is_factory) == (MY_PRESETS, position, False):
+                    return True
+            except Unsettled:
+                pass
+            self.sleep(0.1)
+        return False
 
     def _readback(self):
         """The snapshot after a write. The write already happened, so a QC that is still busy
@@ -361,7 +414,7 @@ class USBAdapter:
         return False
 
     def execute(self, operation, payload):
-        if operation not in {'set_parameter', 'set_bypass', 'select_scene', 'save'}:
+        if operation not in {'set_parameter', 'set_bypass', 'select_scene', 'select_preset', 'save'}:
             raise BridgeError('unsupported_operation', 'Operation not yet validated for the USB adapter.')
         expected = deepcopy(self.state)
         # A QC that is still settling refuses here, before anything is written: Not applied.
@@ -383,6 +436,29 @@ class USBAdapter:
                 raise BridgeError('not_confirmed', 'The QC did not report the new scene; its outcome is unknown.')
             after = self._readback()
             if after['preset_id'] != current['preset_id'] or after['scene'] != target:
+                raise BridgeError('not_confirmed', 'The QC moved elsewhere during the switch; its outcome is unknown.')
+            return after
+        if operation == 'select_preset':
+            target = payload.get('preset_id')
+            try:
+                folder, position, *flags = json.loads(target) if isinstance(target, str) else ()
+            except (ValueError, TypeError):
+                folder, position, flags = None, None, None
+            if (folder != MY_PRESETS or type(position) is not int or flags != [False, False, False]
+                    or not 0 <= position < MY_PRESETS_SLOTS):
+                raise BridgeError('invalid_value', 'Only a My Presets slot can be loaded.')
+            if not self.listed or position not in self.listed:
+                # An empty slot would load a blank preset; only what the last listing named is allowed.
+                raise BridgeError('invalid_value', 'That slot is empty or not listed yet. Refresh the list.')
+            if current['dirty'] and payload.get('discard') is not True:
+                raise BridgeError('unsaved_changes', 'The current preset has unsaved edits.')
+            if target == current['preset_id'] and not current['dirty']:
+                return current
+            self.qc.recall(MY_PRESETS, position, False)
+            if not self._await_preset(position):
+                raise BridgeError('not_confirmed', 'The QC did not report the new preset; its outcome is unknown.')
+            after = self._readback()
+            if after['preset_id'] != target:
                 raise BridgeError('not_confirmed', 'The QC moved elsewhere during the switch; its outcome is unknown.')
             return after
         if operation == 'set_parameter':

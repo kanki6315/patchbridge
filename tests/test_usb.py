@@ -55,7 +55,7 @@ class USBWriteTests(TestCase):
         self.assertFalse(self.adapter.qc.mock_calls)
 
     def test_unsupported_operations_do_not_touch_device(self):
-        for op in ('save_as', 'select_preset', 'recall_preset_save'):
+        for op in ('save_as', 'recall_preset_save'):
             with self.assertRaises(BridgeError):
                 self.adapter.execute(op, {})
         self.assertFalse(self.adapter.qc.mock_calls)
@@ -67,6 +67,8 @@ class USBWriteTests(TestCase):
         self.assertIn('save', response['result']['operations'])
         self.assertIn('set_bypass', response['result']['operations'])
         self.assertIn('select_scene', response['result']['operations'])
+        self.assertIn('select_preset', response['result']['operations'])
+        self.assertIn('list_presets', response['result']['operations'])
         self.assertNotIn('save_as', response['result']['operations'])
 
     def test_parameter_write_requires_readback(self):
@@ -250,6 +252,85 @@ class SceneSwitchTests(TestCase):
         with self.assertRaises(BridgeError) as caught:
             self.adapter.execute('select_scene', {'scene': 'B'})
         self.assertEqual(caught.exception.code, 'not_confirmed')
+
+
+class PresetSwitchTests(TestCase):
+    def setUp(self):
+        self.clock = Clock()
+        self.adapter = USBAdapter(clock=self.clock, sleep=self.clock.sleep)
+        self.adapter.qc = Mock()
+        self.current = USBAdapter.preset_id(16)
+        self.target = USBAdapter.preset_id(14)
+        self.state = {'preset_id': self.current, 'name': 'Disposable', 'scene': 'F', 'dirty': False, 'blocks': []}
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.qc.list_directory.return_value = {'presets': [
+            {'key': 'cloud-0-1', 'name': 'Downloads', 'is_factory': False, 'is_downloads': True, 'files': []},
+            {'key': usb.MY_PRESETS, 'name': 'My Presets', 'is_factory': False, 'is_downloads': False,
+             'files': [{'index': i, 'name': {14: 'Blues Lead', 16: 'Disposable'}.get(i, '')} for i in range(256)]}]}
+
+    def test_listing_names_used_slots_with_their_snapshot_ids(self):
+        listed = self.adapter.list_presets()
+        self.assertEqual(listed['slots'], 256)
+        self.assertEqual(listed['entries'], [
+            {'preset_id': self.target, 'number': 15, 'name': 'Blues Lead'},
+            {'preset_id': self.current, 'number': 17, 'name': 'Disposable'}])
+        self.assertFalse(self.adapter.qc.recall.called)
+
+    def test_switch_recalls_waits_for_the_slot_and_reads_back(self):
+        self.adapter.list_presets()
+        loaded = dict(self.state, preset_id=self.target, name='Blues Lead')
+        self.adapter.snapshot = Mock(side_effect=[self.state, loaded])
+        self.adapter.qc.read_state.side_effect = [NS(folder_key=usb.MY_PRESETS, position=16, is_factory=False),
+                                                  NS(folder_key=usb.MY_PRESETS, position=14, is_factory=False)]
+        self.assertEqual(self.adapter.execute('select_preset', {'preset_id': self.target}), loaded)
+        self.adapter.qc.recall.assert_called_once_with(usb.MY_PRESETS, 14, False)
+
+    def test_unlisted_empty_or_foreign_slots_are_refused_before_the_recall(self):
+        self.adapter.snapshot = Mock(return_value=self.state)
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.execute('select_preset', {'preset_id': self.target})
+        self.assertEqual(caught.exception.code, 'invalid_value')
+        self.adapter.list_presets()
+        for target in (USBAdapter.preset_id(13), USBAdapter.preset_id(300), '["/opt/factory",1,true,false,false]', 'x', 3, None):
+            with self.assertRaises(BridgeError) as caught:
+                self.adapter.execute('select_preset', {'preset_id': target})
+            self.assertEqual(caught.exception.code, 'invalid_value')
+        self.adapter.qc.recall.assert_not_called()
+
+    def test_unsaved_edits_need_an_explicit_discard(self):
+        self.adapter.list_presets()
+        dirty = dict(self.state, dirty=True)
+        self.adapter.state = deepcopy(dirty)
+        self.adapter.snapshot = Mock(return_value=dirty)
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.execute('select_preset', {'preset_id': self.target})
+        self.assertEqual(caught.exception.code, 'unsaved_changes')
+        self.adapter.qc.recall.assert_not_called()
+        self.adapter.qc.read_state.return_value = NS(folder_key=usb.MY_PRESETS, position=14, is_factory=False)
+        self.adapter.snapshot = Mock(side_effect=[dirty, dict(self.state, preset_id=self.target)])
+        self.adapter.execute('select_preset', {'preset_id': self.target, 'discard': True})
+        self.adapter.qc.recall.assert_called_once()
+
+    def test_switch_the_qc_never_reports_is_unknown(self):
+        self.adapter.list_presets()
+        self.adapter.snapshot = Mock(return_value=self.state)
+        self.adapter.qc.read_state.return_value = NS(folder_key=usb.MY_PRESETS, position=16, is_factory=False)
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.execute('select_preset', {'preset_id': self.target})
+        self.assertEqual(caught.exception.code, 'not_confirmed')
+
+    def test_listing_without_my_presets_keeps_the_session(self):
+        self.adapter.qc.list_directory.return_value = {'presets': []}
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.list_presets()
+        self.assertEqual(caught.exception.code, 'not_confirmed')
+
+    def test_helper_lists_without_revision_context(self):
+        bridge = Coordinator(self.adapter)
+        bridge.session, bridge.state = 's', self.state
+        response = bridge.handle({'version': 1, 'type': 'request', 'id': '1', 'operation': 'list_presets', 'session_id': 's'})[0]
+        self.assertEqual(response['status'], 'confirmed')
+        self.assertEqual(len(response['result']['presets']['entries']), 2)
 
 
 class SettleTests(TestCase):

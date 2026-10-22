@@ -39,6 +39,8 @@ struct DuoWorkspaceView: View {
     /// from the posture signal once there is one.
     @State private var halfFolded = DuoWorkspaceView.launchHalfFolded
     @State private var confirmSave = false
+    /// The inner screen's deck shows My Presets in place of the pads; folded screens use a sheet.
+    @State private var browsing = false
     @State private var saveContext: PresetSnapshot?
     @State private var typingTarget: MenuTarget?
     @State private var typingContext: PresetSnapshot?
@@ -88,6 +90,10 @@ struct DuoWorkspaceView: View {
                     selected = "0:1"
                     editing = true
                 }
+                if ProcessInfo.processInfo.arguments.contains("--presets") {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    browsing = true
+                }
                 if model.screenshotFixture, ProcessInfo.processInfo.arguments.contains("--save-confirmation") {
                     try? await Task.sleep(for: .milliseconds(600))
                     requestSave()
@@ -107,6 +113,12 @@ struct DuoWorkspaceView: View {
                 if editing, !value.blocks.contains(where: { $0.id == selected }) { editing = false }
                 if let target = typingTarget, !value.blocks.contains(where: { $0.id == target.block }) { typingTarget = nil }
             }
+            .sheet(isPresented: Binding(get: { browsing && screen != .inner }, set: { if !$0 { browsing = false } })) {
+                PresetBrowser(model: model, theme: theme, layout: .sheet) { browsing = false }
+                    .padding(20).background(theme.ground)
+                    .presentationDetents([.large]).presentationDragIndicator(.visible)
+                    .preferredColorScheme(theme.daylight ? .light : .dark)
+            }
             .sheet(item: $typingTarget) { target in
                 NumberPad(theme: theme, control: model.editor.control(blockID: target.block, parameterID: target.parameter), entry: $entry, busy: model.busy,
                           cancel: { typingTarget = nil }, set: { commitTyped(target, $0) })
@@ -125,7 +137,7 @@ struct DuoWorkspaceView: View {
     private var stripTransition: AnyTransition { .opacity.animation(reduceMotion ? nil : .timingCurve(0.22, 1, 0.36, 1, duration: 0.44).delay(0.12)) }
 
     private func select(_ block: PresetSnapshot.Block) {
-        selected = block.id; row = block.position[0]
+        selected = block.id; row = block.position[0]; browsing = false
         withAnimation(motion) { editing = true }
     }
     private func closeEditor() { withAnimation(motion) { editing = false } }
@@ -179,7 +191,9 @@ struct DuoWorkspaceView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(snapshot.name).font(.system(size: halfFolded ? 22 : 30, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+                    PresetNameButton(model: model, snapshot: snapshot, theme: theme, font: .system(size: halfFolded ? 22 : 30, weight: .bold), chevron: halfFolded ? 24 : 30) {
+                        withAnimation(motion) { editing = false; browsing.toggle() }
+                    }
                     HStack(spacing: 10) {
                         Text(model.location(snapshot)).foregroundStyle(theme.muted)
                         if snapshot.dirty { unsaved }
@@ -211,7 +225,10 @@ struct DuoWorkspaceView: View {
     /// The control deck: the scene pads with Save, or the selected block's dial and controls.
     @ViewBuilder private func deck(_ snapshot: PresetSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            if editing, let block = snapshot.blocks.first(where: { $0.id == selected }) {
+            if browsing {
+                PresetBrowser(model: model, theme: theme, layout: .deck) { withAnimation(motion) { browsing = false } }
+                    .padding(.bottom, 16)
+            } else if editing, let block = snapshot.blocks.first(where: { $0.id == selected }) {
                 HStack(spacing: 12) {
                     Button { closeEditor() } label: {
                         Label("Scenes", systemImage: "chevron.left").font(.headline)
@@ -255,7 +272,7 @@ struct DuoWorkspaceView: View {
                 statusButton(compact: true)
                 tunerButton
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(snapshot.name).font(.title3.bold()).lineLimit(1).minimumScaleFactor(0.7)
+                    PresetNameButton(model: model, snapshot: snapshot, theme: theme, font: .title3.bold(), chevron: 22) { browsing = true }
                     if snapshot.dirty { unsaved.font(.subheadline.weight(.semibold)) }
                 }.layoutPriority(1)
                 Spacer(minLength: 4)
@@ -286,7 +303,7 @@ struct DuoWorkspaceView: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 8) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(snapshot.name).font(.largeTitle.bold()).lineLimit(1).minimumScaleFactor(0.7)
+                        PresetNameButton(model: model, snapshot: snapshot, theme: theme) { browsing = true }
                         HStack(spacing: 10) {
                             Text(model.location(snapshot)).foregroundStyle(theme.muted)
                             if snapshot.dirty { unsaved }
@@ -548,8 +565,7 @@ struct DuoWorkspaceView: View {
     }
     private func saveTitle(_ snapshot: PresetSnapshot) -> String {
         if model.demo { return "Save demo preset" }
-        guard snapshot.preset_id.hasPrefix("captured:") else { return "Save on the QC" }
-        return "Save to " + model.location(snapshot).replacingOccurrences(of: " · ", with: " ")
+        return model.slotName(snapshot).map { "Save to \($0)" } ?? "Save on the QC"
     }
     @ViewBuilder private func saveButton(_ snapshot: PresetSnapshot, short: Bool) -> some View {
         if model.editor.supports("save") {

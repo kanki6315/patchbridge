@@ -793,4 +793,199 @@ extension CoordinatorTests {
         XCTAssertEqual(c.phase, .ready)
     }
 
+    // MARK: Presets
+
+    private var presetOperations: [String] { ["snapshot", "catalog", "set_parameter", "select_scene", "save", "list_presets", "select_preset"] }
+    private func presetState(_ f: [String: Any], id: String = "captured:My Presets:16", name: String = "Tremonti w Mic", dirty: Bool) -> [String: Any] {
+        var state = f["snapshot"] as! [String: Any]; state["preset_id"] = id; state["name"] = name; state["dirty"] = dirty; return state
+    }
+    private var listing: [String: Any] { ["presets": ["source": "My Presets", "slots": 256, "entries": [
+        ["preset_id": "slot-15", "number": 15, "name": "Blues Lead"],
+        ["preset_id": "captured:My Presets:16", "number": 16, "name": "Tremonti w Mic"],
+        ["preset_id": "slot-18", "number": 18, "name": "Funk Wah"]]]] }
+    private func presetBrowsing(dirty: Bool) throws -> (EditorCoordinator, OfflineTransport, [String: Any]) {
+        var f = try fixture(); f["snapshot"] = presetState(f, dirty: dirty)
+        let t = OfflineTransport(), c = coordinator(t)
+        connect(c, t, fixture: f, operations: presetOperations)
+        c.listPresets()
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "list_presets")
+        XCTAssertTrue(c.listingPresets)
+        reply(t, result: listing)
+        XCTAssertFalse(c.listingPresets)
+        return (c, t, f)
+    }
+
+    func testPresetListKeepsSlotsAndCollapsesTheEmptyEnd() throws {
+        let (c, _, _) = try presetBrowsing(dirty: false)
+        let list = try XCTUnwrap(c.presetList)
+        XCTAssertEqual(list.entries.count, 3)
+        XCTAssertEqual(list.rows.count, 14 + 3 + 1 + 1)
+        XCTAssertEqual(list.rows.first, .empty(1))
+        XCTAssertEqual(list.rows[16], .empty(17))
+        XCTAssertEqual(list.rows.last, .emptyRun(19...256))
+        XCTAssertEqual(c.phase, .ready)
+    }
+
+    func testCleanPresetSwitchConfirmsOnlyAfterTheQCLoadsIt() throws {
+        let (c, t, f) = try presetBrowsing(dirty: false)
+        try c.selectPreset("slot-15")
+        let sent = try XCTUnwrap(t.messages.last)
+        XCTAssertEqual(sent["operation"] as? String, "select_preset")
+        XCTAssertEqual(sent["payload"] as? [String: AnyHashable], ["preset_id": "slot-15", "discard": false])
+        XCTAssertEqual(c.presetSwitch, .pending("slot-15"))
+        XCTAssertEqual(c.editor.snapshot?.name, "Tremonti w Mic", "the loaded preset stays until the QC confirms")
+        reply(t, result: ["state": presetState(f, id: "slot-15", name: "Blues Lead", dirty: false)], revision: 1)
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.editor.snapshot?.name, "Blues Lead")
+        XCTAssertNil(c.presetSwitch)
+        XCTAssertEqual(c.outcome, "Loaded Blues Lead")
+        XCTAssertNil(c.editor.lastError)
+    }
+
+    func testPresetWithNewModelsReloadsBeforeShowing() throws {
+        let (c, t, f) = try presetBrowsing(dirty: false)
+        try c.selectPreset("slot-18")
+        var state = presetState(f, id: "slot-18", name: "Funk Wah", dirty: false)
+        var blocks = state["blocks"] as! [[String: Any]]; blocks[0]["model_id"] = "new-model"; state["blocks"] = blocks
+        reply(t, result: ["state": state], revision: 1)
+        XCTAssertEqual(c.phase, .loading)
+        XCTAssertEqual(c.presetSwitch, .loading("slot-18"))
+        XCTAssertEqual(c.loadingPreset?.name, "Funk Wah")
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "catalog")
+        var catalog = f["catalog"] as! [String: Any]; var models = catalog["models"] as! [String: Any]
+        models["new-model"] = models[(blocks[1]["model_id"] as! String)]; catalog["models"] = models
+        reply(t, result: catalog, revision: 1)
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertNil(c.presetSwitch)
+        XCTAssertEqual(c.outcome, "Loaded Funk Wah")
+        XCTAssertNotNil(c.presetList, "the list outlives the switch")
+    }
+
+    func testDirtyPresetIsRefusedWithoutAChoiceAndSaveFirstSavesThenLoads() throws {
+        let (c, t, f) = try presetBrowsing(dirty: true)
+        try c.selectPreset("slot-15")
+        refuse(t, "unsaved_changes")
+        XCTAssertEqual(c.presetSwitch, .notApplied("slot-15", "Not switched. The preset has unsaved edits."))
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        reply(t, result: ["state": presetState(f, dirty: true)], revision: 1)
+        XCTAssertEqual(c.phase, .ready)
+
+        try c.selectPreset("slot-15", mode: .saveFirst)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "save")
+        XCTAssertEqual(c.presetSwitch, .saving("slot-15"))
+        reply(t, result: ["state": presetState(f, dirty: false)], revision: 2)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "select_preset")
+        XCTAssertEqual((t.messages.last?["payload"] as? [String: Any])?["discard"] as? Bool, false)
+        XCTAssertEqual(t.messages.last?["revision"] as? Int, 2)
+        XCTAssertEqual(c.presetSwitch, .pending("slot-15"))
+        reply(t, result: ["state": presetState(f, id: "slot-15", name: "Blues Lead", dirty: false)], revision: 3)
+        XCTAssertEqual(c.editor.snapshot?.name, "Blues Lead")
+        XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "save" }.count, 1)
+    }
+
+    func testDiscardSaysSoAndAFailedSaveSwitchesNothing() throws {
+        let (c, t, _) = try presetBrowsing(dirty: true)
+        try c.selectPreset("slot-15", mode: .saveFirst)
+        refuse(t, "device_busy")
+        XCTAssertEqual(c.presetSwitch, .notApplied("slot-15", "The QC was changing scene or preset. Try again."))
+        XCTAssertFalse(t.messages.contains { $0["operation"] as? String == "select_preset" })
+        try c.selectPreset("slot-15", mode: .discard)
+        XCTAssertEqual((t.messages.last?["payload"] as? [String: Any])?["discard"] as? Bool, true)
+    }
+
+    func testLostPresetSwitchIsUnknownUntilReadbackShowsIt() throws {
+        let (c, t, f) = try presetBrowsing(dirty: false)
+        try c.selectPreset("slot-15")
+        refuse(t, "not_confirmed")
+        XCTAssertEqual(c.presetSwitch, .unknown("slot-15"))
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        reply(t, result: ["state": presetState(f, id: "slot-15", name: "Blues Lead", dirty: false)], revision: 2)
+        XCTAssertNil(c.presetSwitch)
+        XCTAssertEqual(c.outcome, "Loaded Blues Lead")
+        XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "select_preset" }.count, 1, "never replayed")
+    }
+
+    func testSwitchTappedDuringTheListWaitsForIt() throws {
+        let (c, t, f) = try presetBrowsing(dirty: false)
+        c.listPresets()
+        XCTAssertThrowsError(try c.selectPreset("slot-99"))
+        try c.selectPreset("slot-18")
+        XCTAssertEqual(c.presetSwitch, .pending("slot-18"))
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "list_presets")
+        reply(t, result: listing)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "select_preset")
+        reply(t, result: ["state": presetState(f, id: "slot-18", name: "Funk Wah", dirty: false)], revision: 1)
+        XCTAssertEqual(c.editor.snapshot?.name, "Funk Wah")
+    }
+
+    func testListFailureKeepsTheConnectionAndBusyRetries() throws {
+        var f = try fixture(); f["snapshot"] = presetState(f, dirty: false)
+        let t = OfflineTransport(), c = coordinator(t)
+        connect(c, t, fixture: f, operations: presetOperations)
+        c.listPresets(); refuse(t, "device_busy")
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertTrue(c.listingPresets)
+        clock += 1.5; c.tick()
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "list_presets")
+        refuse(t, "not_confirmed")
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.presetListError, "not_confirmed")
+        XCTAssertFalse(c.listingPresets)
+    }
+
+    func testUnsavedEditsListWhoMadeThemAgainstTheSavedPreset() throws {
+        let (c, t, f) = try presetBrowsing(dirty: false)
+        XCTAssertNotNil(c.editor.saved)
+        XCTAssertEqual(c.editor.unsavedEdits, [])
+        let block = try XCTUnwrap(c.editor.snapshot?.blocks.first { b in c.editor.visibleParameters(blockID: b.id).contains { c.editor.readOnlyReason(blockID: b.id, parameterID: $0) == nil } })
+        let parameter = try XCTUnwrap(c.editor.visibleParameters(blockID: block.id).first { c.editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil })
+        let before = try XCTUnwrap(c.editor.value(blockID: block.id, parameterID: parameter))
+        guard case .number(let old) = before else { return XCTFail("numeric parameter expected") }
+        let value = old > 0.5 ? old - 0.1 : old + 0.1
+        try c.edit(blockID: block.id, parameterID: parameter, value: .number(value))
+        var state = presetState(f, dirty: true)
+        var blocks = state["blocks"] as! [[String: Any]]
+        let index = blocks.firstIndex { $0["id"] as? String == block.id }!
+        var scenes = blocks[index]["scenes"] as! [String: [String: Any]]
+        var parameters = scenes["F"]!["parameters"] as! [String: Any]; parameters[parameter] = value
+        scenes["F"]!["parameters"] = parameters; blocks[index]["scenes"] = scenes; state["blocks"] = blocks
+        reply(t, result: ["state": state], revision: 1)
+        XCTAssertEqual(c.editor.unsavedEdits, [UnsavedEdit(blockID: block.id, parameterID: parameter, scene: "F", current: .number(value), saved: before, onQC: false)])
+        // A bypass flipped on the QC is listed as the QC's.
+        scenes["F"]!["bypass"] = !((scenes["F"]!["bypass"] as? Bool) ?? false); blocks[index]["scenes"] = scenes; state["blocks"] = blocks
+        clock += 3; c.tick(); reply(t, result: ["state": state], revision: 2)
+        XCTAssertEqual(c.editor.unsavedEdits.count, 2)
+        XCTAssertEqual(c.editor.unsavedEdits.last?.onQC, true)
+        XCTAssertNil(c.editor.unsavedEdits.last?.parameterID)
+    }
+
+    func testPresetThatArrivesDirtyHasNoKnownSavedValues() throws {
+        let (c, _, _) = try presetBrowsing(dirty: true)
+        XCTAssertNil(c.editor.saved)
+        XCTAssertEqual(c.editor.unsavedEdits, [])
+    }
+
+    func testPresetSwitchThroughTheSimulatedBridge() throws {
+        let helper = try simulatorHelper(); defer { helper.stop() }
+        let shared = SharedUSBSession(helper: helper)
+        let (c, _) = try joined(shared, name: "iPhone")
+        XCTAssertTrue(c.presetSwitchAvailable)
+        c.listPresets()
+        XCTAssertEqual(c.presetList?.entries.map(\.number), [1, 2, 3, 4])
+        XCTAssertEqual(c.editor.snapshot?.location, PresetSnapshot.Location(source: "My Presets", number: 1))
+        try c.edit(blockID: "amp-1", parameterID: "gain", value: .number(7.5))
+        try c.selectPreset("2")
+        XCTAssertEqual(c.presetSwitch, .notApplied("2", "Not switched. The preset has unsaved edits."))
+        XCTAssertEqual(c.editor.snapshot?.name, "Simulation 1")
+        try c.selectPreset("2", mode: .discard)
+        XCTAssertEqual(c.editor.snapshot?.name, "Simulation 2")
+        XCTAssertEqual(c.editor.snapshot?.dirty, false)
+        XCTAssertEqual(c.phase, .ready)
+        try c.edit(blockID: "amp-1", parameterID: "gain", value: .number(3))
+        try c.selectPreset("1", mode: .saveFirst)
+        XCTAssertEqual(c.editor.snapshot?.name, "Simulation 1")
+        try c.selectPreset("2")
+        XCTAssertEqual(c.editor.value(blockID: "amp-1", parameterID: "gain"), .number(3), "saved before switching")
+    }
+
 }

@@ -40,7 +40,7 @@ public final class EditorCoordinator {
     public enum TunerMode: String { case off, live, open }
     static let tunerOperations: Set<String> = ["tuner", "tuner_read", "set_tuner_mute"]
     /// Edits this phone sends. Their outcome is reported and they are never replayed.
-    static let mutations: Set<String> = ["set_parameter", "set_bypass", "select_scene", "save"]
+    static let mutations: Set<String> = ["set_parameter", "set_bypass", "select_scene", "select_preset", "save"]
 
     // Scenes. The strip always draws the scene the QC confirmed; this only marks the tapped one.
     public enum SceneSwitch: Equatable { case pending(String), confirmed(String), notApplied(String), unknown(String) }
@@ -53,6 +53,37 @@ public final class EditorCoordinator {
     private var sceneSettledAt = TimeInterval.infinity
     /// The preset the last switch was sent on. A scene letter means nothing on another preset.
     private var sceneSwitchPreset: String?
+
+    // Presets. The list is read once (about 12 s on the QC) and kept until Refresh. The loaded
+    // preset stays the one the QC reports; a switch only marks the row it was sent for.
+    public enum PresetSwitch: Equatable {
+        /// Saving the current preset before loading the target.
+        case saving(String)
+        case pending(String)
+        /// The QC loaded it; its blocks' metadata is still on the way.
+        case loading(String)
+        case notApplied(String, String)
+        case unknown(String)
+        public var target: String {
+            switch self { case .saving(let id), .pending(let id), .loading(let id), .notApplied(let id, _), .unknown(let id): return id }
+        }
+    }
+    public enum PresetSwitchMode { case clean, discard, saveFirst }
+    public private(set) var presetList: PresetList?
+    public private(set) var presetListError: String?
+    public private(set) var presetSwitch: PresetSwitch?
+    public var presetBrowsingAvailable: Bool { phase == .ready && editor.supports("list_presets") }
+    public var presetSwitchAvailable: Bool { presetBrowsingAvailable && editor.supports("select_preset") }
+    /// A list request is in flight or waiting for the request slot.
+    public var listingPresets: Bool { request?.operation == "list_presets" || wantsList }
+    private var wantsList = false
+    private var listRetryAt: TimeInterval = 0
+    /// A switch tapped while the list was being read; it goes as soon as the list returns.
+    private var queuedPreset: (id: String, mode: PresetSwitchMode)?
+    /// The preset to load once the save sent for it is confirmed.
+    private var afterSave: String?
+    /// The staged preset while its metadata loads, so the overview can draw its name.
+    public var loadingPreset: PresetSnapshot? { if case .loading? = presetSwitch { return staged } else { return nil } }
     public private(set) var tunerMode: TunerMode = .off
     public private(set) var tunerMuted: Bool?
     public private(set) var tunerError: String?
@@ -154,6 +185,8 @@ public final class EditorCoordinator {
         operations.removeAll(); nextPoll = .infinity; discoveryDeadline = .infinity; editor.disconnect()
         held = nil; tunerMode = .off; tunerMuted = nil; tunerError = nil; tunerTrack = TunerTrack()
         sceneSwitch = nil; queuedScene = nil; sceneSettledAt = .infinity; sceneSwitchPreset = nil
+        presetList = nil; presetListError = nil; presetSwitch = nil; wantsList = false; listRetryAt = 0
+        queuedPreset = nil; afterSave = nil
         tunerSeq = 0; tunerSync = false; muteRequest = nil; nextTunerRead = .infinity
         phase = .disconnected; status = "Disconnected"; old?.disconnect(); onChange?()
     }
@@ -195,10 +228,84 @@ public final class EditorCoordinator {
         guard tunerMode == .open, tunerMuteAvailable else { return }
         tunerError = nil; muteRequest = muted; pump(); onChange?()
     }
-    /// Sends what is waiting, in order: a held edit, a tuner change, then the next tuner read.
+    /// Reads My Presets from the QC, or re-reads it. The old list stays usable meanwhile.
+    public func listPresets() {
+        guard presetBrowsingAvailable, !listingPresets else { return }
+        presetListError = nil; wantsList = true; listRetryAt = 0; pump(); onChange?()
+    }
+    /// Loads a preset. A dirty preset needs `discard` or `saveFirst`; the bridge refuses it otherwise.
+    /// A tap while the list is being read waits for it. Never replayed after a failure.
+    public func selectPreset(_ id: String, mode: PresetSwitchMode = .clean) throws {
+        guard phase == .ready else { throw EditorFailure.disconnected }
+        guard presetSwitchAvailable else { throw EditorFailure.unsupported }
+        guard let snapshot = editor.snapshot, presetList?.entries.contains(where: { $0.preset_id == id }) == true else { throw EditorFailure.invalidValue }
+        if mode == .saveFirst && !editor.supports("save") { throw EditorFailure.unsupported }
+        if id == snapshot.preset_id && !snapshot.dirty { presetSwitch = nil; onChange?(); return }
+        // A background read (the list or a poll) is in the way: go right after it.
+        if let reading = request?.operation, ["list_presets", "snapshot"].contains(reading) {
+            queuedPreset = (id, mode); presetSwitch = mode == .saveFirst ? .saving(id) : .pending(id); onChange?(); return
+        }
+        guard !busy else { throw EditorFailure.busy }
+        outcome = nil; error = nil
+        try sendPreset(id, mode: mode)
+    }
+    /// Forgets a refusal or unknown outcome once the browser that showed it closes.
+    public func clearPresetSwitch() {
+        switch presetSwitch { case .notApplied?, .unknown?: presetSwitch = nil; onChange?(); default: break }
+    }
+    private func sendPreset(_ id: String, mode: PresetSwitchMode) throws {
+        queuedPreset = nil
+        if mode == .saveFirst, editor.snapshot?.dirty == true {
+            let pending = try editor.proposeSave()
+            afterSave = id; presetSwitch = .saving(id)
+            send(pending.operation, command: pending.command); return
+        }
+        let pending = try editor.proposePreset(id, discard: mode == .discard)
+        presetSwitch = .pending(id)
+        send(pending.operation, command: pending.command)
+    }
+    /// The QC answered a preset switch, or the save before it, without loading it.
+    private func presetRefused(_ pending: Request, code: String, message: String, response: [String: Any]) -> Bool {
+        let target: String
+        if pending.operation == "select_preset", case .text(let id)? = editor.pending?.proposedValue { target = id }
+        else if pending.operation == "save", let id = afterSave { target = id }
+        else { return false }
+        afterSave = nil
+        let sameSession = response["session_id"] as? String == session
+        let saving = pending.operation == "save"
+        if ["busy", "device_busy"].contains(code) {
+            presetSwitch = .notApplied(target, code == "busy" ? "The bridge was busy with another device. Try again." : "The QC was changing scene or preset. Try again.")
+        } else if sameSession && code == "not_confirmed" {
+            presetSwitch = saving ? .notApplied(target, "Not switched. The save’s outcome is unknown; check the QC before switching.") : .unknown(target)
+        } else if sameSession && ["stale_context", "invalid_value", "unsupported_operation", "unsaved_changes"].contains(code) {
+            presetSwitch = .notApplied(target, code == "unsaved_changes" ? "Not switched. The preset has unsaved edits." : saving ? "Not switched. The save didn’t go through." : message)
+        } else { return false }
+        editor.reject(id: pending.id, message: nil)
+        if ["busy", "device_busy"].contains(code) { ready(keepingPoll: true); pump(); onChange?() }
+        else { phase = .loading; send("snapshot") }
+        return true
+    }
+    /// Shows a loaded preset: at once when its metadata is cached, otherwise once it arrives.
+    private func adopt(_ state: PresetSnapshot, session newSession: String, revision newRevision: Int) throws {
+        if state.catalog_id != editor.catalog?.id || !Set(state.blocks.map(\.model_id)).isSubset(of: cachedModels) {
+            staged = state; revision = newRevision; phase = .loading
+            editor.disconnect(); try loadCatalogIfNeeded()
+        } else {
+            try editor.refresh(state, session: newSession, connection: connection!, revision: newRevision)
+            revision = newRevision; ready()
+        }
+    }
+    /// Sends what is waiting, in order: a held edit, a queued preset switch, the preset list,
+    /// a tuner change, then the next tuner read.
     private func pump() {
         guard phase == .ready, request == nil else { return }
         if let held { self.held = nil; send(held.operation, command: held.command); return }
+        if let queued = queuedPreset {
+            do { try sendPreset(queued.id, mode: queued.mode) }
+            catch { queuedPreset = nil; presetSwitch = .notApplied(queued.id, "Not switched. Refresh the preset and try again."); onChange?() }
+            if request != nil { return }
+        }
+        if wantsList, now() >= listRetryAt, !isInBackground { wantsList = false; send("list_presets"); return }
         guard tunerAvailable, !isInBackground else { return }
         if tunerSync { tunerSync = false; send("tuner", payload: ["mode": tunerMode.rawValue]); return }
         if let mute = muteRequest { muteRequest = nil; send("set_tuner_mute", payload: ["value": mute]); return }
@@ -352,6 +459,16 @@ public final class EditorCoordinator {
                 }
                 // Refused before reaching the QC, so nothing changed: retry when the bridge says.
                 if sceneRefused(pending, code: code, response: response) { return }
+                if presetRefused(pending, code: code, message: message, response: response) { return }
+                // A list that couldn't be read leaves the connection as it was.
+                if pending.operation == "list_presets", code != "device_unavailable",
+                   response["session_id"] as? String == session || code == "busy" {
+                    if code == "busy" || code == "device_busy" {
+                        let retry = response["retry_after"] as? Double ?? 1
+                        wantsList = true; listRetryAt = now() + (retry.isFinite ? min(8, max(0.5, retry)) : 1)
+                    } else { presetListError = code == "unsupported_operation" ? "This bridge can’t list presets." : message }
+                    ready(keepingPoll: true); pump(); onChange?(); return
+                }
                 if code == "busy" || code == "device_busy" {
                     let retry = response["retry_after"] as? Double ?? 1
                     let delay = retry.isFinite ? min(8, max(0.5, retry)) : 1
@@ -373,10 +490,16 @@ public final class EditorCoordinator {
                 if code == "device_unavailable" {
                     let uncertain = Self.mutations.contains(pending.operation)
                     let scene = pending.operation == "select_scene" ? inFlightScene : nil
+                    let preset = pending.operation == "select_preset" || (pending.operation == "save" && afterSave != nil)
+                        ? presetList?.entries.first { $0.preset_id == presetSwitch?.target }?.name ?? "the preset" : nil
                     editor.disconnect(); staged = nil; session = nil; operations.removeAll(); held = nil
                     sceneSwitch = nil; queuedScene = nil
+                    presetSwitch = nil; queuedPreset = nil; afterSave = nil; wantsList = false
                     phase = .recovering; status = "QC unavailable · reconnecting"
-                    if let scene {
+                    if let preset, pending.operation == "select_preset" {
+                        error = response["applied"] as? Bool == false ? "\(preset) not loaded. Switching resumes after the QC reconnects."
+                            : "Load \(preset): outcome unknown. It will not be retried."
+                    } else if let scene {
                         // The strip is gone until fresh state loads, so say it in words.
                         error = response["applied"] as? Bool == false ? "Scene \(scene) not applied. Switching resumes after the QC reconnects."
                             : "Switch to Scene \(scene): outcome unknown. It will not be retried."
@@ -419,6 +542,8 @@ public final class EditorCoordinator {
                 trusted = trustTokens[macID] != nil
             }
             if ["connect", "recover"].contains(pending.operation) {
+                // A new helper session: the list it read stays valid, but no switch survives.
+                presetSwitch = nil; queuedPreset = nil; afterSave = nil
                 phase = .loading; session = newSession; revision = newRevision
                 staged = try decode(PresetSnapshot.self, result["state"])
                 send("capabilities"); return
@@ -440,6 +565,13 @@ public final class EditorCoordinator {
                 }
                 // Readback settles a switch whose answer was lost, but only on the preset it was sent
                 // on. A scene or preset change elsewhere retires a refusal or an unknown outcome.
+                switch presetSwitch {
+                case .unknown(let id)? where state.preset_id == id:
+                    presetSwitch = nil; outcome = "Loaded \(state.name)"
+                case .notApplied?, .unknown?:
+                    if state.preset_id != editor.snapshot?.preset_id { presetSwitch = nil }
+                default: break
+                }
                 switch sceneSwitch {
                 case .unknown(let scene)? where state.preset_id == sceneSwitchPreset && state.scene == scene:
                     sceneSwitch = .confirmed(scene); sceneSettledAt = now() + sceneConfirmationTime; outcome = nil
@@ -448,13 +580,7 @@ public final class EditorCoordinator {
                 default: break
                 }
                 guard newRevision > revision || state == editor.snapshot else { throw EditorFailure.staleContext }
-                if state.catalog_id != editor.catalog?.id || !Set(state.blocks.map(\.model_id)).isSubset(of: cachedModels) {
-                    staged = state; revision = newRevision; phase = .loading
-                    editor.disconnect(); try loadCatalogIfNeeded()
-                } else {
-                    try editor.refresh(state, session: newSession, connection: connection!, revision: newRevision)
-                    revision = newRevision; ready()
-                }
+                try adopt(state, session: newSession, revision: newRevision)
             case "select_scene":
                 let state = try decode(PresetSnapshot.self, result["state"])
                 try editor.confirm(id: pending.id, snapshot: state, session: newSession, connection: connection!, revision: newRevision)
@@ -465,10 +591,33 @@ public final class EditorCoordinator {
                     queuedScene = nil; sceneSwitch = .confirmed(state.scene); sceneSettledAt = now() + sceneConfirmationTime
                     pump()
                 }
+            case "list_presets":
+                guard let presets = result["presets"] as? [String: Any], let source = presets["source"] as? String,
+                      let slots = integer(presets["slots"]), (1...4096).contains(slots) else { throw EditorFailure.invalidState }
+                let entries = try decode([PresetList.Entry].self, presets["entries"])
+                guard entries.count <= slots, Set(entries.map(\.preset_id)).count == entries.count,
+                      entries.allSatisfy({ (1...slots).contains($0.number) && !$0.preset_id.isEmpty }) else { throw EditorFailure.invalidState }
+                presetList = PresetList(source: source, slots: slots, entries: entries, listedAt: Date())
+                presetListError = nil
+                ready(keepingPoll: true); pump()
+            case "select_preset":
+                let state = try decode(PresetSnapshot.self, result["state"])
+                guard case .text(let target)? = editor.pending?.proposedValue, state.preset_id == target,
+                      newRevision > revision || state.preset_id == editor.snapshot?.preset_id else { throw EditorFailure.staleContext }
+                editor.reject(id: pending.id, message: nil)
+                sceneSwitch = nil; queuedScene = nil; error = nil
+                try adopt(state, session: newSession, revision: newRevision)
+                if phase == .loading { presetSwitch = .loading(target) }
+                else { presetSwitch = nil; outcome = "Loaded \(state.name)"; pump() }
             case "set_parameter", "set_bypass", "save":
                 let state = try decode(PresetSnapshot.self, result["state"])
                 let proposed = editor.pending
                 try editor.confirm(id: pending.id, snapshot: state, session: newSession, connection: connection!, revision: newRevision)
+                if pending.operation == "save", let target = afterSave {
+                    // Saved: now load what the player picked. The preset is clean, so nothing is discarded.
+                    afterSave = nil; revision = newRevision; error = nil; ready()
+                    try sendPreset(target, mode: .clean); onChange?(); return
+                }
                 if pending.operation == "save" { outcome = "Saved on the QC" }
                 else if pending.operation == "set_bypass", let block = proposed?.blockID, case .boolean(let wanted)? = proposed?.proposedValue {
                     outcome = editor.bypassed(blockID: block) == wanted ? (wanted ? "Bypassed" : "Enabled") : "Adjusted by the QC"
@@ -500,6 +649,7 @@ public final class EditorCoordinator {
         try editor.load(snapshot: staged, catalog: cachedCatalog, session: session, connection: connection,
                         revision: revision, operations: operations)
         self.staged = nil; ready()
+        if case .loading? = presetSwitch { presetSwitch = nil; outcome = "Loaded \(staged.name)" }
         // A fresh session starts with the tuner off; ask for this phone's mode again.
         tunerSeq = 0; tunerTrack = TunerTrack()
         if tunerMode != .off { tunerSync = true; nextTunerRead = now() }

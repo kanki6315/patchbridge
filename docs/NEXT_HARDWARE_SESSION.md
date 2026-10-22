@@ -104,13 +104,37 @@ To check on hardware: tap scenes A–H from the phone and compare the QC; switch
 presets on the QC itself during polling and during an edit, and confirm the phone keeps
 its connection; confirm the QC's dirty flag doesn't change on a scene switch.
 
+## Preset browsing and switching (offline only so far)
+
+- `list_presets` sends one File READ (qc-mcp's `list_directory`, about 12 s) and returns
+  every named My Presets slot with the `preset_id` a snapshot reports once it's loaded.
+  It changes nothing on the QC and is allowed on read-only sessions.
+- `select_preset` loads only a slot the last listing named, in My Presets. It sends
+  SetlistPosition UPDATE (`recall`), waits up to 8 s for SetlistPosition to report the
+  slot, then reads the preset back. A dirty preset is refused (`unsaved_changes`) unless
+  the phone sends `discard: true`; Save and switch saves with File CREATE first. A switch
+  the QC never reports is `not_confirmed` and is not retried.
+- Snapshots now carry `location` (`My Presets`, number) for the header and Save button.
+
+To check on hardware, with the disposable preset backed up:
+1. Open the browser and compare the list with the QC's My Presets. **Numbering is a
+   guess:** the bridge shows the wire position plus one, so the disposable preset (wire
+   index 16) should read 17. If the QC shows 16, drop the `+ 1` in `list_presets` and the
+   snapshot `location`.
+2. Confirm the My Presets folder key in the File READ is `/media/p4/Presets/My Presets`
+   (the adapter falls back to the folder named My Presets) and that `recall` with that
+   key loads the slot.
+3. Switch to another slot and back from the phone, clean; then with an edit, try Switch
+   anyway and Save and switch, and confirm on the QC which values survived.
+4. Load a preset on the QC itself while the browser is open, and while a list is being read.
+
 ## Still unverified after that run
 
 - Scene-specific parameter writes and amp-model controls.
 - Display accuracy of nonlinear (skewed) conversions against the QC's own readout,
   until step 9 has run.
-- Switching to another slot and back, preset selection, bypass, and Save As
-  (not exposed by the USB adapter).
+- Switching to another slot and back and preset selection, until the steps above run;
+  Save As (not exposed by the USB adapter).
 - Native asynchronous device events; the phone relies on polling.
 - Simultaneous physical and remote edits. USB cannot make the read/write pair
   atomic, so the whole-preset hash check is the only guard.

@@ -15,7 +15,7 @@ RING, GAP, STEP = 4.5, 1.5, 0.1
 
 class SimulatedAdapter:
     operations = frozenset({"connect", "disconnect", "identify", "capabilities", "snapshot", "catalog",
-                            "subscribe", "set_parameter", "set_bypass", "select_scene", "select_preset",
+                            "subscribe", "list_presets", "set_parameter", "set_bypass", "select_scene", "select_preset",
                             "save", "save_as"}) | tuning.OPERATIONS
 
     def __init__(self, clock=time.monotonic):
@@ -30,6 +30,7 @@ class SimulatedAdapter:
     def _preset(slot: str) -> dict[str, Any]:
         return {
             "preset_id": slot, "name": f"Simulation {slot}", "scene": "A",
+            "location": {"source": "My Presets", "number": int(slot)},
             "dirty": False, "catalog_id": "sim-catalog-2",
             "blocks": [{
                 "id": "amp-1", "model_id": "sim-amp", "position": [0, 0],
@@ -101,6 +102,12 @@ class SimulatedAdapter:
         self._require_connection()
         return deepcopy(self.state)
 
+    def list_presets(self) -> dict[str, Any]:
+        self._require_connection()
+        return {"source": "My Presets", "slots": 256, "entries": [
+            {"preset_id": slot, "number": int(slot), "name": preset["name"]}
+            for slot, preset in sorted(self.saved.items(), key=lambda item: int(item[0]))]}
+
     def catalog(self) -> dict[str, Any]:
         self._require_connection()
         catalog = {"id": "sim-catalog-2", "metadata_version": 1, "models": {"sim-amp": {
@@ -165,6 +172,9 @@ class SimulatedAdapter:
             if not isinstance(slot, str) or slot not in self.saved:
                 raise BridgeError("invalid_value", "Unknown preset slot.")
             if operation == "select_preset":
+                # Like the QC adapter: loading over unsaved edits must say it discards them.
+                if self.state["dirty"] and payload.get("discard") is not True:
+                    raise BridgeError("unsaved_changes", "The current preset has unsaved edits.")
                 self.state = deepcopy(self.saved[slot])
             else:
                 self.state["preset_id"] = slot

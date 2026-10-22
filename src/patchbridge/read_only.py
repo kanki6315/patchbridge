@@ -3,9 +3,11 @@ from .adapter import BridgeError
 from . import tuner as tuning
 
 # Starting and reading the tuner are reads: they change neither the preset nor a kept setting.
-# Mute is a QC setting, so it stays out.
+# Mute is a QC setting, so it stays out. Listing presets reads the directory and loads nothing.
 READ_OPERATIONS = frozenset({'connect', 'disconnect', 'identify', 'capabilities', 'snapshot', 'catalog',
-                             'subscribe'}) | tuning.READ_OPERATIONS
+                             'subscribe', 'list_presets'}) | tuning.READ_OPERATIONS
+# Reads only some adapters have.
+OPTIONAL_READS = tuning.READ_OPERATIONS | {'list_presets'}
 
 
 class ReadOnlyAdapter:
@@ -16,7 +18,7 @@ class ReadOnlyAdapter:
         supported = getattr(adapter, 'operations', frozenset())
         supported = supported if isinstance(supported, (set, frozenset)) else frozenset()
         self.operations = frozenset(op for op in READ_OPERATIONS
-                                    if op not in tuning.READ_OPERATIONS or op in supported)
+                                    if op not in OPTIONAL_READS or op in supported)
 
     def connect(self):
         return {**self.adapter.connect(), 'access_mode': 'read_only'}
@@ -32,6 +34,9 @@ class ReadOnlyAdapter:
 
     def execute(self, operation, payload):
         raise BridgeError('read_only', 'This session permits reads only. Editing and saving are disabled.')
+
+    def list_presets(self):
+        return self.adapter.list_presets()
 
     def tuner(self, mode):
         return self.adapter.tuner(mode)

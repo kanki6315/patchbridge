@@ -25,6 +25,7 @@ struct EditorView: View {
     @State private var saveContext: PresetSnapshot?
     @State private var didConfigurePreview = false
     @State private var renaming = false
+    @State private var browsing = false
     @FocusState private var nameFocused: Bool
     enum Sheet: String, Identifiable { case connection, appearance, getMac; var id: String { rawValue } }
     private var theme: PhoneTheme { PhoneTheme(daylight: matchSystem ? systemScheme == .light : appearance == "Daylight") }
@@ -48,7 +49,10 @@ struct EditorView: View {
             let landscape = geometry.size.width > geometry.size.height && !dynamicTypeSize.isAccessibilitySize
             let duo = duoScreen(geometry)
             Group {
-                if model.ready, model.snapshot != nil, let duo {
+                if let staged = model.coordinator.loadingPreset, !model.usesLocalFixture {
+                    // A preset the QC just loaded, while its blocks' metadata arrives.
+                    PresetReloadingView(snapshot: staged, model: model, theme: theme)
+                } else if model.ready, model.snapshot != nil, let duo {
                     DuoWorkspaceView(model: model, tuner: tuner, theme: theme, screen: duo, size: geometry.size, insets: geometry.safeAreaInsets,
                                      row: $duoRow, selected: $duoSelected, editing: $duoEditing,
                                      showConnection: { sheet = .connection }, openEditor: { selectedBlock = $0 })
@@ -82,6 +86,13 @@ struct EditorView: View {
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
                 }.tint(theme.signal).preferredColorScheme(theme.daylight ? .light : .dark)
             }
+            // iPhone: My Presets is a large sheet. iPad uses a popover and the Duo its deck.
+            .sheet(isPresented: Binding(get: { browsing && model.ready && !pad && duo == nil }, set: { if !$0 { browsing = false } })) {
+                PresetBrowser(model: model, theme: theme, layout: .sheet) { browsing = false }
+                    .padding(20).background(theme.ground.ignoresSafeArea())
+                    .presentationDetents([.large]).presentationDragIndicator(.visible)
+                    .tint(theme.signal).preferredColorScheme(theme.daylight ? .light : .dark)
+            }
             .onChange(of: model.ready) { _, ready in
                 if !ready { selectedBlock = nil; duoRow = 0; duoSelected = nil; duoEditing = false }
             }
@@ -97,6 +108,8 @@ struct EditorView: View {
                 if let flag = arguments.firstIndex(of: "--activity"), arguments.indices.contains(flag + 1) {
                     model.liveActivity.preview(arguments[flag + 1], daylight: arguments.contains("--daylight"))
                 }
+                if arguments.contains("--offline-bridge") { model.start() }
+                if arguments.contains("--presets") { browsing = true }
                 if arguments.contains("--demo") || arguments.contains("--screenshots") {
                     if arguments.contains("--screenshots") { model.loadScreenshotFixture() }
                     else { model.loadDemo() }
@@ -190,7 +203,7 @@ struct EditorView: View {
                 Spacer()
                 if tuner.available { TunerButton(tuner: tuner, theme: theme) { tuner.setOpen(true) } }
             }
-            Text(snapshot.name).font(.largeTitle.bold())
+            PresetNameButton(model: model, snapshot: snapshot, theme: theme) { browsing = true }
             HStack(spacing: 10) {
                 Text(model.location(snapshot)).foregroundStyle(theme.muted)
                 if snapshot.dirty { Label("Unsaved", systemImage: "circle.fill").foregroundStyle(theme.signal) }
@@ -264,7 +277,7 @@ struct EditorView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 14) {
                 Button { sheet = .connection } label: { Label(model.demo ? "Demo" : "Mac", systemImage: "checkmark").padding(12) }.phoneGlass(theme)
-                Text(snapshot.name).font(.headline).lineLimit(1)
+                PresetNameButton(model: model, snapshot: snapshot, theme: theme, font: .headline, chevron: 22) { browsing = true }
                 if snapshot.dirty { Circle().fill(theme.signal).frame(width: 8, height: 8).accessibilityLabel("Unsaved") }
                 Spacer()
                 HStack(spacing: 3) {
@@ -322,7 +335,7 @@ struct EditorView: View {
             if model.editor.supports("save") {
                 HStack {
                     if selectedBlock != nil { Label(snapshot.dirty ? "Unsaved" : "Saved", systemImage: snapshot.dirty ? "circle.fill" : "checkmark").font(.subheadline).foregroundStyle(snapshot.dirty ? theme.signal : theme.muted).floatingNote(theme); Spacer() }
-                    PrimaryButton(title: selectedBlock == nil ? (model.demo ? "Save demo preset" : "Save on the QC") : "Save", theme: theme) { requestSave() }
+                    PrimaryButton(title: selectedBlock == nil ? (model.demo ? "Save demo preset" : model.slotName(snapshot).map { "Save to \($0)" } ?? "Save on the QC") : "Save", theme: theme) { requestSave() }
                         .frame(maxWidth: selectedBlock == nil ? .infinity : 100)
                         .floatingDimmed(model.busy || !snapshot.dirty, theme)
                         .saveConfirmation(isPresented: saveConfirmation(pushed: pushed), demo: model.demo, confirm: confirmCurrentSave)
@@ -501,6 +514,7 @@ struct EditorView: View {
                 if model.editor.supports("set_parameter") { Label("Edit supported parameters", systemImage: "checkmark") }
                 if model.editor.supports("set_bypass") { Label("Turn blocks on or off", systemImage: "checkmark") }
                 if model.editor.supports("select_scene") { Label("Switch scenes", systemImage: "checkmark") }
+                if model.editor.supports("select_preset") && model.editor.supports("list_presets") { Label("Load presets from My Presets", systemImage: "checkmark") }
                 if model.editor.supports("save") { Label("Save the current preset", systemImage: "checkmark") }
                 if model.coordinator.trusted {
                     LabeledContent("Trusted", value: "Until revoked on the Mac").foregroundStyle(theme.ink)

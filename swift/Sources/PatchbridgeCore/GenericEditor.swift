@@ -128,6 +128,9 @@ public struct PresetSnapshot: Codable, Equatable {
     public let blocks: [Block]
     public var scene_labels: [String]? = nil
     public var scene_colors: [UInt32]? = nil
+    /// Where the preset lives on the QC, when the bridge knows: "My Presets", slot 16.
+    public struct Location: Codable, Equatable { public let source: String; public let number: Int }
+    public var location: Location? = nil
     public static let sceneLetters = ["A", "B", "C", "D", "E", "F", "G", "H"]
     var validStructure: Bool {
         let scenes = Set(Self.sceneLetters)
@@ -139,6 +142,54 @@ public struct PresetSnapshot: Codable, Equatable {
                 Set($0.scenes.keys).isSubset(of: scenes)
             }
     }
+}
+
+/// One source of presets on the QC, as the bridge listed it. Only named slots are listed.
+public struct PresetList: Equatable {
+    public struct Entry: Codable, Equatable, Identifiable {
+        public let preset_id: String
+        public let number: Int
+        public let name: String
+        public var id: String { preset_id }
+        public init(preset_id: String, number: Int, name: String) { self.preset_id = preset_id; self.number = number; self.name = name }
+    }
+    public let source: String
+    public let slots: Int
+    public let entries: [Entry]
+    public let listedAt: Date
+    public init(source: String, slots: Int, entries: [Entry], listedAt: Date) {
+        self.source = source; self.slots = slots; self.entries = entries; self.listedAt = listedAt
+    }
+    /// The rows a browser draws: each named slot, each empty slot between them, and the empty
+    /// run after the last one as a single row.
+    public enum Row: Equatable, Identifiable {
+        case preset(Entry), empty(Int), emptyRun(ClosedRange<Int>)
+        public var id: String {
+            switch self { case .preset(let e): return e.preset_id; case .empty(let n): return "empty-\(n)"; case .emptyRun(let r): return "run-\(r.lowerBound)" }
+        }
+    }
+    public var rows: [Row] {
+        let sorted = entries.sorted { $0.number < $1.number }
+        var rows = [Row](), next = 1
+        for entry in sorted {
+            if entry.number > next { rows += (next..<entry.number).map { .empty($0) } }
+            rows.append(.preset(entry)); next = entry.number + 1
+        }
+        if next <= slots { rows.append(next == slots ? .empty(next) : .emptyRun(next...slots)) }
+        return rows
+    }
+}
+
+/// An edit the QC holds that its saved preset doesn't: a parameter value or a bypass flag.
+public struct UnsavedEdit: Equatable {
+    public let blockID: String
+    /// nil for a bypass change.
+    public let parameterID: String?
+    public let scene: String
+    public let current: ParameterValue?
+    public let saved: ParameterValue?
+    /// Made on the QC (or another device) rather than from this phone.
+    public let onQC: Bool
 }
 
 public enum EditorFailure: Error { case disconnected, busy, staleContext, incompatibleCatalog, unsupported, invalidValue, invalidState }
@@ -157,6 +208,11 @@ public final class GenericEditor {
     public private(set) var catalog: EditorCatalog?
     public private(set) var pending: Pending?
     public private(set) var lastError: String?
+    /// The preset as last saved on the QC: seen clean on load, or confirmed by Save. nil when the
+    /// preset was already dirty when it arrived, so its saved values aren't known.
+    public private(set) var saved: PresetSnapshot?
+    /// Values this phone changed since `saved`, as "block/parameter" or "block/bypass".
+    private var ownEdits = Set<String>()
     private var session: String?
     private var connection: String?
     private var revision = 0
@@ -165,7 +221,7 @@ public final class GenericEditor {
     public func supports(_ operation: String) -> Bool { operations.contains(operation) }
     public func disconnect() {
         snapshot = nil; catalog = nil; pending = nil; session = nil; connection = nil
-        revision = 0; operations.removeAll()
+        revision = 0; operations.removeAll(); saved = nil; ownEdits.removeAll()
     }
     public func load(snapshot: PresetSnapshot, catalog: EditorCatalog, session: String,
                      connection: String, revision: Int, operations: Set<String>) throws {
@@ -175,7 +231,7 @@ public final class GenericEditor {
         guard snapshot.validStructure else { throw EditorFailure.invalidState }
         self.snapshot = snapshot; self.catalog = catalog; self.session = session
         self.connection = connection; self.revision = revision; self.operations = operations
-        pending = nil; lastError = nil
+        pending = nil; lastError = nil; track(snapshot)
     }
     public func control(blockID: String, parameterID: String) -> ParameterControl? {
         guard let block = snapshot?.blocks.first(where: { $0.id == blockID }) else { return nil }
@@ -298,6 +354,51 @@ public final class GenericEditor {
         pending = change; lastError = nil
         return change
     }
+    /// Asks the QC to load another preset. `discard` says the player chose to lose unsaved edits;
+    /// the bridge refuses a dirty preset without it.
+    @discardableResult
+    public func proposePreset(_ presetID: String, discard: Bool) throws -> Pending {
+        guard let snapshot, let session, let connection else { throw EditorFailure.disconnected }
+        guard pending == nil else { throw EditorFailure.busy }
+        guard operations.contains("select_preset") else { throw EditorFailure.unsupported }
+        guard !presetID.isEmpty, presetID.count <= 512 else { throw EditorFailure.invalidValue }
+        let id = UUID().uuidString
+        let command: [String: Any] = ["version": 1, "id": id, "operation": "select_preset", "connection_id": connection,
+            "session_id": session, "revision": revision, "preset_id": snapshot.preset_id, "scene": snapshot.scene,
+            "payload": ["preset_id": presetID, "discard": discard]]
+        let change = Pending(id: id, operation: "select_preset", blockID: nil, parameterID: nil, proposedValue: .text(presetID), command: command)
+        pending = change; lastError = nil
+        return change
+    }
+    /// Every value the QC holds that differs from the saved preset, in grid order. Empty when the
+    /// saved preset isn't known; check `saved` before saying there's nothing unsaved.
+    public var unsavedEdits: [UnsavedEdit] {
+        guard let snapshot, let saved, saved.preset_id == snapshot.preset_id else { return [] }
+        var edits = [UnsavedEdit]()
+        let blocks = snapshot.blocks.sorted { ($0.position[0], $0.position[1]) < ($1.position[0], $1.position[1]) }
+        for block in blocks {
+            guard let before = saved.blocks.first(where: { $0.id == block.id }), before.model_id == block.model_id else { continue }
+            // The active scene first, so a value is shown as you'd see it now.
+            let scenes = [snapshot.scene] + PresetSnapshot.sceneLetters.filter { $0 != snapshot.scene }
+            let ids = Set(block.scenes.values.flatMap(\.parameters.keys)).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+            for id in ids where control(blockID: block.id, parameterID: id)?.hidden != true {
+                guard let scene = scenes.first(where: { block.scenes[$0]?.parameters[id] != before.scenes[$0]?.parameters[id] }) else { continue }
+                edits.append(UnsavedEdit(blockID: block.id, parameterID: id, scene: scene, current: block.scenes[scene]?.parameters[id],
+                                         saved: before.scenes[scene]?.parameters[id], onQC: !ownEdits.contains("\(block.id)/\(id)")))
+            }
+            if let scene = scenes.first(where: { block.scenes[$0]?.bypass != before.scenes[$0]?.bypass }) {
+                edits.append(UnsavedEdit(blockID: block.id, parameterID: nil, scene: scene, current: block.scenes[scene]?.bypass.map { .boolean($0) },
+                                         saved: before.scenes[scene]?.bypass.map { .boolean($0) }, onQC: !ownEdits.contains("\(block.id)/bypass")))
+            }
+        }
+        return edits
+    }
+    /// Keeps `saved` in step with the QC: a clean preset is the saved one, and another preset
+    /// starts over.
+    private func track(_ state: PresetSnapshot) {
+        if !state.dirty { saved = state; ownEdits.removeAll() }
+        else if saved?.preset_id != state.preset_id { saved = nil; ownEdits.removeAll() }
+    }
     /// A nil message clears the pending change without an error, for outcomes shown elsewhere.
     public func reject(id: String, message: String?) {
         guard pending?.id == id else { return }
@@ -322,7 +423,7 @@ public final class GenericEditor {
             guard newState == snapshot else { throw EditorFailure.staleContext }; return
         }
         if pending != nil { lastError = "Device state changed; pending edit discarded." }
-        pending = nil; snapshot = newState; self.revision = revision
+        pending = nil; snapshot = newState; self.revision = revision; track(newState)
     }
     public func confirm(id: String, snapshot newState: PresetSnapshot, session: String, connection: String, revision: Int) throws {
         guard let pending, pending.id == id, session == self.session, connection == self.connection,
@@ -350,7 +451,10 @@ public final class GenericEditor {
         } else if pending.operation == "save" {
             guard !newState.dirty, newState.blocks == snapshot?.blocks, newState.name == snapshot?.name else { throw EditorFailure.invalidState }
         }
+        if let block = pending.blockID {
+            ownEdits.insert("\(block)/\(pending.operation == "set_bypass" ? "bypass" : pending.parameterID ?? "")")
+        }
         // Readback is authoritative, including a valid value adjusted by the device.
-        snapshot = newState; self.revision = revision; self.pending = nil; lastError = nil
+        snapshot = newState; self.revision = revision; self.pending = nil; lastError = nil; track(newState)
     }
 }

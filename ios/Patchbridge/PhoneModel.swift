@@ -40,7 +40,15 @@ final class PhoneModel: ObservableObject {
         #endif
     }
     @Published var notice: String?
-    let coordinator = EditorCoordinator()
+    let coordinator: EditorCoordinator = {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--offline-bridge") {
+            return EditorCoordinator(makeTransport: { DebugBridge(dirty: arguments.contains("--dirty")) })
+        }
+        #endif
+        return EditorCoordinator()
+    }()
     let liveActivity = ConnectionActivityController()
     let tuner = TunerModel()
     private let demoEditor = GenericEditor()
@@ -79,6 +87,13 @@ final class PhoneModel: ObservableObject {
             self.liveActivity.sync(self)
             self.syncKeepAwake()
             self.sceneSwitchChanged()
+            self.presetSwitchChanged()
+            #if DEBUG
+            // The in-process bridge has no Mac to approve on.
+            if self.coordinator.phase == .awaitingApproval, ProcessInfo.processInfo.arguments.contains("--offline-bridge") {
+                DispatchQueue.main.async { self.coordinator.authorize() }
+            }
+            #endif
             self.version += 1
         }
         savedTrust = coordinator.trustTokens
@@ -121,6 +136,26 @@ final class PhoneModel: ObservableObject {
         catch EditorFailure.busy { notice = "Not applied. Wait for the last change to finish." }
         catch { notice = "Not applied. Refresh the preset and try again." }
         version += 1
+    }
+    /// A selection tick on tap; the success tap comes with the outcome, like scenes.
+    func selectPreset(_ id: String, mode: EditorCoordinator.PresetSwitchMode) {
+        UISelectionFeedbackGenerator().selectionChanged()
+        do { notice = nil; try coordinator.selectPreset(id, mode: mode) }
+        catch EditorFailure.busy { notice = "Not switched. Wait for the last change to finish." }
+        catch { notice = "Not switched. Refresh the list and try again." }
+        version += 1
+    }
+    private var lastPresetSwitch: EditorCoordinator.PresetSwitch?
+    private func presetSwitchChanged() {
+        let current = coordinator.presetSwitch
+        defer { lastPresetSwitch = current }
+        guard current != lastPresetSwitch else { return }
+        switch current {
+        case nil where lastPresetSwitch.map({ if case .pending = $0 { return true }; if case .loading = $0 { return true }; return false }) == true:
+            if coordinator.outcome?.hasPrefix("Loaded ") == true { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+        case .notApplied?, .unknown?: UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        default: break
+        }
     }
     private func sceneSwitchChanged() {
         let current = sceneSwitch
@@ -221,8 +256,14 @@ final class PhoneModel: ObservableObject {
     func category(_ block: PresetSnapshot.Block) -> BlockCategory { BlockCategory(editor.catalog?.models[block.model_id]?.category ?? "") }
     func parameters(_ block: PresetSnapshot.Block) -> [String] { editor.visibleParameters(blockID: block.id) }
     func location(_ snapshot: PresetSnapshot) -> String {
+        if let location = snapshot.location { return "\(location.source) · \(location.number)" }
         if snapshot.preset_id.hasPrefix("captured:") { return snapshot.preset_id.replacingOccurrences(of: "captured:", with: "").replacingOccurrences(of: ":", with: " · ") }
         return "Current preset"
+    }
+    /// "My Presets 16", when the bridge says where the preset is saved.
+    func slotName(_ snapshot: PresetSnapshot) -> String? {
+        guard snapshot.location != nil || snapshot.preset_id.hasPrefix("captured:") else { return nil }
+        return location(snapshot).replacingOccurrences(of: " · ", with: " ")
     }
     func sceneColor(_ theme: PhoneTheme, _ index: Int) -> Color {
         guard let colors = snapshot?.scene_colors, colors.indices.contains(index) else { return theme.muted }
@@ -247,8 +288,10 @@ final class PhoneModel: ObservableObject {
         }.joined(separator: " · ")
     }
     func valueText(_ block: String, _ parameter: String, unit: Bool = true) -> String {
-        guard let value = editor.value(blockID: block, parameterID: parameter) else { return "Unavailable" }
-        let control = editor.control(blockID: block, parameterID: parameter)
+        format(editor.value(blockID: block, parameterID: parameter), control: editor.control(blockID: block, parameterID: parameter), unit: unit)
+    }
+    func format(_ value: ParameterValue?, control: ParameterControl?, unit: Bool = true) -> String {
+        guard let value else { return "Unavailable" }
         if let n = control?.displayValue(value) { return String(format: "%.1f", n) + (unit && control?.unit.isEmpty == false ? " \(control!.unit)" : "") }
         if case .number(let n) = value, let option = control?.options?.first(where: { abs($0.value - n) < 0.000001 }) { return option.label }
         switch value {

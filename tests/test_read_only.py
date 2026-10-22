@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from patchbridge.adapter import BridgeError
 from patchbridge.captured import CapturedAdapter
 from patchbridge.helper import Coordinator, WRITES
-from patchbridge.read_only import ReadOnlyAdapter, READ_OPERATIONS
+from patchbridge.read_only import ReadOnlyAdapter, READ_OPERATIONS, OPTIONAL_READS
 from patchbridge import tuner as tuning
 
 
@@ -24,7 +24,7 @@ class ReadOnlyTests(unittest.TestCase):
         underlying.execute.assert_not_called()
         capabilities = coordinator.handle({'version': 1, 'type': 'request', 'id': 'c', 'operation': 'capabilities'})[0]
         # An adapter without a tuner doesn't advertise one.
-        self.assertEqual(set(capabilities['result']['operations']), READ_OPERATIONS - tuning.READ_OPERATIONS)
+        self.assertEqual(set(capabilities['result']['operations']), READ_OPERATIONS - OPTIONAL_READS)
         self.assertEqual(capabilities['result']['access_mode'], 'read_only')
 
     def test_fixture_changes_removal_and_reconnect(self):
