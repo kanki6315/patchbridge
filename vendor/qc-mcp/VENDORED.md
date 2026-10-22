@@ -39,6 +39,9 @@ git (see `.gitignore`):
   `keep + _pending` when the reply arrived, queuing every earlier message twice
   and keeping the reply, so the queue doubled on each read. Patchbridge keeps
   what follows the reply once. See `docs/USB_RESULTS_2026-10-21.md`.
+- `transport.REPLY_POLL_S`: `request()` and `_read_preset_once()` poll every 10 ms
+  instead of 100–150 ms. The HID backend sleeps the full poll interval, so upstream
+  added that much latency to every read; a snapshot is six reads.
 
 When updating, copy the same files from the new commit, reapply the local
 changes unless upstream fixed them, and update the commit here, in

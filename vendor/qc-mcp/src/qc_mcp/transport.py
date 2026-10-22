@@ -19,6 +19,12 @@ class QCError(Exception):
     pass
 
 
+# Patchbridge: how long request() and the preset read wait between polls. Upstream
+# slept 100-150 ms per poll, and the HID backend sleeps the whole interval even when
+# the reply is already there, so every read cost at least that long.
+REPLY_POLL_S = 0.01
+
+
 def _serialized(method):
     """Hold the device for one whole exchange (send, then collect the reply).
 
@@ -440,7 +446,7 @@ class QuadCortex:
         # prefer a response whose protobuf actually decodes (skip bare READ acks)
         best = None
         while time.time() < deadline:
-            self._collect(0.1)
+            self._collect(REPLY_POLL_S)
             keep = []
             pending = self._pending
             for i, (cmd, obj, raw, pb) in enumerate(pending):
@@ -515,7 +521,7 @@ class QuadCortex:
         self.send("RecallPreset", m)
         deadline = time.time() + timeout_ms / 1000.0
         while time.time() < deadline:
-            self._collect(0.15)
+            self._collect(REPLY_POLL_S)
             for cmd, obj, raw, pb in list(self._pending):
                 # match our request_id so a buffered/older push or the app's own
                 # recall echo can't be mistaken for the response to THIS read.
