@@ -78,8 +78,9 @@ public final class EditorCoordinator {
     public var listingPresets: Bool { request?.operation == "list_presets" || wantsList }
     private var wantsList = false
     private var listRetryAt: TimeInterval = 0
-    /// A switch tapped while the list was being read; it goes as soon as the list returns.
-    private var queuedPreset: (id: String, mode: PresetSwitchMode)?
+    /// A switch tapped during a background read; it goes as soon as the read returns, and only
+    /// if the preset is still the one the player approved.
+    private var queuedPreset: (id: String, mode: PresetSwitchMode, approved: PresetSnapshot)?
     /// The preset to load once the save sent for it is confirmed.
     private var afterSave: String?
     /// The staged preset while its metadata loads, so the overview can draw its name.
@@ -234,20 +235,32 @@ public final class EditorCoordinator {
         presetListError = nil; wantsList = true; listRetryAt = 0; pump(); onChange?()
     }
     /// Loads a preset. A dirty preset needs `discard` or `saveFirst`; the bridge refuses it otherwise.
-    /// A tap while the list is being read waits for it. Never replayed after a failure.
-    public func selectPreset(_ id: String, mode: PresetSwitchMode = .clean) throws {
+    /// `approved` is the state the player chose that against (by default, what is on screen now):
+    /// discarding or saving goes ahead only while the QC still holds exactly that. A tap during a
+    /// background read waits for it. Never replayed after a failure.
+    public func selectPreset(_ id: String, mode: PresetSwitchMode = .clean, approved: PresetSnapshot? = nil) throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
         guard presetSwitchAvailable else { throw EditorFailure.unsupported }
         guard let snapshot = editor.snapshot, presetList?.entries.contains(where: { $0.preset_id == id }) == true else { throw EditorFailure.invalidValue }
+        let approved = approved ?? snapshot
+        guard approvalHolds(mode, approved) else {
+            presetSwitch = .notApplied(id, Self.changedBeforeSwitch); onChange?(); return
+        }
         if mode == .saveFirst && !editor.supports("save") { throw EditorFailure.unsupported }
         if id == snapshot.preset_id && !snapshot.dirty { presetSwitch = nil; onChange?(); return }
         // A background read (the list or a poll) is in the way: go right after it.
         if let reading = request?.operation, ["list_presets", "snapshot"].contains(reading) {
-            queuedPreset = (id, mode); presetSwitch = mode == .saveFirst ? .saving(id) : .pending(id); onChange?(); return
+            queuedPreset = (id, mode, approved); presetSwitch = mode == .saveFirst ? .saving(id) : .pending(id); onChange?(); return
         }
         guard !busy else { throw EditorFailure.busy }
         outcome = nil; error = nil
         try sendPreset(id, mode: mode)
+    }
+    static let changedBeforeSwitch = "Not switched. The preset changed before it went; review its edits and try again."
+    /// A clean switch loses nothing, so any state will do. Discarding or saving acts on the
+    /// edits the player saw, so the preset must not have moved at all since.
+    private func approvalHolds(_ mode: PresetSwitchMode, _ approved: PresetSnapshot) -> Bool {
+        mode == .clean || editor.snapshot == approved
     }
     /// Forgets a refusal or unknown outcome once the browser that showed it closes.
     public func clearPresetSwitch() {
@@ -280,6 +293,11 @@ public final class EditorCoordinator {
         } else if sameSession && ["stale_context", "invalid_value", "unsupported_operation", "unsaved_changes"].contains(code) {
             presetSwitch = .notApplied(target, code == "unsaved_changes" ? "Not switched. The preset has unsaved edits." : saving ? "Not switched. The save didn’t go through." : message)
         } else { return false }
+        if pending.operation == "select_preset" && sameSession && code == "invalid_value" {
+            // The bridge doesn't know that slot: its listing is gone or newer than ours.
+            presetSwitch = .notApplied(target, "Not switched. The list was out of date; it’s being read again.")
+            presetList = nil; wantsList = true; listRetryAt = 0
+        }
         editor.reject(id: pending.id, message: nil)
         if ["busy", "device_busy"].contains(code) { ready(keepingPoll: true); pump(); onChange?() }
         else { phase = .loading; send("snapshot") }
@@ -301,6 +319,10 @@ public final class EditorCoordinator {
         guard phase == .ready, request == nil else { return }
         if let held { self.held = nil; send(held.operation, command: held.command); return }
         if let queued = queuedPreset {
+            // The read that held it may have shown another preset, or new edits on this one.
+            guard approvalHolds(queued.mode, queued.approved) else {
+                queuedPreset = nil; presetSwitch = .notApplied(queued.id, Self.changedBeforeSwitch); onChange?(); return
+            }
             do { try sendPreset(queued.id, mode: queued.mode) }
             catch { queuedPreset = nil; presetSwitch = .notApplied(queued.id, "Not switched. Refresh the preset and try again."); onChange?() }
             if request != nil { return }
@@ -542,8 +564,10 @@ public final class EditorCoordinator {
                 trusted = trustTokens[macID] != nil
             }
             if ["connect", "recover"].contains(pending.operation) {
-                // A new helper session: the list it read stays valid, but no switch survives.
+                // A new helper session forgot the listing that allowed each slot, so read it again
+                // before switching. No switch survives either.
                 presetSwitch = nil; queuedPreset = nil; afterSave = nil
+                presetList = nil; presetListError = nil; wantsList = false
                 phase = .loading; session = newSession; revision = newRevision
                 staged = try decode(PresetSnapshot.self, result["state"])
                 send("capabilities"); return

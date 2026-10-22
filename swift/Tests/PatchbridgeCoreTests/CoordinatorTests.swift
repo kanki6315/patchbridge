@@ -988,4 +988,67 @@ extension CoordinatorTests {
         XCTAssertEqual(c.editor.value(blockID: "amp-1", parameterID: "gain"), .number(3), "saved before switching")
     }
 
+    func testQueuedDiscardIsRefusedWhenThePollShowsAnotherPresetOrNewEdits() throws {
+        for change in ["another preset", "new edit"] {
+            let (c, t, f) = try presetBrowsing(dirty: true)
+            clock += 3; c.tick()
+            XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+            try c.selectPreset("slot-15", mode: change == "new edit" ? .saveFirst : .discard)
+            var state = presetState(f, dirty: true)
+            if change == "another preset" { state = presetState(f, id: "slot-18", name: "Funk Wah", dirty: true) }
+            else { state["scene"] = "A" }
+            reply(t, result: ["state": state], revision: 1)
+            c.tick()
+            XCTAssertEqual(c.presetSwitch, .notApplied("slot-15", EditorCoordinator.changedBeforeSwitch), change)
+            XCTAssertFalse(t.messages.contains { ["select_preset", "save"].contains($0["operation"] as? String) }, change)
+        }
+    }
+
+    func testQueuedDiscardGoesWhenThePollShowsTheSamePreset() throws {
+        let (c, t, f) = try presetBrowsing(dirty: true)
+        clock += 3; c.tick()
+        try c.selectPreset("slot-15", mode: .discard)
+        reply(t, result: ["state": presetState(f, dirty: true)], revision: 0)
+        c.tick()
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "select_preset")
+        XCTAssertEqual((t.messages.last?["payload"] as? [String: Any])?["discard"] as? Bool, true)
+    }
+
+    func testApprovalFromAnOlderScreenIsRefused() throws {
+        let (c, t, f) = try presetBrowsing(dirty: true)
+        var older = presetState(f, dirty: true); older["scene"] = "A"
+        try c.selectPreset("slot-15", mode: .discard, approved: try JSONDecoder().decode(PresetSnapshot.self, from: JSONSerialization.data(withJSONObject: older)))
+        XCTAssertEqual(c.presetSwitch, .notApplied("slot-15", EditorCoordinator.changedBeforeSwitch))
+        XCTAssertNotEqual(t.messages.last?["operation"] as? String, "select_preset")
+    }
+
+    func testRecoveryDropsTheListSoItIsReadAgain() throws {
+        let (c, t, f) = try presetBrowsing(dirty: false)
+        XCTAssertNotNil(c.presetList)
+        clock += 3; c.tick()
+        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "status": "error", "retry_after": 0,
+                       "error": ["code": "device_unavailable", "message": "QC unavailable."]])
+        XCTAssertEqual(c.phase, .recovering)
+        clock += 1; c.tick()
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "recover")
+        reply(t, result: ["state": presetState(f, dirty: false)], session: "s2")
+        reply(t, result: ["protocol_version": 1, "operations": presetOperations], session: "s2")
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertNil(c.presetList, "the new helper session never listed these slots")
+        XCTAssertThrowsError(try c.selectPreset("slot-15"))
+        c.listPresets()
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "list_presets")
+    }
+
+    func testSlotTheBridgeDoesNotKnowRereadsTheList() throws {
+        let (c, t, f) = try presetBrowsing(dirty: false)
+        try c.selectPreset("slot-15")
+        refuse(t, "invalid_value")
+        XCTAssertEqual(c.presetSwitch, .notApplied("slot-15", "Not switched. The list was out of date; it’s being read again."))
+        XCTAssertNil(c.presetList)
+        reply(t, result: ["state": presetState(f, dirty: false)], revision: 1)
+        c.tick()
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "list_presets")
+    }
+
 }
