@@ -176,3 +176,28 @@ class RequestQueueTests(TestCase):
         for i in range(1, 9):
             qc.request(2, SimpleNamespace(request_id=i))
         self.assertEqual(qc._pending, [(40, None, b'u', b'')])
+
+    @skipUnless(PROTOBUF, 'The vendored qc-mcp transport needs protobuf')
+    def test_vendored_reads_poll_quickly(self):
+        """The HID backend sleeps each whole poll, so the poll sets every read's floor."""
+        import sys
+        import threading
+        from types import SimpleNamespace
+        sys.path.insert(0, str(VENDORED))
+        from qc_mcp.transport import QuadCortex
+        qc = QuadCortex.__new__(QuadCortex)
+        qc._io_lock, qc._pending = threading.RLock(), []
+        qc.send = lambda command, message=None, data=None: None
+        polls = []
+        qc._collect = lambda seconds: (polls.append(seconds),
+                                       qc._pending.append((2, SimpleNamespace(request_id=1), b'r', b'reply')))
+        qc.request(2, SimpleNamespace(request_id=1))
+        self.assertLessEqual(max(polls), 0.02)
+
+
+class CompactTests(TestCase):
+    def test_float32_noise_is_trimmed_and_other_values_kept(self):
+        from patchbridge.usb import compact
+        self.assertEqual(compact(0.30000001192092896), 0.3)
+        self.assertEqual(compact(0.6666666865348816), 0.6666667)
+        self.assertEqual((compact(1), compact(True), compact('x')), (1, True, 'x'))

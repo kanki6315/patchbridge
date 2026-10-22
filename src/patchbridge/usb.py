@@ -31,6 +31,13 @@ def active(definitions, parameter, values, depth=0):
             and active(definitions, rule['parameter'], values, depth + 1))
 
 
+def compact(value):
+    """The QC stores floats as float32; as doubles they print as 0.30000001192092896.
+    Seven significant digits is all float32 holds and roughly halves the snapshot the
+    phone receives over Bluetooth."""
+    return float(f'{value:.7g}') if type(value) is float else value
+
+
 def drop_broadcasts(qc, protocol):
     """qc-mcp queues every message a read doesn't consume, and the QC streams some on its
     own (GlobalTempo about four times a second), so a long session's queue grows without
@@ -266,7 +273,7 @@ class USBAdapter:
                             continue  # Missing scene data must not masquerade as a value.
                         v = param.param_values[s if param.scene_mode else 0]
                         field = v.WhichOneof('value')
-                        scenes[chr(65+s)]['parameters'][str(index)] = getattr(v, field) if field else None
+                        scenes[chr(65+s)]['parameters'][str(index)] = compact(getattr(v, field)) if field else None
                 # A conditional control is writable only while its switch makes it active.
                 current = scenes[chr(65+scene.selected_scene)]['parameters']
                 editable = [p for p in editable if active(definitions, p, current)]
