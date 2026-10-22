@@ -84,7 +84,10 @@ def verify(root):
             return message
         save_preset = forbidden
 
-    qc = CapturedQC(); adapter = USBAdapter(factory=lambda: qc); coordinator = Coordinator(adapter)
+    now = [0.0]
+    def sleep(seconds): now[0] += seconds
+    qc = CapturedQC(); adapter = USBAdapter(factory=lambda: qc, clock=lambda: now[0], sleep=sleep)
+    coordinator = Coordinator(adapter)
     def call(operation, payload=None):
         state = coordinator.state or {}
         return coordinator.handle({'version': 1, 'type': 'request', 'id': 'offline', 'operation': operation,
@@ -119,12 +122,16 @@ def verify(root):
         checks.append('unconfirmed save invalidates session with no retry')
         hid.drop_saves = False; hid.closed = False; call('connect')
         hid.drop_edits = True
+        revision = coordinator.revision
         result = call('set_parameter', dict(edit, value=0.61))
-        assert result['error']['code'] == 'adapter_failure' and result['session_id'] is None
-        checks.append('unconfirmed parameter readback invalidates session')
+        assert result['error']['code'] == 'not_confirmed' and result['session_id'] is not None
+        assert result['revision'] == revision + 1 and len(hid.messages) == count + 2
+        checks.append('unconfirmed parameter readback keeps session but forces a fresh snapshot')
         hid.drop_edits = False; call('connect'); qc.timeout = True
-        result = call('snapshot'); assert result['error']['code'] == 'adapter_failure' and hid.closed
-        checks.append('read timeout invalidates session')
+        result = call('snapshot'); assert result['error']['code'] == 'device_busy' and not hid.closed
+        for _ in range(3): result = call('snapshot')
+        assert result['error']['code'] == 'adapter_failure' and hid.closed
+        checks.append('read timeout reports busy, then invalidates session once the QC stays silent')
     finally:
         coordinator.close()
     from .read_only import ReadOnlyAdapter
