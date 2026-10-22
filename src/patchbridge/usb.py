@@ -7,6 +7,7 @@ import logging
 import math
 import tarfile
 import threading
+import time
 import xml.etree.ElementTree as ET
 
 from .adapter import BridgeError
@@ -14,11 +15,29 @@ from .metadata import OPTION_TYPES, WRITABLE_TYPES, normalize_models
 from . import tuner as tuning
 
 OPERATIONS = {'connect', 'disconnect', 'identify', 'capabilities', 'snapshot',
-              'catalog', 'subscribe', 'set_parameter', 'set_bypass', 'save'} | tuning.OPERATIONS
+              'catalog', 'subscribe', 'list_presets', 'set_parameter', 'set_bypass', 'select_scene',
+              'select_preset', 'save'} | tuning.OPERATIONS
 # Broadcasts the QC streams on its own while a session is live. The tuner reader drops them
 # so they don't pile up between requests; anything else stays queued for the next request.
 STREAMED = {'KeepAlive', 'CPULoad', 'GlobalTempo', 'IOMeter', 'GridModelMeter', 'ModuleStats'}
 MUTE_TIMEOUT = 1.5
+# While the QC changes scene or loads a preset, its replies stop for a moment or describe the
+# old and new context halfway. A snapshot retries for SETTLE_BUDGET seconds and then reports
+# device_busy, which keeps the session. Only UNSETTLED_LIMIT seconds of no settled read at all,
+# across requests, means the QC is really gone and the session must be reopened.
+SETTLE_BUDGET = 5.0
+SETTLE_PAUSE = 0.25
+UNSETTLED_LIMIT = 20.0
+SCENE_TIMEOUT = 3.0
+SCENES = 'ABCDEFGH'
+# Loading a preset takes longer than a scene: the QC rebuilds the whole grid.
+PRESET_TIMEOUT = 8.0
+MY_PRESETS = '/media/p4/Presets/My Presets'
+MY_PRESETS_SLOTS = 256
+
+
+class Unsettled(Exception):
+    """The QC is mid-change: a read went unanswered or the context moved during the read."""
 
 
 def active(definitions, parameter, values, depth=0):
@@ -56,12 +75,17 @@ def drop_broadcasts(qc, protocol):
 class USBAdapter:
     operations = OPERATIONS
 
-    def __init__(self, factory=None, protocol=None):
+    def __init__(self, factory=None, protocol=None, clock=time.monotonic, sleep=time.sleep):
         self.factory = factory
         self.protocol = protocol
+        self.clock = clock
+        self.sleep = sleep
+        self.unsettled_since = None
         self.qc = None
         self.state = None
         self.metadata = None
+        # The last My Presets listing, by wire position. Only a listed, named slot can be loaded.
+        self.listed = None
         self.tuning = tuning.TunerBuffer()
         self.reader = None
         self.reader_stop = None
@@ -114,6 +138,8 @@ class USBAdapter:
         qc, self.qc = self.qc, None
         self.state = None
         self.metadata = None
+        self.listed = None
+        self.unsettled_since = None
         self.tuning.reset()
         if qc is not None:
             qc.close()
@@ -220,22 +246,58 @@ class USBAdapter:
             raise BridgeError('disconnected', 'No USB session.')
         return deepcopy(self.metadata)
 
-    def snapshot(self):
+    def _timeouts(self):
+        """qc-mcp raises QCError when a read gets no reply at all."""
+        try:
+            from qc_mcp.transport import QCError
+        except ImportError:
+            return ()
+        return (QCError,)
+
+    def _read(self, read, *args):
+        try:
+            value = read(*args)
+        except self._timeouts() as error:
+            raise Unsettled(str(error)) from error
+        if value is None:
+            raise Unsettled('USB state read timed out.')
+        return value
+
+    def snapshot(self, budget=SETTLE_BUDGET):
+        """A settled snapshot. A QC that is changing scene or preset gets a few seconds to
+        settle; after that this raises device_busy, and the caller asks again later."""
         if self.qc is None:
             raise BridgeError('disconnected', 'No USB session.')
-        pos = self.qc.read_state('SetlistPosition')
-        scene = self.qc.read_state('Scene')
-        bp = self.qc.get_current_preset()
-        dirty = self.qc.read_state('PresetDirty')
-        end_pos = self.qc.read_state('SetlistPosition')
-        end_scene = self.qc.read_state('Scene')
-        if any(x is None for x in (pos, scene, bp, dirty, end_pos, end_scene)):
-            raise RuntimeError('USB state read timed out; reconnect required.')
+        started = self.clock()
+        while True:
+            try:
+                state = self._snapshot_once()
+            except Unsettled as error:
+                now = self.clock()
+                if self.unsettled_since is None:
+                    self.unsettled_since = started
+                if now - self.unsettled_since >= UNSETTLED_LIMIT:
+                    self.unsettled_since = None
+                    raise RuntimeError(f'QC stopped answering for {UNSETTLED_LIMIT:.0f} s; reconnect required.') from error
+                if now - started >= budget:
+                    raise BridgeError('device_busy', 'The QC is changing scene or preset. Try again in a moment.') from error
+                self.sleep(SETTLE_PAUSE)
+                continue
+            self.unsettled_since = None
+            return state
+
+    def _snapshot_once(self):
+        pos = self._read(self.qc.read_state, 'SetlistPosition')
+        scene = self._read(self.qc.read_state, 'Scene')
+        bp = self._read(self.qc.get_current_preset)
+        dirty = self._read(self.qc.read_state, 'PresetDirty')
+        end_pos = self._read(self.qc.read_state, 'SetlistPosition')
+        end_scene = self._read(self.qc.read_state, 'Scene')
         def identity(p):
             return (p.folder_key, p.position, p.is_factory,
                     getattr(p, 'is_downloads', False), getattr(p, 'is_plugin', False))
         if identity(pos) != identity(end_pos) or scene.selected_scene != end_scene.selected_scene:
-            raise RuntimeError('Device context changed during snapshot; reconnect required.')
+            raise Unsettled('Device context changed during snapshot.')
         if not 0 <= scene.selected_scene < 8:
             raise RuntimeError('Invalid scene reported by device.')
         self.position = identity(pos)
@@ -256,13 +318,22 @@ class USBAdapter:
                     raise RuntimeError('Active-scene bypass state is missing; reconnect required.')
                 for s, flag in enumerate(bypass[:8]):
                     scenes[chr(65+s)]['bypass'] = flag.bypass
-                editable = []
+                editable, assigned, pedals = [], [], {}
                 definitions = self.metadata['models'].get(str(model.hash), {}).get('parameters', {})
                 for index, param in enumerate(model.params):
                     definition = definitions.get(str(index), {})
                     numeric = all(v.WhichOneof('value') == 'float_value' for v in param.param_values)
                     # Hidden and unsupported controls are never written, whatever the phone sends.
-                    if (numeric and param.param_values and not param.scene_mode and not param.expression
+                    # A scene-assigned value is written to the active scene only; an expression
+                    # owns its value, so it stays read-only.
+                    if param.scene_mode:
+                        assigned.append(str(index))
+                    if param.expression:
+                        pedals[str(index)] = {'pedal': int(param.expression),
+                                              'heel': float(param.expression_min),
+                                              'toe': float(param.expression_max)}
+                    complete = not param.scene_mode or len(param.param_values) >= 8
+                    if (numeric and param.param_values and complete and not param.expression
                             and definition.get('type') in WRITABLE_TYPES
                             and definition.get('control', {}).get('editable')):
                         editable.append(str(index))
@@ -279,31 +350,139 @@ class USBAdapter:
                 editable = [p for p in editable if active(definitions, p, current)]
                 blocks.append({'id': f'{row}:{column}', 'position': [row, column],
                                'model_id': str(model.hash), 'scenes': scenes,
-                               'editable_parameters': editable})
+                               'editable_parameters': editable,
+                               'scene_parameters': assigned, 'expression_parameters': pedals})
         state = {'preset_id': json.dumps(self.position, separators=(',', ':')),
                  'scene_labels': list(getattr(bp, 'scene_labels', [])),
                  'scene_colors': list(getattr(bp, 'scene_colors', [])),
                  'name': bp.name, 'scene': chr(65+scene.selected_scene),
+                 **({'location': {'source': 'My Presets', 'number': self.position[1] + 1}}
+                    if self._in_my_presets(self.position) else {}),
                  'dirty': dirty.is_dirty, 'blocks': blocks, 'value_encoding': 'qc_normalized',
                  'catalog_id': self.metadata.get('id'),
                  'content_hash': hashlib.sha256(bp.SerializeToString()).hexdigest()}
         self.state = deepcopy(state)
         return state
 
+    @staticmethod
+    def _in_my_presets(position):
+        folder, _, factory, downloads, plugin = position
+        return folder == MY_PRESETS and not (factory or downloads or plugin)
+
+    @staticmethod
+    def preset_id(position):
+        """The preset_id a snapshot reports for a My Presets slot, by wire position."""
+        return json.dumps((MY_PRESETS, position, False, False, False), separators=(',', ':'))
+
+    def list_presets(self):
+        """My Presets, read from the QC's directory in one File READ (about 12 s). Every named
+        slot is listed with the preset_id a snapshot reports once it is loaded. Display numbers
+        are the wire position plus one, unverified against the QC's own screen."""
+        if self.qc is None:
+            raise BridgeError('disconnected', 'No USB session.')
+        directory = self.qc.list_directory()
+        folders = directory.get('presets', []) if isinstance(directory, dict) else []
+        folder = next((f for f in folders if f.get('key') == MY_PRESETS), None) or next(
+            (f for f in folders if f.get('name') == 'My Presets'
+             and not f.get('is_factory') and not f.get('is_downloads')), None)
+        if folder is None:
+            raise BridgeError('not_confirmed', 'The QC did not list My Presets. Try again.')
+        files = folder.get('files', [])[:MY_PRESETS_SLOTS]
+        self.listed = {f['index']: f['name'] for f in files
+                       if isinstance(f.get('index'), int) and isinstance(f.get('name'), str) and f['name'].strip()}
+        return {'source': 'My Presets', 'slots': MY_PRESETS_SLOTS,
+                'entries': [{'preset_id': self.preset_id(index), 'number': index + 1, 'name': name}
+                            for index, name in sorted(self.listed.items())]}
+
+    def _await_preset(self, position):
+        """SetlistPosition READ until the QC reports the recalled slot."""
+        deadline = self.clock() + PRESET_TIMEOUT
+        while self.clock() < deadline:
+            try:
+                pos = self._read(self.qc.read_state, 'SetlistPosition')
+                if (pos.folder_key, pos.position, pos.is_factory) == (MY_PRESETS, position, False):
+                    return True
+            except Unsettled:
+                pass
+            self.sleep(0.1)
+        return False
+
+    def _readback(self):
+        """The snapshot after a write. The write already happened, so a QC that is still busy
+        means the outcome is unknown, not that the write was refused."""
+        try:
+            return self.snapshot()
+        except BridgeError as error:
+            if error.code != 'device_busy':
+                raise
+            raise BridgeError('not_confirmed', 'The QC did not settle after the change; its outcome is unknown.') from error
+
+    def _await_scene(self, index):
+        """Scene READ until the QC reports `index` active. A plain read races the switch."""
+        deadline = self.clock() + SCENE_TIMEOUT
+        while self.clock() < deadline:
+            try:
+                scene = self._read(self.qc.read_state, 'Scene')
+                if scene.selected_scene == index:
+                    return True
+            except Unsettled:
+                pass
+            self.sleep(0.05)
+        return False
+
     def execute(self, operation, payload):
-        if operation not in {'set_parameter', 'set_bypass', 'save'}:
+        if operation not in {'set_parameter', 'set_bypass', 'select_scene', 'select_preset', 'save'}:
             raise BridgeError('unsupported_operation', 'Operation not yet validated for the USB adapter.')
         expected = deepcopy(self.state)
+        # A QC that is still settling refuses here, before anything is written: Not applied.
         current = self.snapshot()
         # Re-read before every write to reject device-side edits since the caller's snapshot.
         if current != expected:
             self.state = expected
             raise BridgeError('stale_context', 'Device changed; request a fresh snapshot.')
+        if operation == 'select_scene':
+            target = payload.get('scene')
+            if not isinstance(target, str) or len(target) != 1 or target not in SCENES:
+                raise BridgeError('invalid_value', 'Scene must be a letter from A to H.')
+            if target == current['scene']:
+                return current
+            index = SCENES.index(target)
+            self.qc.set_scene(index)
+            # Changing scene never touches dirty on the QC; readback reports whatever the QC says.
+            if not self._await_scene(index):
+                raise BridgeError('not_confirmed', 'The QC did not report the new scene; its outcome is unknown.')
+            after = self._readback()
+            if after['preset_id'] != current['preset_id'] or after['scene'] != target:
+                raise BridgeError('not_confirmed', 'The QC moved elsewhere during the switch; its outcome is unknown.')
+            return after
+        if operation == 'select_preset':
+            target = payload.get('preset_id')
+            try:
+                folder, position, *flags = json.loads(target) if isinstance(target, str) else ()
+            except (ValueError, TypeError):
+                folder, position, flags = None, None, None
+            if (folder != MY_PRESETS or type(position) is not int or flags != [False, False, False]
+                    or not 0 <= position < MY_PRESETS_SLOTS):
+                raise BridgeError('invalid_value', 'Only a My Presets slot can be loaded.')
+            if not self.listed or position not in self.listed:
+                # An empty slot would load a blank preset; only what the last listing named is allowed.
+                raise BridgeError('invalid_value', 'That slot is empty or not listed yet. Refresh the list.')
+            if current['dirty'] and payload.get('discard') is not True:
+                raise BridgeError('unsaved_changes', 'The current preset has unsaved edits.')
+            if target == current['preset_id'] and not current['dirty']:
+                return current
+            self.qc.recall(MY_PRESETS, position, False)
+            if not self._await_preset(position):
+                raise BridgeError('not_confirmed', 'The QC did not report the new preset; its outcome is unknown.')
+            after = self._readback()
+            if after['preset_id'] != target:
+                raise BridgeError('not_confirmed', 'The QC moved elsewhere during the switch; its outcome is unknown.')
+            return after
         if operation == 'set_parameter':
             block = next((b for b in current['blocks'] if b['id'] == payload.get('block_id')), None)
             parameter = payload.get('parameter_id')
             if block is None or not isinstance(parameter, str) or parameter not in block['editable_parameters']:
-                raise BridgeError('unsupported_parameter', 'Parameter is unknown, hidden, unsupported, scene-assigned, expression-controlled or inactive.')
+                raise BridgeError('unsupported_parameter', 'Parameter is unknown, hidden, unsupported, expression-controlled or inactive.')
             value = payload.get('value')
             if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
                 raise BridgeError('invalid_value', 'USB values must be normalized numbers in [0, 1].')
@@ -312,13 +491,23 @@ class USBAdapter:
                 steps = int(definition.get('steps', '0'))
                 if steps < 2 or abs(value*(steps-1)-round(value*(steps-1))) > 1e-5:
                     raise BridgeError('invalid_value', 'Value must select a declared option step.')
+            # A plain write lands on the active scene once a parameter is scene-assigned, and on
+            # every scene otherwise. No scene_mode flag, as in Cortex Control.
             self.qc.set_param(*block['position'], int(parameter), value)
-            after = self.snapshot()
+            after = self._readback()
             actual = next((b for b in after['blocks'] if b['id'] == block['id']), None)
+            scoped = parameter in block.get('scene_parameters', [])
             if (after['preset_id'] != current['preset_id'] or after['scene'] != current['scene']
                     or actual is None or actual['model_id'] != block['model_id']
-                    or abs(actual['scenes'][after['scene']]['parameters'][parameter]-value) > 1e-5):
-                raise RuntimeError('Write could not be confirmed; reconnect required.')
+                    or scoped != (parameter in actual.get('scene_parameters', []))
+                    or abs(actual['scenes'][after['scene']]['parameters'][parameter]-value) > 1e-5
+                    # Other scenes keep their own values; a change there means the write went wide.
+                    or (scoped and any(actual['scenes'][s]['parameters'].get(parameter)
+                                       != block['scenes'][s]['parameters'].get(parameter)
+                                       for s in SCENES if s != current['scene']))):
+                # A scene or preset change on the QC can land mid-write. Keep the session; the
+                # caller resyncs and the edit is never retried.
+                raise BridgeError('not_confirmed', 'Write could not be confirmed; its outcome is unknown.')
             return after
         if operation == 'set_bypass':
             block = next((b for b in current['blocks'] if b['id'] == payload.get('block_id')), None)
@@ -330,19 +519,19 @@ class USBAdapter:
             # Like Cortex Control's bypass button: one flag for the active scene. A block whose
             # bypass isn't assigned to scenes shares that flag, so other scenes may follow.
             self.qc.set_block_bypass(*block['position'], value)
-            after = self.snapshot()
+            after = self._readback()
             actual = next((b for b in after['blocks'] if b['id'] == block['id']), None)
             if (after['preset_id'] != current['preset_id'] or after['scene'] != current['scene']
                     or actual is None or actual['model_id'] != block['model_id']
                     or actual['scenes'][after['scene']].get('bypass') is not value):
-                raise RuntimeError('Bypass could not be confirmed; reconnect required.')
+                raise BridgeError('not_confirmed', 'Bypass could not be confirmed; its outcome is unknown.')
             return after
         folder, position, factory, downloads, plugin = self.position
         if factory or downloads or plugin or folder != '/media/p4/Presets/My Presets' or not current['name']:
             raise BridgeError('unsupported_operation', 'Only an existing named My Presets slot can be saved.')
         self.qc.write_preset_file(folder, position, current['name'])
         # Never invoke qc.save_preset(): RecallPreset SAVE restarted the test device twice.
-        after = self.snapshot()
+        after = self._readback()
         comparable = {k: v for k, v in current.items() if k != 'dirty'}
         if after['dirty'] or {k: v for k, v in after.items() if k != 'dirty'} != comparable:
             raise RuntimeError('Save not confirmed; reconnect required. No automatic retry.')

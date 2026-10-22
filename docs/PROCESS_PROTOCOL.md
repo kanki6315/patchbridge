@@ -39,6 +39,16 @@ context. Even saves and scene/preset selection require this context.
 models. Unknown IDs are omitted, preserving the catalog ID and metadata version.
 The Swift coordinator requests only models referenced by the current preset.
 
+Each block in a state lists `editable_parameters`, and two optional fields that
+say where a value lives. `scene_parameters` lists the parameters assigned to scenes:
+each scene holds its own value, and `set_parameter` writes the active scene's only.
+Every other parameter is global, so a write changes it in every scene. Readback of
+a scene-assigned write must show the active scene changed and the other scenes
+unchanged. `expression_parameters` maps a parameter to
+`{pedal, heel, toe}`: the expression pedal (1 or 2) that drives it and its sweep,
+in the same normalized units as its value. Expression parameters are never
+editable. Older bridges omit both fields; treat their absence as unknown, not global.
+
 Example edit (replace context with the connect response):
 
 ```json
@@ -93,7 +103,7 @@ bounds buffering. There is no internal command queue or automatic replay.
 
 Simulation metadata is fabricated, with two scenes, four preset slots, numeric,
 boolean, enum, and logarithmic controls. Saved presets persist only for the
-lifetime of the helper. Scene selection isolates parameter edits; switching
+lifetime of the helper. Gain is scene-assigned and frequency is global; switching
 presets discards unsaved edits. These are simulation semantics awaiting hardware
 validation.
 

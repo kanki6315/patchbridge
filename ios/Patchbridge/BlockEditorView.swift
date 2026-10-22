@@ -7,6 +7,8 @@ struct BlockEditorView: View {
     /// `deck` is the iPhone Duo's control deck: dial left, tiles or number pad right, no header.
     enum Layout { case standard, deck }
     var layout: Layout = .standard
+    /// iPhone: the scene pill in the navigation bar switches scenes without leaving the block.
+    var scenePill = false
     @State private var parameter = ""
     @State private var draft: Double?
     @State private var fine = false
@@ -23,10 +25,18 @@ struct BlockEditorView: View {
     private var raw: ParameterValue { model.editor.value(blockID: block.id, parameterID: parameter) ?? .unknown }
     private var display: Double? { control?.displayValue(raw) }
     private var readOnly: Bool { model.editor.readOnlyReason(blockID: block.id, parameterID: parameter) != nil }
+    private var scope: GenericEditor.Scope { model.editor.scope(blockID: block.id, parameterID: parameter) }
+    /// A scene switch on its way to the QC: a scene value isn't known until it answers.
+    private var switchingTo: String? {
+        guard case .pending(let scene)? = model.sceneSwitch else { return nil }; return scene
+    }
+    private var loading: Bool { scope == .scene && switchingTo != nil }
+    /// The scene the dial edits: the one being switched to while the QC answers.
+    private var editingScene: String { switchingTo ?? model.snapshot?.scene ?? "" }
     private var pending: GenericEditor.Pending? {
         guard let p = model.editor.pending, p.blockID == block.id, p.parameterID == parameter else { return nil }; return p
     }
-    private var shown: Double? { draft ?? pending?.proposedValue.flatMap { control?.displayValue($0) } ?? display }
+    private var shown: Double? { loading ? nil : draft ?? pending?.proposedValue.flatMap { control?.displayValue($0) } ?? display }
     private var category: BlockCategory { model.category(block) }
     private var arcColor: Color { category.arc(daylight: theme.daylight) }
     /// Regular width (iPad) shows the number pad as a popover and types into the dial itself.
@@ -36,7 +46,15 @@ struct BlockEditorView: View {
     private var subtitle: String {
         let kind = model.kind(block)
         let slot = regular && block.position.count == 2 ? " · Row \(block.position[0] + 1), slot \(block.position[1] + 1)" : ""
-        return kind + slot + " · Scene \(model.snapshot?.scene ?? "")"
+        // Scope known: say which values follow the scene. The pill or strip names the scene itself.
+        let scoped = model.parameters(block).filter { model.editor.scope(blockID: block.id, parameterID: $0) == .scene }
+        let names = scoped.map { model.editor.control(blockID: block.id, parameterID: $0)?.name.capitalized ?? "Parameter \($0)" }
+        switch names.count {
+        case 0: return kind + slot + " · Scene \(model.snapshot?.scene ?? "")"
+        case 1: return kind + slot + " · \(names[0]) changes per scene"
+        case 2: return kind + slot + " · \(names[0]) and \(names[1]) change per scene"
+        default: return kind + slot + " · \(names.count) values change per scene"
+        }
     }
 
     var body: some View {
@@ -85,6 +103,13 @@ struct BlockEditorView: View {
         #endif
         .onChange(of: block.id) { _, _ in selectInitial(); typing = false }
         .onChange(of: model.snapshot) { _, _ in draft = nil; fine = false }
+        .toolbar {
+            if scenePill, model.canSwitchScenes, let snapshot = model.snapshot {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ScenePill(model: model, snapshot: snapshot, theme: theme, blockID: block.id, parameterID: parameter)
+                }
+            }
+        }
         .sheet(isPresented: Binding(get: { typing && !regular && !inlinePad }, set: { typing = $0 })) { numberPad.presentationDetents([.height(dynamicTypeSize.isAccessibilitySize ? 550 : 355)]).presentationDragIndicator(.visible) }
     }
     @ViewBuilder private var content: some View {
@@ -136,17 +161,55 @@ struct BlockEditorView: View {
                 }
             }.padding(.vertical, 16)
         } else { gauge }
-        if readOnly {
-            Label(readOnlyText, systemImage: "lock").font(.footnote).foregroundStyle(theme.muted).frame(maxWidth: .infinity)
-        } else if pending != nil {
-            Text("Sending…").font(.footnote).foregroundStyle(theme.signal).frame(maxWidth: .infinity)
+        sceneFailure.font(.subheadline.weight(.semibold)).multilineTextAlignment(.center).frame(maxWidth: .infinity)
+        status.font(.subheadline.weight(.medium)).multilineTextAlignment(.center).frame(maxWidth: .infinity)
+            .accessibilityElement(children: .combine)
+        SceneScopeRow(model: model, block: block, parameter: parameter, theme: theme, scope: scope,
+                      editingScene: editingScene, loading: loading, proposed: pending?.proposedValue)
+    }
+    /// A switch the QC refused or never answered, as on the overview. The dial keeps the QC's
+    /// scene; choosing the scene again retries.
+    @ViewBuilder private var sceneFailure: some View {
+        switch model.sceneSwitch {
+        case .notApplied(let scene)?:
+            Label("Scene \(scene) not applied · the QC stayed on \(model.snapshot?.scene ?? "")", systemImage: "exclamationmark.triangle")
+                .foregroundStyle(theme.caution)
+                .accessibilityElement(children: .ignore).accessibilityLabel(model.sceneAccessibilityLabel(scene))
+        case .unknown(let scene)?:
+            Label("Switch to scene \(scene): outcome unknown · showing \(model.snapshot?.scene ?? "")", systemImage: "questionmark.circle")
+                .foregroundStyle(theme.caution)
+        default: EmptyView()
         }
+    }
+    /// Says whose value the dial holds: this scene's, every scene's, or the pedal's.
+    @ViewBuilder private var status: some View {
+        if case .expression(let pedal) = scope {
+            Label { Text("Read-only · set by Expression \(pedal.pedal)") } icon: { PedalGlyph() }.foregroundStyle(theme.muted)
+        } else if readOnly {
+            Label(readOnlyText, systemImage: "lock").foregroundStyle(theme.muted)
+        } else if pending != nil {
+            Label(scope == .scene ? "Sending to scene \(editingScene)…" : "Sending…", systemImage: "circle.dotted").foregroundStyle(theme.signal)
+        } else if loading {
+            Label("Loading scene \(editingScene) from the QC…", systemImage: "circle.dotted").foregroundStyle(theme.muted)
+        } else if scope == .scene, case .confirmed(let scene)? = model.sceneSwitch, scene == editingScene {
+            Label("Now editing scene \(scene)", systemImage: "checkmark").foregroundStyle(theme.signal)
+        } else if scope == .scene {
+            Label { Text("Edits scene \(editingScene) only") } icon: { SceneDot(color: sceneColor(editingScene), size: 8, theme: theme) }
+                .foregroundStyle(theme.muted)
+        } else if scope == .global {
+            Text("Applies to all scenes").foregroundStyle(theme.muted)
+        }
+    }
+    private func sceneColor(_ letter: String) -> Color {
+        model.sceneColor(theme, PresetSnapshot.sceneLetters.firstIndex(of: letter) ?? -1)
     }
     private func selectInitial() {
         parameter = model.parameters(block).first(where: { model.editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }) ?? model.parameters(block).first ?? ""
         draft = nil
     }
     private func tileValue(_ id: String) -> String {
+        if case .expression(let pedal) = model.editor.scope(blockID: block.id, parameterID: id) { return "On Exp \(pedal.pedal)" }
+        if model.editor.scope(blockID: block.id, parameterID: id) == .scene, switchingTo != nil { return "—" }
         switch model.editor.control(blockID: block.id, parameterID: id)?.kind {
         case "meter": return "Meter"
         case "unknown" where model.editor.readOnlyReason(blockID: block.id, parameterID: id) != nil: return "Scale unknown"
@@ -171,7 +234,15 @@ struct BlockEditorView: View {
         ZStack(alignment: .bottom) {
             ZStack {
                 DialArc(end: 1).stroke(theme.raised, style: StrokeStyle(lineWidth: 16, lineCap: .round))
-                DialArc(end: position(display)).stroke(readOnly ? theme.muted : arcColor, style: StrokeStyle(lineWidth: 16, lineCap: .round))
+                if case .expression(let pedal) = scope {
+                    // The pedal's heel-to-toe sweep, with a tick at each end.
+                    let heel = wirePosition(pedal.heel), toe = wirePosition(pedal.toe)
+                    DialArc(start: min(heel, toe), end: max(heel, toe)).stroke(arcColor.opacity(0.3), style: StrokeStyle(lineWidth: 16))
+                    DialTick(at: heel).stroke(theme.ink, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    DialTick(at: toe).stroke(theme.ink, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                } else if !loading {
+                    DialArc(end: position(display)).stroke(readOnly ? theme.muted : arcColor, style: StrokeStyle(lineWidth: 16, lineCap: .round))
+                }
                 if draft != nil || pending != nil {
                     DialArc(start: min(position(display), position(shown)), end: max(position(display), position(shown)))
                         .stroke(theme.signal, style: StrokeStyle(lineWidth: 16, lineCap: .butt, dash: [4, 5]))
@@ -181,19 +252,27 @@ struct BlockEditorView: View {
                     let radius = (geo.size.width - 26) / 2
                     Circle().fill(readOnly ? theme.ground : (fine ? theme.signal : .white))
                         .overlay(Circle().stroke(readOnly ? theme.muted : theme.ground, lineWidth: 3))
-                        .frame(width: 26, height: 26)
+                        .frame(width: 26, height: 26).opacity(loading ? 0 : 1)
                         .position(x: geo.size.width / 2 + radius * cos(angle), y: geo.size.height / 2 + radius * sin(angle))
                 }.allowsHitTesting(false)
                 VStack(spacing: 10) {
+                    // The marker says whose value the number is.
+                    if scope == .scene {
+                        HStack(spacing: 5) { SceneDot(color: sceneColor(editingScene), size: 9, theme: theme); Text(editingScene) }
+                            .font(.footnote.bold()).padding(.leading, 8).padding(.trailing, 9).frame(height: 24)
+                            .background(theme.ink.opacity(0.08), in: Capsule()).overlay(Capsule().stroke(theme.ink.opacity(0.12)))
+                            .accessibilityLabel("Scene \(editingScene)")
+                    }
                     Button {
                         editingContext = model.snapshot
                         entry = String(format: "%.2f", display ?? 0); typing = true
                     } label: {
                         HStack(alignment: .firstTextBaseline, spacing: 5) {
-                            if readOnly { Image(systemName: "lock").font(.title3) }
-                            Text(typingInDial ? (entry.isEmpty ? "0" : entry) : shown.map { String(format: fine ? "%.2f" : "%.1f", $0) } ?? model.valueText(block.id, parameter))
+                            if case .expression = scope { PedalGlyph(size: 24) }
+                            else if readOnly { Image(systemName: "lock").font(.title3) }
+                            Text(typingInDial ? (entry.isEmpty ? "0" : entry) : loading ? "—" : shown.map { String(format: fine ? "%.2f" : "%.1f", $0) } ?? model.valueText(block.id, parameter))
                                 .font(.system(size: min(valueSize, fine ? 40 : 48), weight: .bold)).monospacedDigit().minimumScaleFactor(0.65).lineLimit(1)
-                            if shown != nil { Text(control?.unit ?? "").font(.system(size: min(unitSize, 22), weight: .semibold)).foregroundStyle(theme.muted) }
+                            if shown != nil || loading { Text(control?.unit ?? "").font(.system(size: min(unitSize, 22), weight: .semibold)).foregroundStyle(theme.muted) }
                         }.padding(5).overlay {
                             if typingInDial {
                                 RoundedRectangle(cornerRadius: 12).stroke(enteredValue == nil ? theme.caution : theme.signal, lineWidth: 2)
@@ -201,18 +280,18 @@ struct BlockEditorView: View {
                                 RoundedRectangle(cornerRadius: 12).stroke(pending != nil ? theme.signal : .clear, style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
                             }
                         }
-                    }.buttonStyle(.plain).disabled(readOnly || model.busy || display == nil)
+                    }.buttonStyle(.plain).disabled(readOnly || model.busy || loading || display == nil)
                         .popover(isPresented: Binding(get: { typing && regular && !inlinePad }, set: { typing = $0 }), arrowEdge: .top) {
                             numberPad.frame(width: 340).presentationBackground(theme.surface.opacity(0.95))
                         }
-                        .accessibilityLabel("\(control?.name ?? "Value"), \(model.valueText(block.id, parameter)). Enter exact value")
+                        .accessibilityLabel("\(control?.name ?? "Value"), \(scope == .scene ? "scene \(editingScene), " : "")\(loading ? "loading" : model.valueText(block.id, parameter)). Enter exact value")
                     if fine { Text("Fine · 0.05 steps").font(.footnote).foregroundStyle(theme.signal) }
                 }.padding(.horizontal, 20)
             }
             .frame(width: 240, height: 240)
             .contentShape(Circle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { event in
-                guard !readOnly, !model.busy, let control, let lo = control.minimum, let hi = control.maximum else { return }
+                guard !readOnly, !model.busy, !loading, let control, let lo = control.minimum, let hi = control.maximum else { return }
                 if gestureStart == nil {
                     guard hypot(event.startLocation.x - 120, event.startLocation.y - 120) > 85 else { return }
                     gestureStart = Date(); editingContext = model.snapshot
@@ -237,7 +316,7 @@ struct BlockEditorView: View {
             })
             .accessibilityElement(children: .contain)
             .accessibilityAdjustableAction { direction in
-                if !readOnly && !model.busy, let display { step(direction == .increment ? 0.1 : -0.1, from: display) }
+                if !readOnly && !model.busy && !loading, let display { step(direction == .increment ? 0.1 : -0.1, from: display) }
             }
             HStack(alignment: .bottom) {
                 if !readOnly { stepButton("minus", -0.1) }
@@ -249,8 +328,13 @@ struct BlockEditorView: View {
         }.frame(maxWidth: .infinity).padding(.top, 6).padding(.bottom, 30)
     }
     private func stepButton(_ icon: String, _ delta: Double) -> some View {
-        Button { if let display { step(delta, from: display) } } label: { Image(systemName: icon).font(.title2).frame(width: 54, height: 54) }.phoneGlass(theme, radius: 27).disabled(model.busy || display == nil)
+        Button { if let display { step(delta, from: display) } } label: { Image(systemName: icon).font(.title2).frame(width: 54, height: 54) }.phoneGlass(theme, radius: 27).disabled(model.busy || loading || display == nil)
             .accessibilityLabel(delta > 0 ? "Increase \(control?.name ?? "value")" : "Decrease \(control?.name ?? "value")")
+    }
+    /// Where a wire value sits on the arc.
+    private func wirePosition(_ wire: Double) -> Double {
+        if control?.encoding == "qc_normalized" { return min(1, max(0, wire)) }
+        return position(control?.displayValue(.number(wire)))
     }
     private func step(_ delta: Double, from value: Double) {
         guard let lo = control?.minimum, let hi = control?.maximum else { return }
@@ -271,11 +355,18 @@ struct BlockEditorView: View {
         LazyVGrid(columns: dynamicTypeSize.isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
             ForEach(model.parameters(block), id: \.self) { id in
                 let locked = model.editor.readOnlyReason(blockID: block.id, parameterID: id) != nil
+                let tileScope = model.editor.scope(blockID: block.id, parameterID: id)
                 Button { parameter = id; draft = nil } label: {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 3) {
-                            if locked { Image(systemName: "lock").font(.caption) }
+                            if case .expression = tileScope { PedalGlyph(size: 14) }
+                            else if locked { Image(systemName: "lock").font(.caption) }
                             Text(model.editor.control(blockID: block.id, parameterID: id)?.name.capitalized ?? "Parameter \(id)").font(.footnote).lineLimit(1)
+                            if tileScope == .scene {
+                                Spacer(minLength: 2)
+                                HStack(spacing: 3) { SceneDot(color: sceneColor(editingScene), size: 7, theme: theme); Text(editingScene) }
+                                    .font(.caption2.bold()).foregroundStyle(theme.ink).fixedSize()
+                            }
                         }.foregroundStyle(theme.muted)
                         Text(tileValue(id)).font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.75)
                     }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(10)
@@ -283,8 +374,16 @@ struct BlockEditorView: View {
                         .parameterMaterial(theme, enabled: !locked)
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(parameter == id ? category.color : theme.line, lineWidth: parameter == id ? 1.5 : 1))
                 }.buttonStyle(.plain).disabled(model.editor.pending != nil)
+                .accessibilityLabel(tileAccessibility(id, scope: tileScope))
             }
         }
+    }
+    private func tileAccessibility(_ id: String, scope: GenericEditor.Scope) -> String {
+        let name = model.editor.control(blockID: block.id, parameterID: id)?.name.capitalized ?? "Parameter \(id)"
+        if case .expression(let pedal) = scope { return "\(name), read-only, set by Expression \(pedal.pedal)" }
+        if let reason = model.editor.readOnlyReason(blockID: block.id, parameterID: id) { return "\(name), read-only, \(reason)" }
+        if scope == .scene { return "\(name), scene \(editingScene), \(switchingTo != nil ? "loading" : tileValue(id))" }
+        return "\(name), \(tileValue(id))"
     }
     private var typingInDial: Bool { typing && (regular || inlinePad) }
     private var enteredValue: Double? { NumberPad.value(entry, control) }
@@ -339,6 +438,18 @@ struct NumberPad: View {
         case ".": if !entry.contains(".") { entry += "." }
         default: if entry.count < 14 { entry += key }
         }
+    }
+}
+
+/// A short radial tick across the dial's track, at a normalized position.
+private struct DialTick: Shape {
+    let at: Double
+    func path(in rect: CGRect) -> Path {
+        let radius = (min(rect.width, rect.height) - 26) / 2, angle = (135 + at * 270) * .pi / 180
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX + (radius - 14) * cos(angle), y: rect.midY + (radius - 14) * sin(angle)))
+        path.addLine(to: CGPoint(x: rect.midX + (radius + 14) * cos(angle), y: rect.midY + (radius + 14) * sin(angle)))
+        return path
     }
 }
 

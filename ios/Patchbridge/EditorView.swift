@@ -25,6 +25,7 @@ struct EditorView: View {
     @State private var saveContext: PresetSnapshot?
     @State private var didConfigurePreview = false
     @State private var renaming = false
+    @State private var browsing = false
     @FocusState private var nameFocused: Bool
     enum Sheet: String, Identifiable { case connection, appearance, getMac; var id: String { rawValue } }
     private var theme: PhoneTheme { PhoneTheme(daylight: matchSystem ? systemScheme == .light : appearance == "Daylight") }
@@ -48,7 +49,10 @@ struct EditorView: View {
             let landscape = geometry.size.width > geometry.size.height && !dynamicTypeSize.isAccessibilitySize
             let duo = duoScreen(geometry)
             Group {
-                if model.ready, model.snapshot != nil, let duo {
+                if let staged = model.coordinator.loadingPreset, !model.usesLocalFixture {
+                    // A preset the QC just loaded, while its blocks' metadata arrives.
+                    PresetReloadingView(snapshot: staged, model: model, theme: theme)
+                } else if model.ready, model.snapshot != nil, let duo {
                     DuoWorkspaceView(model: model, tuner: tuner, theme: theme, screen: duo, size: geometry.size, insets: geometry.safeAreaInsets,
                                      row: $duoRow, selected: $duoSelected, editing: $duoEditing,
                                      showConnection: { sheet = .connection }, openEditor: { selectedBlock = $0 })
@@ -82,6 +86,13 @@ struct EditorView: View {
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
                 }.tint(theme.signal).preferredColorScheme(theme.daylight ? .light : .dark)
             }
+            // iPhone: My Presets is a large sheet. iPad uses a popover and the Duo its deck.
+            .sheet(isPresented: Binding(get: { browsing && model.ready && !pad && duo == nil }, set: { if !$0 { browsing = false } })) {
+                PresetBrowser(model: model, theme: theme, layout: .sheet) { browsing = false }
+                    .padding(20).background(theme.ground.ignoresSafeArea())
+                    .presentationDetents([.large]).presentationDragIndicator(.visible)
+                    .tint(theme.signal).preferredColorScheme(theme.daylight ? .light : .dark)
+            }
             .onChange(of: model.ready) { _, ready in
                 if !ready { selectedBlock = nil; duoRow = 0; duoSelected = nil; duoEditing = false }
             }
@@ -97,6 +108,8 @@ struct EditorView: View {
                 if let flag = arguments.firstIndex(of: "--activity"), arguments.indices.contains(flag + 1) {
                     model.liveActivity.preview(arguments[flag + 1], daylight: arguments.contains("--daylight"))
                 }
+                if arguments.contains("--offline-bridge") { model.start() }
+                if arguments.contains("--presets") { browsing = true }
                 if arguments.contains("--demo") || arguments.contains("--screenshots") {
                     if arguments.contains("--screenshots") { model.loadScreenshotFixture() }
                     else { model.loadDemo() }
@@ -105,8 +118,10 @@ struct EditorView: View {
                         duoEditing = true
                     }
                     if arguments.contains("--editor") {
-                        if duo == .inner { duoSelected = "0:1"; duoEditing = true }
-                        else if !pad { selectedBlock = "0:1" }
+                        // --block=2:6 opens another block, such as the Dual Chorus's scene values.
+                        let id = arguments.first { $0.hasPrefix("--block=") }.map { String($0.dropFirst(8)) } ?? "0:1"
+                        if duo == .inner { duoSelected = id; duoEditing = true }
+                        else if !pad { selectedBlock = id }
                     }
                     if ProcessInfo.processInfo.arguments.contains("--daylight") { appearance = "Daylight" }
                     if arguments.contains("--live-tuner") { tuner.setLive(true) }
@@ -141,7 +156,7 @@ struct EditorView: View {
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: $selectedBlock) { id in
             if let snapshot = model.snapshot, let block = snapshot.blocks.first(where: { $0.id == id }) {
-                BlockEditorView(model: model, block: block, theme: theme)
+                BlockEditorView(model: model, block: block, theme: theme, scenePill: true)
                 .safeAreaInset(edge: .bottom, spacing: 0) { saveBar(snapshot, pushed: true) }
                 .background(theme.ground.ignoresSafeArea()).foregroundStyle(theme.ink).tint(theme.signal)
                 .navigationTitle(snapshot.name).navigationBarTitleDisplayMode(.inline)
@@ -190,33 +205,24 @@ struct EditorView: View {
                 Spacer()
                 if tuner.available { TunerButton(tuner: tuner, theme: theme) { tuner.setOpen(true) } }
             }
-            Text(snapshot.name).font(.largeTitle.bold())
+            PresetNameButton(model: model, snapshot: snapshot, theme: theme) { browsing = true }
             HStack(spacing: 10) {
                 Text(model.location(snapshot)).foregroundStyle(theme.muted)
                 if snapshot.dirty { Label("Unsaved", systemImage: "circle.fill").foregroundStyle(theme.signal) }
             }.font(.subheadline)
         }
     }
+    /// The active scene's title with the last tap's status on its right, over the scene buttons.
     private func scenes(_ snapshot: PresetSnapshot) -> some View {
-        let active = Array("ABCDEFGH").firstIndex(of: snapshot.scene.first ?? "A") ?? 0
+        let active = PresetSnapshot.sceneLetters.firstIndex(of: snapshot.scene) ?? 0
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Circle().fill(model.sceneColor(theme, active)).frame(width: 10, height: 10)
-                Text("Scene \(snapshot.scene)" + (model.sceneName(active).isEmpty ? "" : " · \(model.sceneName(active))")).font(.headline)
+                SceneDot(color: model.sceneColor(theme, active), size: 10, theme: theme)
+                Text(model.sceneTitle(snapshot.scene)).font(.headline).lineLimit(1).layoutPriority(1)
+                Spacer(minLength: 8)
+                SceneStatus(model: model, theme: theme)
             }
-            HStack(spacing: 4) {
-                ForEach(0..<8) { index in
-                    VStack(spacing: 3) {
-                        Circle().fill(model.sceneColor(theme, index)).frame(width: index == active ? 12 : 9, height: index == active ? 12 : 9)
-                            .overlay(Circle().stroke(theme.daylight ? theme.ink : .clear, lineWidth: 1))
-                        Text(String(Array("ABCDEFGH")[index])).font(.caption.weight(.semibold))
-                    }.frame(maxWidth: .infinity).frame(height: 40)
-                        .background(index == active ? theme.raised : .clear, in: RoundedRectangle(cornerRadius: 13))
-                        .overlay(RoundedRectangle(cornerRadius: 13).stroke(index == active ? model.sceneColor(theme, index) : .clear, lineWidth: 1.5))
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("Scene \(String(Array("ABCDEFGH")[index])) \(model.sceneName(index))\(index == active ? ", active" : "")")
-                }
-            }
+            SceneButtons(model: model, snapshot: snapshot, theme: theme, style: .strip)
         }
     }
     private func grid(_ snapshot: PresetSnapshot) -> some View {
@@ -273,7 +279,7 @@ struct EditorView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 14) {
                 Button { sheet = .connection } label: { Label(model.demo ? "Demo" : "Mac", systemImage: "checkmark").padding(12) }.phoneGlass(theme)
-                Text(snapshot.name).font(.headline).lineLimit(1)
+                PresetNameButton(model: model, snapshot: snapshot, theme: theme, font: .headline, chevron: 22) { browsing = true }
                 if snapshot.dirty { Circle().fill(theme.signal).frame(width: 8, height: 8).accessibilityLabel("Unsaved") }
                 Spacer()
                 HStack(spacing: 3) {
@@ -331,7 +337,7 @@ struct EditorView: View {
             if model.editor.supports("save") {
                 HStack {
                     if selectedBlock != nil { Label(snapshot.dirty ? "Unsaved" : "Saved", systemImage: snapshot.dirty ? "circle.fill" : "checkmark").font(.subheadline).foregroundStyle(snapshot.dirty ? theme.signal : theme.muted).floatingNote(theme); Spacer() }
-                    PrimaryButton(title: selectedBlock == nil ? (model.demo ? "Save demo preset" : "Save on the QC") : "Save", theme: theme) { requestSave() }
+                    PrimaryButton(title: selectedBlock == nil ? (model.demo ? "Save demo preset" : model.slotName(snapshot).map { "Save to \($0)" } ?? "Save on the QC") : "Save", theme: theme) { requestSave() }
                         .frame(maxWidth: selectedBlock == nil ? .infinity : 100)
                         .floatingDimmed(model.busy || !snapshot.dirty, theme)
                         .saveConfirmation(isPresented: saveConfirmation(pushed: pushed), demo: model.demo, confirm: confirmCurrentSave)
@@ -346,7 +352,7 @@ struct EditorView: View {
                     if model.coordinator.phase == .disconnected { Wordmark(theme: theme) }
                     else { Text(connectionTitle).font(.largeTitle.bold()).tracking(-0.4).accessibilityAddTraits(.isHeader) }
                 }.padding(.top, pad ? 72 : 24).frame(maxWidth: .infinity, alignment: pad ? .center : .leading)
-                if model.coordinator.phase == .disconnected && model.error == nil { demoPreview }
+                if model.coordinator.phase == .disconnected && model.error == nil { demoPreview; KeepAwakePrompt(theme: theme) }
                 connectionRail
                 if model.coordinator.phase == .awaitingApproval {
                     if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
@@ -509,6 +515,8 @@ struct EditorView: View {
                 Label("Read preset and parameter values", systemImage: "checkmark")
                 if model.editor.supports("set_parameter") { Label("Edit supported parameters", systemImage: "checkmark") }
                 if model.editor.supports("set_bypass") { Label("Turn blocks on or off", systemImage: "checkmark") }
+                if model.editor.supports("select_scene") { Label("Switch scenes", systemImage: "checkmark") }
+                if model.editor.supports("select_preset") && model.editor.supports("list_presets") { Label("Load presets from My Presets", systemImage: "checkmark") }
                 if model.editor.supports("save") { Label("Save the current preset", systemImage: "checkmark") }
                 if model.coordinator.trusted {
                     LabeledContent("Trusted", value: "Until revoked on the Mac").foregroundStyle(theme.ink)
@@ -530,10 +538,15 @@ struct ConnectionStatusSettings: View {
     let theme: PhoneTheme
     @AppStorage(ConnectionActivityController.showKey) private var showStatus = false
     @AppStorage(ConnectionActivityController.alertKey) private var alertOnDrop = false
+    @AppStorage(PhoneModel.keepAwakeKey) private var keepAwake = false
+    @AppStorage(PhoneModel.keepAwakeAskedKey) private var keepAwakeAsked = false
     @State private var alertsDenied = false
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Lock Screen").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
+            Toggle("Keep screen on while connected", isOn: $keepAwake).frame(minHeight: 44)
+            Text("Your \(deviceName) won’t auto-lock during a session, so it doesn’t drop the connection while it waits for the QC. Uses more battery.")
+                .font(.footnote).foregroundStyle(theme.muted)
             if ConnectionActivityController.supported {
                 Toggle("Show connection status", isOn: $showStatus).frame(minHeight: 44)
                 if showStatus && !ConnectionActivityController.systemEnabled {
@@ -545,6 +558,7 @@ struct ConnectionStatusSettings: View {
                 .font(.footnote).foregroundStyle(alertsDenied ? theme.caution : theme.muted)
         }
         .onChange(of: showStatus) { _, _ in model.connectionStatusPreferenceChanged() }
+        .onChange(of: keepAwake) { _, _ in keepAwakeAsked = true; model.syncKeepAwake() }
         .onChange(of: alertOnDrop) { _, on in
             guard on else { alertsDenied = false; return }
             ConnectionActivityController.requestAlertPermission { granted in alertsDenied = !granted }

@@ -19,8 +19,8 @@ None of the live phone → Mac → USB path has run against the QC yet.
 - **Mac bridge.** `dist/Patchbridge.app` opens stopped with live USB/Bluetooth
   selected. Start bridge advertises over BLE; USB opens only after a phone is
   approved and requests a connection. The bundled helper runs the pinned USB
-  adapter (`--usb`), which exposes `set_parameter`, `set_bypass` and File CREATE
-  `save` only. `set_bypass` and the request queue fix were verified directly over
+  adapter (`--usb`), which exposes `set_parameter`, `set_bypass`, `select_scene`
+  and File CREATE `save` only. `set_bypass` and the request queue fix were verified directly over
   USB on 2026-10-21, not yet through the bridge; see [USB results](USB_RESULTS_2026-10-21.md).
   **Use simulation** switches back to the bundled simulator with BLE and USB off.
   See [Mac bridge shell](MAC_BRIDGE_SHELL.md).
@@ -30,9 +30,11 @@ None of the live phone → Mac → USB path has run against the QC yet.
   edits and saves are never replayed. A local demo mode loads the captured fixture
   without a bridge. The old `amp-1` 0–10 simulation editor is no longer the phone UI.
 - **Editable controls.** A parameter is editable only when the device marks it
-  editable, it is not scene- or expression-assigned, and it has a declared conversion
+  editable, it is not expression-assigned, and it has a declared conversion
   (explicit range with valid skew, or normalized enum steps). Everything else is
-  shown read-only with a reason. The simulator's 0–10 range is never reused.
+  shown read-only with a reason. A scene-assigned parameter is written with the same
+  plain `set_param`, which the QC routes to the active scene; readback must show the
+  other seven scenes unchanged, or the write is reported as outcome unknown. The simulator's 0–10 range is never reused.
 
 ## Offline coverage
 
@@ -48,7 +50,7 @@ None of the live phone → Mac → USB path has run against the QC yet.
   changes that the parameter UI does not display. Missing scene values stay
   absent instead of borrowing another scene's data.
 - Catalog option labels and symbolic ranges remain intact. Unsupported firmware,
-  unknown controls, scene assignments, and expression assignments fail closed.
+  unknown controls, expression assignments and incomplete scene data fail closed.
 - Read-only captured sessions, helper crash, timeout, removal, and preset-change
   recovery pass through the packaged runtime. See [read-only QC mode](READ_ONLY_QC.md).
 
@@ -88,13 +90,54 @@ With the user present, Cortex Control closed, and the disposable preset
    PYTHONPATH=vendor/qc-mcp/src .venv-hardware/bin/python tools/calibrate_qc_controls.py
    ```
 
+## Scene switching and settling (offline only so far)
+
+- `select_scene` sends qc-mcp's `set_scene` (Scene UPDATE), waits up to 3 s for a Scene
+  READ to report the new scene, then reads the preset back. A switch the QC never reports
+  is `not_confirmed` (Outcome unknown), never Not applied, and is not retried.
+- A snapshot that catches the QC mid-change (an unanswered read, or the preset or scene
+  moving during the read) retries for 5 s, then answers `device_busy` with
+  `retry_after`. The session survives and the phone polls again. Only 20 s with no
+  settled read at all invalidates the session and starts recovery, as before.
+- A write whose readback lands mid-change is `not_confirmed`: the session survives, the
+  helper bumps its revision so no request builds on old state, and the phone reloads.
+
+To check on hardware: tap scenes A–H from the phone and compare the QC; switch scenes and
+presets on the QC itself during polling and during an edit, and confirm the phone keeps
+its connection; confirm the QC's dirty flag doesn't change on a scene switch.
+
+## Preset browsing and switching (offline only so far)
+
+- `list_presets` sends one File READ (qc-mcp's `list_directory`, about 12 s) and returns
+  every named My Presets slot with the `preset_id` a snapshot reports once it's loaded.
+  It changes nothing on the QC and is allowed on read-only sessions.
+- `select_preset` loads only a slot the last listing named, in My Presets. It sends
+  SetlistPosition UPDATE (`recall`), waits up to 8 s for SetlistPosition to report the
+  slot, then reads the preset back. A dirty preset is refused (`unsaved_changes`) unless
+  the phone sends `discard: true`; Save and switch saves with File CREATE first. A switch
+  the QC never reports is `not_confirmed` and is not retried.
+- Snapshots now carry `location` (`My Presets`, number) for the header and Save button.
+
+To check on hardware, with the disposable preset backed up:
+1. Open the browser and compare the list with the QC's My Presets. **Numbering is a
+   guess:** the bridge shows the wire position plus one, so the disposable preset (wire
+   index 16) should read 17. If the QC shows 16, drop the `+ 1` in `list_presets` and the
+   snapshot `location`.
+2. Confirm the My Presets folder key in the File READ is `/media/p4/Presets/My Presets`
+   (the adapter falls back to the folder named My Presets) and that `recall` with that
+   key loads the slot.
+3. Switch to another slot and back from the phone, clean; then with an edit, try Switch
+   anyway and Save and switch, and confirm on the QC which values survived.
+4. Load a preset on the QC itself while the browser is open, and while a list is being read.
+
 ## Still unverified after that run
 
-- Scene-specific parameter writes and amp-model controls.
+- Scene-specific parameter writes (Eltron 30 GAIN in scenes F and H, say) and
+  amp-model controls. Check on the QC that only the active scene changed.
 - Display accuracy of nonlinear (skewed) conversions against the QC's own readout,
   until step 9 has run.
-- Switching to another slot and back, preset selection, bypass, and Save As
-  (not exposed by the USB adapter).
+- Switching to another slot and back and preset selection, until the steps above run;
+  Save As (not exposed by the USB adapter).
 - Native asynchronous device events; the phone relies on polling.
 - Simultaneous physical and remote edits. USB cannot make the read/write pair
   atomic, so the whole-preset hash check is the only guard.

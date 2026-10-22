@@ -165,7 +165,9 @@ Each block lists the parameters the QC shows, in index order, in three groups:
 - **Editable**: everything in the table above that maps cleanly, while the bridge also
   reports it in `editable_parameters`.
 - **Unsupported**: shown on the QC but not editable here yet (unmeasured range constant,
-  missing labels, scene-assigned, inactive). Listed read-only with the reason.
+  missing labels, expression-assigned, inactive). Listed read-only with the reason.
+  Scene-assigned parameters are editable in the active scene; `scene_parameters` and
+  `expression_parameters` on each block say which values follow the scene or a pedal.
 - **Not listed**: hidden parameters, empty layout slots, and preset values past the end of
   the model's catalog definition (most captured blocks carry one, the cab 20). A block whose
   model is missing from the catalog lists every value, read-only.

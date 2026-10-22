@@ -34,6 +34,9 @@
 		B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E125DD1594C135E050EF4E8 /* BLECentral.swift */; };
 		B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59B2D058255097DC58ED315 /* EditorCoordinator.swift */; };
 		CCB8F3B7D3AB5BBCEAFF5B6E /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
+		EA6177919C4E44F0C8375500 /* SceneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E237C5A44F146DC9CAC103E /* SceneViews.swift */; };
+		EA6177919C4E44F0C8375501 /* PresetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E237C5A44F146DC9CAC1040 /* PresetViews.swift */; };
+		EA6177919C4E44F0C8375502 /* DebugBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E237C5A44F146DC9CAC1041 /* DebugBridge.swift */; };
 		F97C260A660F2DC435857133 /* demo-preset.json in Resources */ = {isa = PBXBuildFile; fileRef = 86359669B935F031597CF377 /* demo-preset.json */; };
 /* End PBXBuildFile section */
 
@@ -81,6 +84,9 @@
 		4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExchange.swift; sourceTree = "<group>"; };
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
 		67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PadWorkspaceView.swift; sourceTree = "<group>"; };
+		6E237C5A44F146DC9CAC103E /* SceneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneViews.swift; sourceTree = "<group>"; };
+		6E237C5A44F146DC9CAC1040 /* PresetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetViews.swift; sourceTree = "<group>"; };
+		6E237C5A44F146DC9CAC1041 /* DebugBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugBridge.swift; sourceTree = "<group>"; };
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
 		7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupViews.swift; sourceTree = "<group>"; };
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -144,6 +150,9 @@
 				17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */,
 				D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */,
 				9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */,
+				6E237C5A44F146DC9CAC103E /* SceneViews.swift */,
+				6E237C5A44F146DC9CAC1040 /* PresetViews.swift */,
+				6E237C5A44F146DC9CAC1041 /* DebugBridge.swift */,
 				7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */,
 				81EB72B83CCED483250AEC0C /* Theme.swift */,
 				D296E6B8332175985BB77130 /* TrustStore.swift */,
@@ -352,6 +361,9 @@
 				31876869DBD5740176721AEB /* PadWorkspaceView.swift in Sources */,
 				8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */,
 				47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */,
+				EA6177919C4E44F0C8375500 /* SceneViews.swift in Sources */,
+				EA6177919C4E44F0C8375501 /* PresetViews.swift in Sources */,
+				EA6177919C4E44F0C8375502 /* DebugBridge.swift in Sources */,
 				8476F1A6BB746C32FD575EE1 /* SetupViews.swift in Sources */,
 				444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */,
 				07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */,

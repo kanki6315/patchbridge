@@ -12,7 +12,7 @@ struct PadWorkspaceView: View {
     @State private var confirmSave = false
     @State private var saveContext: PresetSnapshot?
     @State private var details = false
-    private let letters = Array("ABCDEFGH").map(String.init)
+    @State private var browsing = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -70,6 +70,12 @@ struct PadWorkspaceView: View {
                 }
                 #endif
                 .onChange(of: snapshot) { _, value in selectDefault(value) }
+                #if DEBUG
+                .task {
+                    guard ProcessInfo.processInfo.arguments.contains("--presets") else { return }
+                    try? await Task.sleep(for: .milliseconds(600)); browsing = true
+                }
+                #endif
             }
         }
     }
@@ -88,7 +94,14 @@ struct PadWorkspaceView: View {
     private func topBar(_ snapshot: PresetSnapshot, portrait: Bool) -> some View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(snapshot.name).font(.largeTitle.bold()).lineLimit(1).minimumScaleFactor(0.7)
+                PresetNameButton(model: model, snapshot: snapshot, theme: theme, chevron: 32) { browsing = true }
+                    .popover(isPresented: $browsing, arrowEdge: .top) {
+                        PresetBrowser(model: model, theme: theme, layout: .popover) { browsing = false }
+                            .padding(24).frame(width: 720, height: 640)
+                            .background(theme.surface.opacity(0.97))
+                            .presentationBackground(theme.surface.opacity(0.97))
+                            .preferredColorScheme(theme.daylight ? .light : .dark)
+                    }
                 HStack(spacing: 10) {
                     Text(model.location(snapshot)).foregroundStyle(theme.muted)
                     if snapshot.dirty { Label("Unsaved", systemImage: "circle.fill").labelStyle(SmallDotLabel()).foregroundStyle(theme.signal) }
@@ -114,7 +127,24 @@ struct PadWorkspaceView: View {
     /// Notices sit in the top bar's free space, between the preset name and the status pill.
     @ViewBuilder private var toast: some View {
         let pending = model.editor.pending
-        if let message = model.error ?? model.notice ?? model.coordinator.outcome ?? pending.map({ $0.operation == "save" ? "Saving on the QC…" : "Sending…" }) {
+        if model.error == nil, model.notice == nil, let scene = model.sceneToast {
+            // Scene switches use the same toast as Saved and Changed on the QC, naming both scenes.
+            HStack(spacing: 12) {
+                Group {
+                    if case .pending? = model.sceneSwitch { Image(systemName: "circle.dotted").foregroundStyle(theme.signal) }
+                    else { Image(systemName: scene.failure ? "exclamationmark.triangle" : "checkmark").foregroundStyle(scene.failure ? theme.caution : theme.signal) }
+                }
+                .frame(width: 32, height: 32).background(theme.raised, in: Circle())
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(scene.title).font(.subheadline.weight(.semibold)).foregroundStyle(scene.failure ? theme.caution : theme.ink)
+                    Text(scene.detail).font(.footnote).foregroundStyle(theme.muted)
+                }.lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .padding(.leading, 8).padding(.trailing, 18).padding(.vertical, 8)
+            .background(theme.surface, in: Capsule()).overlay(Capsule().stroke(theme.line))
+            .frame(maxWidth: 420)
+            .accessibilityElement(children: .combine)
+        } else if let message = model.error ?? model.notice ?? model.coordinator.outcome ?? pending.map({ $0.operation == "save" ? "Saving on the QC…" : "Sending…" }) {
             let failure = model.error != nil || message.hasPrefix("Not ") || message.hasPrefix("Couldn")
             HStack(spacing: 12) {
                 Image(systemName: pending != nil && model.error == nil && model.notice == nil ? "arrow.triangle.2.circlepath" : (failure ? "exclamationmark.triangle" : "info.circle"))
@@ -143,10 +173,7 @@ struct PadWorkspaceView: View {
             PadConnectionDetails(model: model, theme: theme) { details = false }
         }
     }
-    private func slotName(_ snapshot: PresetSnapshot) -> String? {
-        guard snapshot.preset_id.hasPrefix("captured:") else { return nil }
-        return model.location(snapshot).replacingOccurrences(of: " · ", with: " ")
-    }
+    private func slotName(_ snapshot: PresetSnapshot) -> String? { model.slotName(snapshot) }
     @ViewBuilder private func saveButton(_ snapshot: PresetSnapshot) -> some View {
         if model.editor.supports("save") {
             let disabled = model.busy || !snapshot.dirty
@@ -185,25 +212,7 @@ struct PadWorkspaceView: View {
     // MARK: Scenes and grid
 
     private func scenes(_ snapshot: PresetSnapshot) -> some View {
-        HStack(spacing: 4) {
-            ForEach(0..<8, id: \.self) { index in
-                let active = snapshot.scene == letters[index]
-                let name = model.sceneName(index)
-                VStack(spacing: 2) {
-                    HStack(spacing: 6) {
-                        Circle().fill(model.sceneColor(theme, index)).frame(width: 10, height: 10)
-                            .overlay(Circle().stroke(theme.daylight ? theme.ink : .clear, lineWidth: 1))
-                        Text(letters[index]).font(.headline)
-                    }
-                    if !name.isEmpty { Text(name.uppercased()).font(.caption.weight(.semibold)).foregroundStyle(active ? theme.ink : theme.muted).lineLimit(1).minimumScaleFactor(0.7) }
-                }
-                .frame(maxWidth: .infinity).frame(height: 50)
-                .background(active ? theme.raised : .clear, in: RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(active ? model.sceneColor(theme, index) : .clear, lineWidth: 1.5))
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Scene \(letters[index]) \(name)\(active ? ", active" : "")")
-            }
-        }
+        SceneButtons(model: model, snapshot: snapshot, theme: theme, style: .named)
     }
     private func grid(_ snapshot: PresetSnapshot) -> some View {
         VStack(spacing: 6) {
@@ -341,7 +350,10 @@ struct PadConnectionDetails: View {
                             row("Edit parameters", model.editor.supports("set_parameter") ? "Supported ones" : "Not yet", ok: model.editor.supports("set_parameter"))
                             row("Save to this slot", model.editor.supports("save") ? "Yes" : "Not yet", ok: model.editor.supports("save"))
                             row("Turn blocks on or off", model.editor.supports("set_bypass") ? "Yes" : "Not yet", ok: model.editor.supports("set_bypass"))
-                            row("Scenes, Save As", "Not yet")
+                            row("Switch scenes", model.editor.supports("select_scene") ? "Yes" : "Not yet", ok: model.editor.supports("select_scene"))
+                            let presets = model.editor.supports("select_preset") && model.editor.supports("list_presets")
+                            row("Load presets", presets ? "My Presets" : "Not yet", ok: presets)
+                            row("Save As", "Not yet")
                         }
                         ConnectionStatusSettings(model: model, theme: theme).padding(.horizontal, 4)
                     }

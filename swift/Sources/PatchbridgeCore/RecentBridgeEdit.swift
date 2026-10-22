@@ -32,9 +32,15 @@ struct RecentBridgeEdit: Identifiable {
         let scenes = block?["scenes"] as? [String: [String: Any]]
         let raw = ((scenes?[snapshot?["scene"] as? String ?? ""]?["parameters"] as? [String: Any])?[fileName ?? ""]) as? String
         let blockName = raw.flatMap(GenericEditor.captureName(fileName:)) ?? DeviceIdentity.name(model?["name"] as? String, fallback: "Block")
-        title = operation == "save" ? "Save preset" : "\(parameter.capitalized) · \(blockName)"
-        context = "\(DeviceIdentity.name(snapshot?["name"] as? String, fallback: "Preset")) · Scene \(snapshot?["scene"] as? String ?? "—")"
+        let targetScene = payload["scene"] as? String
         let state = (response?["result"] as? [String: Any])?["state"] as? [String: Any]
+        switch operation {
+        case "save": title = "Save preset"
+        case "select_scene": title = "Switch to Scene \(targetScene ?? "—")"
+        case "select_preset": title = "Load \(DeviceIdentity.name(state?["name"] as? String, fallback: "preset"))"
+        default: title = "\(parameter.capitalized) · \(blockName)"
+        }
+        context = "\(DeviceIdentity.name(snapshot?["name"] as? String, fallback: "Preset")) · Scene \(snapshot?["scene"] as? String ?? "—")"
         let scene = state?["scene"] as? String ?? ""
         let afterBlock = (state?["blocks"] as? [[String: Any]])?.first { $0["id"] as? String == blockID }
         let afterScene = (afterBlock?["scenes"] as? [String: [String: Any]])?[scene]
@@ -43,6 +49,10 @@ struct RecentBridgeEdit: Identifiable {
         let confirmed = response?["status"] as? String == "confirmed"
         if confirmed, operation == "save", state?["dirty"] as? Bool == false {
             outcome = .confirmed; detail = "Save confirmed"; value = nil
+        } else if confirmed, operation == "select_scene", let targetScene, scene == targetScene {
+            outcome = .confirmed; detail = "Scene confirmed"; value = nil
+        } else if confirmed, operation == "select_preset", state?["preset_id"] as? String == payload["preset_id"] as? String {
+            outcome = .confirmed; detail = payload["discard"] as? Bool == true ? "Preset loaded · unsaved edits discarded" : "Preset loaded"; value = nil
         } else if confirmed, let actual, actual.doubleValue.isFinite {
             outcome = requested.map { abs($0.doubleValue - actual.doubleValue) > 0.000001 } == true ? .adjusted : .confirmed
             detail = outcome.rawValue
@@ -53,6 +63,8 @@ struct RecentBridgeEdit: Identifiable {
             switch code {
             case _ where response?["applied"] as? Bool == false: outcome = .rejected; detail = "Not sent to the device"
             case "stale_context": outcome = .rejected; detail = "Device state changed"
+            case "unsaved_changes": outcome = .rejected; detail = "The preset had unsaved edits"
+            case "device_busy": outcome = .rejected; detail = "The QC was changing scene or preset"
             case "invalid_value": outcome = .rejected; detail = "Value is invalid"
             case "unsupported_parameter", "unsupported_operation", "read_only": outcome = .rejected; detail = "Not supported in this session"
             default: outcome = .unknown; detail = "Not retried. Reload state before editing."

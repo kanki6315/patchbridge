@@ -16,7 +16,7 @@ VERSION = 1
 MAX_FRAME_BYTES = 65536
 WRITES = {"set_parameter", "set_bypass", "select_scene", "select_preset", "save", "save_as"}
 OPERATIONS = {"connect", "disconnect", "identify", "capabilities", "snapshot", "catalog",
-              "subscribe"} | WRITES | tuning.OPERATIONS
+              "subscribe", "list_presets"} | WRITES | tuning.OPERATIONS
 
 
 class Coordinator:
@@ -116,6 +116,11 @@ class Coordinator:
                     else:
                         tuner = self.adapter.set_tuner_mute(payload.get("value"))
                     result = {"tuner": tuner}
+                elif operation == "list_presets":
+                    # A read of the QC's directory: it changes nothing, so it needs no revision context.
+                    if operation not in getattr(self.adapter, "operations", ()):
+                        raise BridgeError("unsupported_operation", "This adapter can't list presets.")
+                    result = {"presets": self.adapter.list_presets()}
                 elif operation == "snapshot":
                     state = self.adapter.snapshot()
                     if state != self.state:
@@ -139,7 +144,14 @@ class Coordinator:
         except BridgeError as error:
             if error.code == "disconnected":
                 self.close()
+            elif error.code == "not_confirmed" and self.session is not None:
+                # A write reached the QC but its readback didn't settle. The session survives,
+                # but no request may build on the old state: the caller must take a snapshot.
+                self.revision += 1
             response.update(status="error", error={"code": error.code, "message": str(error)})
+            if error.code == "device_busy":
+                # The QC is mid scene or preset change and nothing was written. Ask again soon.
+                response["retry_after"] = 1
         except Exception:
             logging.exception("Adapter failure; invalidating session")
             try:

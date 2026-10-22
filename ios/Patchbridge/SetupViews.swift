@@ -159,6 +159,42 @@ struct SecondaryButton: View {
     }
 }
 
+/// Asked once, on the first screen: a phone that auto-locks mid-session can lose its Bluetooth
+/// link while it waits for the QC. The same choice lives in Connection details afterwards.
+struct KeepAwakePrompt: View {
+    let theme: PhoneTheme
+    @AppStorage(PhoneModel.keepAwakeKey) private var keepAwake = false
+    @AppStorage(PhoneModel.keepAwakeAskedKey) private var asked = false
+    var body: some View {
+        if !asked {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "sun.max").font(.title3).foregroundStyle(theme.signal).frame(width: 28).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Keep the screen on while connected?").font(.headline)
+                        Text("If your \(deviceName) locks while it waits for the QC, the connection can drop. Uses more battery. You can change this later in Connection details.")
+                            .font(.footnote).foregroundStyle(theme.muted).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                HStack(spacing: 10) {
+                    Button { choose(true) } label: {
+                        Text("Keep it on").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).frame(minHeight: 44)
+                            .foregroundStyle(theme.signalInk).background(theme.signal, in: Capsule())
+                    }
+                    Button { choose(false) } label: {
+                        Text("Not now").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).frame(minHeight: 44)
+                            .foregroundStyle(theme.ink).background(theme.raised, in: Capsule())
+                    }
+                }.buttonStyle(.plain)
+            }
+            .padding(16).background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line))
+            .transition(.opacity)
+        }
+    }
+    private func choose(_ on: Bool) { keepAwake = on; withAnimation(.easeOut(duration: 0.2)) { asked = true } }
+}
+
 /// Gets the Mac app's link onto the Mac: an iPhone can't install it. Sharing turns the sheet into the next steps.
 struct GetMacSheet: View {
     let theme: PhoneTheme

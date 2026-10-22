@@ -26,6 +26,7 @@ def preset(spec):
     def model(data):
         return NS(hash=data['hash'], column=data['column'], params=[NS(
             scene_mode=p['scene_mode'], expression=p['expression'],
+            expression_min=p.get('expr_min', 0.0), expression_max=p.get('expr_max', 1.0),
             param_values=[Value(v) for v in p['values']]) for p in data['params']])
     return NS(name=spec['name'], chains=[NS(row=ch['row'], models=[model(m) for m in ch['models']])
                                        for ch in spec['chains']],
@@ -124,28 +125,38 @@ class SnapshotTests(unittest.TestCase):
         block = next(b for b in self.adapter.snapshot()['blocks'] if b['id'] == '0:3')
         self.assertNotIn('0', block['scenes']['F']['parameters'])
         self.assertNotIn('0', block['editable_parameters'])
+        self.assertEqual(block['scene_parameters'], ['0'])
 
     def test_timeout_and_context_change_are_not_snapshots(self):
+        # Mid-change reads are retried, then reported busy; the session survives.
+        self.adapter.sleep = lambda seconds: None
         self.qc.get_current_preset.side_effect = lambda: None
-        with self.assertRaises(RuntimeError):
-            self.adapter.snapshot()
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.snapshot(budget=0)
+        self.assertEqual(caught.exception.code, 'device_busy')
         self.qc.get_current_preset.side_effect = lambda: preset(self.spec)
         self.qc.read_state.side_effect = [self.pos, self.scene, NS(is_dirty=False),
                                         NS(folder_key='other', position=1, is_factory=False), self.scene]
-        with self.assertRaises(RuntimeError):
-            self.adapter.snapshot()
+        with self.assertRaises(BridgeError):
+            self.adapter.snapshot(budget=0)
 
     def test_expression_parameter_is_read_only(self):
-        self.spec['chains'][0]['models'][3]['params'][0]['expression'] = 1
+        param = self.spec['chains'][0]['models'][3]['params'][0]
+        param.update(expression=1, expr_min=0.2, expr_max=0.8)
         block = next(b for b in self.adapter.snapshot()['blocks'] if b['id'] == '0:3')
         self.assertNotIn('0', block['editable_parameters'])
+        self.assertEqual(block['expression_parameters'], {'0': {'pedal': 1, 'heel': 0.2, 'toe': 0.8}})
+        with self.assertRaisesRegex(BridgeError, 'expression'):
+            self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
+        self.qc.set_param.assert_not_called()
 
-    def test_all_scene_assignments_preserve_distinct_values_but_remain_read_only(self):
+    def test_scene_assigned_parameter_keeps_every_scene_and_is_writable(self):
         param = self.spec['chains'][0]['models'][3]['params'][0]
         param['scene_mode'] = True
         param['values'] = [[i / 10, None, None] for i in range(8)]
         block = next(b for b in self.adapter.snapshot()['blocks'] if b['id'] == '0:3')
-        self.assertNotIn('0', block['editable_parameters'])
+        self.assertIn('0', block['editable_parameters'])
+        self.assertEqual(block['scene_parameters'], ['0'])
         for index in range(8):
             self.assertEqual(block['scenes'][chr(65 + index)]['parameters']['0'], index / 10)
 

@@ -49,7 +49,8 @@ class HelperTests(unittest.TestCase):
         self.assertEqual(self.edit()["status"], "confirmed")
         self.call("save")
         self.edit(2)
-        self.call("select_preset", {"preset_id": "2"})
+        self.assertEqual(self.call("select_preset", {"preset_id": "2"})["error"]["code"], "unsaved_changes")
+        self.assertEqual(self.call("select_preset", {"preset_id": "2", "discard": True})["status"], "confirmed")
         self.call("select_preset", {"preset_id": "1"})
         self.assertEqual(self.gain(), 7)
         self.assertFalse(self.bridge.state["dirty"])
@@ -101,6 +102,33 @@ class HelperTests(unittest.TestCase):
         self.assertEqual(result["error"]["code"], "adapter_failure")
         self.assertIsNone(self.bridge.session)
         self.assertEqual(self.edit()["error"]["code"], "disconnected")
+
+    def test_unconfirmed_write_keeps_the_session_but_requires_a_snapshot(self):
+        from patchbridge.adapter import BridgeError
+        session, revision = self.bridge.session, self.bridge.revision
+        def unsettled(*args):
+            raise BridgeError("not_confirmed", "The QC moved during the switch.")
+        original, self.adapter.execute = self.adapter.execute, unsettled
+        result = self.call("select_scene", {"scene": "B"})
+        self.assertEqual(result["error"]["code"], "not_confirmed")
+        self.assertEqual(self.bridge.session, session)
+        self.assertEqual(self.bridge.revision, revision + 1)
+        self.adapter.execute = original
+        # The old context is refused until the caller takes a snapshot.
+        self.assertEqual(self.edit(revision=revision)["error"]["code"], "stale_context")
+        self.call("snapshot")
+        self.assertEqual(self.edit()["status"], "confirmed")
+
+    def test_busy_device_keeps_the_session_and_says_when_to_retry(self):
+        from patchbridge.adapter import BridgeError
+        session, revision = self.bridge.session, self.bridge.revision
+        def busy():
+            raise BridgeError("device_busy", "Changing preset.")
+        self.adapter.snapshot = busy
+        result = self.call("snapshot")
+        self.assertEqual(result["error"]["code"], "device_busy")
+        self.assertEqual(result["retry_after"], 1)
+        self.assertEqual((self.bridge.session, self.bridge.revision), (session, revision))
 
     def test_subscription_events_follow_confirmation(self):
         self.call("subscribe")

@@ -185,6 +185,11 @@ saves entirely local. Tuner captures use a stable A2 pitch at +2 cents.
 pad with −30.00 entered. `--save-confirmation` shows the native Save prompt
 without saving anything. `--editor` uses the Duo deck when unfolded and the
 full editor when folded; iPad keeps its persistent editor panel.
+`--offline-bridge` connects the live coordinator to an in-process bridge
+(`DebugBridge.swift`) serving the demo preset in My Presets 16 and eight other
+slots, so listing, switching and Save and switch run without a Mac or QC.
+`--dirty` makes its first poll find an edit made on the QC, and `--presets` opens
+the preset browser.
 These screenshot launch options are unavailable in Release builds.
 `tools/capture_app_screenshots.py` captures the same seven features per layout:
 overview, parameter editor, exact-value entry, full tuner, Daylight overview,

@@ -20,8 +20,9 @@ hardware. Simulation is development scaffolding, not hardware compatibility evid
 **Python helper.** Versioned process messages, serialized writes, confirmed-state
 responses, session/preset/scene/revision guards, and explicit save. Adapters:
 simulated, captured read-only, and direct USB. The USB adapter accepts only
-verified 4.1.1 and exposes `set_parameter` and File CREATE `save`; Save As,
-bypass, scene and preset selection are not exposed. See
+verified 4.1.1 and exposes `set_parameter`, `set_bypass`, `select_scene`,
+`list_presets`, `select_preset` (My Presets only) and File CREATE `save`; Save As
+is not exposed. Bypass, scenes and presets are not yet verified on hardware. See
 [USB results](docs/USB_RESULTS_2026-10-20.md) and [README.md](README.md).
 
 **Mac bridge.** A native app bundles an isolated arm64 CPython runtime (macOS 26+)
@@ -38,8 +39,9 @@ The bridge does not require a local HTTP server or shared Wi-Fi network.
 drives the transport-injectable `EditorCoordinator` over BLE. It loads capabilities
 and relevant catalog metadata, caches by catalog/model identity, polls every 2 s
 while idle, and reconciles edits and reconnects without replay. Only parameters with
-a declared conversion that are not scene- or expression-assigned are editable;
-everything else is shown read-only. A demo mode loads the captured fixture without
+a declared conversion that are not expression-assigned are editable; everything
+else is shown read-only. A scene-assigned parameter edits the active scene only,
+and the editor lists its value in every scene. A demo mode loads the captured fixture without
 a bridge. See [the data-layer contract](docs/METADATA_AND_EDITOR_MODEL.md).
 
 **Safety and verification.** Read-only policy is enforced at the helper/adapter
@@ -49,8 +51,8 @@ checks package provenance, relocated runtime, schemas, read-only policy, report
 privacy, and recovery. See [read-only mode](docs/READ_ONLY_QC.md),
 [diagnostics](docs/DIAGNOSTICS.md), and [preflight](docs/PREFLIGHT.md).
 
-**Next.** The first live end-to-end hardware run, then scene-specific edits,
-nonlinear display accuracy, and recovery/latency baselines. See
+**Next.** The first live end-to-end hardware run, including scene-specific edits,
+then nonlinear display accuracy, and recovery/latency baselines. See
 [the next hardware session](docs/NEXT_HARDWARE_SESSION.md).
 
 ## 1. Product scope
