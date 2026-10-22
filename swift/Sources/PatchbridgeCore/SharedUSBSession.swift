@@ -35,7 +35,8 @@ public struct KeychainTrustStorage: TrustStorage {
 public final class TrustRegistry {
     public static let limit = 8
     /// `id` names an entry in the UI; the token never leaves the bridge and its devices.
-    private struct Entry: Codable { var id: UUID; var token: String; var name: String }
+    /// `device` is the phone's own stable ID, so one phone keeps one entry however it's named.
+    private struct Entry: Codable { var id: UUID; var token: String; var name: String; var device: String? }
     private var entries: [Entry] = [] { didSet { persist() } }
     private let storage: TrustStorage?
     public init(storage: TrustStorage? = nil) {
@@ -46,16 +47,25 @@ public final class TrustRegistry {
     }
     public var names: [String] { entries.map(\.name) }
     public var list: [(id: UUID, name: String)] { entries.map { ($0.id, $0.name) } }
-    func add(name: String) -> String {
+    func add(name: String, device: String? = nil) -> String {
         let token = UUID().uuidString + UUID().uuidString
-        entries.append(Entry(id: UUID(), token: token, name: name))
+        if let device { entries.removeAll { $0.device == device } }
+        entries.append(Entry(id: UUID(), token: token, name: name, device: device))
         if entries.count > Self.limit { entries.removeFirst() }
         return token
     }
     func name(for token: String) -> String? { entries.first { $0.token == token }?.name }
     func id(for token: String) -> UUID? { entries.first { $0.token == token }?.id }
-    func rename(_ token: String, to name: String) {
-        if let index = entries.firstIndex(where: { $0.token == token }), entries[index].name != name { entries[index].name = name }
+    /// A trusted reconnect refreshes the entry's name and device, dropping older entries
+    /// from the same device.
+    func refresh(_ token: String, name: String, device: String?) {
+        guard let index = entries.firstIndex(where: { $0.token == token }) else { return }
+        if let device, entries.contains(where: { $0.device == device && $0.token != token }) {
+            var entry = entries[index]; entry.name = name; entry.device = device
+            entries = entries.filter { $0.device != device && $0.token != token } + [entry]
+        } else if entries[index].name != name || (device != nil && entries[index].device != device) {
+            entries[index].name = name; entries[index].device = device ?? entries[index].device
+        }
     }
     func remove(_ token: String) { entries.removeAll { $0.token == token } }
     func remove(id: UUID) { entries.removeAll { $0.id == id } }

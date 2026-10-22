@@ -7,6 +7,8 @@ public final class DeviceSession {
     public let shared: SharedUSBSession
     public private(set) var token = UUID().uuidString
     public private(set) var phoneName = "iPhone"
+    /// The phone's stable ID from `hello`, so trusting it again replaces its old entry.
+    private var deviceID: String?
     public var macName: String { shared.macName }
     public var approvalCode: String { DeviceIdentity.approvalCode(token) }
     public var recovering: Bool { shared.recovering }
@@ -35,7 +37,7 @@ public final class DeviceSession {
     deinit { shared.forget(ObjectIdentifier(self)) }
     public func approve(trusting: Bool = false) {
         authorized = true; helper.diagnostics.record(.bridgeApproved, device: index)
-        if trusting { trustToken = shared.trust.add(name: phoneName); trustedConnection = true }
+        if trusting { trustToken = shared.trust.add(name: phoneName, device: deviceID); trustedConnection = true }
     }
     /// The connected phone keeps its current approval; its next connection needs a code.
     public func revokeTrust() {
@@ -50,7 +52,7 @@ public final class DeviceSession {
     /// Clears this connection's approval; trust lives in the registry.
     func endConnection() {
         authorized = false; trustedConnection = false; token = UUID().uuidString
-        adoptedGeneration = nil; requestIDs.removeAll(); phoneName = "iPhone"
+        adoptedGeneration = nil; requestIDs.removeAll(); phoneName = "iPhone"; deviceID = nil
     }
     /// Used by the offline shell to exercise a cable interruption, without touching USB.
     public func simulateDeviceRemoval() throws {
@@ -71,9 +73,10 @@ public final class DeviceSession {
         if operation == "hello" {
             if !authorized {
                 phoneName = DeviceIdentity.name(message["device_name"] as? String, fallback: "iPhone")
+                deviceID = (message["device_id"] as? String).flatMap { (1...128).contains($0.count) ? $0 : nil }
                 if let offered = message["trust_token"] as? String, shared.trust.name(for: offered) != nil {
                     authorized = true; trustedConnection = true; trustToken = offered
-                    shared.trust.rename(offered, to: phoneName)
+                    shared.trust.refresh(offered, name: phoneName, device: deviceID)
                     helper.diagnostics.record(.bridgeApproved, device: index)
                 }
             }

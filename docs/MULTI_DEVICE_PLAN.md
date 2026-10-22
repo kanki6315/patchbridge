@@ -70,7 +70,7 @@ Split `BridgeSession` into three types:
 
 | Operation | New behaviour |
 | --- | --- |
-| `hello` | Creates a `DeviceSession` if there is room, otherwise replies `bridge_full` (phase 2 explains how an unadmitted device reaches this). A `trust_token` is looked up in `TrustRegistry`; a match authorizes the new session and refreshes the stored device name. |
+| `hello` | Creates a `DeviceSession` if there is room, otherwise replies `bridge_full` (phase 2 explains how an unadmitted device reaches this). A `trust_token` is looked up in `TrustRegistry`; a match authorizes the new session and refreshes the stored device name. A `device_id` (the phone's stable ID) keeps one trust entry per phone: trusting it again, or reconnecting with a token, drops its older entries. |
 | `connect` | First joiner forwards `connect` to the helper. Later joiners do **not** forward it (the helper would answer `already_connected`); the bridge forwards a `snapshot` and returns a connect-shaped reply with the shared `session_id`, current `revision` and state. Either way the device's `adoptedGeneration` is set to the current `generation`. If the device is trusted, the reply carries its trust token. |
 | `disconnect` | Removes the device from the joined set. Forwards `disconnect` to the helper only when the set becomes empty. Trust is unaffected. |
 | `recover` | While recovering, unchanged: `device_unavailable` until `retryAt`, then the first device's `recover` reconnects the helper and increments `generation`. If the shared session is already healthy and newer than the device's `adoptedGeneration`, the bridge returns a connect-shaped reply for the current session (via a `snapshot`, never a second helper `connect`) and updates `adoptedGeneration`. |

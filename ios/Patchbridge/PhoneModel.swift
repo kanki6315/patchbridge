@@ -57,6 +57,7 @@ final class PhoneModel: ObservableObject {
     init() {
         tuner.phone = self
         coordinator.trustTokens = TrustStore.load()
+        coordinator.deviceID = TrustStore.deviceID()
         coordinator.onChange = { [weak self] in
             guard let self else { return }
             // A connection that ended takes the tuner with it; recovery keeps it.
