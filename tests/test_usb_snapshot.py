@@ -126,14 +126,17 @@ class SnapshotTests(unittest.TestCase):
         self.assertNotIn('0', block['editable_parameters'])
 
     def test_timeout_and_context_change_are_not_snapshots(self):
+        # Mid-change reads are retried, then reported busy; the session survives.
+        self.adapter.sleep = lambda seconds: None
         self.qc.get_current_preset.side_effect = lambda: None
-        with self.assertRaises(RuntimeError):
-            self.adapter.snapshot()
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.snapshot(budget=0)
+        self.assertEqual(caught.exception.code, 'device_busy')
         self.qc.get_current_preset.side_effect = lambda: preset(self.spec)
         self.qc.read_state.side_effect = [self.pos, self.scene, NS(is_dirty=False),
                                         NS(folder_key='other', position=1, is_factory=False), self.scene]
-        with self.assertRaises(RuntimeError):
-            self.adapter.snapshot()
+        with self.assertRaises(BridgeError):
+            self.adapter.snapshot(budget=0)
 
     def test_expression_parameter_is_read_only(self):
         self.spec['chains'][0]['models'][3]['params'][0]['expression'] = 1

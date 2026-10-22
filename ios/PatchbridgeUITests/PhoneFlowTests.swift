@@ -141,6 +141,26 @@ final class PhoneFlowTests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         capture("iPad portrait")
     }
+    /// Scene buttons on iPhone and iPad. The demo confirms at once; Save is never touched.
+    func testSceneSwitchingInTheDemo() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--demo", "--stage"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Dirty Riffage"].waitForExistence(timeout: 10))
+        if duoScreen(app) != nil { throw XCTSkip("The Duo's scene pads are covered by testDuoWorkspace") }
+        XCTAssertTrue(app.buttons["Scene F · RHYTHM, active"].exists)
+        let unsaved = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Unsaved")).count
+        app.buttons["Scene B · CRONCH"].tap()
+        XCTAssertTrue(app.buttons["Scene B · CRONCH, active"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Scene F · RHYTHM, active"].exists)
+        capture("Scene switched")
+        XCTAssertEqual(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Unsaved")).count, unsaved,
+                       "A scene switch never changes the unsaved state")
+        // A scene without a QC name goes by its letter alone.
+        app.buttons["Scene C"].tap()
+        XCTAssertTrue(app.buttons["Scene C, active"].waitForExistence(timeout: 5))
+    }
+
     func testDuoWorkspace() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--demo", "--stage"]
@@ -149,9 +169,11 @@ final class PhoneFlowTests: XCTestCase {
         guard let screen = duoScreen(app) else { throw XCTSkip("iPhone Duo layouts only") }
         let optoComp = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Opto Comp")).firstMatch
         if screen == "inner" {
-            // The deck under the hinge lists the row, then edits in place without navigating.
-            XCTAssertTrue(app.staticTexts["Row 1"].exists)
-            capture("Duo unfolded row")
+            // The deck under the hinge holds the scene pads, then edits in place without navigating.
+            XCTAssertTrue(app.staticTexts["Scenes"].exists)
+            app.buttons["Scene B · CRONCH"].tap()
+            XCTAssertTrue(app.buttons["Scene B · CRONCH, active"].waitForExistence(timeout: 5))
+            capture("Duo unfolded scenes")
             optoComp.tap()
             XCTAssertTrue(app.buttons["Increase THRESHOLD"].waitForExistence(timeout: 5))
             capture("Duo unfolded editing")
@@ -164,15 +186,15 @@ final class PhoneFlowTests: XCTestCase {
             app.buttons["Save"].tap()
             app.buttons["Save demo preset"].tap()
             XCTAssertTrue(app.staticTexts["Saved in demo only"].waitForExistence(timeout: 5))
-            app.buttons["Row 1"].tap()
-            XCTAssertTrue(app.staticTexts["Row 1"].waitForExistence(timeout: 5))
-            // A non-default row and editor survive the sideways fallback layout.
+            app.buttons["Scenes"].tap()
+            XCTAssertTrue(app.staticTexts["Scenes"].waitForExistence(timeout: 5))
+            // A block's editor survives the sideways fallback layout.
             app.buttons["Dual Chorus"].firstMatch.tap()
-            XCTAssertTrue(app.buttons["Row 3"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["Scenes"].waitForExistence(timeout: 5))
             XCUIDevice.shared.orientation = .landscapeLeft
             capture("Duo sideways fallback")
             XCUIDevice.shared.orientation = .portrait
-            XCTAssertTrue(app.buttons["Row 3"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["Scenes"].waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["Increase MIX"].exists)
             capture("Duo editor after rotation")
         } else {

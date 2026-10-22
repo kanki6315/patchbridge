@@ -42,12 +42,13 @@ final class CoordinatorTests: XCTestCase {
         t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "session_id": session,
                        "revision": revision, "status": "confirmed", "result": result])
     }
-    private func connect(_ c: EditorCoordinator, _ t: OfflineTransport, fixture f: [String: Any], catalog: Bool = true) {
+    private func connect(_ c: EditorCoordinator, _ t: OfflineTransport, fixture f: [String: Any], catalog: Bool = true,
+                         operations: [String] = ["snapshot", "catalog", "set_parameter", "save"]) {
         c.start()
         t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "authorization_required": true])
         XCTAssertEqual(c.phase, .awaitingApproval)
         c.authorize(); reply(t, result: ["state": f["snapshot"]!])
-        reply(t, result: ["protocol_version": 1, "operations": ["snapshot", "catalog", "set_parameter", "save"]])
+        reply(t, result: ["protocol_version": 1, "operations": operations])
         if catalog { reply(t, result: f["catalog"] as! [String: Any]) }
         XCTAssertEqual(c.phase, .ready)
     }
@@ -639,4 +640,157 @@ extension CoordinatorTests {
         phone.refresh()
         XCTAssertNotEqual(phone.outcome, "Changed on iPhone")
     }
+
+    // MARK: Scene switching
+
+    private func sceneState(_ f: [String: Any], _ scene: String) -> [String: Any] {
+        var state = f["snapshot"] as! [String: Any]; state["scene"] = scene; return state
+    }
+    private func refuse(_ t: OfflineTransport, _ code: String, session: String = "s") {
+        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "session_id": session,
+                       "revision": 1, "status": "error", "error": ["code": code, "message": code]])
+    }
+    private func sceneSwitching() throws -> (EditorCoordinator, OfflineTransport, [String: Any]) {
+        let f = try fixture(), t = OfflineTransport(), c = coordinator(t)
+        connect(c, t, fixture: f, operations: ["snapshot", "catalog", "set_parameter", "select_scene", "save"])
+        return (c, t, f)
+    }
+
+    func testSceneSwitchIsHiddenUntilTheBridgeAdvertisesIt() throws {
+        let f = try fixture(), t = OfflineTransport(), c = coordinator(t)
+        connect(c, t, fixture: f)
+        XCTAssertFalse(c.sceneSwitchAvailable)
+        XCTAssertThrowsError(try c.selectScene("B"))
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "catalog")
+    }
+
+    func testSceneSwitchConfirmsOnlyAfterTheQCRepliesAndKeepsDirty() throws {
+        let (c, t, f) = try sceneSwitching()
+        XCTAssertTrue(c.sceneSwitchAvailable)
+        try c.selectScene("B")
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "select_scene")
+        XCTAssertEqual((t.messages.last?["payload"] as? [String: Any])?["scene"] as? String, "B")
+        XCTAssertEqual(t.messages.last?["scene"] as? String, "F")
+        XCTAssertEqual(c.sceneSwitch, .pending("B"))
+        XCTAssertEqual(c.editor.snapshot?.scene, "F", "the strip keeps the QC's scene until it confirms")
+        reply(t, result: ["state": sceneState(f, "B")], revision: 1)
+        XCTAssertEqual(c.editor.snapshot?.scene, "B")
+        XCTAssertEqual(c.editor.snapshot?.dirty, true)
+        XCTAssertEqual(c.sceneSwitch, .confirmed("B"))
+        XCTAssertNil(c.error); XCTAssertEqual(c.phase, .ready)
+        clock += 2; c.tick()
+        XCTAssertNil(c.sceneSwitch)
+    }
+
+    func testNewerTapReplacesTheSwitchStillWaiting() throws {
+        let (c, t, f) = try sceneSwitching()
+        try c.selectScene("B")
+        try c.selectScene("D")
+        try c.selectScene("A")
+        XCTAssertEqual(c.sceneSwitch, .pending("A"))
+        XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "select_scene" }.count, 1)
+        reply(t, result: ["state": sceneState(f, "B")], revision: 1)
+        XCTAssertEqual(c.editor.snapshot?.scene, "B")
+        XCTAssertEqual(c.sceneSwitch, .pending("A"))
+        XCTAssertEqual((t.messages.last?["payload"] as? [String: Any])?["scene"] as? String, "A")
+        XCTAssertEqual(t.messages.last?["revision"] as? Int, 1)
+        reply(t, result: ["state": sceneState(f, "A")], revision: 2)
+        XCTAssertEqual(c.sceneSwitch, .confirmed("A"))
+    }
+
+    func testBusyQCLeavesTheSceneAndTheSession() throws {
+        let (c, t, _) = try sceneSwitching()
+        try c.selectScene("D")
+        refuse(t, "device_busy")
+        XCTAssertEqual(c.sceneSwitch, .notApplied("D"))
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.editor.snapshot?.scene, "F")
+        XCTAssertNil(c.error, "a refused scene shows on the strip, not as an edit error")
+        XCTAssertNil(c.editor.pending)
+        // Tapping again retries.
+        try c.selectScene("D")
+        XCTAssertEqual(c.sceneSwitch, .pending("D"))
+    }
+
+    func testStaleSwitchIsNotAppliedAndReloads() throws {
+        let (c, t, f) = try sceneSwitching()
+        try c.selectScene("D")
+        refuse(t, "stale_context")
+        XCTAssertEqual(c.sceneSwitch, .notApplied("D"))
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        reply(t, result: ["state": f["snapshot"]!], revision: 2)
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.sceneSwitch, .notApplied("D"))
+    }
+
+    func testLostSwitchIsUnknownUntilReadbackShowsIt() throws {
+        let (c, t, f) = try sceneSwitching()
+        try c.selectScene("B")
+        refuse(t, "not_confirmed")
+        XCTAssertEqual(c.sceneSwitch, .unknown("B"))
+        XCTAssertEqual(c.phase, .loading)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        reply(t, result: ["state": sceneState(f, "B")], revision: 2)
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.sceneSwitch, .confirmed("B"))
+        XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "select_scene" }.count, 1, "never replayed")
+    }
+
+    func testLostSwitchIsNotConfirmedByTheSameLetterOnAnotherPreset() throws {
+        let (c, t, f) = try sceneSwitching()
+        try c.selectScene("B")
+        refuse(t, "not_confirmed")
+        XCTAssertEqual(c.sceneSwitch, .unknown("B"))
+        var elsewhere = sceneState(f, "B"); elsewhere["preset_id"] = "another-preset"; elsewhere["name"] = "Another preset"
+        reply(t, result: ["state": elsewhere], revision: 2)
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertNil(c.sceneSwitch, "scene B of another preset says nothing about the switch")
+        XCTAssertEqual(c.outcome, "Changed on the QC")
+        clock += 3; c.tick()
+        reply(t, result: ["state": elsewhere], revision: 2)
+        XCTAssertNil(c.sceneSwitch)
+    }
+
+    func testUnconfirmedEditKeepsTheConnectionAndIsNotRetried() throws {
+        let f = try fixture(), t = OfflineTransport(), c = coordinator(t)
+        connect(c, t, fixture: f)
+        let snapshot = try XCTUnwrap(c.editor.snapshot)
+        let block = try XCTUnwrap(snapshot.blocks.first { b in c.editor.visibleParameters(blockID: b.id).contains { c.editor.readOnlyReason(blockID: b.id, parameterID: $0) == nil } })
+        let parameter = try XCTUnwrap(c.editor.visibleParameters(blockID: block.id).first { c.editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil })
+        try c.edit(blockID: block.id, parameterID: parameter, value: try XCTUnwrap(c.editor.value(blockID: block.id, parameterID: parameter)))
+        refuse(t, "not_confirmed")
+        XCTAssertEqual(c.phase, .loading)
+        XCTAssertTrue(c.error?.hasPrefix("Outcome unknown") == true)
+        reply(t, result: ["state": sceneState(f, "G")], revision: 2)
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "set_parameter" }.count, 1)
+    }
+
+    func testBusyQCDefersPollingInsteadOfFailing() throws {
+        let f = try fixture(), t = OfflineTransport(), c = coordinator(t)
+        connect(c, t, fixture: f)
+        clock += 3; c.tick()
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        refuse(t, "device_busy")
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertNil(c.error)
+    }
+
+    func testSceneSwitchThroughTheSimulatedBridge() throws {
+        let helper = try simulatorHelper(); defer { helper.stop() }
+        let shared = SharedUSBSession(helper: helper)
+        let (c, _) = try joined(shared, name: "iPhone")
+        try c.edit(blockID: "amp-1", parameterID: "gain", value: .number(7.5))
+        XCTAssertEqual(c.editor.snapshot?.dirty, true)
+        try c.selectScene("B")
+        XCTAssertEqual(c.editor.snapshot?.scene, "B")
+        XCTAssertEqual(c.editor.snapshot?.dirty, true)
+        XCTAssertEqual(c.sceneSwitch, .confirmed("B"))
+        // The simulator has two scenes, so C is refused before anything changes.
+        try c.selectScene("C")
+        XCTAssertEqual(c.sceneSwitch, .notApplied("C"))
+        XCTAssertEqual(c.editor.snapshot?.scene, "B")
+        XCTAssertEqual(c.phase, .ready)
+    }
+
 }

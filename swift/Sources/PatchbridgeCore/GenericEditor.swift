@@ -128,8 +128,9 @@ public struct PresetSnapshot: Codable, Equatable {
     public let blocks: [Block]
     public var scene_labels: [String]? = nil
     public var scene_colors: [UInt32]? = nil
+    public static let sceneLetters = ["A", "B", "C", "D", "E", "F", "G", "H"]
     var validStructure: Bool {
-        let scenes = Set(["A", "B", "C", "D", "E", "F", "G", "H"])
+        let scenes = Set(Self.sceneLetters)
         return !preset_id.isEmpty && scenes.contains(scene) && blocks.count <= 32 &&
             Set(blocks.map(\.id)).count == blocks.count &&
             Set(blocks.map(\.position)).count == blocks.count && blocks.allSatisfy {
@@ -282,7 +283,23 @@ public final class GenericEditor {
         pending = edit; lastError = nil
         return edit
     }
-    public func reject(id: String, message: String) {
+    /// Asks the QC to make `scene` active. Scenes aren't part of Save, so this never touches dirty.
+    @discardableResult
+    public func proposeScene(_ scene: String) throws -> Pending {
+        guard let snapshot, let session, let connection else { throw EditorFailure.disconnected }
+        guard pending == nil else { throw EditorFailure.busy }
+        guard operations.contains("select_scene") else { throw EditorFailure.unsupported }
+        guard PresetSnapshot.sceneLetters.contains(scene) else { throw EditorFailure.invalidValue }
+        let id = UUID().uuidString
+        let command: [String: Any] = ["version": 1, "id": id, "operation": "select_scene", "connection_id": connection,
+            "session_id": session, "revision": revision, "preset_id": snapshot.preset_id, "scene": snapshot.scene,
+            "payload": ["scene": scene]]
+        let change = Pending(id: id, operation: "select_scene", blockID: nil, parameterID: nil, proposedValue: .text(scene), command: command)
+        pending = change; lastError = nil
+        return change
+    }
+    /// A nil message clears the pending change without an error, for outcomes shown elsewhere.
+    public func reject(id: String, message: String?) {
         guard pending?.id == id else { return }
         pending = nil; lastError = message // confirmed snapshot remains unchanged
     }
@@ -309,9 +326,16 @@ public final class GenericEditor {
     }
     public func confirm(id: String, snapshot newState: PresetSnapshot, session: String, connection: String, revision: Int) throws {
         guard let pending, pending.id == id, session == self.session, connection == self.connection,
-              revision > self.revision, newState.catalog_id == catalog?.id,
-              newState.preset_id == snapshot?.preset_id, newState.scene == snapshot?.scene,
-              newState.validStructure else { throw EditorFailure.staleContext }
+              revision >= self.revision, newState.catalog_id == catalog?.id,
+              newState.preset_id == snapshot?.preset_id, newState.validStructure else { throw EditorFailure.staleContext }
+        // Only a scene switch may change the scene, and only to the one it asked for. Switching
+        // to the scene that is already active writes nothing, so its revision may stay put.
+        if pending.operation == "select_scene" {
+            guard case .text(let scene)? = pending.proposedValue, newState.scene == scene,
+                  revision > self.revision || newState == snapshot else { throw EditorFailure.staleContext }
+        } else {
+            guard revision > self.revision, newState.scene == snapshot?.scene else { throw EditorFailure.staleContext }
+        }
         if pending.operation == "set_parameter" {
             guard let blockID = pending.blockID, let parameterID = pending.parameterID,
                   let block = newState.blocks.first(where: { $0.id == blockID }),

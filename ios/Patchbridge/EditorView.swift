@@ -197,26 +197,17 @@ struct EditorView: View {
             }.font(.subheadline)
         }
     }
+    /// The active scene's title with the last tap's status on its right, over the scene buttons.
     private func scenes(_ snapshot: PresetSnapshot) -> some View {
-        let active = Array("ABCDEFGH").firstIndex(of: snapshot.scene.first ?? "A") ?? 0
+        let active = PresetSnapshot.sceneLetters.firstIndex(of: snapshot.scene) ?? 0
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Circle().fill(model.sceneColor(theme, active)).frame(width: 10, height: 10)
-                Text("Scene \(snapshot.scene)" + (model.sceneName(active).isEmpty ? "" : " · \(model.sceneName(active))")).font(.headline)
+                SceneDot(color: model.sceneColor(theme, active), size: 10, theme: theme)
+                Text(model.sceneTitle(snapshot.scene)).font(.headline).lineLimit(1).layoutPriority(1)
+                Spacer(minLength: 8)
+                SceneStatus(model: model, theme: theme)
             }
-            HStack(spacing: 4) {
-                ForEach(0..<8) { index in
-                    VStack(spacing: 3) {
-                        Circle().fill(model.sceneColor(theme, index)).frame(width: index == active ? 12 : 9, height: index == active ? 12 : 9)
-                            .overlay(Circle().stroke(theme.daylight ? theme.ink : .clear, lineWidth: 1))
-                        Text(String(Array("ABCDEFGH")[index])).font(.caption.weight(.semibold))
-                    }.frame(maxWidth: .infinity).frame(height: 40)
-                        .background(index == active ? theme.raised : .clear, in: RoundedRectangle(cornerRadius: 13))
-                        .overlay(RoundedRectangle(cornerRadius: 13).stroke(index == active ? model.sceneColor(theme, index) : .clear, lineWidth: 1.5))
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("Scene \(String(Array("ABCDEFGH")[index])) \(model.sceneName(index))\(index == active ? ", active" : "")")
-                }
-            }
+            SceneButtons(model: model, snapshot: snapshot, theme: theme, style: .strip)
         }
     }
     private func grid(_ snapshot: PresetSnapshot) -> some View {
@@ -346,7 +337,7 @@ struct EditorView: View {
                     if model.coordinator.phase == .disconnected { Wordmark(theme: theme) }
                     else { Text(connectionTitle).font(.largeTitle.bold()).tracking(-0.4).accessibilityAddTraits(.isHeader) }
                 }.padding(.top, pad ? 72 : 24).frame(maxWidth: .infinity, alignment: pad ? .center : .leading)
-                if model.coordinator.phase == .disconnected && model.error == nil { demoPreview }
+                if model.coordinator.phase == .disconnected && model.error == nil { demoPreview; KeepAwakePrompt(theme: theme) }
                 connectionRail
                 if model.coordinator.phase == .awaitingApproval {
                     if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
@@ -509,6 +500,7 @@ struct EditorView: View {
                 Label("Read preset and parameter values", systemImage: "checkmark")
                 if model.editor.supports("set_parameter") { Label("Edit supported parameters", systemImage: "checkmark") }
                 if model.editor.supports("set_bypass") { Label("Turn blocks on or off", systemImage: "checkmark") }
+                if model.editor.supports("select_scene") { Label("Switch scenes", systemImage: "checkmark") }
                 if model.editor.supports("save") { Label("Save the current preset", systemImage: "checkmark") }
                 if model.coordinator.trusted {
                     LabeledContent("Trusted", value: "Until revoked on the Mac").foregroundStyle(theme.ink)
@@ -530,10 +522,15 @@ struct ConnectionStatusSettings: View {
     let theme: PhoneTheme
     @AppStorage(ConnectionActivityController.showKey) private var showStatus = false
     @AppStorage(ConnectionActivityController.alertKey) private var alertOnDrop = false
+    @AppStorage(PhoneModel.keepAwakeKey) private var keepAwake = false
+    @AppStorage(PhoneModel.keepAwakeAskedKey) private var keepAwakeAsked = false
     @State private var alertsDenied = false
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Lock Screen").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
+            Toggle("Keep screen on while connected", isOn: $keepAwake).frame(minHeight: 44)
+            Text("Your \(deviceName) won’t auto-lock during a session, so it doesn’t drop the connection while it waits for the QC. Uses more battery.")
+                .font(.footnote).foregroundStyle(theme.muted)
             if ConnectionActivityController.supported {
                 Toggle("Show connection status", isOn: $showStatus).frame(minHeight: 44)
                 if showStatus && !ConnectionActivityController.systemEnabled {
@@ -545,6 +542,7 @@ struct ConnectionStatusSettings: View {
                 .font(.footnote).foregroundStyle(alertsDenied ? theme.caution : theme.muted)
         }
         .onChange(of: showStatus) { _, _ in model.connectionStatusPreferenceChanged() }
+        .onChange(of: keepAwake) { _, _ in keepAwakeAsked = true; model.syncKeepAwake() }
         .onChange(of: alertOnDrop) { _, on in
             guard on else { alertsDenied = false; return }
             ConnectionActivityController.requestAlertPermission { granted in alertsDenied = !granted }

@@ -186,15 +186,17 @@ struct DuoWorkspaceView: View {
                     }.font(.subheadline.weight(.medium))
                 }.layoutPriority(1)
                 Spacer(minLength: 8)
-                if halfFolded { sceneStrip(snapshot, stacked: true).transition(stripTransition) }
+                // The pads are under the controls while a block is open, so the header mirrors the
+                // QC's scene. Its cells are under 44 pt, so it stays display-only.
+                if editing { sceneStrip(snapshot, stacked: true).transition(stripTransition) }
                 tunerButton
-                statusButton(compact: halfFolded)
+                statusButton(compact: halfFolded || editing)
             }
-            if !halfFolded { namedScenes(snapshot).transition(.opacity) }
-            grid(snapshot, style: .named, band: !editing, cellHeight: nil).frame(maxHeight: .infinity)
+            grid(snapshot, style: .named, band: false, cellHeight: nil).frame(maxHeight: .infinity)
         }
         .padding(.horizontal, 24).padding(.top, 8)
         .animation(foldMotion, value: halfFolded)
+        .animation(motion, value: editing)
     }
     /// A hairline at the hinge, with the crease shadow fading in when half-folded.
     private var fold: some View {
@@ -206,13 +208,13 @@ struct DuoWorkspaceView: View {
         .animation(foldMotion, value: halfFolded)
         .allowsHitTesting(false).accessibilityHidden(true)
     }
-    /// The control deck: the row's blocks with Save, or the selected block's dial and controls.
+    /// The control deck: the scene pads with Save, or the selected block's dial and controls.
     @ViewBuilder private func deck(_ snapshot: PresetSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             if editing, let block = snapshot.blocks.first(where: { $0.id == selected }) {
                 HStack(spacing: 12) {
                     Button { closeEditor() } label: {
-                        Label("Row \(block.position[0] + 1)", systemImage: "chevron.left").font(.headline)
+                        Label("Scenes", systemImage: "chevron.left").font(.headline)
                             .padding(.horizontal, 16).frame(minHeight: 44)
                     }.buttonStyle(.plain).phoneGlass(theme, radius: 22)
                     chip(block, size: 40)
@@ -227,38 +229,21 @@ struct DuoWorkspaceView: View {
                 notice
                 BlockEditorView(model: model, block: block, theme: theme, layout: .deck)
             } else {
-                let blocks = snapshot.blocks.filter { $0.position[0] == row }.sorted { $0.position[1] < $1.position[1] }
+                // Like the QC's footswitches. Half-folded, they lie flat on the table.
                 HStack(spacing: 12) {
-                    Text("Row \(row + 1)").font(.title2.bold())
-                    Text("\(blocks.count) blocks · \(8 - blocks.count) empty").foregroundStyle(theme.muted).lineLimit(1)
+                    Text("Scenes").font(.title2.bold())
+                    SceneStatus(model: model, theme: theme, named: true)
                     Spacer(minLength: 8)
-                    saveButton(snapshot, short: false)
+                    saveButton(snapshot, short: true)
                 }
+                Text("Tap a block to edit it").font(.footnote).foregroundStyle(theme.muted)
                 notice
-                ScrollView { rowList(blocks) }
+                SceneButtons(model: model, snapshot: snapshot, theme: theme, style: .pads)
+                    .frame(maxHeight: .infinity).padding(.bottom, 16)
             }
         }
         .padding(.horizontal, 24)
     }
-    private func rowList(_ blocks: [PresetSnapshot.Block]) -> some View {
-        VStack(spacing: 0) {
-            if blocks.isEmpty { Text("No blocks in this row").foregroundStyle(theme.muted).padding(24) }
-            ForEach(blocks, id: \.id) { block in
-                Button { select(block) } label: {
-                    HStack(spacing: 14) {
-                        chip(block, size: 40)
-                        Text(model.name(block)).font(.headline).lineLimit(1).minimumScaleFactor(0.8).frame(width: 170, alignment: .leading)
-                        Text(model.summary(block)).font(.subheadline).foregroundStyle(theme.muted).lineLimit(1)
-                        Spacer(minLength: 0)
-                        if !model.editable(block) { Image(systemName: "lock").foregroundStyle(theme.muted) }
-                        Image(systemName: "chevron.right").foregroundStyle(theme.muted)
-                    }.frame(minHeight: 50).padding(.vertical, 2).contentShape(Rectangle())
-                }.buttonStyle(.plain)
-                Rectangle().fill(theme.line).frame(height: 0.5)
-            }
-        }
-    }
-
     // MARK: Outer screen
 
     /// Landscape, the main folded posture: a one-line header over the named grid. The block menu
@@ -603,9 +588,6 @@ struct DuoWorkspaceView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(active ? model.sceneColor(theme, index) : .clear, lineWidth: 1.5))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Scene \(letters[index]) \(name)\(active ? ", active" : "")")
-    }
-    private func namedScenes(_ snapshot: PresetSnapshot) -> some View {
-        HStack(spacing: 4) { ForEach(0..<8, id: \.self) { sceneCell(snapshot, $0) } }
     }
     private func sceneGrid(_ snapshot: PresetSnapshot) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {

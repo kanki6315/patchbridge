@@ -40,7 +40,19 @@ public final class EditorCoordinator {
     public enum TunerMode: String { case off, live, open }
     static let tunerOperations: Set<String> = ["tuner", "tuner_read", "set_tuner_mute"]
     /// Edits this phone sends. Their outcome is reported and they are never replayed.
-    static let mutations: Set<String> = ["set_parameter", "set_bypass", "save"]
+    static let mutations: Set<String> = ["set_parameter", "set_bypass", "select_scene", "save"]
+
+    // Scenes. The strip always draws the scene the QC confirmed; this only marks the tapped one.
+    public enum SceneSwitch: Equatable { case pending(String), confirmed(String), notApplied(String), unknown(String) }
+    public private(set) var sceneSwitch: SceneSwitch?
+    public var sceneSwitchAvailable: Bool { phase == .ready && editor.supports("select_scene") }
+    /// A newer tap made while a switch was in flight. It replaces the one before it.
+    private var queuedScene: String?
+    /// "On the QC" shows this long after a confirmed switch, then clears.
+    private let sceneConfirmationTime: TimeInterval = 1.6
+    private var sceneSettledAt = TimeInterval.infinity
+    /// The preset the last switch was sent on. A scene letter means nothing on another preset.
+    private var sceneSwitchPreset: String?
     public private(set) var tunerMode: TunerMode = .off
     public private(set) var tunerMuted: Bool?
     public private(set) var tunerError: String?
@@ -141,6 +153,7 @@ public final class EditorCoordinator {
         request = nil; staged = nil; connection = nil; session = nil; revision = 0
         operations.removeAll(); nextPoll = .infinity; discoveryDeadline = .infinity; editor.disconnect()
         held = nil; tunerMode = .off; tunerMuted = nil; tunerError = nil; tunerTrack = TunerTrack()
+        sceneSwitch = nil; queuedScene = nil; sceneSettledAt = .infinity; sceneSwitchPreset = nil
         tunerSeq = 0; tunerSync = false; muteRequest = nil; nextTunerRead = .infinity
         phase = .disconnected; status = "Disconnected"; old?.disconnect(); onChange?()
     }
@@ -163,6 +176,7 @@ public final class EditorCoordinator {
     public func tick() {
         if phase == .connecting, nearbyMacs.isEmpty, now() >= discoveryDeadline { fail("No Mac replied. Open Patchbridge on your Mac and try again."); return }
         if let request, now() >= request.deadline { fail("Request timed out; its outcome is unknown. Reconnect before editing."); return }
+        if case .confirmed? = sceneSwitch, now() >= sceneSettledAt { sceneSwitch = nil; sceneSettledAt = .infinity; onChange?() }
         guard !isInBackground else { return }
         if phase == .ready, request == nil, now() >= nextPoll { refresh() }
         pump()
@@ -219,6 +233,46 @@ public final class EditorCoordinator {
         outcome = nil
         let pending = try editor.proposeBypass(blockID: blockID, bypassed: bypassed)
         send(pending.operation, command: pending.command)
+    }
+    /// Asks the QC to switch scene. A tap while another switch is in flight replaces it: the
+    /// newest one goes to the QC as soon as the current one answers. Never replayed after a failure.
+    public func selectScene(_ scene: String) throws {
+        guard phase == .ready else { throw EditorFailure.disconnected }
+        guard editor.supports("select_scene") else { throw EditorFailure.unsupported }
+        guard PresetSnapshot.sceneLetters.contains(scene) else { throw EditorFailure.invalidValue }
+        if request?.operation == "select_scene" || held?.operation == "select_scene" {
+            queuedScene = scene; sceneSwitch = .pending(scene); onChange?(); return
+        }
+        guard !busy else { throw EditorFailure.busy }
+        // The QC is already there and nothing else is waiting on the strip.
+        if scene == editor.snapshot?.scene { sceneSwitch = nil; onChange?(); return }
+        outcome = nil
+        try sendScene(scene)
+    }
+    /// The scene the switch on its way to the QC asked for; a later tap may already be queued.
+    private var inFlightScene: String? {
+        guard editor.pending?.operation == "select_scene", case .text(let scene)? = editor.pending?.proposedValue else { return nil }
+        return scene
+    }
+    private func sendScene(_ scene: String) throws {
+        queuedScene = nil
+        let pending = try editor.proposeScene(scene)
+        sceneSwitch = .pending(scene); sceneSettledAt = .infinity; sceneSwitchPreset = editor.snapshot?.preset_id
+        send(pending.operation, command: pending.command)
+    }
+    /// The QC answered a switch without confirming it. Nothing is retried; a stale or unknown
+    /// outcome reloads state first.
+    private func sceneRefused(_ pending: Request, code: String, response: [String: Any]) -> Bool {
+        guard pending.operation == "select_scene", let scene = inFlightScene else { return false }
+        let sameSession = response["session_id"] as? String == session
+        if ["busy", "device_busy"].contains(code) || (sameSession && ["stale_context", "invalid_value", "unsupported_operation"].contains(code)) {
+            sceneSwitch = .notApplied(scene)
+        } else if sameSession && code == "not_confirmed" {
+            sceneSwitch = .unknown(scene)
+        } else { return false }
+        queuedScene = nil; editor.reject(id: pending.id, message: nil)
+        if code == "busy" || code == "device_busy" { ready(keepingPoll: true) } else { phase = .loading; send("snapshot"); return true }
+        pump(); onChange?(); return true
     }
     public func save() throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
@@ -297,7 +351,8 @@ public final class EditorCoordinator {
                     fail("Disconnected on your Mac. Reconnect to ask for approval again.", reason: .revoked); return
                 }
                 // Refused before reaching the QC, so nothing changed: retry when the bridge says.
-                if code == "busy" {
+                if sceneRefused(pending, code: code, response: response) { return }
+                if code == "busy" || code == "device_busy" {
                     let retry = response["retry_after"] as? Double ?? 1
                     let delay = retry.isFinite ? min(8, max(0.5, retry)) : 1
                     if Self.tunerOperations.contains(pending.operation) {
@@ -305,8 +360,8 @@ public final class EditorCoordinator {
                         if pending.operation == "tuner" { tunerSync = true }
                         nextTunerRead = now() + delay
                     } else if Self.mutations.contains(pending.operation) {
-                        let text = pending.operation == "save" ? "Save not applied. The bridge was busy with another device; try again."
-                            : "Not applied. The bridge was busy with another device; try again."
+                        let cause = code == "busy" ? "The bridge was busy with another device" : "The QC was changing scene or preset"
+                        let text = pending.operation == "save" ? "Save not applied. \(cause); try again." : "Not applied. \(cause); try again."
                         editor.reject(id: pending.id, message: text); error = text; ready()
                     } else if phase == .ready || phase == .recovering {
                         nextPoll = now() + delay
@@ -317,9 +372,15 @@ public final class EditorCoordinator {
                 }
                 if code == "device_unavailable" {
                     let uncertain = Self.mutations.contains(pending.operation)
+                    let scene = pending.operation == "select_scene" ? inFlightScene : nil
                     editor.disconnect(); staged = nil; session = nil; operations.removeAll(); held = nil
+                    sceneSwitch = nil; queuedScene = nil
                     phase = .recovering; status = "QC unavailable · reconnecting"
-                    if uncertain {
+                    if let scene {
+                        // The strip is gone until fresh state loads, so say it in words.
+                        error = response["applied"] as? Bool == false ? "Scene \(scene) not applied. Switching resumes after the QC reconnects."
+                            : "Switch to Scene \(scene): outcome unknown. It will not be retried."
+                    } else if uncertain {
                         // The bridge marks an edit it never sent; only then is the outcome certain.
                         error = response["applied"] as? Bool == false
                             ? (pending.operation == "save" ? "Save not applied. Editing resumes after the QC reconnects." : "Edit not applied. Editing resumes after the QC reconnects.")
@@ -338,9 +399,12 @@ public final class EditorCoordinator {
                 }
                 // Only explicit, session-preserving rejections are recoverable. Resync before more edits.
                 if Self.mutations.contains(pending.operation),
-                   ["stale_context", "invalid_value", "unsupported_parameter", "unsupported_operation"].contains(code),
+                   ["stale_context", "invalid_value", "unsupported_parameter", "unsupported_operation", "not_confirmed"].contains(code),
                    response["session_id"] as? String == session {
-                    let text = code == "stale_context" ? Self.deviceName(response).map { "Not applied. \($0) changed it first." } ?? message : message
+                    let text = code == "stale_context" ? Self.deviceName(response).map { "Not applied. \($0) changed it first." } ?? message
+                        : code == "not_confirmed" ? (pending.operation == "save" ? "Save outcome unknown. The QC changed scene or preset during it; it will not be retried."
+                                                     : "Outcome unknown. The QC changed scene or preset during the edit; it will not be retried.")
+                        : message
                     editor.reject(id: pending.id, message: text); error = text
                     phase = .loading; send("snapshot"); return
                 }
@@ -374,6 +438,15 @@ public final class EditorCoordinator {
                 if let previous = editor.snapshot, previous != state {
                     outcome = Self.deviceName(response).map { "Changed on \($0)" } ?? "Changed on the QC"
                 }
+                // Readback settles a switch whose answer was lost, but only on the preset it was sent
+                // on. A scene or preset change elsewhere retires a refusal or an unknown outcome.
+                switch sceneSwitch {
+                case .unknown(let scene)? where state.preset_id == sceneSwitchPreset && state.scene == scene:
+                    sceneSwitch = .confirmed(scene); sceneSettledAt = now() + sceneConfirmationTime; outcome = nil
+                case .notApplied?, .unknown?:
+                    if state.preset_id != sceneSwitchPreset || state.scene != editor.snapshot?.scene { sceneSwitch = nil }
+                default: break
+                }
                 guard newRevision > revision || state == editor.snapshot else { throw EditorFailure.staleContext }
                 if state.catalog_id != editor.catalog?.id || !Set(state.blocks.map(\.model_id)).isSubset(of: cachedModels) {
                     staged = state; revision = newRevision; phase = .loading
@@ -381,6 +454,16 @@ public final class EditorCoordinator {
                 } else {
                     try editor.refresh(state, session: newSession, connection: connection!, revision: newRevision)
                     revision = newRevision; ready()
+                }
+            case "select_scene":
+                let state = try decode(PresetSnapshot.self, result["state"])
+                try editor.confirm(id: pending.id, snapshot: state, session: newSession, connection: connection!, revision: newRevision)
+                revision = newRevision; error = nil; ready()
+                if let next = queuedScene, next != state.scene {
+                    try sendScene(next)
+                } else {
+                    queuedScene = nil; sceneSwitch = .confirmed(state.scene); sceneSettledAt = now() + sceneConfirmationTime
+                    pump()
                 }
             case "set_parameter", "set_bypass", "save":
                 let state = try decode(PresetSnapshot.self, result["state"])

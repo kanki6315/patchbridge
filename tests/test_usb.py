@@ -5,7 +5,10 @@ from unittest.mock import Mock
 
 from patchbridge.adapter import BridgeError
 from patchbridge.helper import Coordinator
-from patchbridge.usb import USBAdapter
+from types import SimpleNamespace as NS
+
+from patchbridge import usb
+from patchbridge.usb import Unsettled, USBAdapter
 
 
 class USBWriteTests(TestCase):
@@ -52,7 +55,7 @@ class USBWriteTests(TestCase):
         self.assertFalse(self.adapter.qc.mock_calls)
 
     def test_unsupported_operations_do_not_touch_device(self):
-        for op in ('save_as', 'select_scene', 'recall_preset_save'):
+        for op in ('save_as', 'select_preset', 'recall_preset_save'):
             with self.assertRaises(BridgeError):
                 self.adapter.execute(op, {})
         self.assertFalse(self.adapter.qc.mock_calls)
@@ -63,6 +66,7 @@ class USBWriteTests(TestCase):
         })[0]
         self.assertIn('save', response['result']['operations'])
         self.assertIn('set_bypass', response['result']['operations'])
+        self.assertIn('select_scene', response['result']['operations'])
         self.assertNotIn('save_as', response['result']['operations'])
 
     def test_parameter_write_requires_readback(self):
@@ -73,10 +77,11 @@ class USBWriteTests(TestCase):
         self.adapter.state = deepcopy(self.state)
         self.adapter.metadata = {'models': {'1': {'parameters': {'0': {'type': 'float'}}}}}
         self.adapter.snapshot = Mock(return_value=self.state)
-        with self.assertRaisesRegex(RuntimeError, 'Write could not be confirmed'):
+        with self.assertRaisesRegex(BridgeError, 'Write could not be confirmed') as caught:
             self.adapter.execute('set_parameter', {
                 'block_id': '0:3', 'parameter_id': '0', 'value': 0.39,
             })
+        self.assertEqual(caught.exception.code, 'not_confirmed')
         self.adapter.qc.set_param.assert_called_once_with(0, 3, 0, 0.39)
 
     def test_toggle_button_writes_only_declared_steps(self):
@@ -112,8 +117,9 @@ class USBWriteTests(TestCase):
         self.state['blocks'] = [self.bypass_block(False)]
         self.adapter.state = deepcopy(self.state)
         self.adapter.snapshot = Mock(return_value=self.state)
-        with self.assertRaisesRegex(RuntimeError, 'Bypass could not be confirmed'):
+        with self.assertRaisesRegex(BridgeError, 'Bypass could not be confirmed') as caught:
             self.adapter.execute('set_bypass', {'block_id': '0:3', 'value': True})
+        self.assertEqual(caught.exception.code, 'not_confirmed')
         self.adapter.qc.set_block_bypass.assert_called_once()
 
     def test_bypass_rejects_unknown_block_and_non_boolean(self):
@@ -176,3 +182,121 @@ class RequestQueueTests(TestCase):
         for i in range(1, 9):
             qc.request(2, SimpleNamespace(request_id=i))
         self.assertEqual(qc._pending, [(40, None, b'u', b'')])
+
+
+class Clock:
+    def __init__(self):
+        self.now = 0.0
+    def __call__(self):
+        return self.now
+    def sleep(self, seconds):
+        self.now += seconds
+
+
+class SceneSwitchTests(TestCase):
+    def setUp(self):
+        self.clock = Clock()
+        self.adapter = USBAdapter(clock=self.clock, sleep=self.clock.sleep)
+        self.adapter.qc = Mock()
+        self.state = {'preset_id': 'slot', 'name': 'Disposable', 'scene': 'F', 'dirty': True, 'blocks': []}
+        self.adapter.state = deepcopy(self.state)
+
+    def test_switch_writes_waits_for_the_qc_and_reads_back(self):
+        switched = dict(self.state, scene='B')
+        self.adapter.snapshot = Mock(side_effect=[self.state, switched])
+        self.adapter.qc.read_state.side_effect = [NS(selected_scene=5), NS(selected_scene=1)]
+        self.assertEqual(self.adapter.execute('select_scene', {'scene': 'B'}), switched)
+        self.adapter.qc.set_scene.assert_called_once_with(1)
+
+    def test_active_scene_is_not_written_again(self):
+        self.adapter.snapshot = Mock(return_value=self.state)
+        self.assertEqual(self.adapter.execute('select_scene', {'scene': 'F'}), self.state)
+        self.adapter.qc.set_scene.assert_not_called()
+
+    def test_unknown_scene_is_refused_before_the_write(self):
+        self.adapter.snapshot = Mock(return_value=self.state)
+        for scene in ('I', 'b', 'AB', 2, None):
+            with self.assertRaises(BridgeError) as caught:
+                self.adapter.execute('select_scene', {'scene': scene})
+            self.assertEqual(caught.exception.code, 'invalid_value')
+        self.adapter.qc.set_scene.assert_not_called()
+
+    def test_switch_the_qc_never_reports_is_unknown_not_refused(self):
+        self.adapter.snapshot = Mock(return_value=self.state)
+        self.adapter.qc.read_state.return_value = NS(selected_scene=5)
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.execute('select_scene', {'scene': 'B'})
+        self.assertEqual(caught.exception.code, 'not_confirmed')
+        self.adapter.qc.set_scene.assert_called_once_with(1)
+
+    def test_switch_that_lands_elsewhere_is_unknown(self):
+        self.adapter.snapshot = Mock(side_effect=[self.state, dict(self.state, scene='C')])
+        self.adapter.qc.read_state.return_value = NS(selected_scene=1)
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.execute('select_scene', {'scene': 'B'})
+        self.assertEqual(caught.exception.code, 'not_confirmed')
+
+    def test_busy_qc_refuses_before_anything_is_written(self):
+        self.adapter.snapshot = Mock(side_effect=BridgeError('device_busy', 'Busy.'))
+        for operation, payload in (('select_scene', {'scene': 'B'}), ('set_bypass', {'block_id': '0:0', 'value': True})):
+            with self.assertRaises(BridgeError) as caught:
+                self.adapter.execute(operation, payload)
+            self.assertEqual(caught.exception.code, 'device_busy')
+        self.assertFalse(self.adapter.qc.mock_calls)
+
+    def test_busy_readback_after_a_write_is_unknown(self):
+        self.adapter.snapshot = Mock(side_effect=[self.state, BridgeError('device_busy', 'Busy.')])
+        self.adapter.qc.read_state.return_value = NS(selected_scene=1)
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.execute('select_scene', {'scene': 'B'})
+        self.assertEqual(caught.exception.code, 'not_confirmed')
+
+
+class SettleTests(TestCase):
+    """Scene and preset changes on the QC must not end the session."""
+    def setUp(self):
+        self.clock = Clock()
+        self.adapter = USBAdapter(clock=self.clock, sleep=self.clock.sleep)
+        self.adapter.qc = Mock()
+        self.reads = 0
+
+    def unsettled(self, times):
+        def read():
+            self.reads += 1
+            if self.reads <= times:
+                raise Unsettled('mid-change')
+            return {'scene': 'B'}
+        self.adapter._snapshot_once = read
+
+    def test_snapshot_waits_out_a_short_change(self):
+        self.unsettled(3)
+        self.assertEqual(self.adapter.snapshot(), {'scene': 'B'})
+        self.assertIsNone(self.adapter.unsettled_since)
+
+    def test_long_change_is_busy_and_keeps_the_session(self):
+        self.unsettled(1000)
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.snapshot()
+        self.assertEqual(caught.exception.code, 'device_busy')
+        self.assertLessEqual(self.clock.now, usb.SETTLE_BUDGET + usb.SETTLE_PAUSE)
+
+    def test_qc_that_never_settles_needs_a_reconnect(self):
+        self.unsettled(10000)
+        with self.assertRaises(RuntimeError):
+            for _ in range(10):
+                try:
+                    self.adapter.snapshot()
+                except BridgeError:
+                    self.clock.now += 1
+        self.assertGreaterEqual(self.clock.now, usb.UNSETTLED_LIMIT)
+
+    def test_unanswered_reads_and_moving_context_are_unsettled(self):
+        position = NS(folder_key='/media/p4/Presets/My Presets', position=16, is_factory=False)
+        self.adapter.qc.read_state.side_effect = lambda name: None
+        with self.assertRaises(Unsettled):
+            self.adapter._snapshot_once()
+        scenes = iter([NS(selected_scene=5), NS(selected_scene=1)])
+        self.adapter.qc.read_state.side_effect = lambda name: {
+            'SetlistPosition': position, 'PresetDirty': NS(is_dirty=False)}.get(name) or next(scenes)
+        with self.assertRaisesRegex(Unsettled, 'changed during snapshot'):
+            self.adapter._snapshot_once()

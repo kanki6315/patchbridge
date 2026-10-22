@@ -139,7 +139,14 @@ class Coordinator:
         except BridgeError as error:
             if error.code == "disconnected":
                 self.close()
+            elif error.code == "not_confirmed" and self.session is not None:
+                # A write reached the QC but its readback didn't settle. The session survives,
+                # but no request may build on the old state: the caller must take a snapshot.
+                self.revision += 1
             response.update(status="error", error={"code": error.code, "message": str(error)})
+            if error.code == "device_busy":
+                # The QC is mid scene or preset change and nothing was written. Ask again soon.
+                response["retry_after"] = 1
         except Exception:
             logging.exception("Adapter failure; invalidating session")
             try:

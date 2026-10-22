@@ -50,6 +50,20 @@ final class PhoneModel: ObservableObject {
     var ready: Bool { usesLocalFixture || coordinator.phase == .ready }
     var busy: Bool { !usesLocalFixture && coordinator.busy }
     var error: String? { (usesLocalFixture ? nil : coordinator.error) ?? editor.lastError }
+
+    // Scenes. The demo confirms a switch at once; live ones wait for the QC.
+    private var demoSceneSwitch: EditorCoordinator.SceneSwitch?
+    private var lastSceneSwitch: EditorCoordinator.SceneSwitch?
+    var sceneSwitch: EditorCoordinator.SceneSwitch? { usesLocalFixture ? demoSceneSwitch : coordinator.sceneSwitch }
+    var canSwitchScenes: Bool { usesLocalFixture ? editor.supports("select_scene") : coordinator.sceneSwitchAvailable }
+    /// A read-only connection: the strip follows the QC but its buttons are off. A bridge that
+    /// can edit but not switch scenes keeps the plain display-only strip instead.
+    var scenesReadOnly: Bool { !usesLocalFixture && !["set_parameter", "set_bypass", "select_scene", "save"].contains(where: editor.supports) }
+
+    /// Keeps the screen on while connected to a Mac, so iOS doesn't lock the phone mid-session.
+    static let keepAwakeKey = "patchbridge.keepAwake"
+    /// Set once the first-run prompt has been answered.
+    static let keepAwakeAskedKey = "patchbridge.keepAwakeAsked"
     /// The last Mac has a trust token, so Reconnect should skip the approval code.
     var hasTrust: Bool { coordinator.macID.flatMap { coordinator.trustTokens[$0] } != nil }
     /// Reconnect finds the last Mac directly instead of listing nearby ones.
@@ -63,6 +77,8 @@ final class PhoneModel: ObservableObject {
             if !self.usesLocalFixture, [.disconnected, .failed].contains(self.coordinator.phase), self.tuner.open || self.tuner.live { self.tuner.reset() }
             if self.coordinator.trustTokens != self.savedTrust { self.savedTrust = self.coordinator.trustTokens; TrustStore.save(self.savedTrust) }
             self.liveActivity.sync(self)
+            self.syncKeepAwake()
+            self.sceneSwitchChanged()
             self.version += 1
         }
         savedTrust = coordinator.trustTokens
@@ -85,7 +101,45 @@ final class PhoneModel: ObservableObject {
         coordinator.setPhoneName(UserDefaults.standard.string(forKey: "patchbridge.phoneName") ?? "")
         notice = nil; liveActivity.willReconnect(); coordinator.start(reconnecting: true)
     }
-    func disconnect() { clearScreenshotFixture(); tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoEditor.disconnect(); demo = false; notice = nil; version += 1 }
+    func disconnect() { clearScreenshotFixture(); tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoEditor.disconnect(); demoSceneSwitch = nil; demo = false; notice = nil; version += 1 }
+    /// A selection tick on tap; a success tap once the QC confirms.
+    func selectScene(_ scene: String) {
+        guard canSwitchScenes, sceneSwitch != .pending(scene) else { return }
+        UISelectionFeedbackGenerator().selectionChanged()
+        if usesLocalFixture {
+            guard let pending = try? editor.proposeScene(scene) else { return }
+            do { try confirmDemo(pending); demoSceneSwitch = .confirmed(scene) }
+            catch { editor.reject(id: pending.id, message: nil); demoSceneSwitch = .notApplied(scene) }
+            sceneSwitchChanged(); version += 1
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
+                guard let self, self.demoSceneSwitch == .confirmed(scene) else { return }
+                self.demoSceneSwitch = nil; self.version += 1
+            }
+            return
+        }
+        do { notice = nil; try coordinator.selectScene(scene) }
+        catch EditorFailure.busy { notice = "Not applied. Wait for the last change to finish." }
+        catch { notice = "Not applied. Refresh the preset and try again." }
+        version += 1
+    }
+    private func sceneSwitchChanged() {
+        let current = sceneSwitch
+        defer { lastSceneSwitch = current }
+        guard current != lastSceneSwitch else { return }
+        switch current {
+        case .confirmed?: UINotificationFeedbackGenerator().notificationOccurred(.success)
+        case .notApplied?, .unknown?: UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        default: break
+        }
+    }
+    /// The idle timer stays off only while a Mac session is open or being opened, and only when
+    /// the player chose to keep the screen on.
+    func syncKeepAwake() {
+        let wanted = UserDefaults.standard.bool(forKey: Self.keepAwakeKey)
+        let session: Bool = !usesLocalFixture && ![.disconnected, .failed].contains(coordinator.phase)
+        let keepOn = wanted && session
+        if UIApplication.shared.isIdleTimerDisabled != keepOn { UIApplication.shared.isIdleTimerDisabled = keepOn }
+    }
     /// Settings changed: start, update or end the activity to match.
     func connectionStatusPreferenceChanged() { liveActivity.sync(self) }
     func background() { coordinator.setBackgrounded(true) }
@@ -103,8 +157,8 @@ final class PhoneModel: ObservableObject {
         clearScreenshotFixture()
         do {
             let fixture = try DemoFixture.load()
-            tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0
-            try demoEditor.load(snapshot: fixture.snapshot, catalog: fixture.catalog, session: "demo", connection: "demo", revision: 0, operations: ["set_parameter", "set_bypass", "save"])
+            tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0; demoSceneSwitch = nil
+            try demoEditor.load(snapshot: fixture.snapshot, catalog: fixture.catalog, session: "demo", connection: "demo", revision: 0, operations: ["set_parameter", "set_bypass", "select_scene", "save"])
             demo = true; notice = nil; liveActivity.sync(self); version += 1
         } catch { notice = "The demo preset could not be loaded." }
     }
@@ -136,7 +190,9 @@ final class PhoneModel: ObservableObject {
     private func confirmDemo(_ pending: GenericEditor.Pending) throws {
         guard let snapshot else { throw EditorFailure.invalidState }
         var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(snapshot)) as! [String: Any]
-        object["dirty"] = pending.operation != "save"
+        // Saving clears dirty, an edit sets it, and a scene switch leaves it as it was.
+        object["dirty"] = pending.operation == "select_scene" ? snapshot.dirty : pending.operation != "save"
+        if pending.operation == "select_scene", case .text(let scene)? = pending.proposedValue { object["scene"] = scene }
         if let block = pending.blockID, let parameter = pending.parameterID, let value = pending.proposedValue {
             var blocks = object["blocks"] as! [[String: Any]]
             let index = blocks.firstIndex { $0["id"] as? String == block }!

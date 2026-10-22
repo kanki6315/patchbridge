@@ -19,8 +19,8 @@ None of the live phone → Mac → USB path has run against the QC yet.
 - **Mac bridge.** `dist/Patchbridge.app` opens stopped with live USB/Bluetooth
   selected. Start bridge advertises over BLE; USB opens only after a phone is
   approved and requests a connection. The bundled helper runs the pinned USB
-  adapter (`--usb`), which exposes `set_parameter`, `set_bypass` and File CREATE
-  `save` only. `set_bypass` and the request queue fix were verified directly over
+  adapter (`--usb`), which exposes `set_parameter`, `set_bypass`, `select_scene`
+  and File CREATE `save` only. `set_bypass` and the request queue fix were verified directly over
   USB on 2026-10-21, not yet through the bridge; see [USB results](USB_RESULTS_2026-10-21.md).
   **Use simulation** switches back to the bundled simulator with BLE and USB off.
   See [Mac bridge shell](MAC_BRIDGE_SHELL.md).
@@ -87,6 +87,22 @@ With the user present, Cortex Control closed, and the disposable preset
    ```sh
    PYTHONPATH=vendor/qc-mcp/src .venv-hardware/bin/python tools/calibrate_qc_controls.py
    ```
+
+## Scene switching and settling (offline only so far)
+
+- `select_scene` sends qc-mcp's `set_scene` (Scene UPDATE), waits up to 3 s for a Scene
+  READ to report the new scene, then reads the preset back. A switch the QC never reports
+  is `not_confirmed` (Outcome unknown), never Not applied, and is not retried.
+- A snapshot that catches the QC mid-change (an unanswered read, or the preset or scene
+  moving during the read) retries for 5 s, then answers `device_busy` with
+  `retry_after`. The session survives and the phone polls again. Only 20 s with no
+  settled read at all invalidates the session and starts recovery, as before.
+- A write whose readback lands mid-change is `not_confirmed`: the session survives, the
+  helper bumps its revision so no request builds on old state, and the phone reloads.
+
+To check on hardware: tap scenes A–H from the phone and compare the QC; switch scenes and
+presets on the QC itself during polling and during an edit, and confirm the phone keeps
+its connection; confirm the QC's dirty flag doesn't change on a scene switch.
 
 ## Still unverified after that run
 

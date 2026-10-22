@@ -314,7 +314,7 @@ These designs assume changes that aren't built yet:
 - **Scene data:** `PresetSnapshot` and `tools/export_editor_fixture.py` need `scene_labels` and `scene_colors` from the QC.
 - **Approval code:** both clients now derive a short display code from the full connection UUID. Authorization continues to use the full token.
 - **Fine steps:** the 0.05 hold-and-slide gesture should send only the final value on release.
-- **Scene switching:** the bridge needs a scene-change write that reports applied, refused before the write ("Not applied") or unknown, plus scene changes made on the QC. The confirmed snapshot must keep `dirty` unchanged.
+- **Scene switching:** built offline. The USB adapter's `select_scene` reports applied, refused before the write ("Not applied", including `device_busy`) or unknown (`not_confirmed`); scene changes made on the QC arrive through polling. Readback is authoritative for `dirty`; that the QC leaves it unchanged is still to be checked on hardware.
 - **Capabilities:** scene switching, bypass writes, Save As and preset switching stay hidden until the bridge advertises them.
 - **Mac app distribution:** Get Patchbridge for Mac assumes a Mac App Store link. A direct download changes only the link and the App Store wording. The short typeable address is a placeholder.
 - **Menu bar mode:** the offline shell now keeps running when its window closes, with a menu bar popover and a keep-running setting. Dock visibility and opt-in launch-at-login now use native macOS services. Stop and Quit both end the session.
