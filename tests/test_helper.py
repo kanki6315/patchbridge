@@ -119,6 +119,14 @@ class HelperTests(unittest.TestCase):
         self.call("snapshot")
         self.assertEqual(self.edit()["status"], "confirmed")
 
+    def test_snapshot_at_a_known_revision_carries_no_state(self):
+        revision = self.bridge.revision
+        self.assertEqual(self.call("snapshot", {"known_revision": revision})["result"], {"unchanged": True})
+        self.assertIn("state", self.call("snapshot", {"known_revision": revision - 1})["result"])
+        self.assertIn("state", self.call("snapshot", {"known_revision": True})["result"])
+        self.edit()
+        self.assertIn("state", self.call("snapshot", {"known_revision": revision})["result"])
+
     def test_busy_device_keeps_the_session_and_says_when_to_retry(self):
         from patchbridge.adapter import BridgeError
         session, revision = self.bridge.session, self.bridge.revision

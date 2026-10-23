@@ -45,6 +45,29 @@ final class CentralRouterTests: XCTestCase {
     }
     private func code(_ reply: [String: Any]?) -> String? { (reply?["error"] as? [String: Any])?["code"] as? String }
 
+    func testRepliesAreDeflatedOnlyForPhonesThatOfferIt() {
+        var sent = [UUID: [UInt8]]()
+        router.send = { [unowned self] id, data in
+            sent[id, default: []].append(data[0])
+            if let message = try? receivers[id, default: ChunkReceiver()].receive(data),
+               let object = try? JSONSerialization.jsonObject(with: message) as? [String: Any] { replies[id, default: []].append(object) }
+            return true
+        }
+        router.onMessage = { _, message in
+            PeripheralReply(message: ["version": 1, "id": message["id"] ?? "", "status": "confirmed", "state": String(repeating: "scene ", count: 500)],
+                            admission: message["operation"] as? String == "hello" ? .admit : .unchanged)
+        }
+        let old = admitted(), new = UUID()
+        radio.sync { router.subscribe(new, limit: 185) }
+        transfer += 1
+        let hello = try! Chunks.split(JSONSerialization.data(withJSONObject: ["version": 1, "id": "h", "operation": "hello", "compression": ["deflate"]]), limit: 512, transfer: transfer)
+        radio.sync { hello.forEach { _ = router.write(new, $0) } }; flush()
+        sent.removeAll()
+        _ = write(old, "snapshot"); _ = write(new, "snapshot"); flush()
+        XCTAssertEqual(Set(sent[old] ?? []), [1]); XCTAssertEqual(Set(sent[new] ?? []), [2])
+        XCTAssertLessThan(sent[new]!.count, sent[old]!.count / 4)
+        XCTAssertEqual(replies[new]?.last?["state"] as? String, replies[old]?.last?["state"] as? String)
+    }
     func testSlowRequestDoesNotDelayAnotherDevicesWrites() {
         let phone = admitted(), pad = admitted()
         let release = DispatchSemaphore(value: 0)

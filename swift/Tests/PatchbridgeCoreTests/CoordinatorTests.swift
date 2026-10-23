@@ -132,11 +132,14 @@ final class CoordinatorTests: XCTestCase {
         clock = 1; c.tick(); XCTAssertEqual(t.messages.count, count)
         clock = 2; c.tick(); XCTAssertEqual(t.messages.count, count + 1)
         c.tick(); c.refresh(); XCTAssertEqual(t.messages.count, count + 1)
-        XCTAssertThrowsError(try c.save())
+        // A save during the poll waits for it; the poll found the preset changed, so it never goes.
+        XCTAssertNoThrow(try c.save()); XCTAssertTrue(c.busy); XCTAssertEqual(t.messages.count, count + 1)
         var state = f["snapshot"] as! [String: Any]; state["scene"] = "A"
         reply(t, result: ["state": state], revision: 1)
         XCTAssertEqual(c.editor.snapshot?.scene, "A")
         XCTAssertEqual(c.outcome, "Changed on the QC")
+        XCTAssertEqual(c.error, "Not applied. The QC changed first; try again.")
+        XCTAssertFalse(c.busy); XCTAssertNil(c.editor.pending)
         clock = 3; c.tick(); XCTAssertEqual(t.messages.count, count + 1)
         clock = 4; c.tick(); XCTAssertEqual(t.messages.count, count + 2)
         c.disconnect(); clock = 100; c.tick(); XCTAssertEqual(t.messages.count, count + 2)
@@ -168,12 +171,33 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
         XCTAssertEqual(t.messages.last?["connection_id"] as? String, "c")
         XCTAssertEqual(t.messages.last?["session_id"] as? String, "s")
-        XCTAssertThrowsError(try c.save())
+        // The poll doesn't grey out Save: the save waits for it, then goes against unchanged state.
+        XCTAssertFalse(c.busy)
+        XCTAssertNoThrow(try c.save())
         c.setBackgrounded(false); c.tick()
         XCTAssertEqual(t.messages.count, count + 1)
         reply(t, result: ["state": f["snapshot"]!])
-        XCTAssertEqual(c.phase, .ready)
-        XCTAssertFalse(c.busy)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "save")
+        XCTAssertEqual(c.phase, .ready); XCTAssertTrue(c.busy)
+        var saved = f["snapshot"] as! [String: Any]; saved["dirty"] = false
+        reply(t, result: ["state": saved], revision: 1)
+        XCTAssertEqual(c.outcome, "Saved on the QC"); XCTAssertFalse(c.busy)
+    }
+    func testUnchangedPollCarriesNoState() throws {
+        let t = OfflineTransport(); let c = coordinator(t); let f = try fixture()
+        connect(c, t, fixture: f)
+        let before = c.editor.snapshot
+        c.refresh()
+        XCTAssertEqual((t.messages.last?["payload"] as? [String: Any])?["known_revision"] as? Int, 0)
+        reply(t, result: ["unchanged": true])
+        XCTAssertEqual(c.phase, .ready); XCTAssertEqual(c.editor.snapshot, before); XCTAssertNil(c.outcome)
+        // "Unchanged" at a revision this phone never saw can't be trusted.
+        c.refresh(); reply(t, result: ["unchanged": true], revision: 3)
+        XCTAssertEqual(c.phase, .failed)
+    }
+    func testHelloOffersDeflate() {
+        let t = OfflineTransport(); let c = coordinator(t); c.start()
+        XCTAssertEqual(t.messages.last?["compression"] as? [String], ["deflate"])
     }
     func testBackgroundRequestCanFinishWithoutStartingMorePolls() throws {
         let t = OfflineTransport(); let c = coordinator(t); let f = try fixture()

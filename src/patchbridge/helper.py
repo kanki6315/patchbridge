@@ -126,7 +126,9 @@ class Coordinator:
                     if state != self.state:
                         self.revision += 1
                     self.state = state
-                    result = {"state": state}
+                    # A caller already holding this revision holds this state: spare it the resend.
+                    known = payload.get("known_revision")
+                    result = {"unchanged": True} if type(known) is int and known == self.revision else {"state": state}
                 else:
                     assert self.state is not None
                     if (type(request.get("revision")) is not int

@@ -21,7 +21,7 @@ context. Even saves and scene/preset selection require this context.
 | disconnect | `{}` | cleared session |
 | capabilities | `{}` | operations and confirmation/event support |
 | identify | `{}` | device identity and compatibility |
-| snapshot | `{}` | confirmed state |
+| snapshot | optional `known_revision` | confirmed state, or `{"unchanged": true}` when the session is still at `known_revision` |
 | catalog | optional `model_ids` array | metadata with catalog identity, optionally limited to requested models |
 | subscribe | `{}` | current state; enable subsequent state events |
 | set_parameter | block_id, parameter_id, value | confirmed state |

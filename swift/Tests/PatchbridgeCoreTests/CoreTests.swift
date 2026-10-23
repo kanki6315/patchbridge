@@ -21,6 +21,19 @@ final class CoreTests: XCTestCase {
         XCTAssertNil(try receiver.receive(chunks[0], now: now))
         XCTAssertThrowsError(try receiver.receive(chunks[1], now: now.addingTimeInterval(6)))
     }
+    func testDeflatedTransfer() throws {
+        let original = Data(String(repeating: "{\"bypass\":false,\"parameters\":{\"0\":0.5}},", count: 400).utf8)
+        let chunks = try Chunks.split(original, limit: 185, transfer: 7, deflate: true)
+        XCTAssertEqual(chunks[0][0], 2)
+        XCTAssertLessThan(chunks.count, original.count / 177 / 4, "Repetitive state shrinks severalfold")
+        var receiver = ChunkReceiver(), complete: Data?
+        for chunk in chunks { complete = try receiver.receive(chunk) }
+        XCTAssertEqual(complete, original)
+        // Small replies stay plain; a receiver never inflates past its limit.
+        XCTAssertEqual(try Chunks.split(Data("{}".utf8), limit: 185, transfer: 8, deflate: true)[0][0], 1)
+        var small = ChunkReceiver(limit: 4096)
+        XCTAssertThrowsError(try chunks.forEach { _ = try small.receive($0) })
+    }
     func testLimits() {
         XCTAssertThrowsError(try Chunks.split(Data(), limit: 8, transfer: 1))
         XCTAssertThrowsError(try Chunks.split(Data(count: 1_048_577), limit: 512, transfer: 1))

@@ -34,8 +34,12 @@ public final class EditorCoordinator {
     public var onChange: (() -> Void)?
     /// Each new tuner reading. Kept apart from `onChange`, which redraws whole screens, because it fires about ten times a second.
     public var onTuner: (() -> Void)?
-    /// Tuner requests run between edits, never in their way, so they don't count as busy.
-    public var busy: Bool { request.map { !Self.tunerOperations.contains($0.operation) } ?? false }
+    /// Tuner requests and the background poll run between edits, never in their way, so they
+    /// don't count as busy: an edit made meanwhile waits for them, then goes first.
+    public var busy: Bool { held != nil || request.map { !Self.yields($0.operation, phase) } ?? false }
+    private static func yields(_ operation: String, _ phase: Phase) -> Bool {
+        tunerOperations.contains(operation) || (operation == "snapshot" && phase == .ready)
+    }
 
     // Tuner. The Mac gives the QC the strongest mode any device wants: open (shown, and mute
     // applies), then live (streaming, never muted), then off.
@@ -98,7 +102,7 @@ public final class EditorCoordinator {
     private var tunerSync = false
     private var muteRequest: Bool?
     private var nextTunerRead = TimeInterval.infinity
-    /// An edit or save that arrived while a tuner request was in flight; it goes first.
+    /// An edit or save that arrived while a tuner request or the poll was in flight; it goes first.
     private var held: (operation: String, command: [String: Any])?
     private let tunerInterval: TimeInterval = 0.08
     private let makeTransport: () -> EditorTransport
@@ -197,7 +201,8 @@ public final class EditorCoordinator {
         guard phase == .awaitingApproval, !busy else { return }
         phase = .loading; error = nil; send("connect")
     }
-    public func refresh() { guard phase == .ready, !busy else { return }; send("snapshot") }
+    /// Names the revision on screen, so a bridge that finds the same one can answer without the state.
+    public func refresh() { guard phase == .ready, !busy else { return }; send("snapshot", payload: ["known_revision": revision]) }
     /// Keep the authorized transport alive while iOS handles Bluetooth events, but
     /// stop idle polling. Outstanding requests retain their normal timeout policy.
     public func setBackgrounded(_ backgrounded: Bool) {
@@ -345,7 +350,7 @@ public final class EditorCoordinator {
             guard let number = integer(reading["seq"]), number > tunerSeq, let hz = reading["hz"] as? Double else { continue }
             tunerTrack.add(hz: hz, at: now()); tunerSeq = number
         }
-        tunerSeq = max(tunerSeq, seq)
+        tunerSeq = max(tunerSeq, seq); tunerTrack.answered(at: now())
         // The helper's tuner is off although this phone wants it: a new USB session. Ask again.
         if mode == "off", tunerMode != .off { tunerSync = true }
         nextTunerRead = operation == "tuner_read" ? now() + tunerInterval : now()
@@ -419,13 +424,14 @@ public final class EditorCoordinator {
         (response["changed_by"] as? String).map { DeviceIdentity.name($0, fallback: "another device") }
     }
     private func send(_ operation: String, command: [String: Any]? = nil, payload: [String: Any]? = nil) {
-        // An edit waits for a tuner request already in flight, then goes before anything else.
-        if let request, Self.tunerOperations.contains(request.operation), command != nil { held = (operation, command!); onChange?(); return }
+        // An edit waits for a tuner request or poll already in flight, then goes before anything else.
+        if let request, Self.yields(request.operation, phase), command != nil { held = (operation, command!); onChange?(); return }
         guard request == nil, let transport else { return }
         var message = command ?? ["version": 1, "id": UUID().uuidString, "operation": operation]
         if let payload { message["payload"] = payload }
         if operation == "hello" {
             message["device_name"] = phoneName
+            message["compression"] = ["deflate"] // Snapshots and catalogs shrink about tenfold.
             if let deviceID { message["device_id"] = deviceID }
             if let macID, let token = trustTokens[macID] { message["trust_token"] = token }
         }
@@ -506,7 +512,7 @@ public final class EditorCoordinator {
                         let text = pending.operation == "save" ? "Save not applied. \(cause); try again." : "Not applied. \(cause); try again."
                         editor.reject(id: pending.id, message: text); error = text; ready()
                     } else if phase == .ready || phase == .recovering {
-                        nextPoll = now() + delay
+                        nextPoll = now() + delay; pump() // An edit held behind the poll goes now.
                     } else if phase == .loading {
                         deferred = (pending.operation, now() + delay)
                     } else { fail(message); return }
@@ -586,7 +592,12 @@ public final class EditorCoordinator {
                 guard catalog.id == staged?.catalog_id, catalog.metadata_version == 1 else { throw EditorFailure.incompatibleCatalog }
                 cachedCatalog = catalog; cachedModels = requestedModels; try installStaged()
             case "snapshot":
-                let state = try decode(PresetSnapshot.self, result["state"])
+                // A poll that found nothing new carries no state; the one on screen still holds.
+                let state: PresetSnapshot
+                if result["unchanged"] as? Bool == true {
+                    guard let current = editor.snapshot, newRevision == revision else { throw EditorFailure.staleContext }
+                    state = current
+                } else { state = try decode(PresetSnapshot.self, result["state"]) }
                 if let previous = editor.snapshot, previous != state {
                     outcome = Self.deviceName(response).map { "Changed on \($0)" } ?? "Changed on the QC"
                 }
@@ -607,6 +618,17 @@ public final class EditorCoordinator {
                 default: break
                 }
                 guard newRevision > revision || state == editor.snapshot else { throw EditorFailure.staleContext }
+                if let waiting = held {
+                    if newRevision == revision && state == editor.snapshot {
+                        // Nothing moved under the waiting edit: it goes now, as made.
+                        ready(); pump(); break
+                    }
+                    // It was made against state that is gone. Never sent, so certainly not applied.
+                    held = nil
+                    let text = Self.deviceName(response).map { "Not applied. \($0) changed it first." } ?? "Not applied. The QC changed first; try again."
+                    if waiting.operation == "select_scene", let scene = inFlightScene { sceneSwitch = .notApplied(scene); queuedScene = nil }
+                    editor.reject(id: waiting.command["id"] as? String ?? "", message: text); error = text
+                }
                 try adopt(state, session: newSession, revision: newRevision)
             case "select_scene":
                 let state = try decode(PresetSnapshot.self, result["state"])
