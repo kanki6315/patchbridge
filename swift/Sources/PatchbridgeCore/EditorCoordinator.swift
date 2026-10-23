@@ -221,8 +221,10 @@ public final class EditorCoordinator {
         let uncertain = editor.pending != nil || request.map { Self.mutations.contains($0.operation) } == true
         var next = resume ?? Resume(deadline: deadline, reason: reason,
                                     notice: uncertain ? "Last edit or save outcome unknown. It will not be retried." : nil)
-        let lastName = macName
+        // The tuner screen stays as it was; the resumed session asks the QC for this mode again.
+        let lastName = macName, lastTuner = tunerMode
         teardown(notify: false)
+        tunerMode = lastTuner
         diagnostics.record(.editorResuming, code: "disconnected")
         next.at = now() + (next.attempt == 0 ? 0 : min(8, pow(2, Double(next.attempt - 1))))
         next.attempt += 1

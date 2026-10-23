@@ -32,6 +32,20 @@ final class KeepAwakeTests: XCTestCase {
         XCTAssertTrue(awake.holding); XCTAssertEqual(ledger.begun, 1); XCTAssertEqual(ledger.ended, 0)
         awake.stop(); XCTAssertFalse(awake.holding); XCTAssertEqual(ledger.ended, 1)
     }
+    func testAReleaseRacingAReturningPhoneNeverEndsTheNewHold() {
+        // Whichever runs first, a phone that came back is held when both are done.
+        for _ in 0..<2000 {
+            var items = [DispatchWorkItem]()
+            let awake = KeepAwake(begin: { NSObject() }, end: { _ in }, after: { _, item in items.append(item) })
+            awake.hold(true); awake.hold(false)
+            let release = items[0]
+            DispatchQueue.concurrentPerform(iterations: 2) { lane in
+                if lane == 0 { release.perform() } else { awake.hold(true) }
+            }
+            XCTAssertTrue(awake.holding)
+            if !awake.holding { return }
+        }
+    }
     func testBridgeHoldsWhileAPhoneIsApprovedAndLetsGoOnStop() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)

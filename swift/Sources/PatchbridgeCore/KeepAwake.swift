@@ -41,14 +41,19 @@ final class KeepAwake {
         let item = DispatchWorkItem { [weak self] in self?.expire(expected) }
         release = item; after(grace, item)
     }
-    /// A release that already started when a phone came back must not end the new hold.
+    /// A release that already started when a phone came back must not end the new hold, so
+    /// the check and the release happen under one lock.
     private func expire(_ expected: Int) {
-        guard lock.withLock({ generation == expected && release != nil }) else { return }
-        stop()
+        lock.lock(); defer { lock.unlock() }
+        guard generation == expected, release != nil else { return }
+        endLocked()
     }
     /// Lets go at once, as when the bridge stops.
     func stop() {
         lock.lock(); defer { lock.unlock() }
+        endLocked()
+    }
+    private func endLocked() {
         release?.cancel(); release = nil
         if let activity { end(activity) }
         activity = nil

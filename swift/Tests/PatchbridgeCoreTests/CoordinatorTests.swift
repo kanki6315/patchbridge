@@ -547,6 +547,24 @@ extension CoordinatorTests {
         t.onDiscovered?("mac", "Studio Mac")
         XCTAssertEqual(c.phase, .ready); XCTAssertFalse(c.resuming); XCTAssertNil(c.approvalCode)
     }
+    func testResumeKeepsTheTunerAndAsksForItAgain() throws {
+        let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
+        guard c.tunerAvailable else { throw XCTSkip("The simulated bridge offers no tuner") }
+        c.setTuner(.live)
+        XCTAssertTrue(t.messages.contains { $0["operation"] as? String == "tuner" })
+        bridge.revoke(); t.disconnectionIsTransient = true; t.onDisconnected?()
+        XCTAssertTrue(c.resuming); XCTAssertEqual(c.tunerMode, .live, "The screen keeps the tuner open while reconnecting")
+        let sent = t.messages.count
+        t.disconnectionIsTransient = false; t.onDiscovered?("mac", "Studio Mac")
+        XCTAssertEqual(c.phase, .ready); XCTAssertEqual(c.tunerMode, .live)
+        let tuner = t.messages.dropFirst(sent).first { $0["operation"] as? String == "tuner" }
+        XCTAssertEqual((tuner?["payload"] as? [String: Any])?["mode"] as? String, "live")
+
+        // Giving up turns it off, as any failed session does.
+        bridge.revoke(); t.disconnectionIsTransient = true; t.onDisconnected?()
+        clock += EditorCoordinator.resumeWindow; c.tick()
+        XCTAssertEqual(c.phase, .failed); XCTAssertEqual(c.tunerMode, .off)
+    }
     func testResumeNeverReplaysAnEditInFlight() throws {
         let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
         // The save reaches the Mac, but its answer never comes back before the link drops.
