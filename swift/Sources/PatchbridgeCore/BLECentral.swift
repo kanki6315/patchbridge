@@ -185,6 +185,10 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         do {
             if let complete = try receiver.receive(data) {
                 guard let response = try JSONSerialization.jsonObject(with: complete) as? [String: Any] else { throw ChunkFailure.malformed }
+                if response["type"] as? String == "event", response["event"] as? String == "revision_changed" {
+                    onResponse?(response)
+                    return
+                }
                 try exchange.accept(response)
                 completeExchange()
             }

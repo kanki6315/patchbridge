@@ -84,3 +84,48 @@ slider coalescing, transfer priority scheduler, or asynchronous device-event
 forwarding yet. Use explicit snapshot requests for state refresh. A helper crash
 requires restarting the demo. The simulator supports more operations than the
 real USB adapter; this demo intentionally cannot launch USB mode.
+
+
+## Revision notifications
+
+The live Mac bridge and editor negotiate push hints through
+`"revision_notifications": true` in both the hello request and reply. If the
+bridge does not advertise support, the editor retains its normal one-second
+polling default. Older apps do not opt in and receive no unsolicited events.
+Both the Mac bridge and iOS app must be rebuilt to enable this behavior.
+
+After a confirmed snapshot changes revision, or a confirmed app edit changes
+shared state, the bridge sends joined, opted-in apps a small event on the existing
+result characteristic:
+
+```json
+{"version":1,"type":"event","event":"revision_changed","connection_id":"…","session_id":"…","revision":42}
+```
+
+An app whose response already carries the new state needs no hint. Unapproved,
+unjoined, legacy, and disconnected devices are excluded. Unchanged refreshes do
+not emit events. Events contain no preset contents.
+
+Events use the same chunk framing and negotiated compression as replies. The
+router finishes already queued messages and in-flight requests before sending a
+pending event; multiple unsent hints collapse into the latest. Requests may arrive
+while event chunks are being sent. Event handling on the central does not consume
+a command response or clear its acknowledgment/timeout state.
+
+The editor validates connection/session identity and ignores revisions it already
+has. A new revision triggers a snapshot immediately when idle. During a request,
+it retains the newest hint and fetches after that request completes; queued edits
+retain their existing priority. Notifications never replay an edit. Backgrounded
+apps defer fetching and refresh on return to the foreground.
+
+With push negotiated, ordinary polling becomes a **30-second fallback**, scheduled
+after the latest completed refresh or state-bearing operation. It recovers missed
+hints and discovers session recovery when necessary. Reconnect and foreground
+resync remain in place. USB detection still runs on the bridge's existing schedule;
+notifications remove the extra app polling wait, not the QC read interval.
+
+Tests cover autonomous bridge detection, peer edits, opt-in/admission filtering,
+stale hints, duplicate/coalesced hints, saves in flight, fallback/foreground
+behavior, and response/event chunk ordering under backpressure. These tests use
+simulated transports and the real helper simulator; over-the-air delivery and
+phone-visible latency still need verification with rebuilt apps.

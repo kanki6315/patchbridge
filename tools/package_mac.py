@@ -182,7 +182,7 @@ def main():
         ROOT / 'mac' / 'main.swift', '-o', executables / 'Patchbridge')
     plist = {'CFBundleExecutable': 'Patchbridge', 'CFBundleIdentifier': 'com.arjunakankipati.patchbridge',
              'CFBundleName': 'Patchbridge', 'CFBundlePackageType': 'APPL',
-             'CFBundleVersion': '1', 'CFBundleShortVersionString': '0.3.1',
+             'CFBundleVersion': '1', 'CFBundleShortVersionString': '0.4.0',
              'LSMinimumSystemVersion': minimum, 'NSHighResolutionCapable': True,
              'NSBluetoothAlwaysUsageDescription': 'Connect your iPhone to this Mac to view and edit your Quad Cortex over USB.'}
     icon_plist = resources / 'icon-info.plist'

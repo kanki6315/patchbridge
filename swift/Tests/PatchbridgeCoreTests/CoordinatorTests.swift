@@ -43,15 +43,75 @@ final class CoordinatorTests: XCTestCase {
         t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "session_id": session,
                        "revision": revision, "status": "confirmed", "result": result])
     }
-    private func connect(_ c: EditorCoordinator, _ t: OfflineTransport, fixture f: [String: Any], catalog: Bool = true,
+    private func connect(_ c: EditorCoordinator, _ t: OfflineTransport, fixture f: [String: Any], catalog: Bool = true, notifications: Bool = false,
                          operations: [String] = ["snapshot", "catalog", "set_parameter", "save"]) {
         c.start()
-        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "authorization_required": true])
+        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "authorization_required": true, "revision_notifications": notifications])
         XCTAssertEqual(c.phase, .awaitingApproval)
         c.authorize(); reply(t, result: ["state": f["snapshot"]!])
         reply(t, result: ["protocol_version": 1, "operations": operations])
         if catalog { reply(t, result: f["catalog"] as! [String: Any]) }
         XCTAssertEqual(c.phase, .ready)
+    }
+    private func revisionEvent(_ t: OfflineTransport, revision: Int, session: String = "s", connection: String = "c") {
+        t.onResponse?(["version": 1, "type": "event", "event": "revision_changed", "revision": revision,
+                       "session_id": session, "connection_id": connection])
+    }
+    func testRevisionHintRefreshesImmediatelyAndIgnoresStaleContext() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, notifications: true)
+        let count = t.messages.count
+        revisionEvent(t, revision: 1, session: "old")
+        revisionEvent(t, revision: 1, connection: "old")
+        revisionEvent(t, revision: 0)
+        XCTAssertEqual(t.messages.count, count)
+        revisionEvent(t, revision: 1)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        XCTAssertEqual(t.messages.count, count + 1)
+        reply(t, result: ["state": f["snapshot"]!], revision: 1)
+        revisionEvent(t, revision: 1)
+        XCTAssertEqual(t.messages.count, count + 1)
+    }
+    func testRevisionHintsCoalesceWhileRequestIsInFlight() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, notifications: true)
+        c.refresh()
+        let count = t.messages.count
+        revisionEvent(t, revision: 1); revisionEvent(t, revision: 3); revisionEvent(t, revision: 2)
+        XCTAssertEqual(t.messages.count, count)
+        reply(t, result: ["unchanged": true])
+        XCTAssertEqual(t.messages.count, count + 1)
+        reply(t, result: ["state": f["snapshot"]!], revision: 3)
+        XCTAssertEqual(t.messages.count, count + 1)
+        XCTAssertEqual(c.phase, .ready)
+    }
+    func testRevisionHintDuringSaveWaitsForConfirmationWithoutReplayingSave() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, notifications: true)
+        try c.save()
+        let count = t.messages.count
+        revisionEvent(t, revision: 2)
+        XCTAssertEqual(t.messages.count, count)
+        var saved = f["snapshot"] as! [String: Any]; saved["dirty"] = false
+        reply(t, result: ["state": saved], revision: 1)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot")
+        XCTAssertEqual(t.messages.filter { $0["operation"] as? String == "save" }.count, 1)
+        reply(t, result: ["state": saved], revision: 2)
+        XCTAssertEqual(c.phase, .ready)
+    }
+    func testPushUsesSlowFallbackAndResumesFromBackground() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, notifications: true)
+        let count = t.messages.count
+        clock = 29; c.tick(); XCTAssertEqual(t.messages.count, count)
+        clock = 30; c.tick(); XCTAssertEqual(t.messages.count, count + 1)
+        reply(t, result: ["unchanged": true])
+        c.setBackgrounded(true); revisionEvent(t, revision: 1)
+        XCTAssertEqual(t.messages.count, count + 1)
+        c.setBackgrounded(false)
+        XCTAssertEqual(t.messages.count, count + 2)
+        reply(t, result: ["state": f["snapshot"]!], revision: 1)
+        XCTAssertEqual(t.messages.count, count + 2)
     }
     func testBluetoothFailureRetainsActionableReason() {
         let t = OfflineTransport(); t.autoReady = false

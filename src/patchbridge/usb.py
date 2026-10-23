@@ -375,12 +375,12 @@ class USBAdapter:
         return json.dumps((MY_PRESETS, position, False, False, False), separators=(',', ':'))
 
     def list_presets(self):
-        """My Presets, read from the QC's directory in one File READ (about 12 s). Every named
+        """My Presets, read with a targeted File READ. Every named
         slot is listed with the preset_id a snapshot reports once it is loaded. Display numbers
         are the wire position plus one, unverified against the QC's own screen."""
         if self.qc is None:
             raise BridgeError('disconnected', 'No USB session.')
-        directory = self.qc.list_directory()
+        directory = self.qc.list_directory(folder_key=MY_PRESETS, timeout_ms=5000)
         folders = directory.get('presets', []) if isinstance(directory, dict) else []
         folder = next((f for f in folders if f.get('key') == MY_PRESETS), None) or next(
             (f for f in folders if f.get('name') == 'My Presets'

@@ -52,7 +52,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: '0.3.1'
+        MARKETING_VERSION: '0.4.0'
   PatchbridgeWidgets:
     type: app-extension
     platform: iOS
@@ -72,7 +72,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.arjunakankipati.patchbridge.widgets
         TARGETED_DEVICE_FAMILY: '1,2'
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: '0.3.1'
+        MARKETING_VERSION: '0.4.0'
         SKIP_INSTALL: YES
   PatchbridgeUITests:
     type: bundle.ui-testing

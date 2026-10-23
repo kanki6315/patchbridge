@@ -31,6 +31,8 @@ final class CentralRouter {
         /// The phone said in its hello that it reads deflated replies.
         var deflate = false
         var outgoing: [Data] = []
+        var sendingEvent = false
+        var pendingEvent: [String: Any]?
         var receiver = ChunkReceiver(limit: CentralRouter.unadmittedMessageBytes)
     }
     /// Owner queue. Returns the reply for one message from the device with that identifier.
@@ -93,7 +95,7 @@ final class CentralRouter {
     func write(_ id: UUID, _ bytes: Data) -> WriteResult {
         expireUnadmitted()
         guard var entry = entries[id] else { return .notPermitted }
-        guard entry.outgoing.isEmpty, !entry.releasing else { return .busy }
+        guard (entry.outgoing.isEmpty || entry.sendingEvent), !entry.releasing else { return .busy }
         let object: [String: Any]
         do {
             guard let message = try entry.receiver.receive(bytes) else { entries[id] = entry; return .success }
@@ -135,9 +137,16 @@ final class CentralRouter {
         do {
             let data = try JSONSerialization.data(withJSONObject: answer.message)
             entry.transfer &+= 1
+            entry.sendingEvent = false
             entry.outgoing += try Chunks.split(data, limit: min(entry.limit, 512), transfer: entry.transfer, deflate: entry.deflate)
         } catch { fail(id); return }
         entries[id] = entry
+        drain()
+    }
+    /// Coalesce unsent hints; complete messages always share the same chunk queue.
+    func notify(_ id: UUID, message: [String: Any]) {
+        guard entries[id]?.admitted == true, entries[id]?.releasing == false else { return }
+        entries[id]?.pendingEvent = message
         drain()
     }
     func drain() {
@@ -146,6 +155,18 @@ final class CentralRouter {
             while let chunk = entry.outgoing.first {
                 guard send?(id, chunk) ?? true else { entries[id] = entry; return } // Resumes when ready.
                 entry.outgoing.removeFirst()
+            }
+            entry.sendingEvent = false
+            if !entry.inFlight, !entry.releasing, let event = entry.pendingEvent {
+                entry.pendingEvent = nil
+                do {
+                    entry.transfer &+= 1
+                    entry.outgoing = try Chunks.split(JSONSerialization.data(withJSONObject: event), limit: min(entry.limit, 512), transfer: entry.transfer, deflate: entry.deflate)
+                    entry.sendingEvent = true
+                } catch { fail(id); continue }
+                entries[id] = entry
+                drain()
+                continue
             }
             // An unadmitted device is dropped once it has its answer.
             if entry.releasing { entries[id] = nil; notifyDisconnect(id) } else { entries[id] = entry }

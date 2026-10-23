@@ -322,13 +322,13 @@ class QuadCortex:
             if "request_id" in [f.name for f in rcb.DESCRIPTOR.fields]:
                 rcb.request_id = 0
             self.send("ResetCommsBuffers", rcb)
-            self._collect(0.15)
+            self._collect(0.15, wait_full=True)
 
             # READ then announce our client version (compatibility check).
             # Mirror back whatever firmware the device reports, so we always
             # claim a matching Cortex Control rather than a hardcoded release.
             self.send("Version", P.message_class("Version")(action=P.ACTION["READ"]))
-            self._collect(0.15)
+            self._collect(0.15, wait_full=True)
             if client_version is None:
                 client_version = self._reported_firmware() or f"{P.LATEST_VERSION}.0"
             vmsg = P.message_class("Version")()
@@ -338,7 +338,7 @@ class QuadCortex:
                 if fld in [f.name for f in vmsg.DESCRIPTOR.fields]:
                     setattr(vmsg, fld, client_version)
             self.send("Version", vmsg)
-            self._collect(0.15)
+            self._collect(0.15, wait_full=True)
 
             conn = P.message_class("Connection")()
             conn.connected = True
@@ -346,7 +346,9 @@ class QuadCortex:
 
             # Subscribe to live state (the app READs these on connect, which
             # makes the QC start streaming and marks the session active).
-            for st in ("ModelRepo", "ModuleStats", "UndoRedo", "IOSettings",
+            # USBAdapter reads ModelRepo after version negotiation. Requesting
+            # it here as well streams the large catalog twice and delays Version.
+            for st in ("ModuleStats", "UndoRedo", "IOSettings",
                        "GeneralSettings", "Mode", "GlobalEQ", "MasterVolume",
                        "GlobalTempo", "Scene", "PresetDirty", "SetlistPosition"):
                 try:
@@ -360,7 +362,7 @@ class QuadCortex:
                 except Exception:
                     pass
             time.sleep(0.3)
-            self._collect(0.4)
+            self._collect(0.4, wait_full=True)
             self._pending.clear()
         except Exception:
             pass
@@ -392,8 +394,12 @@ class QuadCortex:
                     self.last_write_error = rc
 
     @_serialized
-    def _collect(self, seconds):
+    def _collect(self, seconds, *, wait_full=False):
         """Pump input, decode any complete messages into self._pending."""
+        # Handshake settling delays must not shrink when input wakes the reader.
+        if wait_full:
+            time.sleep(seconds)
+            seconds = 0
         for report_id, data in self.io.read_reports(seconds):
             # the IOKit input callback delivers [reportId][chunkLen][flags][payload]
             for raw in self._rx.feed(data, has_report_id=True):
@@ -441,6 +447,15 @@ class QuadCortex:
         # (in bridge mode) Cortex Control's own responses. Fall back to a command match
         # only if nothing with our id arrives (some message types may not echo it).
         exp_rid = int(getattr(proto_message, "request_id", 0) or 0) if proto_message is not None else 0
+        # CorOS 4.1.1 omits IDs on these immutable session metadata replies.
+        # Only our exclusive session may consume them early, and only after
+        # draining queued replies. Never relax matching for editable state.
+        unnumbered_metadata = (command in ('Version', 'ModelRepo') and expect is None
+                               and self.firmware in (None, '4.1.1')
+                               and self._owns_session() and not self.shared)
+        if unnumbered_metadata:
+            self._collect(0)
+            self._pending = [item for item in self._pending if item[0] != want]
         self.send(command, proto_message, proto_bytes)
         deadline = time.time() + timeout_ms / 1000.0
         # prefer a response whose protobuf actually decodes (skip bare READ acks)
@@ -452,6 +467,13 @@ class QuadCortex:
             for i, (cmd, obj, raw, pb) in enumerate(pending):
                 if cmd == want:
                     rid = int(getattr(obj, "request_id", 0) or 0) if obj is not None else 0
+                    metadata_complete = (obj is not None and (
+                        command == 'Version' and any(P.parse_version(getattr(obj, f, ''))
+                                                     for f in ('zenos_git_hash', 'app_fw_version'))
+                        or command == 'ModelRepo' and bool(getattr(obj, 'model_repo_payload', b''))))
+                    if unnumbered_metadata and rid == 0 and metadata_complete:
+                        self._pending = keep + pending[i + 1:]
+                        return cmd, obj, raw
                     if exp_rid and rid == exp_rid and obj is not None and len(pb) > 2:
                         # Patchbridge: upstream rebuilt this as `keep + _pending`, which
                         # queued every earlier message twice and kept the reply, doubling
@@ -1091,7 +1113,7 @@ class QuadCortex:
         self.send("SetlistPosition", m)
 
     @_serialized
-    def list_directory(self, timeout_ms=30000, quiet_ms=1500):
+    def list_directory(self, timeout_ms=30000, quiet_ms=1500, folder_key=None):
         """Send a File READ and collect the full stream of File UPDATE folder
         messages the device emits (presets, IRs, captures). Returns the structured
         catalog from directory.structure_directory(). Read-only. Works in BRIDGE
@@ -1102,6 +1124,16 @@ class QuadCortex:
         m = cls(action=P.ACTION["READ"])
         if "request_id" in [f.name for f in cls.DESCRIPTOR.fields]:
             m.request_id = self.next_request_id()
+        if folder_key is not None:
+            # A targeted READ returns one complete 256-slot My Presets table,
+            # echoing our request ID. Never accept an old or partial table.
+            m.folder.key = folder_key
+            _, reply, _ = self.request('File', m, timeout_ms=timeout_ms)
+            if (reply is None or reply.request_id != m.request_id
+                    or not reply.HasField('folder') or reply.folder.key != folder_key
+                    or reply.type != 0 or len(reply.folder.files) != 256):
+                raise QCError('Targeted preset directory was not confirmed complete')
+            return _dir.structure_directory([reply])
         self.send("File", m)
         want = P.NAME_TO_CMD["File"]
         deadline = time.time() + timeout_ms / 1000.0

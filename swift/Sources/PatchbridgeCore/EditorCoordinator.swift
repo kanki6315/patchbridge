@@ -118,6 +118,9 @@ public final class EditorCoordinator {
     private var connection: String?
     private var session: String?
     private var revision = 0
+    private var revisionNotifications = false
+    private var wantedRevision = 0
+    static let fallbackPollInterval: TimeInterval = 30
     private var operations = Set<String>()
     private var staged: PresetSnapshot?
     // One bounded catalog subset, reused only for a matching ID and covered model IDs.
@@ -138,8 +141,8 @@ public final class EditorCoordinator {
     /// How long a dropped session keeps searching before it asks for Reconnect.
     static let resumeWindow: TimeInterval = 60
 
-    /// Polls are answered from the bridge's own reading of the QC, without touching USB, so they
-    /// can be frequent; the bridge reads the QC every `SharedUSBSession.pollInterval`.
+    /// Legacy bridges use this poll interval. Negotiated revision notifications trigger
+    /// immediate snapshots and retain a 30-second fallback against the shared QC cache.
     public init(pollInterval: TimeInterval = 1, timeout: TimeInterval = 60,
                 automaticPolling: Bool = true, phoneName: String = DeviceIdentity.phoneName, diagnostics: Diagnostics = .shared,
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
@@ -204,6 +207,7 @@ public final class EditorCoordinator {
         let old = transport; transport = nil
         old?.onReady = nil; old?.onDisconnected = nil; old?.onStatus = nil; old?.onResponse = nil
         nearbyMacs.removeAll(); approvalCode = nil; trusted = false; preferredMac = nil
+        revisionNotifications = false; wantedRevision = 0
         request = nil; staged = nil; connection = nil; session = nil; revision = 0
         operations.removeAll(); nextPoll = .infinity; discoveryDeadline = .infinity; editor.disconnect()
         held = nil; tunerMode = .off; tunerMuted = nil; tunerError = nil; tunerTrack = TunerTrack()
@@ -379,6 +383,7 @@ public final class EditorCoordinator {
             catch { queuedPreset = nil; presetSwitch = .notApplied(queued.id, "Not switched. Refresh the preset and try again."); onChange?() }
             if request != nil { return }
         }
+        if !isInBackground, wantedRevision > revision { wantedRevision = 0; refresh(); return }
         if wantsList, now() >= listRetryAt, !isInBackground { wantsList = false; send("list_presets"); return }
         guard tunerAvailable, !isInBackground else { return }
         if tunerSync { tunerSync = false; send("tuner", payload: ["mode": tunerMode.rawValue]); return }
@@ -476,6 +481,7 @@ public final class EditorCoordinator {
         if let payload { message["payload"] = payload }
         if operation == "hello" {
             message["device_name"] = phoneName
+            message["revision_notifications"] = true
             message["compression"] = ["deflate"] // Snapshots and catalogs shrink about tenfold.
             if let deviceID { message["device_id"] = deviceID }
             if let macID, let token = trustTokens[macID] { message["trust_token"] = token }
@@ -499,8 +505,19 @@ public final class EditorCoordinator {
         return n.intValue
     }
     private func receive(_ response: [String: Any]) {
+        if response["type"] as? String == "event" {
+            guard revisionNotifications, response["event"] as? String == "revision_changed",
+                  integer(response["version"]) == 1, let connection, let session,
+                  response["connection_id"] as? String == connection,
+                  response["session_id"] as? String == session,
+                  let value = integer(response["revision"]), value > revision else { return }
+            wantedRevision = max(wantedRevision, value)
+            pump()
+            return
+        }
         guard let pending = request, response["id"] as? String == pending.id else { return }
         request = nil
+        defer { pump() }
         do {
             guard integer(response["version"]) == 1 else { throw EditorFailure.invalidState }
             if pending.operation == "hello" {
@@ -512,6 +529,7 @@ public final class EditorCoordinator {
                 guard let token = response["connection_id"] as? String, !token.isEmpty,
                       let required = response["authorization_required"] as? Bool, required || offeredTrust else { throw EditorFailure.invalidState }
                 macName = DeviceIdentity.name(response["mac_name"] as? String, fallback: "Mac")
+                revisionNotifications = response["revision_notifications"] as? Bool == true
                 connection = token
                 if !required {
                     trusted = true; phase = .loading; status = "Trusted · connecting"; send("connect"); return
@@ -751,6 +769,6 @@ public final class EditorCoordinator {
     }
     private func ready(keepingPoll: Bool = false) {
         phase = .ready; status = "Confirmed state loaded"
-        if !keepingPoll { nextPoll = now() + pollInterval }
+        if !keepingPoll { nextPoll = now() + (revisionNotifications ? Self.fallbackPollInterval : pollInterval) }
     }
 }

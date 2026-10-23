@@ -9,6 +9,8 @@ final class TestPeripheral: BridgePeripheral {
     let device = UUID()
     private(set) var lastAdmission = PeripheralReply.Admission.unchanged
     func start(name: String) { starts += 1 }
+    var notifications = [(UUID, [String: Any])]()
+    func notify(_ id: UUID, message: [String: Any]) { notifications.append((id, message)) }
     func stop() {}
     func send(_ operation: String, from id: UUID? = nil, token: String? = nil, session: String? = nil, fields: [String: Any] = [:]) -> [String: Any] {
         var request: [String: Any] = ["version": 1, "id": UUID().uuidString, "operation": operation]
@@ -126,6 +128,43 @@ final class LiveBridgeBackendTests: XCTestCase {
         phone.leave(); phone.leave(pad)
         time += SharedUSBSession.pollInterval; host.tick(); XCTAssertEqual(try reads(), 3)
         XCTAssertEqual(host.state?.0, .running)
+    }
+    func testRevisionNotificationsReachOnlyOptedInJoinedPeers() throws {
+        let phone = TestPeripheral(), helper = try helper()
+        var time = 0.0
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper }, now: { time })
+        try host.start(); defer { host.stop() }
+        host.tick()
+        func join(_ id: UUID, push: Bool) throws -> (String, [String: Any]) {
+            let hello = phone.send("hello", from: id, fields: ["revision_notifications": push])
+            XCTAssertEqual(hello["revision_notifications"] as? Bool, true)
+            let token = try XCTUnwrap(hello["connection_id"] as? String)
+            try host.approvePending()
+            return (token, phone.send("connect", from: id, token: token))
+        }
+        let first = try join(phone.device, push: true), peer = UUID(), legacy = UUID()
+        _ = try join(peer, push: true); _ = try join(legacy, push: false)
+        let waiting = UUID()
+        _ = phone.send("hello", from: waiting, fields: ["revision_notifications": true])
+        phone.notifications.removeAll()
+        let session = try XCTUnwrap(first.1["session_id"] as? String)
+        let edit: [String: Any] = ["revision": 0, "preset_id": "1", "scene": "A",
+            "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": 7.5]]
+        XCTAssertEqual(phone.send("set_parameter", token: first.0, session: session, fields: edit)["status"] as? String, "confirmed")
+        XCTAssertEqual(phone.notifications.count, 1)
+        XCTAssertEqual(phone.notifications.first?.0, peer)
+        XCTAssertEqual(phone.notifications.first?.1["revision"] as? Int, 1)
+        host.tick(); XCTAssertEqual(phone.notifications.count, 1)
+        // Change the helper behind the bridge cache: its next autonomous poll must notify both apps.
+        let changed = try helper.request(["operation": "set_parameter", "session_id": session,
+            "revision": 1, "preset_id": "1", "scene": "A",
+            "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": 6.5]])
+        XCTAssertEqual(changed["status"] as? String, "confirmed")
+        time += SharedUSBSession.pollInterval; host.tick()
+        XCTAssertEqual(phone.notifications.count, 3)
+        XCTAssertEqual(Set(phone.notifications.suffix(2).map { $0.0 }), Set([phone.device, peer]))
+        XCTAssertTrue(phone.notifications.suffix(2).allSatisfy { $0.1["revision"] as? Int == 2 })
+        phone.leave(peer); host.tick(); XCTAssertEqual(phone.notifications.count, 3)
     }
     func testHelperFailurePreservesUnknownOutcomeAndRequiresNewApproval() throws {
         let helper = try helper(), phone = TestPeripheral()
