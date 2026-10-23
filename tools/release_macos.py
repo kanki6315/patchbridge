@@ -20,6 +20,21 @@ def run(*args, capture=False):
     return result.stdout.strip() if capture else None
 
 
+def check_offline(out):
+    """Use the packaged dependency set and preserve complete test tracebacks."""
+    python = ROOT / 'build/runtime/Library/Frameworks/Python.framework/Versions/3.14/bin/python3.14'
+    log = out / 'offline-checks.log'
+    env = dict(os.environ, PATCHBRIDGE_TEST_BUNDLE='1', PYTHON_BIN=str(python), PYTHONUNBUFFERED='1')
+    print(f'Running offline checks; full output: {log}', flush=True)
+    with log.open('w') as output:
+        try:
+            subprocess.run(['sh', 'tools/check_offline.sh'], cwd=ROOT, env=env,
+                           stdout=output, stderr=subprocess.STDOUT, check=True)
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(f'Offline checks failed (exit {error.returncode}). Full traceback: {log}') from error
+    print(f'Offline checks passed; output saved to {log}', flush=True)
+
+
 def verify_app(app, team, bundle, version, build):
     info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
     for key, expected in [('CFBundleIdentifier', bundle), ('CFBundleVersion', build),
@@ -135,8 +150,7 @@ def main(argv=None):
     shutil.copytree(ROOT / 'dist/dSYMs', symbols)
     if not args.skip_tests:
         run(sys.executable, 'tools/check_mac_package.py')
-        env = dict(os.environ, PATCHBRIDGE_TEST_BUNDLE='1', PYTHON_BIN=sys.executable)
-        subprocess.run(['sh', 'tools/check_offline.sh'], cwd=ROOT, env=env, check=True)
+        check_offline(out)
     project_dir = ROOT / 'mac'
     run('xcodegen', 'generate', '--spec', 'mac/project.yml')
     if not dirty and run('git', 'status', '--porcelain', '--', '.', capture=True):

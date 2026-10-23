@@ -14,6 +14,12 @@ That mode never starts a radio or opens USB. Self-tests and report-export CLI ch
 also remain simulated. No Homebrew or separately installed Python is needed at runtime.
 See [Mac bridge shell](MAC_BRIDGE_SHELL.md) for controls and limitations.
 
+The Mac release script runs offline checks with the source-built Python runtime,
+including its protobuf dependency, rather than the launcher interpreter. Full
+stdout/stderr is saved to `build/release-macos/<version>-<build>/offline-checks.log`.
+If checks fail, the release stops before archiving and prints that log's path;
+inspect its final exception rather than interpreting skipped tests as failures.
+
 ## Build the runtime
 
 The bundled CPython and protobuf are built from source so that every bundled binary

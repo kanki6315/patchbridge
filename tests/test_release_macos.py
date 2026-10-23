@@ -138,6 +138,29 @@ class MacReleaseTests(unittest.TestCase):
         release.main(['--build', '42', '--no-upload'])
         self.assertLess(self.calls.index(('tests',)), next(i for i,c in enumerate(self.calls) if c[:2] == ('xcodebuild','archive')))
 
+    def test_offline_checks_use_built_runtime_and_save_both_output_streams(self):
+        def checks(command, **kwargs):
+            self.assertEqual(command, ['sh', 'tools/check_offline.sh'])
+            self.assertEqual(kwargs['env']['PYTHON_BIN'], str(self.root / 'build/runtime/Library/Frameworks/Python.framework/Versions/3.14/bin/python3.14'))
+            self.assertEqual(kwargs['stderr'], subprocess.STDOUT)
+            kwargs['stdout'].write('complete test output\n')
+        with patch.object(release.subprocess, 'run', side_effect=checks):
+            release.main(['--build', '42', '--no-upload'])
+        log = self.root / f'build/release-macos/{VERSION}-42/offline-checks.log'
+        self.assertEqual(log.read_text(), 'complete test output\n')
+
+    def test_offline_check_failure_preserves_traceback_and_stops_before_archive(self):
+        def checks(command, **kwargs):
+            kwargs['stdout'].write('Traceback\nFinal exception detail\n')
+            raise subprocess.CalledProcessError(1, command)
+        with patch.object(release.subprocess, 'run', side_effect=checks):
+            with self.assertRaisesRegex(RuntimeError, 'offline-checks.log'):
+                release.main(['--build', '42'])
+        log = self.root / f'build/release-macos/{VERSION}-42/offline-checks.log'
+        self.assertIn('Final exception detail', log.read_text())
+        self.assertFalse(any(c[:2] == ('xcodebuild', 'archive') for c in self.calls))
+        self.assertFalse(self.uploaded()); self.assertFalse(self.tagged())
+
     def test_upload_requires_auth_before_build(self):
         os.environ.pop('MAC_ASC_USERNAME')
         with self.assertRaises(ValueError): self.invoke()
