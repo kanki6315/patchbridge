@@ -114,10 +114,11 @@ public final class SharedUSBSession {
     /// The bridge reads the QC itself (`poll`) and keeps its session open with no device
     /// connected. Otherwise the session lives only while devices are joined.
     let keepsSession: Bool
-    /// How often `poll` re-reads the QC.
-    static let pollInterval: TimeInterval = 2
+    /// Delay after the last completed read. Hardware snapshots take about 60 ms;
+    /// leave room for edits while keeping physical QC changes visible promptly.
+    static let pollInterval: TimeInterval = 0.5
     /// A device's snapshot is answered from `cached` while it is at most this old.
-    static let freshFor: TimeInterval = 3
+    static let freshFor: TimeInterval = 1
     /// The QC state as last read on the current helper session, by whichever request read it.
     /// When the bridge keeps the session (and so keeps it fresh with `poll`), devices' snapshots
     /// and joins are answered from it, so N devices cost one USB read, not N.

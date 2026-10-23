@@ -42,6 +42,17 @@ git (see `.gitignore`):
 - `transport.REPLY_POLL_S`: `request()` and `_read_preset_once()` poll every 10 ms
   instead of 100–150 ms. The HID backend sleeps the full poll interval, so upstream
   added that much latency to every read; a snapshot is six reads.
+- `iohid.IOHIDTransport.read_reports()`: a condition variable now wakes reads on
+  incoming reports and drains buffered reports immediately. The 10 ms interval is
+  a maximum wait, not a mandatory sleep. Handshake calls explicitly retain their
+  full settling delays via `_collect(wait_full=True)`. See
+  `docs/SYNC_BENCHMARK_2026-10-23.md` for hardware measurements.
+- Startup accepts complete zero-ID Version/ModelRepo replies only in an owned,
+  exclusive session after draining queued messages. Other state retains its
+  existing matching behavior. The handshake no longer requests ModelRepo twice.
+- `list_directory(folder_key=...)` reads one preset folder and requires an echoed
+  request ID, matching folder/type, and all 256 slots before returning. The adapter
+  uses this for My Presets instead of streaming IR/capture/factory directories.
 
 When updating, copy the same files from the new commit, reapply the local
 changes unless upstream fixed them, and update the commit here, in

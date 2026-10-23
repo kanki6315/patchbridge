@@ -6,7 +6,6 @@ import ctypes
 import ctypes.util
 import struct
 import threading
-import time
 
 from .backend import QC_VID, device_ids, not_found_error
 
@@ -114,6 +113,7 @@ class IOHIDTransport:
         self._in_buf = (ctypes.c_uint8 * (report_size + 1))()
         self._cb_ref = None
         self._rx_lock = threading.Lock()
+        self._rx_ready = threading.Condition(self._rx_lock)
         self._rx = []   # list of (report_id, data) captured by the reader thread
         self._thread = None
         self._runloop = None
@@ -159,8 +159,9 @@ class IOHIDTransport:
 
         def _cb(context, result, sender, rtype, report_id, report_ptr, length):
             data = bytes(bytearray(report_ptr[i] for i in range(length)))
-            with self._rx_lock:
+            with self._rx_ready:
                 self._rx.append((report_id, data))
+                self._rx_ready.notify()
         self._cb_ref = INPUT_CB(_cb)
 
         # Dedicated reader thread runs a CFRunLoop so input reports are never
@@ -201,11 +202,11 @@ class IOHIDTransport:
         return r
 
     def read_reports(self, timeout=0.1):
-        """Return (and clear) reports captured by the reader thread. `timeout`
-        lets callers wait a little for more data to arrive."""
-        if timeout:
-            time.sleep(timeout)
-        with self._rx_lock:
+        """Drain queued reports immediately, or wait up to `timeout` for input.
+        The callback wakes the reader so each request doesn't pay a fixed sleep."""
+        with self._rx_ready:
+            if timeout:
+                self._rx_ready.wait_for(lambda: bool(self._rx), timeout=timeout)
             out = self._rx[:]
             self._rx.clear()
         return out

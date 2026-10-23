@@ -61,14 +61,14 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         if let queue {
             // The first read runs after Start returns, so the window shows the bridge running at once.
             let poller = DispatchSource.makeTimerSource(queue: queue)
-            poller.schedule(deadline: .now(), repeating: 0.5)
+            poller.schedule(deadline: .now(), repeating: 0.25)
             poller.setEventHandler { [weak self] in self?.tick() }
             poller.resume(); self.poller = poller
         }
     }
 
     /// The bridge's own read of the QC: opens USB when it isn't open, otherwise refreshes the
-    /// state every device is answered from. Called every half second; reads only when due.
+    /// state every device is answered from. Called every quarter second; reads only when due.
     func tick() {
         guard let shared else { return }
         let reply: [String: Any]?
@@ -84,6 +84,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             status = code == "unsupported_firmware" ? "This USB adapter requires verified CorOS 4.1.1. Use a QC on a supported firmware."
                 : "QC not reachable over USB. Check the cable and close Cortex Control; the bridge keeps trying."
         }
+        notifyRevisions()
         publish()
     }
     private func show(_ state: [String: Any]) {
@@ -156,6 +157,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         presentation = MacBridgePresentation()
     }
     private func deviceLeft(_ id: UUID) {
+        notificationDevices.remove(id); announced[id] = nil
         revoked[id] = nil
         guard let shared, let device = devices.removeValue(forKey: id) else { return }
         let name = device.phoneName, trusted = device.trustEntryID != nil
@@ -174,12 +176,14 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     }
     /// Ends one device's session; its next request learns it was disconnected.
     private func end(_ id: UUID) {
+        notificationDevices.remove(id); announced[id] = nil
         guard let index = devices[id]?.index else { return }
         deviceLeft(id); revoked[id] = index
     }
     func revokeTrust(id: UUID) { shared?.revokeTrust(id: id); publish() }
     func refresh() throws {} // The bridge reads the QC on its own schedule (`tick`).
     func stop() {
+        notificationDevices.removeAll(); announced.removeAll()
         poller?.cancel(); poller = nil
         peripheral.onMessage = nil; peripheral.onDisconnect = nil; peripheral.onStatus = nil; peripheral.stop()
         if let shared { shared.devices.forEach(shared.remove) }
@@ -189,6 +193,19 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     }
     func interruptHelper() { helper?.stop() }
 
+    private var notificationDevices = Set<UUID>()
+    private var announced = [UUID: String]()
+    private func notifyRevisions(except origin: UUID? = nil) {
+        guard let shared, let session = shared.helperSession, let cached = shared.cached else { return }
+        let key = "\(session):\(cached.revision)"
+        for (id, device) in devices where notificationDevices.contains(id) && shared.isJoined(device) && !shared.isOutdated(device) {
+            guard announced[id] != key else { continue }
+            announced[id] = key
+            guard id != origin else { continue }
+            peripheral.notify(id, message: ["version": 1, "type": "event", "event": "revision_changed",
+                "connection_id": device.token, "session_id": session, "revision": cached.revision])
+        }
+    }
     private func receive(_ id: UUID, _ request: [String: Any]) -> PeripheralReply {
         guard let shared else { return PeripheralReply(message: failure(request, code: "disconnected")) }
         var admission = PeripheralReply.Admission.unchanged
@@ -206,7 +223,17 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             return PeripheralReply(message: CentralRouter.errorReply(request, code: "revoked", text: "This device was disconnected on the Mac."))
         }
         guard let device = devices[id] else { return PeripheralReply(message: failure(request, code: "unauthorized")) }
-        return PeripheralReply(message: receive(request, from: device, id: id), admission: admission)
+        var reply = receive(request, from: device, id: id)
+        if request["operation"] as? String == "hello" {
+            if request["revision_notifications"] as? Bool == true { notificationDevices.insert(id) }
+            else { notificationDevices.remove(id) }
+            announced[id] = nil
+            reply["revision_notifications"] = true
+        }
+        let result = reply["result"] as? [String: Any]
+        let carriesState = reply["status"] as? String == "confirmed" && (result?["state"] != nil || result?["unchanged"] as? Bool == true)
+        notifyRevisions(except: carriesState ? id : nil)
+        return PeripheralReply(message: reply, admission: admission)
     }
     private func receive(_ request: [String: Any], from device: DeviceSession, id: UUID) -> [String: Any] {
         do {

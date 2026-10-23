@@ -11,6 +11,7 @@ protocol BridgePeripheral: AnyObject {
     var onStatus: ((String) -> Void)? { get set }
     func start(name: String)
     func stop()
+    func notify(_ id: UUID, message: [String: Any])
 }
 
 /// CoreBluetooth adapter around `CentralRouter`, which owns all per-device state.
@@ -50,6 +51,7 @@ final class BLEPeripheral: NSObject, BridgePeripheral, CBPeripheralManagerDelega
     // The radio queue never waits on the owner's queue, so these syncs cannot deadlock.
     func start(name: String) { radio.sync { stopRadio(); self.name = name; manager = CBPeripheralManager(delegate: self, queue: radio) } }
     func stop() { radio.sync { stopRadio() } }
+    func notify(_ id: UUID, message: [String: Any]) { radio.async { self.router.notify(id, message: message) } }
     private func stopRadio() {
         manager?.delegate = nil; manager?.stopAdvertising(); manager?.removeAllServices(); manager = nil
         centrals.removeAll(); result = nil; router.removeAll()

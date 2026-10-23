@@ -45,6 +45,35 @@ final class CentralRouterTests: XCTestCase {
     }
     private func code(_ reply: [String: Any]?) -> String? { (reply?["error"] as? [String: Any])?["code"] as? String }
 
+    func testRevisionEventsWaitBehindResponsesAndCoalesceUnderBackpressure() {
+        let id = admitted()
+        var blocked = true
+        let original = router.send
+        router.send = { central, data in blocked ? false : original?(central, data) ?? false }
+        XCTAssertEqual(write(id, "snapshot"), .success); flush()
+        radio.sync {
+            router.notify(id, message: ["type": "event", "revision": 1])
+            router.notify(id, message: ["type": "event", "revision": 2])
+            blocked = false; router.drain()
+        }
+        XCTAssertEqual(replies[id]?.count, 3) // hello, response, newest event
+        XCTAssertEqual(replies[id]?.last?["revision"] as? Int, 2)
+        XCTAssertNotNil(replies[id]?[1]["id"])
+        radio.sync { router.unsubscribe(id); router.notify(id, message: ["revision": 3]) }
+        flush(); XCTAssertEqual(replies[id]?.count, 3)
+    }
+    func testRequestMayArriveWhileEventChunksAreBackpressured() {
+        let id = admitted()
+        var blocked = true
+        let original = router.send
+        router.send = { central, data in blocked ? false : original?(central, data) ?? false }
+        radio.sync { router.notify(id, message: ["type": "event", "revision": 1, "padding": String(repeating: "x", count: 500)]) }
+        XCTAssertEqual(write(id, "snapshot"), .success); flush()
+        radio.sync { blocked = false; router.drain() }
+        XCTAssertEqual(replies[id]?.count, 3)
+        XCTAssertEqual(replies[id]?[1]["type"] as? String, "event")
+        XCTAssertEqual(replies[id]?[2]["status"] as? String, "confirmed")
+    }
     func testRepliesAreDeflatedOnlyForPhonesThatOfferIt() {
         var sent = [UUID: [UInt8]]()
         router.send = { [unowned self] id, data in
