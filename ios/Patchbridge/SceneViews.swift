@@ -57,6 +57,8 @@ struct SceneButtons: View {
                     }
                 }
                 .shadow(color: active && style == .pads && !theme.daylight ? color.opacity(0.35) : .clear, radius: 14)
+                .sceneArrival(scene: snapshot.scene, active: active, color: color, shape: shape,
+                              spread: style == .pads ? 16 : 10, daylight: theme.daylight)
                 .overlay(alignment: .topTrailing) {
                     if mark == .notApplied {
                         Text("!").font(.caption.weight(.heavy)).foregroundStyle(theme.signalInk)
@@ -111,6 +113,66 @@ struct SceneButtons: View {
         case .named: return active ? 12 : 10
         case .pads: return active ? 22 : 18
         }
+    }
+}
+
+/// When the QC lands on a new scene, from the phone or the unit's footswitches, the newly active
+/// cell pops, flashes its scene colour and sends a ring outward. Other cells are untouched.
+private struct SceneArrival: ViewModifier {
+    let scene: String
+    let active: Bool
+    let color: Color
+    let shape: RoundedRectangle
+    /// How far the ring travels past the cell's edge.
+    let spread: CGFloat
+    let daylight: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var arrivals = 0
+
+    private struct Arrival {
+        var scale: CGFloat = 1
+        var fill: Double = 0
+        var spread: CGFloat = 0
+        var ring: Double = 0
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .keyframeAnimator(initialValue: Arrival(), trigger: arrivals) { view, arrival in
+                view
+                    .overlay {
+                        if active {
+                            // Over the cell's opaque fill; the blend tints the ground and leaves text as it is.
+                            shape.fill(color.opacity(arrival.fill)).blendMode(daylight ? .multiply : .screen)
+                            shape.stroke(color, lineWidth: 2).padding(-arrival.spread).opacity(arrival.ring)
+                        }
+                    }
+                    .scaleEffect(active ? arrival.scale : 1)
+            } keyframes: { _ in
+                KeyframeTrack(\.scale) {
+                    SpringKeyframe(1.12, duration: 0.14, spring: .snappy)
+                    SpringKeyframe(1, duration: 0.4, spring: .bouncy)
+                }
+                KeyframeTrack(\.fill) {
+                    LinearKeyframe(daylight ? 0.3 : 0.4, duration: 0.06)
+                    CubicKeyframe(0, duration: 0.6)
+                }
+                KeyframeTrack(\.spread) {
+                    LinearKeyframe(0, duration: 0.06)
+                    CubicKeyframe(spread, duration: 0.6)
+                }
+                KeyframeTrack(\.ring) {
+                    LinearKeyframe(0.9, duration: 0.06)
+                    CubicKeyframe(0, duration: 0.6)
+                }
+            }
+            .onChange(of: scene) { old, new in if old != new && !reduceMotion { arrivals += 1 } }
+    }
+}
+
+extension View {
+    func sceneArrival(scene: String, active: Bool, color: Color, shape: RoundedRectangle, spread: CGFloat = 10, daylight: Bool) -> some View {
+        modifier(SceneArrival(scene: scene, active: active, color: color, shape: shape, spread: spread, daylight: daylight))
     }
 }
 
