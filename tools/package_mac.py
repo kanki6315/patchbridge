@@ -104,6 +104,13 @@ def build_helper(launcher, runtime, minimum, symbols):
     obj.unlink()
 
 
+def verify_app_store_stdlib(stdlib):
+    """Reject cached runtimes without CPython's official App Store patch."""
+    parser = stdlib / 'urllib' / 'parse.py'
+    if not parser.is_file() or b'itms-services' in parser.read_bytes().lower():
+        raise SystemExit('Python lacks the App Store compliance patch; rebuild with tools/build_runtime.py.')
+
+
 def main():
     if sys.platform != 'darwin' or platform.machine() != 'arm64':
         raise SystemExit('This offline recipe requires Apple silicon macOS.')
@@ -116,6 +123,7 @@ def main():
     stdlib = Path(sysconfig.get_path('stdlib'))
     if not runtime.is_file():
         raise SystemExit('Expected a local framework CPython build; no runtime will be downloaded.')
+    verify_app_store_stdlib(stdlib)
     minimum = re.search(r'\bminos\s+(\S+)', output('otool', '-l', runtime)).group(1)
     symbols = ROOT / 'dist/dSYMs'
     for generated in (APP, symbols):
@@ -174,7 +182,7 @@ def main():
         ROOT / 'mac' / 'main.swift', '-o', executables / 'Patchbridge')
     plist = {'CFBundleExecutable': 'Patchbridge', 'CFBundleIdentifier': 'com.arjunakankipati.patchbridge',
              'CFBundleName': 'Patchbridge', 'CFBundlePackageType': 'APPL',
-             'CFBundleVersion': '1', 'CFBundleShortVersionString': '0.3.0',
+             'CFBundleVersion': '1', 'CFBundleShortVersionString': '0.3.1',
              'LSMinimumSystemVersion': minimum, 'NSHighResolutionCapable': True,
              'NSBluetoothAlwaysUsageDescription': 'Connect your iPhone to this Mac to view and edit your Quad Cortex over USB.'}
     icon_plist = resources / 'icon-info.plist'

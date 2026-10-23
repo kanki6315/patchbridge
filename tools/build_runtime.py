@@ -95,7 +95,7 @@ def main():
     # No LTO or PGO: object files stay ordinary so dsymutil can read their DWARF.
     # The macOS 27 SDK declares dup3/pipe2, which macOS 26 lacks and CPython calls unguarded.
     run('./configure', f'--enable-framework={OUT}/Library/Frameworks', '--with-ensurepip=install',
-        '--with-pkg-config=no', '--without-static-libpython',
+        '--with-pkg-config=no', '--without-static-libpython', '--with-app-store-compliance',
         'ac_cv_func_dup3=no', 'ac_cv_func_pipe2=no', cwd=cpython)
     run('make', f'-j{os.cpu_count()}', cwd=cpython)
     run('make', 'altinstall', cwd=cpython)
@@ -121,7 +121,7 @@ def main():
     for binary in binaries:
         symbols.update(symbolize(binary, dsyms))
     manifest = {'python': PYTHON_VERSION, 'protobuf': PROTOBUF_VERSION, 'architecture': 'arm64',
-                'minimum_macos': MINIMUM_MACOS,
+                'minimum_macos': MINIMUM_MACOS, 'app_store_compliance': True,
                 'sources': {name: digest for name, (_, digest) in PINNED.items()}, 'dsym_uuids': symbols}
     (OUT / 'runtime-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(f'Built {python}\n{len(symbols)} binaries with matching dSYMs in {dsyms}')
