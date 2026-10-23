@@ -37,6 +37,13 @@ for each `lib-dynload` extension and for protobuf's `_message` extension, and
 
 ## Build and check without downloads
 
+The runtime must be built with CPython's official `--with-app-store-compliance`
+configure option. This removes `itms-services` support from `urllib.parse`, which
+can trigger App Store rejection even though Patchbridge never uses that scheme.
+Rebuild existing runtimes with `tools/build_runtime.py` before packaging a new
+submission. The packager rejects an unpatched URL parser before replacing outputs.
+See [CPython App Store compliance](https://docs.python.org/3/using/mac.html#app-store-compliance).
+
 From the repository root, with the runtime above and Xcode:
 
 ```sh
