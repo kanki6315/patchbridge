@@ -297,7 +297,7 @@ final class PhoneModel: ObservableObject {
         if editable.isEmpty { return "Read-only" }
         return editable.prefix(2).map { id in
             let name = editor.control(blockID: block.id, parameterID: id)?.name.capitalized ?? "Value"
-            // A unit that repeats the name says it once: "Semitones -1.0", not "Semitones -1.0 Semitones".
+            // A unit that repeats the name says it once: "Semitones -1", not "Semitones -1 Semitones".
             let unit = editor.control(blockID: block.id, parameterID: id)?.unit.caseInsensitiveCompare(name) != .orderedSame
             return name + " " + valueText(block.id, id, unit: unit)
         }.joined(separator: " · ")
@@ -307,7 +307,7 @@ final class PhoneModel: ObservableObject {
     }
     func format(_ value: ParameterValue?, control: ParameterControl?, unit: Bool = true) -> String {
         guard let value else { return "Unavailable" }
-        if let n = control?.displayValue(value) { return String(format: "%.1f", n) + (unit && control?.unit.isEmpty == false ? " \(control!.unit)" : "") }
+        if let control, let n = control.displayValue(value) { return control.formatted(n) + (unit && !control.unit.isEmpty ? " \(control.unit)" : "") }
         if case .number(let n) = value, let option = control?.options?.first(where: { abs($0.value - n) < 0.000001 }) { return option.label }
         switch value {
         case .number(let n):

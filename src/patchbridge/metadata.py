@@ -9,7 +9,7 @@ with toggleOn/toggleOff naming a switch is active at the switch's toggleStep pos
 (toggleOn) or the other positions (toggleOff); without toggleStep, a two-step switch's
 toggleOn means 1 and toggleOff 0. A control is active only while its switch is too.
 Inactive controls are greyed out on the QC and read-only here. floatWithLed is a float,
-and an empty skew is linear.
+and an empty skew is linear. A linear showAsInteger control moves in its declared whole steps.
 """
 import math
 
@@ -168,7 +168,26 @@ def _normalize(raw, parameters):
         return control
     control.update(kind='number', editable=True, minimum=low, maximum=high,
                    mapping='power', exponent=exponent)
+    step = _integer_step(raw, low, high, exponent)
+    if step is not None:
+        control['step'] = step  # Only whole values, e.g. Transpose SEMITONES.
     return control
+
+
+def _integer_step(raw, low, high, exponent):
+    """The spacing of a linear showAsInteger control whose declared steps land on whole numbers."""
+    if raw.get('showAsInteger') != 'true' or exponent != 1.0:
+        return None
+    try:
+        count = int(raw.get('steps', ''))
+    except ValueError:
+        return None
+    if not 2 <= count <= 1024:
+        return None
+    step = (high - low) / (count - 1)
+    if step < 1 or step != round(step) or low != round(low):
+        return None
+    return step
 
 
 def normalize_models(models):

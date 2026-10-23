@@ -265,12 +265,12 @@ struct BlockEditorView: View {
                     }
                     Button {
                         editingContext = model.snapshot
-                        entry = String(format: "%.2f", display ?? 0); typing = true
+                        entry = control.map { $0.step != nil ? $0.formatted(display ?? 0) : String(format: "%.2f", display ?? 0) } ?? ""; typing = true
                     } label: {
                         HStack(alignment: .firstTextBaseline, spacing: 5) {
                             if case .expression = scope { PedalGlyph(size: 24) }
                             else if readOnly { Image(systemName: "lock").font(.title3) }
-                            Text(typingInDial ? (entry.isEmpty ? "0" : entry) : loading ? "—" : shown.map { String(format: fine ? "%.2f" : "%.1f", $0) } ?? model.valueText(block.id, parameter))
+                            Text(typingInDial ? (entry.isEmpty ? "0" : entry) : loading ? "—" : shown.flatMap { value in control?.formatted(value, fine: fine) } ?? model.valueText(block.id, parameter))
                                 .font(.system(size: min(valueSize, fine ? 40 : 48), weight: .bold)).monospacedDigit().minimumScaleFactor(0.65).lineLimit(1)
                             if shown != nil || loading { Text(control?.unit ?? "").font(.system(size: min(unitSize, 22), weight: .semibold)).foregroundStyle(theme.muted) }
                         }.padding(5).overlay {
@@ -298,7 +298,8 @@ struct BlockEditorView: View {
                 }
                 let dx = event.location.x - 120, dy = event.location.y - 120
                 let outward = hypot(dx, dy) > 132
-                let newFine = outward && Date().timeIntervalSince(gestureStart!) > 0.35
+                // A stepped control has no finer steps to offer.
+                let newFine = control.step == nil && outward && Date().timeIntervalSince(gestureStart!) > 0.35
                 if newFine != fine { fine = newFine; UIImpactFeedbackGenerator(style: .rigid).impactOccurred() }
                 var angle = atan2(dy, dx) * 180 / .pi - 135
                 if angle < 0 { angle += 360 }
@@ -306,8 +307,7 @@ struct BlockEditorView: View {
                 let normalized = angle > 270 ? (angle > 315 ? 0.0 : 1.0) : angle / 270
                 let mapped = control.encoding == "qc_normalized" ? control.displayValue(.number(normalized)) : lo + (hi - lo) * normalized
                 guard let mapped else { return }
-                let step = fine ? 0.05 : 0.1
-                let value = min(hi, max(lo, (mapped / step).rounded() * step))
+                let value = min(hi, max(lo, control.snapped(mapped, fine: fine)))
                 if value != lastStep { UISelectionFeedbackGenerator().selectionChanged(); lastStep = value }
                 draft = value
             }.onEnded { _ in
@@ -316,14 +316,14 @@ struct BlockEditorView: View {
             })
             .accessibilityElement(children: .contain)
             .accessibilityAdjustableAction { direction in
-                if !readOnly && !model.busy && !loading, let display { step(direction == .increment ? 0.1 : -0.1, from: display) }
+                if !readOnly && !model.busy && !loading, let display { step(direction == .increment ? 1 : -1, from: display) }
             }
             HStack(alignment: .bottom) {
-                if !readOnly { stepButton("minus", -0.1) }
+                if !readOnly { stepButton("minus", -1) }
                 Text(control?.minimum.map { String(format: "%g", $0) } ?? "0 %").font(.footnote).foregroundStyle(theme.muted)
                 Spacer()
                 Text(control?.maximum.map { String(format: "%g", $0) } ?? "100 %").font(.footnote).foregroundStyle(theme.muted)
-                if !readOnly { stepButton("plus", 0.1) }
+                if !readOnly { stepButton("plus", 1) }
             }.offset(y: 12)
         }.frame(maxWidth: .infinity).padding(.top, 6).padding(.bottom, 30)
     }
@@ -336,9 +336,10 @@ struct BlockEditorView: View {
         if control?.encoding == "qc_normalized" { return min(1, max(0, wire)) }
         return position(control?.displayValue(.number(wire)))
     }
-    private func step(_ delta: Double, from value: Double) {
-        guard let lo = control?.minimum, let hi = control?.maximum else { return }
-        commit(min(hi, max(lo, ((value + delta) * 10).rounded() / 10)))
+    /// Moves one increment: a whole step where the QC has them, 0.1 otherwise.
+    private func step(_ direction: Double, from value: Double) {
+        guard let control, let lo = control.minimum, let hi = control.maximum else { return }
+        commit(min(hi, max(lo, control.snapped(value + direction * control.increment))))
         UISelectionFeedbackGenerator().selectionChanged()
     }
     private func commitContextual(_ value: Double) {

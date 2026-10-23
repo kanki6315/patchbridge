@@ -438,7 +438,7 @@ struct DuoWorkspaceView: View {
                 Button { beginTyping(block, id) } label: {
                     HStack(alignment: .firstTextBaseline, spacing: 3) {
                         if let shown {
-                            Text(String(format: "%.1f", shown)).font(.title3.bold()).monospacedDigit()
+                            Text(control?.formatted(shown) ?? "").font(.title3.bold()).monospacedDigit()
                             if let unit = control?.unit, !unit.isEmpty { Text(unit).font(.footnote.weight(.semibold)).foregroundStyle(theme.muted) }
                         } else { Text(model.valueText(block.id, id)).font(.headline) }
                     }
@@ -451,7 +451,7 @@ struct DuoWorkspaceView: View {
                 nudgeButton("plus", block, id, 1, name)
             }
             if pending != nil, let shown, let current = control?.displayValue(confirmed) {
-                Label("Sending \(String(format: "%.1f", shown)) · QC at \(String(format: "%.1f", current))", systemImage: "circle.dotted")
+                Label("Sending \(control?.formatted(shown) ?? "") · QC at \(control?.formatted(current) ?? "")", systemImage: "circle.dotted")
                     .font(.footnote.weight(.semibold)).foregroundStyle(theme.signal)
             }
         }.padding(.vertical, 6)
@@ -461,7 +461,7 @@ struct DuoWorkspaceView: View {
             .buttonStyle(.plain).phoneGlass(theme, radius: 22).disabled(model.busy)
             .accessibilityLabel(direction > 0 ? "Increase \(name)" : "Decrease \(name)")
     }
-    /// Steps a number by 0.1, as the editor's steppers do, or an option list to its neighbour.
+    /// Steps a number by one increment, as the editor's steppers do, or an option list to its neighbour.
     private func nudge(_ block: PresetSnapshot.Block, _ id: String, _ direction: Int) {
         guard let control = model.editor.control(blockID: block.id, parameterID: id),
               let raw = model.editor.value(blockID: block.id, parameterID: id) else { return }
@@ -470,14 +470,15 @@ struct DuoWorkspaceView: View {
                   options.indices.contains(index + direction) else { return }
             model.edit(block.id, id, .number(options[index + direction].value))
         } else if let display = control.displayValue(raw), let lo = control.minimum, let hi = control.maximum,
-                  let wire = control.wireValue(display: min(hi, max(lo, ((display + 0.1 * Double(direction)) * 10).rounded() / 10))) {
+                  let wire = control.wireValue(display: min(hi, max(lo, control.snapped(display + control.increment * Double(direction))))) {
             model.edit(block.id, id, wire)
         } else { return }
         UISelectionFeedbackGenerator().selectionChanged()
     }
     private func beginTyping(_ block: PresetSnapshot.Block, _ id: String) {
-        guard let display = model.editor.control(blockID: block.id, parameterID: id)?.displayValue(model.editor.value(blockID: block.id, parameterID: id) ?? .unknown) else { return }
-        entry = String(format: "%.2f", display); typingContext = model.snapshot
+        guard let control = model.editor.control(blockID: block.id, parameterID: id),
+              let display = control.displayValue(model.editor.value(blockID: block.id, parameterID: id) ?? .unknown) else { return }
+        entry = control.step != nil ? control.formatted(display) : String(format: "%.2f", display); typingContext = model.snapshot
         typingTarget = MenuTarget(block: block.id, parameter: id)
     }
     private func commitTyped(_ target: MenuTarget, _ value: Double) {
