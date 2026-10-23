@@ -130,7 +130,7 @@ public final class EditorCoordinator {
                 automaticPolling: Bool = true, phoneName: String = DeviceIdentity.phoneName, diagnostics: Diagnostics = .shared,
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
                 makeTransport: @escaping () -> EditorTransport = { BLECentral(automaticallyConnect: false) }) {
-        self.phoneName = DeviceIdentity.name(phoneName, fallback: "iPhone")
+        self.phoneName = DeviceIdentity.name(phoneName, fallback: DeviceIdentity.localName)
         self.diagnostics = diagnostics
         self.pollInterval = max(0.5, pollInterval.isFinite ? pollInterval : 2)
         self.timeout = max(0.5, timeout.isFinite ? timeout : 15)
@@ -139,7 +139,7 @@ public final class EditorCoordinator {
     deinit { timer?.invalidate() }
     public func setPhoneName(_ name: String) {
         guard phase == .disconnected || phase == .failed else { return }
-        phoneName = DeviceIdentity.name(name, fallback: "iPhone")
+        phoneName = DeviceIdentity.name(name, fallback: DeviceIdentity.localName)
     }
     /// With `reconnecting`, the last Mac is chosen as soon as it is found.
     public func start(reconnecting: Bool = false) {

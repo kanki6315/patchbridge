@@ -28,7 +28,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Patchbridge
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.music
-        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: Connect your iPhone to this Mac to view and edit your Quad Cortex over USB.
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: Connect your iPhone or iPad to this Mac to view and edit your Quad Cortex over USB.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         DEBUG_INFORMATION_FORMAT: dwarf-with-dsym

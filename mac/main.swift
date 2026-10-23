@@ -274,7 +274,7 @@ struct BridgeWindow: View {
     private var diagram: some View {
         HStack(alignment: .top, spacing: 10) {
             let devices = model.presentation.connected.count
-            node(devices > 1 ? "ipad.and.iphone" : "iphone", devices > 1 ? "\(devices) devices" : phone ? model.presentation.phoneName : "iPhone", live: model.phase == .connected)
+            node(devices > 1 || !phone ? "ipad.and.iphone" : model.presentation.phoneName.localizedCaseInsensitiveContains("iPad") ? "ipad" : "iphone", devices > 1 ? "\(devices) devices" : phone ? model.presentation.phoneName : "iPhone or iPad", live: model.phase == .connected)
             link(model.isSimulation ? "Simulated" : "Bluetooth", live: model.phase == .connected)
             node("laptopcomputer", model.presentation.macName, live: active)
             link(model.phase == .recovering ? "Paused" : model.isSimulation ? "Simulated" : "USB", live: model.phase == .connected)
@@ -299,10 +299,10 @@ struct BridgeWindow: View {
     @ViewBuilder private var setup: some View {
         let denied = bluetooth.authorization == .denied || bluetooth.authorization == .restricted
         let (title, detail): (String, String) = switch setupStep {
-        case .welcome: ("Edit your QC from your iPhone", "This Mac connects to the Quad Cortex over USB and passes edits to your iPhone over Bluetooth.")
-        case .bluetooth where denied: ("Bluetooth access is off", "Allow Patchbridge in System Settings → Privacy & Security → Bluetooth to connect your iPhone.")
-        case .bluetooth: ("Patchbridge needs Bluetooth", "Your iPhone reaches the QC through this Mac. Continue to request Bluetooth access.")
-        case .ready: ("Ready when you are", "Start the bridge whenever you want to use your iPhone. Patchbridge stays in the menu bar.")
+        case .welcome: ("Edit your QC from your iPhone or iPad", "This Mac connects to the Quad Cortex over USB and passes edits to your iPhone or iPad over Bluetooth.")
+        case .bluetooth where denied: ("Bluetooth access is off", "Allow Patchbridge in System Settings → Privacy & Security → Bluetooth to connect your iPhone or iPad.")
+        case .bluetooth: ("Patchbridge needs Bluetooth", "Your iPhone or iPad reaches the QC through this Mac. Continue to request Bluetooth access.")
+        case .ready: ("Ready when you are", "Start the bridge whenever you want to use your iPhone or iPad. Patchbridge stays in the menu bar.")
         }
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.system(size: 27, weight: .bold)).fixedSize(horizontal: false, vertical: true)
@@ -311,7 +311,7 @@ struct BridgeWindow: View {
         switch setupStep {
         case .welcome:
             VStack(spacing: 0) {
-                let steps = ["Connect the QC to this Mac with USB", "Keep Cortex Control closed", "Open Patchbridge on your iPhone"]
+                let steps = ["Connect the QC to this Mac with USB", "Keep Cortex Control closed", "Open Patchbridge on your iPhone or iPad"]
                 ForEach(steps.indices, id: \.self) { index in
                     if index > 0 { Divider() }
                     HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -468,7 +468,7 @@ struct BridgeSettings: View {
                 if let error = desktop.notificationError { Text(error).foregroundStyle(.red) }
             }
             Section("Bluetooth") {
-                LabeledContent("iPhones see this Mac as", value: DeviceIdentity.macName)
+                LabeledContent("iPhones and iPads see this Mac as", value: DeviceIdentity.macName)
             }
             Section("Diagnostics") {
                 LabeledContent {

@@ -245,27 +245,27 @@ final class MacBridgeModel: ObservableObject {
     init(backend: OfflineBridgeBackend? = nil) {
         self.backend = backend ?? LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue), trust: Self.trust)
         isSimulation = !self.backend.isLive
-        detail = isSimulation ? "Start the bridge to try a simulated phone connection." : "Connect your QC over USB and close Cortex Control. Start the bridge to connect your iPhone."
+        detail = isSimulation ? "Start the bridge to try a simulated phone connection." : "Connect your QC over USB and close Cortex Control. Start the bridge to connect your iPhone or iPad."
     }
     func setSimulation(_ enabled: Bool) {
         guard phase == .stopped, !busy else { return }
         backend = enabled ? BundledOfflineBackend() : LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue), trust: Self.trust)
         isSimulation = enabled
         presentation = MacBridgePresentation()
-        detail = enabled ? "Simulation uses no Bluetooth or USB." : "Connect your QC over USB and close Cortex Control. Start the bridge to connect your iPhone."
+        detail = enabled ? "Simulation uses no Bluetooth or USB." : "Connect your QC over USB and close Cortex Control. Start the bridge to connect your iPhone or iPad."
         onChange?()
     }
     var title: String {
         switch phase {
         case .stopped: return "Bridge stopped"
         case .starting: return "Starting bridge…"
-        case .running: return isSimulation ? "Ready for a simulated phone" : "Waiting for your iPhone"
+        case .running: return isSimulation ? "Ready for a simulated phone" : "Waiting for your iPhone or iPad"
         case .awaitingApproval: return "Approval requested"
         case .approving: return "Verifying connection…"
         case .connected:
             let names = presentation.connected.map(\.name)
             switch names.count {
-            case 0, 1: return isSimulation ? "Simulated iPhone connected" : "\(names.first ?? presentation.phoneName) connected"
+            case 0, 1: return isSimulation ? "Simulated device connected" : "\(names.first ?? presentation.phoneName) connected"
             case 2: return "\(names[0]) and \(names[1]) connected"
             default: return "\(names.count) devices connected"
             }

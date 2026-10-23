@@ -1,4 +1,7 @@
 import Foundation
+#if os(iOS)
+import UIKit
+#endif
 
 /// Display labels only. Authorization is always bound to the transport and full token.
 public enum DeviceIdentity {
@@ -9,7 +12,15 @@ public enum DeviceIdentity {
         return clean.isEmpty ? fallback : String(clean.prefix(64))
     }
     public static var phoneName: String {
-        name(UserDefaults.standard.string(forKey: "patchbridge.phoneName"), fallback: "iPhone")
+        name(UserDefaults.standard.string(forKey: "patchbridge.phoneName"), fallback: localName)
+    }
+    /// What this device is called until the player renames it: the system's name, so an iPad joins as "iPad".
+    public static var localName: String {
+        #if os(iOS)
+        return name(UIDevice.current.name, fallback: UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone")
+        #else
+        return "iPhone"
+        #endif
     }
     public static var macName: String {
         #if os(macOS)

@@ -150,7 +150,7 @@ final class MacDesktopServices: ObservableObject {
         let title: String, body: String
         switch next {
         case .awaitingApproval:
-            title = simulated ? "Simulated iPhone approval requested" : "iPhone approval requested"
+            title = simulated ? "Simulated device approval requested" : "Device approval requested"
             body = "Open Patchbridge to compare the current approval code."
         case .recovering:
             title = simulated ? "Simulated QC connection interrupted" : "QC connection interrupted"
