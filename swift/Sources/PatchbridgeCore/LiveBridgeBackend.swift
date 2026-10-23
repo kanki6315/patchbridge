@@ -28,9 +28,12 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     private let now: () -> TimeInterval
     /// Outlives each start's shared session, so Stop keeps trusted devices.
     private let trust: TrustRegistry
+    /// Held while any device is approved, so the Mac neither naps nor sleeps under it.
+    let keepAwake: KeepAwake
     init(peripheral: BridgePeripheral, makeHelper: @escaping () throws -> HelperClient = { try HelperClient(bundle: .main, liveUSB: true) },
-         trust: TrustRegistry = TrustRegistry(), now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
-        self.peripheral = peripheral; self.makeHelper = makeHelper; self.trust = trust; self.now = now
+         trust: TrustRegistry = TrustRegistry(), keepAwake: KeepAwake = KeepAwake(),
+         now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+        self.peripheral = peripheral; self.makeHelper = makeHelper; self.trust = trust; self.keepAwake = keepAwake; self.now = now
     }
     func start() throws {
         stop()
@@ -65,6 +68,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             devices[id].map { BridgeDevice(id: id, connection: $0.token, name: $0.phoneName, state: states[id] ?? .awaitingApproval, trustID: $0.trustEntryID) }
         }
         let active = order.filter { states[$0] != .awaitingApproval }
+        keepAwake.hold(!active.isEmpty)
         presentation.trusted = shared.trust.list.map { entry in
             TrustedDevice(id: entry.id, name: entry.name, connected: active.contains { devices[$0]?.trustEntryID == entry.id })
         }
@@ -145,7 +149,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         peripheral.onMessage = nil; peripheral.onDisconnect = nil; peripheral.onStatus = nil; peripheral.stop()
         if let shared { shared.devices.forEach(shared.remove) }
         devices.removeAll(); states.removeAll(); order.removeAll(); revoked.removeAll()
-        shared = nil; helper?.stop(); helper = nil; resetQCState()
+        shared = nil; helper?.stop(); helper = nil; resetQCState(); keepAwake.stop()
         state = (.stopped, "Bridge stopped. Connections ended; trusted devices reconnect without a code.")
     }
     func interruptHelper() { helper?.stop() }

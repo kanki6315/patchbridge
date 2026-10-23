@@ -171,6 +171,7 @@ def main():
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'BLEPeripheral.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'CentralRouter.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'LiveBridgeBackend.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'KeepAwake.swift',
         ROOT / 'mac' / 'main.swift', '-o', executables / 'Patchbridge')
     plist = {'CFBundleExecutable': 'Patchbridge', 'CFBundleIdentifier': 'com.arjunakankipati.patchbridge',
              'CFBundleName': 'Patchbridge', 'CFBundlePackageType': 'APPL',

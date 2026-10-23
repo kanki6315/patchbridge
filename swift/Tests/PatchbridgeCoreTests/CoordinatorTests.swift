@@ -4,6 +4,7 @@ import CoreBluetooth
 
 private final class OfflineTransport: DiscoverableEditorTransport {
     var disconnectionReason: String?
+    var disconnectionIsTransient = false
     var onDiscovered: ((String, String) -> Void)?
     var autoReady = true
     var selectedPeripheral: String?
@@ -520,6 +521,82 @@ extension CoordinatorTests {
         XCTAssertEqual(c.phase, .awaitingApproval); XCTAssertFalse(c.trusted); XCTAssertNil(c.trustTokens["mac"])
         bridge.approve(); c.authorize()
         XCTAssertEqual(c.phase, .ready); XCTAssertFalse(c.trusted); XCTAssertNil(c.trustTokens["mac"])
+    }
+    /// A trusted, ready session over the simulator bridge, as after approving with trust.
+    private func trustedSession() throws -> (EditorCoordinator, OfflineTransport, DeviceSession, HelperClient) {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path)
+        let bridge = DeviceSession(helper: helper)
+        let t = OfflineTransport(); t.autoReady = false; t.handler = { try bridge.handle($0) }
+        let c = coordinator(t)
+        c.start(); t.onDiscovered?("mac", "Studio Mac"); c.chooseMac("mac")
+        bridge.approve(trusting: true); c.authorize()
+        XCTAssertEqual(c.phase, .ready); XCTAssertTrue(c.trusted)
+        return (c, t, bridge, helper)
+    }
+    func testTrustedSessionResumesAfterTransientDrop() throws {
+        let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
+        bridge.revoke()
+        t.disconnectionReason = "Your Mac disconnected. Keep it nearby with Patchbridge open, then reconnect."
+        t.disconnectionIsTransient = true; t.onDisconnected?()
+        XCTAssertEqual(c.phase, .connecting); XCTAssertTrue(c.resuming)
+        XCTAssertEqual(c.macName, bridge.macName); XCTAssertNil(c.error)
+
+        // Found again: the trust token skips the code and fresh state loads.
+        t.disconnectionIsTransient = false
+        t.onDiscovered?("mac", "Studio Mac")
+        XCTAssertEqual(c.phase, .ready); XCTAssertFalse(c.resuming); XCTAssertNil(c.approvalCode)
+    }
+    func testResumeNeverReplaysAnEditInFlight() throws {
+        let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
+        // The save reaches the Mac, but its answer never comes back before the link drops.
+        t.hold = true; try c.save(); XCTAssertTrue(c.busy)
+        let sent = t.messages.count
+        bridge.revoke(); t.hold = false; t.held = nil
+        t.disconnectionIsTransient = true; t.onDisconnected?()
+        XCTAssertTrue(c.resuming)
+        XCTAssertEqual(c.error, "Last edit or save outcome unknown. It will not be retried.")
+        t.disconnectionIsTransient = false; t.onDiscovered?("mac", "Studio Mac")
+        XCTAssertEqual(c.phase, .ready)
+        let operations = t.messages.dropFirst(sent).compactMap { $0["operation"] as? String }
+        XCTAssertFalse(operations.contains { EditorCoordinator.mutations.contains($0) })
+    }
+    func testResumeBacksOffThenGivesUpWithOriginalReason() throws {
+        let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
+        bridge.revoke()
+        let reason = "Your Mac disconnected. Keep it nearby with Patchbridge open, then reconnect."
+        t.disconnectionReason = reason; t.disconnectionIsTransient = true; t.onDisconnected?()
+        // The first search starts at once; a second drop waits before searching again.
+        t.onDisconnected?()
+        XCTAssertTrue(c.resuming); XCTAssertEqual(c.phase, .connecting)
+        let before = t.messages.count
+        clock += 0.5; c.tick(); t.onDiscovered?("mac", "Studio Mac")
+        XCTAssertEqual(t.messages.count, before, "No search while backing off")
+        clock += 1; c.tick()
+        XCTAssertTrue(c.resuming)
+        clock += EditorCoordinator.resumeWindow; c.tick()
+        XCTAssertEqual(c.phase, .failed); XCTAssertFalse(c.resuming); XCTAssertEqual(c.error, reason)
+    }
+    func testDropsThatNeedTheUserStillFail() throws {
+        // Pairing or Bluetooth problems need Settings, not another search.
+        let (c, t, _, helper) = try trustedSession(); defer { helper.stop() }
+        t.disconnectionReason = "Bluetooth pairing needs to be set up again."
+        t.disconnectionIsTransient = false; t.onDisconnected?()
+        XCTAssertEqual(c.phase, .failed); XCTAssertFalse(c.resuming)
+
+        // A session without trust would land on an approval code, so it asks for Reconnect instead.
+        let u = OfflineTransport(); let d = coordinator(u)
+        connect(d, u, fixture: try fixture())
+        u.disconnectionIsTransient = true; u.onDisconnected?()
+        XCTAssertEqual(d.phase, .failed); XCTAssertFalse(d.resuming)
+    }
+    func testDisconnectCancelsResume() throws {
+        let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
+        bridge.revoke(); t.disconnectionIsTransient = true; t.onDisconnected?()
+        XCTAssertTrue(c.resuming)
+        c.disconnect()
+        XCTAssertEqual(c.phase, .disconnected); XCTAssertFalse(c.resuming)
+        t.onDiscovered?("mac", "Studio Mac"); XCTAssertEqual(c.phase, .disconnected)
     }
     func testForgedTrustTokenStillRequiresApproval() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
