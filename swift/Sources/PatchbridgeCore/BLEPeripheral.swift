@@ -69,7 +69,7 @@ final class BLEPeripheral: NSObject, BridgePeripheral, CBPeripheralManagerDelega
         if peripheral.state == .poweredOn { installService(peripheral) }
         else {
             status(peripheral.state == .unauthorized ? "Allow Bluetooth access for Patchbridge in System Settings."
-                : peripheral.state == .poweredOff ? "Bluetooth is off. Turn it on to connect your iPhone."
+                : peripheral.state == .poweredOff ? "Bluetooth is off. Turn it on to connect your iPhone or iPad."
                 : "Bluetooth is unavailable. Check System Settings or restart the bridge.")
         }
     }
@@ -80,7 +80,7 @@ final class BLEPeripheral: NSObject, BridgePeripheral, CBPeripheralManagerDelega
     }
     func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
         guard peripheral === manager else { return }
-        status(error == nil ? "Open Patchbridge on your iPhone and choose this Mac. Connect the QC over USB and close Cortex Control." : "Bluetooth advertising failed. Restart the bridge.")
+        status(error == nil ? "Open Patchbridge on your iPhone or iPad and choose this Mac. Connect the QC over USB and close Cortex Control." : "Bluetooth advertising failed. Restart the bridge.")
     }
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
         guard peripheral === manager, characteristic === result else { return }

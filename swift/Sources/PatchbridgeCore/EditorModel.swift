@@ -90,7 +90,7 @@ final class EditorModel: ObservableObject {
            response["authorization_required"] as? Bool == true, connectionID != nil {
             macName = DeviceIdentity.name(response["mac_name"] as? String, fallback: "Mac")
             approvalCode = DeviceIdentity.approvalCode(connectionID!)
-            needsApproval = true; status = "Approve this iPhone on your Mac"
+            needsApproval = true; status = "Approve this device on your Mac"
             return
         }
         guard response["version"] as? Int == 1 else { invalidate("Unsupported bridge protocol."); return }
