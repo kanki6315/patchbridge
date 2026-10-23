@@ -603,6 +603,8 @@ struct DuoWorkspaceView: View {
         .frame(maxWidth: .infinity).frame(height: 48)
         .background(active ? theme.raised : .clear, in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(active ? model.sceneColor(theme, index) : .clear, lineWidth: 1.5))
+        .sceneArrival(scene: snapshot.scene, active: active, color: model.sceneColor(theme, index),
+                      shape: RoundedRectangle(cornerRadius: 14), daylight: theme.daylight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Scene \(letters[index]) \(name)\(active ? ", active" : "")")
     }
@@ -625,6 +627,8 @@ struct DuoWorkspaceView: View {
                     .frame(width: 26, height: 36)
                     .background(index == active ? theme.raised : .clear, in: RoundedRectangle(cornerRadius: 9))
                     .overlay(RoundedRectangle(cornerRadius: 9).stroke(index == active ? model.sceneColor(theme, index) : .clear, lineWidth: 1.5))
+                    .sceneArrival(scene: snapshot.scene, active: index == active, color: model.sceneColor(theme, index),
+                                  shape: RoundedRectangle(cornerRadius: 9), spread: 6, daylight: theme.daylight)
             }
         }
         return Group {
