@@ -182,8 +182,8 @@ def _integer_step(raw, low, high, exponent):
         count = int(raw.get('steps', ''))
     except ValueError:
         return None
-    if not 2 <= count <= 1024:
-        return None
+    if count < 2:
+        return None  # No cap: Parametric-4 LPF moves in whole Hz across 19001 steps.
     step = (high - low) / (count - 1)
     if step < 1 or step != round(step) or low != round(low):
         return None

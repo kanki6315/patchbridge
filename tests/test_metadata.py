@@ -13,6 +13,9 @@ class MetadataTests(unittest.TestCase):
         semitones = {'type': 'float', 'name': 'SEMITONES', 'min': '-12', 'max': '12', 'steps': '25',
                      'skew': 'LIN_SKEW', 'showAsInteger': 'true'}
         self.assertEqual(normalize_parameter(semitones)['step'], 1.0)
+        lpf = {'type': 'float', 'name': 'LPF', 'min': '1000', 'max': '20000', 'steps': '19001',
+               'showAsInteger': 'true', 'units': 'Hz'}
+        self.assertEqual(normalize_parameter(lpf)['step'], 1.0)
         # No step without showAsInteger, without whole spacing, or on a curved taper.
         for changes in ({'showAsInteger': 'false'}, {'steps': '49'}, {'steps': ''}, {'skew': '0.5'}):
             self.assertNotIn('step', normalize_parameter({**semitones, **changes}), changes)
