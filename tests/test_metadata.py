@@ -9,6 +9,17 @@ class MetadataTests(unittest.TestCase):
             self.assertEqual(c['exponent'], exponent)
             self.assertEqual(c['verification'], 'not_hardware_calibrated')
 
+    def test_integer_controls_move_in_whole_steps(self):
+        semitones = {'type': 'float', 'name': 'SEMITONES', 'min': '-12', 'max': '12', 'steps': '25',
+                     'skew': 'LIN_SKEW', 'showAsInteger': 'true'}
+        self.assertEqual(normalize_parameter(semitones)['step'], 1.0)
+        lpf = {'type': 'float', 'name': 'LPF', 'min': '1000', 'max': '20000', 'steps': '19001',
+               'showAsInteger': 'true', 'units': 'Hz'}
+        self.assertEqual(normalize_parameter(lpf)['step'], 1.0)
+        # No step without showAsInteger, without whole spacing, or on a curved taper.
+        for changes in ({'showAsInteger': 'false'}, {'steps': '49'}, {'steps': ''}, {'skew': '0.5'}):
+            self.assertNotIn('step', normalize_parameter({**semitones, **changes}), changes)
+
     def test_implicit_tapers_use_hardware_calibration(self):
         for patch, exponent in [({}, 1.0), ({'skew': 'LOG_SKEW'}, 0.3)]:
             c = normalize_parameter({'type': 'float', 'min': '20', 'max': '10000'} | patch)

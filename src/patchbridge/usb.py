@@ -491,6 +491,10 @@ class USBAdapter:
                 steps = int(definition.get('steps', '0'))
                 if steps < 2 or abs(value*(steps-1)-round(value*(steps-1))) > 1e-5:
                     raise BridgeError('invalid_value', 'Value must select a declared option step.')
+            elif definition.get('control', {}).get('step'):
+                steps = int(definition['steps'])
+                if abs(value*(steps-1)-round(value*(steps-1))) > 1e-5:
+                    raise BridgeError('invalid_value', 'Value must land on a whole step.')
             # A plain write lands on the active scene once a parameter is scene-assigned, and on
             # every scene otherwise. No scene_mode flag, as in Cortex Control.
             self.qc.set_param(*block['position'], int(parameter), value)

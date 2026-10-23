@@ -42,6 +42,32 @@ public struct ParameterControl: Codable {
     public var active_when: ActiveWhen? = nil
     /// An internal value the QC never shows (hidden="true" or an empty layout slot). Never listed or written.
     public var hidden: Bool? = nil
+    /// Whole steps the QC moves in (Transpose SEMITONES: 1). Values between steps are refused.
+    public var step: Double? = nil
+
+    /// How far one nudge moves the value in display units.
+    public var increment: Double { step ?? 0.1 }
+    /// `value` rounded to the nearest step, or to 0.1 without one.
+    public func snapped(_ value: Double, fine: Bool = false) -> Double {
+        if let step, let lo = minimum { return lo + ((value - lo) / step).rounded() * step }
+        let unit = fine ? 0.05 : 0.1
+        return (value / unit).rounded() * unit
+    }
+    /// A display value as the QC shows it: whole numbers for stepped controls.
+    public func formatted(_ value: Double, fine: Bool = false) -> String {
+        String(format: step != nil ? "%.0f" : fine ? "%.2f" : "%.1f", value)
+    }
+    /// A new value must land on a step; a current one may sit between (the QC holds -1.03 semitones as -1).
+    public func acceptsEdit(_ value: ParameterValue) -> Bool {
+        guard accepts(value) else { return false }
+        return kind != "number" || displayValue(value).map(onStep) == true
+    }
+    private func onStep(_ value: Double) -> Bool {
+        guard let step else { return true }
+        guard step > 0, let lo = minimum else { return false }
+        let steps = (value - lo) / step
+        return abs(steps - steps.rounded()) < 0.001
+    }
 
     /// Raw QC normalized -> declared display units. Unknown metadata returns nil.
     public func displayValue(_ raw: ParameterValue) -> Double? {
@@ -57,7 +83,9 @@ public struct ParameterControl: Codable {
               let lo = minimum, let hi = maximum, lo.isFinite, hi.isFinite, hi > lo,
               let skew = exponent, skew.isFinite, skew > 0 else { return nil }
         let value = lo + (hi - lo) * pow(n, 1 / skew)
-        return value.isFinite ? value : nil
+        guard value.isFinite else { return nil }
+        // Float readback lands a hair off the step; show the step itself.
+        return step != nil && onStep(value) ? snapped(value) : value
     }
     public func wireValue(display: Double) -> ParameterValue? {
         if editable, encoding == "native", displayValue(.number(display)) != nil { return .number(display) }
@@ -67,8 +95,10 @@ public struct ParameterControl: Codable {
         }
         guard editable, kind == "number", encoding == "qc_normalized", mapping == "power",
               display.isFinite, let lo = minimum, let hi = maximum, lo.isFinite, hi.isFinite,
-              hi > lo, (lo...hi).contains(display), let skew = exponent, skew.isFinite, skew > 0 else { return nil }
-        return .number(pow((display - lo) / (hi - lo), skew))
+              hi > lo, (lo...hi).contains(display), let skew = exponent, skew.isFinite, skew > 0,
+              onStep(display) else { return nil }
+        let value = step != nil ? snapped(display) : display
+        return .number(pow((value - lo) / (hi - lo), skew))
     }
     /// Points with both coordinates strictly increasing, spanning 0...1 and the declared range.
     private var table: [[Double]]? {
@@ -335,7 +365,7 @@ public final class GenericEditor {
         guard let snapshot, let session, let connection else { throw EditorFailure.disconnected }
         guard pending == nil else { throw EditorFailure.busy }
         guard readOnlyReason(blockID: blockID, parameterID: parameterID) == nil else { throw EditorFailure.unsupported }
-        guard control(blockID: blockID, parameterID: parameterID)?.accepts(value) == true else { throw EditorFailure.invalidValue }
+        guard control(blockID: blockID, parameterID: parameterID)?.acceptsEdit(value) == true else { throw EditorFailure.invalidValue }
         let id = UUID().uuidString
         let command: [String: Any] = ["version": 1, "id": id, "operation": "set_parameter", "connection_id": connection,
             "session_id": session, "revision": revision, "preset_id": snapshot.preset_id, "scene": snapshot.scene,

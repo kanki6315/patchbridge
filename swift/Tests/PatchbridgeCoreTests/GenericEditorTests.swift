@@ -107,6 +107,34 @@ final class GenericEditorTests: XCTestCase {
         XCTAssertNil(control.displayValue(.boolean(true)))
         XCTAssertNil(control.wireValue(display: .nan))
     }
+    func testTransposeMovesOnlyInWholeSemitones() throws {
+        let model = try editor(fixture())
+        let semitones = try XCTUnwrap(model.control(blockID: "0:4", parameterID: "3"))
+        XCTAssertEqual(semitones.step, 1)
+        XCTAssertEqual(semitones.increment, 1)
+        let wire = try XCTUnwrap(semitones.wireValue(display: 7))
+        XCTAssertEqual(wire, .number(19.0 / 24))
+        XCTAssertEqual(semitones.displayValue(wire), 7)
+        XCTAssertEqual(semitones.formatted(-1), "-1")
+        XCTAssertNil(semitones.wireValue(display: 6.5))
+        XCTAssertNil(semitones.wireValue(display: 0.1))
+        XCTAssertThrowsError(try model.propose(blockID: "0:4", parameterID: "3", value: .number(12.5 / 24)))
+        XCTAssertNoThrow(try model.propose(blockID: "0:4", parameterID: "3", value: .number(13.0 / 24)))
+        // The captured preset holds -1.03 semitones: shown as the QC shows it, still editable.
+        let current = try XCTUnwrap(semitones.displayValue(model.value(blockID: "0:4", parameterID: "3") ?? .unknown))
+        XCTAssertEqual(semitones.formatted(current), "-1")
+        XCTAssertNil(model.readOnlyReason(blockID: "0:4", parameterID: "3"))
+        XCTAssertEqual(semitones.snapped(current + semitones.increment), 0)
+        // Stepping and dial positions snap to the nearest semitone.
+        XCTAssertEqual(semitones.snapped(3.4), 3)
+        XCTAssertEqual(semitones.snapped(-2.6), -3)
+        // Unstepped controls keep their 0.1 steps.
+        let threshold = try XCTUnwrap(model.control(blockID: "0:1", parameterID: "0"))
+        XCTAssertNil(threshold.step)
+        XCTAssertEqual(threshold.increment, 0.1)
+        XCTAssertNotNil(threshold.wireValue(display: -24.3))
+        XCTAssertEqual(threshold.formatted(-24.3), "-24.3")
+    }
     func testPendingEditDoesNotMutateConfirmedValueAndRejectRestores() throws {
         let model = try editor(fixture()); let original = model.value(blockID: "0:1", parameterID: "0")
         let edit = try model.propose(blockID: "0:1", parameterID: "0", value: .number(0.5))

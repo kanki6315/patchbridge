@@ -91,7 +91,8 @@ required encryption to work around a pairing failure.
 - The portrait overview shows scene indicators, the four-by-eight grid map,
   and a selectable row's blocks. Landscape offers the full grid and an inspector.
 - Open a block for its metadata-backed controls. The dial uses normalized knob
-  travel, with 0.1 display-unit steps and hold-and-slide-out 0.05 fine steps.
+  travel, with 0.1 display-unit steps and hold-and-slide-out 0.05 fine steps;
+  controls the QC shows as whole numbers (Transpose SEMITONES) move in whole steps only.
   Dragging sends only on release; tapping the number opens a signed numeric pad.
 - Confirmed values remain authoritative. Pending edits are dashed; rejected,
   adjusted, externally changed and saved state are reported. A changed snapshot

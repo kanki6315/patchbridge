@@ -130,6 +130,25 @@ class USBWriteTests(TestCase):
             self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 0.5})
         self.adapter.qc.set_param.assert_called_once()
 
+    def test_whole_step_control_writes_only_whole_steps(self):
+        # Transpose SEMITONES: -12...12 in 25 steps, so only whole semitones.
+        block = {'id': '0:3', 'position': [0, 3], 'model_id': '1', 'editable_parameters': ['0'],
+                 'scenes': {'F': {'parameters': {'0': 0.5}}}}
+        self.state['blocks'] = [block]
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.metadata = {'models': {'1': {'parameters': {'0': {
+            'type': 'float', 'steps': '25', 'control': {'step': 1.0}}}}}}
+        up = deepcopy(self.state); up['blocks'][0]['scenes']['F']['parameters']['0'] = 13 / 24
+        self.adapter.snapshot = Mock(side_effect=[self.state, up])
+        self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 13 / 24})
+        self.adapter.qc.set_param.assert_called_once_with(0, 3, 0, 13 / 24)
+        self.adapter.state = deepcopy(self.state)
+        self.adapter.snapshot = Mock(return_value=self.state)
+        with self.assertRaises(BridgeError) as caught:
+            self.adapter.execute('set_parameter', {'block_id': '0:3', 'parameter_id': '0', 'value': 12.5 / 24})
+        self.assertEqual(caught.exception.code, 'invalid_value')
+        self.adapter.qc.set_param.assert_called_once()
+
     def bypass_block(self, bypassed):
         return {'id': '0:3', 'position': [0, 3], 'model_id': '1', 'editable_parameters': [],
                 'scenes': {'F': {'bypass': bypassed, 'parameters': {}}}}
