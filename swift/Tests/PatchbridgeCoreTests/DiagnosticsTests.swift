@@ -109,7 +109,7 @@ extension DiagnosticsTests {
         let padToken = try XCTUnwrap(phone.send("hello", from: pad, fields: ["device_name": "Jamie’s iPad"])["connection_id"] as? String)
         try host.approvePending()
         _ = phone.send("connect", from: pad, token: padToken)
-        _ = phone.send("snapshot", from: pad, token: padToken, session: session)
+        _ = phone.send("catalog", from: pad, token: padToken, session: session)
         for _ in 0..<3 { _ = phone.send("hello", from: UUID()) }
         _ = phone.send("hello", from: UUID()) // A fifth device.
         let iPhone = try XCTUnwrap(host.presentation.devices.first { $0.name == "Jamie’s iPhone" })
@@ -122,8 +122,8 @@ extension DiagnosticsTests {
         }
         XCTAssertEqual(tagged("bridgeApproved"), [1, 2])
         XCTAssertEqual(tagged("requestStarted", "connect"), [1]) // The iPad joined without a second connect.
-        XCTAssertEqual(tagged("requestStarted", "identify"), [2])
-        XCTAssertTrue(tagged("requestStarted", "snapshot").contains(2))
+        XCTAssertEqual(tagged("requestStarted", "identify"), []) // Its identity came from the bridge's own connect.
+        XCTAssertTrue(tagged("requestStarted", "catalog").contains(2))
         XCTAssertTrue(recorded.contains { $0["code"] as? String == "bridge_full" && $0["device"] == nil })
         XCTAssertTrue(recorded.contains { $0["code"] as? String == "revoked" && $0["device"] as? Int == 1 })
         XCTAssertEqual(tagged("bridgeRevoked").first, 1)

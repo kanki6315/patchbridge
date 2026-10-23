@@ -130,7 +130,9 @@ public final class EditorCoordinator {
     private struct Request { let id: String; let operation: String; let deadline: TimeInterval; var trustOffered = false }
     private var request: Request?
 
-    public init(pollInterval: TimeInterval = 2, timeout: TimeInterval = 60,
+    /// Polls are answered from the bridge's own reading of the QC, without touching USB, so they
+    /// can be frequent; the bridge reads the QC every `SharedUSBSession.pollInterval`.
+    public init(pollInterval: TimeInterval = 1, timeout: TimeInterval = 60,
                 automaticPolling: Bool = true, phoneName: String = DeviceIdentity.phoneName, diagnostics: Diagnostics = .shared,
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
                 makeTransport: @escaping () -> EditorTransport = { BLECentral(automaticallyConnect: false) }) {

@@ -3,8 +3,10 @@
 `dist/Patchbridge.app` is a standalone native Mac bridge with bundle ID
 `com.arjunakankipati.patchbridge`. It uses the same Patch Cable Icon Composer asset
 as the iPhone app. It starts stopped. **Start bridge** starts Bluetooth advertising
-and the bundled USB helper; USB opens only after a phone is explicitly approved and
-requests a connection. The iPhone must compare the code, then tap **I’ve approved it**.
+and the bundled USB helper, and the bridge opens USB and reads the QC every 2 s on its
+own until **Stop**, whether or not a phone is connected. Phones are answered from that
+reading; only an approved phone can edit. The iPhone must compare the code, then tap
+**I’ve approved it**.
 Close Cortex Control and connect a QC running verified CorOS 4.1.1.
 
 **Use simulation**, available while stopped, selects the offline walkthrough instead.

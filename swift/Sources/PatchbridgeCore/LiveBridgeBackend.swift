@@ -3,7 +3,9 @@ import Foundation
 
 /// Owns USB and session state on the host's worker queue. The Bluetooth peripheral runs on
 /// its own queue and delivers each device's messages here, so USB requests never block it.
-/// Reads and writes originate only from explicitly approved devices; no edit is replayed.
+/// The bridge opens USB and reads the QC itself from Start to Stop, whether or not any device
+/// is connected, and answers every device's reads from that one reading. Writes originate
+/// only from explicitly approved devices; no edit is replayed.
 final class LiveBridgeBackend: OfflineBridgeBackend {
     static let deviceLimit = 4
     let isLive = true
@@ -24,18 +26,24 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     private var revoked = [UUID: Int]()
     private var snapshot: [String: Any]?
     private var catalog: [String: Any]?
-    private var status = "Starting Bluetooth. USB opens after you approve a phone and it requests a connection."
+    private var status = LiveBridgeBackend.startingStatus
+    private static let startingStatus = "Starting Bluetooth and reading the QC over USB. Close Cortex Control while the bridge runs."
     private let now: () -> TimeInterval
+    /// The worker queue the bridge's own QC reads run on; nil leaves them to `tick()`'s caller.
+    private let queue: DispatchQueue?
+    private var poller: DispatchSourceTimer?
+    /// The last poll couldn't reach the QC; its status stays until a read succeeds.
+    private var qcMissing = false
     /// Outlives each start's shared session, so Stop keeps trusted devices.
     private let trust: TrustRegistry
     init(peripheral: BridgePeripheral, makeHelper: @escaping () throws -> HelperClient = { try HelperClient(bundle: .main, liveUSB: true) },
-         trust: TrustRegistry = TrustRegistry(), now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
-        self.peripheral = peripheral; self.makeHelper = makeHelper; self.trust = trust; self.now = now
+         trust: TrustRegistry = TrustRegistry(), queue: DispatchQueue? = nil, now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+        self.peripheral = peripheral; self.makeHelper = makeHelper; self.trust = trust; self.queue = queue; self.now = now
     }
     func start() throws {
         stop()
         let helper = try makeHelper(); self.helper = helper
-        let shared = SharedUSBSession(helper: helper, requestTimeout: 40, allowsRecovery: true, deviceLimit: Self.deviceLimit, trust: trust, now: now)
+        let shared = SharedUSBSession(helper: helper, requestTimeout: 40, allowsRecovery: true, deviceLimit: Self.deviceLimit, trust: trust, keepsSession: true, now: now)
         self.shared = shared
         shared.onMutation = { [weak self] device, request, response in
             guard let self else { return }
@@ -50,9 +58,46 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             guard let self, self.shared != nil else { return }
             self.status = message; self.publish()
         }
-        status = "Starting Bluetooth. USB opens after you approve a phone and it requests a connection."
+        status = Self.startingStatus; qcMissing = false
         publish()
         peripheral.start(name: shared.macName)
+        if let queue {
+            // The first read runs after Start returns, so the window shows the bridge running at once.
+            let poller = DispatchSource.makeTimerSource(queue: queue)
+            poller.schedule(deadline: .now(), repeating: 0.5)
+            poller.setEventHandler { [weak self] in self?.tick() }
+            poller.resume(); self.poller = poller
+        }
+    }
+
+    /// The bridge's own read of the QC: opens USB when it isn't open, otherwise refreshes the
+    /// state every device is answered from. Called every half second; reads only when due.
+    func tick() {
+        guard let shared else { return }
+        let reply: [String: Any]?
+        do { reply = try shared.poll() } catch { helperFailed(); return }
+        guard let reply else { return }
+        if reply["status"] as? String == "confirmed" {
+            if let state = (reply["result"] as? [String: Any])?["state"] as? [String: Any] { show(state) }
+            if qcMissing { qcMissing = false; status = "QC connected. Open Patchbridge on your iPhone and choose this Mac." }
+        } else {
+            let code = (reply["error"] as? [String: Any])?["code"] as? String
+            guard code != "device_busy" else { return } // Mid scene or preset change; the next read settles it.
+            qcMissing = true
+            status = code == "unsupported_firmware" ? "This USB adapter requires verified CorOS 4.1.1. Use a QC on a supported firmware."
+                : "QC not reachable over USB. Check the cable and close Cortex Control; the bridge keeps trying."
+        }
+        publish()
+    }
+    private func show(_ state: [String: Any]) {
+        guard let dirty = state["dirty"] as? Bool else { return }
+        snapshot = state
+        presentation.preset = state["name"] as? String; presentation.scene = state["scene"] as? String; presentation.dirty = dirty
+    }
+    private func helperFailed() {
+        // The helper's transport failed: approval cannot survive this failure.
+        stop(); state = (.failed, "The USB helper stopped responding. Restart the bridge and approve your devices again. An uncertain edit is never replayed.")
+        onChange?()
     }
 
     private func ids(_ state: BridgeDevice.State) -> [UUID] { order.filter { states[$0] == state } }
@@ -121,7 +166,6 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         let name = device.phoneName, trusted = device.trustEntryID != nil
         states[id] = nil; order.removeAll { $0 == id }
         shared.remove(device)
-        if !states.values.contains(where: { $0 != .awaitingApproval }) { resetQCState() }
         publish(.running, trusted ? "\(name) disconnected. It can reconnect without a code until you revoke trust."
                 : "\(name) disconnected. Open Patchbridge on it to connect with fresh approval.")
     }
@@ -139,9 +183,10 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         deviceLeft(id); revoked[id] = index
     }
     func revokeTrust(id: UUID) { shared?.revokeTrust(id: id); publish() }
-    func refresh() throws {} // Devices poll; the Mac must not create a competing USB session.
+    func refresh() throws {} // The bridge reads the QC on its own schedule (`tick`).
     func clearRecentEdits() { presentation.recentEdits.removeAll(); onChange?() }
     func stop() {
+        poller?.cancel(); poller = nil
         peripheral.onMessage = nil; peripheral.onDisconnect = nil; peripheral.onStatus = nil; peripheral.stop()
         if let shared { shared.devices.forEach(shared.remove) }
         devices.removeAll(); states.removeAll(); order.removeAll(); revoked.removeAll()
@@ -184,12 +229,10 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             } else if reply["status"] as? String == "confirmed" {
                 let result = reply["result"] as? [String: Any]
                 if operation == "catalog" { catalog = result }
-                if let state = result?["state"] as? [String: Any], let dirty = state["dirty"] as? Bool {
-                    snapshot = state; states[id] = .connected
-                    presentation.preset = state["name"] as? String; presentation.scene = state["scene"] as? String
-                    presentation.dirty = dirty
+                if let state = result?["state"] as? [String: Any], state["dirty"] is Bool {
+                    show(state); states[id] = .connected
                     if operation == "recover" { catalog = nil }
-                }
+                } else if result?["unchanged"] as? Bool == true { states[id] = .connected }
                 if operation == "disconnect" { end(id); return reply }
             } else if (reply["error"] as? [String: Any])?["code"] as? String == "unsupported_firmware" {
                 event = (.approving, "This USB adapter requires verified CorOS 4.1.1. Disconnect the device and use a supported QC firmware.")
@@ -205,9 +248,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             case BridgeFailure.protocolError: code = "invalid_request"
             default:
                 let response = failure(request, code: "disconnected", token: device.token)
-                // The helper's transport failed: approval cannot survive this failure.
-                stop(); state = (.failed, "The USB helper stopped responding. Restart the bridge and approve your devices again. An uncertain edit is never replayed.")
-                onChange?()
+                helperFailed()
                 return response
             }
             return failure(request, code: code, token: device.token)
