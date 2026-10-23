@@ -49,6 +49,9 @@ Payload is part of a UTF-8 JSON object. Use the platform's negotiated maximum
 write/notification length, capped at 512 bytes here. One transfer per direction;
 maximum message 1 MiB, assembly lifetime 5 seconds. Missing, reordered, expired,
 or oversized transfers fail. New connections discard all partial transfers.
+A phone that sends `"compression": ["deflate"]` in its `hello` may get replies with
+protocol byte `2`: the reassembled payload is raw DEFLATE of the JSON, and the 1 MiB
+limit applies after inflating. Replies under 512 bytes, or that don't shrink, stay `1`.
 
 Phone flow:
 

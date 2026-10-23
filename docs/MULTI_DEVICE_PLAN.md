@@ -107,7 +107,8 @@ routed through recovery.
 
 - Two devices join one helper session; the second `connect` never reaches the helper.
 - A stale write from device B after device A's write returns `stale_context`.
-- The helper disconnects only after the last device leaves.
+- The helper disconnects only after the last device leaves (superseded: the live bridge
+  now keeps the session from Start to Stop and reads the QC itself; see `SharedUSBSession.poll`).
 - Revoking A leaves B's requests working.
 - Recovery reconnects the helper once and both devices resume.
 - **B returns after A has already recovered:** B's first read gets

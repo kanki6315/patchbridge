@@ -111,10 +111,23 @@ public final class SharedUSBSession {
     private var admissions = 0
     private var retryAt: TimeInterval = 0
     private var retryDelay: TimeInterval = 1
+    /// The bridge reads the QC itself (`poll`) and keeps its session open with no device
+    /// connected. Otherwise the session lives only while devices are joined.
+    let keepsSession: Bool
+    /// How often `poll` re-reads the QC.
+    static let pollInterval: TimeInterval = 2
+    /// A device's snapshot is answered from `cached` while it is at most this old.
+    static let freshFor: TimeInterval = 3
+    /// The QC state as last read on the current helper session, by whichever request read it.
+    /// When the bridge keeps the session (and so keeps it fresh with `poll`), devices' snapshots
+    /// and joins are answered from it, so N devices cost one USB read, not N.
+    private(set) var cached: (state: Any, revision: Int, at: TimeInterval)?
+    /// The QC's identity from this session's `connect`.
+    private var identity: Any?
     public init(helper: HelperClient, requestTimeout: TimeInterval = 5, allowsRecovery: Bool = false,
                 deviceLimit: Int = 4, macName: String = DeviceIdentity.macName, trust: TrustRegistry = TrustRegistry(),
-                now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
-        self.helper = helper; self.trust = trust; self.requestTimeout = requestTimeout
+                keepsSession: Bool = false, now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+        self.helper = helper; self.trust = trust; self.requestTimeout = requestTimeout; self.keepsSession = keepsSession
         self.allowsRecovery = allowsRecovery; self.now = now; self.deviceLimit = deviceLimit
         self.macName = DeviceIdentity.name(macName, fallback: "Mac")
     }
@@ -156,20 +169,66 @@ public final class SharedUSBSession {
         catch { failAll(); throw error }
         let code = (response["error"] as? [String: Any])?["code"] as? String
         if allowsRecovery && ["adapter_failure", "disconnected"].contains(code ?? ""), response["session_id"] as? String == nil {
-            recovering = true; helperSession = nil
+            recovering = true; helperSession = nil; cached = nil; identity = nil
             retryAt = now() + retryDelay; retryDelay = min(retryDelay * 2, 8)
             return (response, true)
         }
         adopt(response)
+        remember(response, operation: message["operation"] as? String)
         return (response, false)
     }
     private func adopt(_ response: [String: Any]) {
         let session = response["session_id"] as? String
         if session != helperSession {
             helperSession = session; lastWrite = nil; tunerModes.removeAll() // A new helper session starts with the tuner off.
+            cached = nil; identity = nil
             if session != nil { generation += 1 }
         }
         if let value = response["revision"], !(value is NSNull) { revision = value }
+    }
+    private static func number(_ value: Any?) -> Int? {
+        (value as? NSNumber).flatMap { String(cString: $0.objCType) == "c" ? nil : $0.intValue }
+    }
+    /// Every confirmed state the helper sends is the newest reading of the QC; an edit whose
+    /// outcome isn't confirmed leaves the QC unknown until it is read again.
+    private func remember(_ response: [String: Any], operation: String?) {
+        guard helperSession != nil, let revision = Self.number(response["revision"]) else { cached = nil; return }
+        let result = response["result"] as? [String: Any]
+        if response["status"] as? String == "confirmed", let state = result?["state"], !(state is NSNull) {
+            cached = (state, revision, now())
+            if operation == "connect" { identity = result?["device"] }
+        } else if response["status"] as? String == "confirmed", result?["unchanged"] as? Bool == true, cached?.revision == revision {
+            cached?.at = now()
+        } else if CentralRouter.mutations.contains(operation ?? "") || response["status"] as? String != "confirmed" && operation == "snapshot" {
+            cached = nil
+        }
+    }
+
+    /// The bridge's own read of the QC, run every `pollInterval` whether or not any device is
+    /// connected: opens the USB session when there is none (with the recovery backoff), and
+    /// otherwise refreshes `cached`. Returns the helper's reply, or nil when nothing was due.
+    @discardableResult
+    func poll() throws -> [String: Any]? {
+        guard let session = helperSession else {
+            guard canRecoverNow else { return nil }
+            let opened = try forward(["operation": "connect"])
+            if !opened.recovering, opened.response["status"] as? String == "confirmed" { recovering = false; retryDelay = 1 }
+            else if !opened.recovering { retryAt = now() + retryDelay; retryDelay = min(retryDelay * 2, 8) }
+            return opened.response
+        }
+        guard now() - (cached?.at ?? -.infinity) >= Self.pollInterval else { return nil }
+        return try forward(["operation": "snapshot", "session_id": session]).response
+    }
+    /// A snapshot for a device: from `cached` while fresh, otherwise read from the QC. A device
+    /// that names the revision it already holds gets `unchanged` instead of the state again.
+    func snapshot(_ device: DeviceSession, _ message: [String: Any]) throws -> (response: [String: Any], recovering: Bool) {
+        guard keepsSession, let session = helperSession, message["session_id"] as? String == session,
+              let cached, now() - cached.at <= Self.freshFor else { return try forward(message, for: device) }
+        let known = Self.number((message["payload"] as? [String: Any])?["known_revision"])
+        let result: [String: Any] = known == cached.revision ? ["unchanged": true] : ["state": cached.state]
+        let response: [String: Any] = ["version": 1, "type": "response", "status": "confirmed", "session_id": session,
+                                       "revision": cached.revision, "result": result]
+        return (response, false)
     }
 
     /// Joins the device to the current helper session, opening one if none exists. Later
@@ -178,12 +237,16 @@ public final class SharedUSBSession {
     func join(_ device: DeviceSession, _ message: [String: Any]) throws -> (response: [String: Any], recovering: Bool) {
         var result: (response: [String: Any], recovering: Bool)
         if let session = helperSession {
-            result = try forward(["operation": "snapshot", "session_id": session], for: device)
+            // The bridge already holds the QC's state and identity: usually no USB at all.
+            result = try snapshot(device, ["operation": "snapshot", "session_id": session])
             guard !result.recovering, result.response["status"] as? String == "confirmed" else { return result }
-            let identity = try forward(["operation": "identify", "session_id": session], for: device)
-            guard !identity.recovering, identity.response["status"] as? String == "confirmed" else { return identity }
+            if identity == nil || !keepsSession {
+                let identified = try forward(["operation": "identify", "session_id": session], for: device)
+                guard !identified.recovering, identified.response["status"] as? String == "confirmed" else { return identified }
+                identity = identified.response["result"]
+            }
             let state = (result.response["result"] as? [String: Any])?["state"] ?? NSNull()
-            result.response["result"] = ["device": identity.response["result"] ?? NSNull(), "state": state]
+            result.response["result"] = ["device": identity ?? NSNull(), "state": state]
         } else {
             var forwarded = message
             forwarded["operation"] = "connect"; forwarded.removeValue(forKey: "session_id")
@@ -214,19 +277,19 @@ public final class SharedUSBSession {
         _ = try? helper.request(["operation": "tuner", "session_id": session, "payload": ["mode": tunerMode]])
     }
 
-    /// The last device to leave closes the helper session; earlier ones leave it open.
-    /// A device's own `disconnect` is forwarded only when it is the last one.
+    /// The last device to leave closes the helper session, unless the bridge keeps it; earlier
+    /// ones leave it open. A device's own `disconnect` is forwarded only when it closes it.
     func leave(_ device: DeviceSession, forwarding message: [String: Any]? = nil) throws -> [String: Any] {
         joined.remove(ObjectIdentifier(device)); device.adoptedGeneration = nil
         releaseTuner(ObjectIdentifier(device))
         var response: [String: Any] = ["version": 1, "status": "confirmed", "result": [String: Any](),
                                        "session_id": helperSession ?? NSNull(), "revision": revision]
-        guard joined.isEmpty else { return response }
+        guard joined.isEmpty, !keepsSession else { return response }
         if var message {
             if let helperSession { message["session_id"] = helperSession }
             response = try forward(message, for: device).response
         }
-        else if let session = helperSession { _ = try? helper.request(["operation": "disconnect", "session_id": session], device: device.index); helperSession = nil }
+        else if let session = helperSession { _ = try? helper.request(["operation": "disconnect", "session_id": session], device: device.index); helperSession = nil; cached = nil; identity = nil }
         if helperSession == nil { recovering = false; retryDelay = 1; retryAt = 0 }
         return response
     }
@@ -234,21 +297,21 @@ public final class SharedUSBSession {
     func simulateDeviceRemoval() throws {
         guard allowsRecovery, let session = helperSession else { throw BridgeFailure.disconnected }
         _ = try helper.request(["operation": "disconnect", "session_id": session])
-        helperSession = nil; recovering = true; retryAt = now() + 2; retryDelay = 1
+        helperSession = nil; cached = nil; identity = nil; recovering = true; retryAt = now() + 2; retryDelay = 1
     }
     /// Called from a device's deinit, so a released device never holds the helper session open.
     func forget(_ id: ObjectIdentifier) {
         admitted.removeAll { $0.device == nil }
         let wasJoined = joined.remove(id) != nil
         releaseTuner(id)
-        guard wasJoined, joined.isEmpty, let session = helperSession else { return }
+        guard wasJoined, joined.isEmpty, !keepsSession, let session = helperSession else { return }
         _ = try? helper.request(["operation": "disconnect", "session_id": session])
-        helperSession = nil; recovering = false; retryDelay = 1; retryAt = 0
+        helperSession = nil; cached = nil; identity = nil; recovering = false; retryDelay = 1; retryAt = 0
     }
     /// The helper's transport failed: no approval survives. Trust belongs to the devices, not
     /// the helper, so trusted devices reconnect without a code once the bridge is back.
     private func failAll() {
-        let all = devices; joined.removeAll(); helperSession = nil; tunerModes.removeAll()
+        let all = devices; joined.removeAll(); helperSession = nil; tunerModes.removeAll(); cached = nil; identity = nil
         if !all.isEmpty { helper.diagnostics.record(.bridgeRevoked) }
         recovering = false; retryDelay = 1; retryAt = 0
         for device in all { device.endConnection() }

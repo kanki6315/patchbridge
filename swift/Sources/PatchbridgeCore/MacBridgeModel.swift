@@ -230,13 +230,13 @@ final class MacBridgeModel: ObservableObject {
     /// The live bridge's trusted devices, shared by every live backend this app creates.
     private static let trust = TrustRegistry(storage: KeychainTrustStorage())
     init(backend: OfflineBridgeBackend? = nil) {
-        self.backend = backend ?? LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue), trust: Self.trust)
+        self.backend = backend ?? LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue), trust: Self.trust, queue: queue)
         isSimulation = !self.backend.isLive
         detail = isSimulation ? "Start the bridge to try a simulated phone connection." : "Connect your QC over USB and close Cortex Control. Start the bridge to connect your iPhone or iPad."
     }
     func setSimulation(_ enabled: Bool) {
         guard phase == .stopped, !busy else { return }
-        backend = enabled ? BundledOfflineBackend() : LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue), trust: Self.trust)
+        backend = enabled ? BundledOfflineBackend() : LiveBridgeBackend(peripheral: BLEPeripheral(queue: queue), trust: Self.trust, queue: queue)
         isSimulation = enabled
         presentation = MacBridgePresentation()
         detail = enabled ? "Simulation uses no Bluetooth or USB." : "Connect your QC over USB and close Cortex Control. Start the bridge to connect your iPhone or iPad."

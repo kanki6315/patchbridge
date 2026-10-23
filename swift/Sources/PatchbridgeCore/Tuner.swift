@@ -25,24 +25,32 @@ public struct TunerPitch: Equatable {
 }
 
 /// Steadies the QC's stream for display. The median of the last three readings means one stray
-/// reading as a note starts or dies never moves the needle, and silence is shown as soon as the
-/// QC stops sending (it sends nothing while no note rings).
+/// reading as a note starts or dies never moves the needle. Silence is decided by the bridge's
+/// answers, not the clock: the QC sends nothing while no note rings, so an answer with no new
+/// reading for `quietAfter` means quiet. While no answer comes back at all (the bridge is busy
+/// with a poll, or another device's request), the last pitch stays up to `holdAtMost`.
 public struct TunerTrack: Equatable {
-    /// No reading for this long means the strings are quiet.
-    public static let quietAfter: TimeInterval = 0.5
+    /// Answers with no reading for this long mean the strings are quiet. The QC's own stream
+    /// pauses for a few hundred milliseconds while a note rings.
+    public static let quietAfter: TimeInterval = 0.75
+    /// No answer for this long and the last pitch is too old to show.
+    public static let holdAtMost: TimeInterval = 2.5
     private var recent: [Double] = []
     public private(set) var lastReading: TimeInterval = -.infinity
+    private var lastAnswer: TimeInterval = -.infinity
     public init() {}
 
     public mutating func add(hz: Double, at time: TimeInterval) {
-        lastReading = time
+        lastReading = time; answered(at: time)
         guard hz > 0 else { recent.removeAll(); return }
         recent.append(hz)
         if recent.count > 3 { recent.removeFirst(recent.count - 3) }
     }
+    /// The bridge answered a read, with or without new readings.
+    public mutating func answered(at time: TimeInterval) { lastAnswer = max(lastAnswer, time) }
 
     public func pitch(at time: TimeInterval) -> TunerPitch? {
-        guard time - lastReading <= Self.quietAfter, !recent.isEmpty else { return nil }
+        guard !recent.isEmpty, lastAnswer - lastReading <= Self.quietAfter, time - lastReading <= Self.holdAtMost else { return nil }
         let sorted = recent.sorted()
         return TunerPitch(hz: sorted[sorted.count / 2])
     }

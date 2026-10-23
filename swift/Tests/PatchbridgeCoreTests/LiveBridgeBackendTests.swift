@@ -75,11 +75,57 @@ final class LiveBridgeBackendTests: XCTestCase {
         XCTAssertEqual(host.state?.0, .connected)
         phone.leave()
         XCTAssertEqual(host.state?.0, .running)
-        XCTAssertNil(host.presentation.preset)
+        XCTAssertEqual(host.presentation.preset, "Simulation 1") // The bridge keeps the QC open with no device.
         let next = phone.send("hello")
         XCTAssertNotEqual(next["connection_id"] as? String, token)
         XCTAssertEqual(host.presentation.phoneName, "iPhone")
         XCTAssertEqual((phone.send("connect", token: token)["error"] as? [String: Any])?["code"] as? String, "unauthorized")
+    }
+    func testBridgeReadsTheQCItselfAndAnswersEveryDeviceFromOneRead() throws {
+        let log = Diagnostics()
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let helper = try HelperClient(python: "/opt/homebrew/bin/python3", source: root.appendingPathComponent("src").path, diagnostics: log)
+        let phone = TestPeripheral(), pad = UUID()
+        var time = 10.0
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper }, now: { time })
+        defer { host.stop() }
+        try host.start()
+        func reads() throws -> Int {
+            let report = try JSONSerialization.jsonObject(with: log.reportData()) as! [String: Any]
+            return (report["events"] as! [[String: Any]]).filter { $0["event"] as? String == "requestStarted" && ["connect", "snapshot"].contains($0["operation"] as? String) }.count
+        }
+        // No device yet: the bridge opens USB and reads the QC on its own.
+        host.tick()
+        XCTAssertEqual(host.presentation.preset, "Simulation 1"); XCTAssertEqual(try reads(), 1)
+        host.tick(); XCTAssertEqual(try reads(), 1, "Not due yet")
+        func joined(_ id: UUID, _ name: String) throws -> (token: String, reply: [String: Any]) {
+            let token = try XCTUnwrap(phone.send("hello", from: id, fields: ["device_name": name])["connection_id"] as? String)
+            try host.approvePending()
+            return (token, phone.send("connect", from: id, token: token))
+        }
+        let first = try joined(phone.device, "iPhone"), second = try joined(pad, "iPad")
+        let session = try XCTUnwrap(first.reply["session_id"] as? String)
+        XCTAssertEqual(second.reply["session_id"] as? String, session)
+        XCTAssertNotNil((second.reply["result"] as? [String: Any])?["device"] as? [String: Any])
+        // Both devices poll; neither poll reaches USB, and one that already holds the state gets "unchanged".
+        let revision = try XCTUnwrap(first.reply["revision"] as? Int)
+        let full = phone.send("snapshot", token: first.token, session: session)
+        XCTAssertNotNil((full["result"] as? [String: Any])?["state"])
+        let same = phone.send("snapshot", from: pad, token: second.token, session: session, fields: ["payload": ["known_revision": revision]])
+        XCTAssertEqual((same["result"] as? [String: Any])?["unchanged"] as? Bool, true)
+        XCTAssertEqual(try reads(), 1)
+        // The bridge's next read refreshes what every device sees; an edit's state does too.
+        time += SharedUSBSession.pollInterval; host.tick(); XCTAssertEqual(try reads(), 2)
+        let edit: [String: Any] = ["revision": revision, "preset_id": "1", "scene": "A", "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": 7.5]]
+        XCTAssertEqual(phone.send("set_parameter", from: pad, token: second.token, session: session, fields: edit)["status"] as? String, "confirmed")
+        let after = phone.send("snapshot", token: first.token, session: session, fields: ["payload": ["known_revision": revision]])
+        XCTAssertEqual(after["revision"] as? Int, revision + 1); XCTAssertNotNil((after["result"] as? [String: Any])?["state"])
+        XCTAssertEqual(after["changed_by"] as? String, "iPad")
+        XCTAssertEqual(try reads(), 2)
+        // Everyone leaving keeps the session; the bridge goes on reading.
+        phone.leave(); phone.leave(pad)
+        time += SharedUSBSession.pollInterval; host.tick(); XCTAssertEqual(try reads(), 3)
+        XCTAssertEqual(host.state?.0, .running)
     }
     func testHelperFailurePreservesUnknownOutcomeAndRequiresNewApproval() throws {
         let helper = try helper(), phone = TestPeripheral()

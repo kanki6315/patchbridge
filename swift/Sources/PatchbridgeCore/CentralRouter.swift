@@ -28,6 +28,8 @@ final class CentralRouter {
         var inFlight = false
         var releasing = false
         var transfer: UInt32 = 0
+        /// The phone said in its hello that it reads deflated replies.
+        var deflate = false
         var outgoing: [Data] = []
         var receiver = ChunkReceiver(limit: CentralRouter.unadmittedMessageBytes)
     }
@@ -98,6 +100,7 @@ final class CentralRouter {
             guard let decoded = try JSONSerialization.jsonObject(with: message) as? [String: Any] else { throw BridgeFailure.protocolError }
             object = decoded
         } catch { fail(id); return .failed }
+        if object["operation"] as? String == "hello" { entry.deflate = (object["compression"] as? [String])?.contains("deflate") == true }
         entries[id] = entry
         if !entry.admitted && object["operation"] as? String != "hello" {
             reply(id, entry.epoch, PeripheralReply(message: Self.errorReply(object, code: "invalid_request", text: "Say hello before sending requests.")))
@@ -132,7 +135,7 @@ final class CentralRouter {
         do {
             let data = try JSONSerialization.data(withJSONObject: answer.message)
             entry.transfer &+= 1
-            entry.outgoing += try Chunks.split(data, limit: min(entry.limit, 512), transfer: entry.transfer)
+            entry.outgoing += try Chunks.split(data, limit: min(entry.limit, 512), transfer: entry.transfer, deflate: entry.deflate)
         } catch { fail(id); return }
         entries[id] = entry
         drain()

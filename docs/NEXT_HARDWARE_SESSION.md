@@ -17,16 +17,17 @@ None of the live phone → Mac → USB path has run against the QC yet.
 ## Current software wiring
 
 - **Mac bridge.** `dist/Patchbridge.app` opens stopped with live USB/Bluetooth
-  selected. Start bridge advertises over BLE; USB opens only after a phone is
-  approved and requests a connection. The bundled helper runs the pinned USB
+  selected. Start bridge advertises over BLE, opens USB and reads the QC every 2 s
+  until Stop, with or without a phone; phones' reads are answered from that reading,
+  and only an approved phone can edit. The bundled helper runs the pinned USB
   adapter (`--usb`), which exposes `set_parameter`, `set_bypass`, `select_scene`
   and File CREATE `save` only. `set_bypass` and the request queue fix were verified directly over
   USB on 2026-10-21, not yet through the bridge; see [USB results](USB_RESULTS_2026-10-21.md).
   **Use simulation** switches back to the bundled simulator with BLE and USB off.
   See [Mac bridge shell](MAC_BRIDGE_SHELL.md).
 - **iPhone app.** The designed app drives `EditorCoordinator` over BLE. It loads
-  capabilities, the snapshot, and the relevant catalog subset, then polls every 2 s
-  while idle. USB loss retries connect with capped backoff and reloads state;
+  capabilities, the snapshot, and the relevant catalog subset, then polls the bridge
+  every 1 s while idle (answered from the bridge's own reading, without USB). USB loss retries connect with capped backoff and reloads state;
   edits and saves are never replayed. A local demo mode loads the captured fixture
   without a bridge. The old `amp-1` 0–10 simulation editor is no longer the phone UI.
 - **Editable controls.** A parameter is editable only when the device marks it
