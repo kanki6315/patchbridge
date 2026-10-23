@@ -30,10 +30,7 @@ enum MacScreenshotPreview {
         app.setActivationPolicy(replay ? .regular : .prohibited)
         app.appearance = NSAppearance(named: .darkAqua)
         let root = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: fixture))) as! [String: Any]
-        var snapshot = root["snapshot"] as! [String: Any]
-        // Live QC snapshots mark normalized values; retain that envelope metadata.
-        snapshot["value_encoding"] = "qc_normalized"
-        let catalog = root["catalog"] as! [String: Any]
+        let snapshot = root["snapshot"] as! [String: Any]
         let directory = URL(fileURLWithPath: output)
         try FileManager.default.createDirectory(at: directory.appendingPathComponent("native"), withIntermediateDirectories: true)
         let suiteName = "PatchbridgeScreenshot-\(UUID().uuidString)"
@@ -46,8 +43,7 @@ enum MacScreenshotPreview {
             ("01-usb-connection", "Your Quad Cortex.\nConnected.", "Connect Quad Cortex to your Mac over USB.\nEdit from your iPhone over Bluetooth."),
             ("02-device-approval", "Approve the devices\nyou trust.", "Compare the code and approve your device.\nYou decide who can connect."),
             ("03-multiple-devices", "One Quad Cortex.\niPhone and iPad.", "Connect your iPhone and iPad to the same\nQuad Cortex session."),
-            ("04-confirmed-edits", "See every\nconfirmed edit.", "See what changed, which device sent it,\nand what your Quad Cortex confirmed."),
-            ("05-trusted-devices", "Reconnect\nwith confidence.", "Trusted devices reconnect without a code.\nRevoke access whenever you need.")
+            ("04-trusted-devices", "Reconnect\nwith confidence.", "Trusted devices reconnect without a code.\nRevoke access whenever you need.")
         ]
         let manifest = stories.map { ["file": $0.0, "title": $0.1, "subtitle": $0.2] }
         try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys])
@@ -68,23 +64,9 @@ enum MacScreenshotPreview {
                 p.devices.append(BridgeDevice(id: tabletID, connection: "preview-tablet", name: "Maya’s iPad", state: .connected, trustID: tabletID))
                 p.trusted.append(TrustedDevice(id: tabletID, name: "Maya’s iPad", connected: true))
             }
-            if index == 4 {
+            if index == 3 {
                 p.trusted.append(TrustedDevice(id: tabletID, name: "Maya’s iPad"))
                 p.trusted.append(TrustedDevice(id: UUID(), name: "Alex’s iPhone"))
-            }
-            if index == 0 || index == 3 {
-                let fixed = Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 21, hour: 16))!
-                var saved = snapshot; saved["dirty"] = false
-                p.recentEdits = [RecentBridgeEdit(request: ["operation": "save"], response: ["status": "confirmed", "result": ["state": saved]], snapshot: snapshot, catalog: catalog, device: p.phoneName, date: fixed)]
-                if index == 3 {
-                    p.recentEdits = []
-                    for blockID in ["0:1", "0:3"] {
-                        let block = (snapshot["blocks"] as! [[String: Any]]).first { $0["id"] as? String == blockID }!
-                        let scenes = block["scenes"] as! [String: [String: Any]]
-                        let params = scenes[p.scene!]!["parameters"] as! [String: Any]
-                        p.recentEdits.append(RecentBridgeEdit(request: ["operation": "set_parameter", "payload": ["block_id": blockID, "parameter_id": "0", "value": params["0"]!]], response: ["status": "confirmed", "result": ["state": snapshot]], snapshot: snapshot, catalog: catalog, device: p.phoneName, date: fixed))
-                    }
-                }
             }
             presentations.append(p)
             if replay { continue }
@@ -150,24 +132,18 @@ private final class FixtureClipPlayer: NSObject {
         func at(_ second: Double, _ work: @escaping () -> Void) {
             timers.append(Timer.scheduledTimer(withTimeInterval: delay + second, repeats: false) { _ in work() })
         }
-        var connected = presentations[0]; connected.recentEdits = []
-        let saved = presentations[0], approval = presentations[1], multiple = presentations[2]
-        let edited = presentations[3], trusted = presentations[4]
+        let connected = presentations[0], approval = presentations[1], multiple = presentations[2]
+        let trusted = presentations[3]
         backend.show(connected)
         at(0) { self.backend.show(connected) }
-        at(2.4) { self.backend.show(saved) }
         at(5.6) { self.backend.show(approval, phase: .awaitingApproval, detail: "Compare this code with the one on Steve’s iPhone before approving.") }
         at(7.8) { self.backend.show(approval, phase: .approving, detail: "Approving this connection and requesting a snapshot.") }
         at(8.4) { self.backend.show(connected) }
         at(11.2) { self.backend.show(connected) }
         at(13.4) { self.backend.show(multiple) }
         at(16.8) { self.backend.show(connected) }
-        at(18.2) {
-            var first = connected; first.recentEdits = Array(edited.recentEdits.prefix(1)); first.dirty = true
-            self.backend.show(first)
-        }
-        at(19.6) { var both = edited; both.dirty = true; self.backend.show(both) }
-        at(21.2) { var savedEdits = edited; savedEdits.recentEdits.insert(saved.recentEdits[0], at: 0); self.backend.show(savedEdits) }
+        at(18.2) { var edited = connected; edited.dirty = true; self.backend.show(edited) }
+        at(21.2) { self.backend.show(connected) }
         at(22.4) { self.backend.show(trusted) }
         at(24.4) { self.backend.show(multiple) }
         at(27.9) { self.backend.show(multiple) }

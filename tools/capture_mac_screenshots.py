@@ -9,7 +9,7 @@ import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ['HelperClient', 'Diagnostics', 'DeviceSession', 'SharedUSBSession', 'DeviceIdentity',
-           'MacBridgeModel', 'RecentBridgeEdit', 'GenericEditor', 'MacDesktopServices', 'Chunks',
+           'MacBridgeModel', 'GenericEditor', 'MacDesktopServices', 'Chunks',
            'BLEPeripheral', 'CentralRouter', 'LiveBridgeBackend']
 
 def main():

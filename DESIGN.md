@@ -387,12 +387,6 @@ appear in a Devices list on surface rows with Disconnect and Revoke Trust. The a
 card shows one device at a time, names it, and counts devices waiting behind it; the
 diagram's device node reads "2 devices" when more than one is connected.
 
-Recent edits are confirmed command history, not a list of current parameter values.
-Each row carries the sending device, preset/scene context, time, an outcome word and an icon. Explicit
-rejections say Not applied; a failed/absent readback says Outcome unknown. Missing
-metadata never receives invented names or units. Empty history is plain text. Twelve
-entries are retained in memory; the popover shows three and the window provides Clear.
-
 Notifications open the current request for code comparison. They never approve a phone,
 and old alerts are withdrawn when their state ends. No session tokens or preset data
 are included. This preserves the same approval rule in the window and menu bar.

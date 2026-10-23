@@ -22,8 +22,6 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     /// requests are refused until they say hello again or leave.
     /// Value: the device's diagnostics number.
     private var revoked = [UUID: Int]()
-    private var snapshot: [String: Any]?
-    private var catalog: [String: Any]?
     private var status = "Starting Bluetooth. USB opens after you approve a phone and it requests a connection."
     private let now: () -> TimeInterval
     /// Outlives each start's shared session, so Stop keeps trusted devices.
@@ -37,11 +35,6 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         let helper = try makeHelper(); self.helper = helper
         let shared = SharedUSBSession(helper: helper, requestTimeout: 40, allowsRecovery: true, deviceLimit: Self.deviceLimit, trust: trust, now: now)
         self.shared = shared
-        shared.onMutation = { [weak self] device, request, response in
-            guard let self else { return }
-            self.presentation.recentEdits.insert(RecentBridgeEdit(request: request, response: response, snapshot: self.snapshot, catalog: self.catalog, device: device), at: 0)
-            self.presentation.recentEdits = Array(self.presentation.recentEdits.prefix(12))
-        }
         peripheral.onMessage = { [weak self] id, message in
             self?.receive(id, message) ?? PeripheralReply(message: CentralRouter.errorReply(message, code: "disconnected", text: "The bridge stopped."))
         }
@@ -111,9 +104,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         publish(.approving, "Approved. Tap ‘I’ve approved it’ on \(device.phoneName) to read the QC.")
     }
     private func resetQCState() {
-        let edits = presentation.recentEdits
-        presentation = MacBridgePresentation(); presentation.recentEdits = edits
-        snapshot = nil; catalog = nil
+        presentation = MacBridgePresentation()
     }
     private func deviceLeft(_ id: UUID) {
         revoked[id] = nil
@@ -140,7 +131,6 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     }
     func revokeTrust(id: UUID) { shared?.revokeTrust(id: id); publish() }
     func refresh() throws {} // Devices poll; the Mac must not create a competing USB session.
-    func clearRecentEdits() { presentation.recentEdits.removeAll(); onChange?() }
     func stop() {
         peripheral.onMessage = nil; peripheral.onDisconnect = nil; peripheral.onStatus = nil; peripheral.stop()
         if let shared { shared.devices.forEach(shared.remove) }
@@ -183,12 +173,10 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
                 }
             } else if reply["status"] as? String == "confirmed" {
                 let result = reply["result"] as? [String: Any]
-                if operation == "catalog" { catalog = result }
                 if let state = result?["state"] as? [String: Any], let dirty = state["dirty"] as? Bool {
-                    snapshot = state; states[id] = .connected
+                    states[id] = .connected
                     presentation.preset = state["name"] as? String; presentation.scene = state["scene"] as? String
                     presentation.dirty = dirty
-                    if operation == "recover" { catalog = nil }
                 }
                 if operation == "disconnect" { end(id); return reply }
             } else if (reply["error"] as? [String: Any])?["code"] as? String == "unsupported_firmware" {

@@ -224,7 +224,7 @@ Bluetooth permission, finding the QC, an unavailable USB connection, Bluetooth o
 
 ### Approving an iPhone and recovering
 
-Approval uses the same short code as the iPhone. While connected, the window shows the preset, the scene, unsaved state and the last few edits, including any the QC didn't apply. With more than one iPhone or iPad connected, it lists each device with Disconnect, and every recent edit names the device that sent it. Recovery covers the QC being unplugged, the bridge stopping, and an untested CorOS version.
+Approval uses the same short code as the iPhone. While connected, the window shows the preset, the scene and unsaved state. With more than one iPhone or iPad connected, it lists each device with Disconnect. Recovery covers the QC being unplugged, the bridge stopping, and an untested CorOS version.
 
 <table>
 <tr><td align="center" valign="top"><a href="html/mac/m-request.html"><img src="mac/m-request.png" width="220" alt="Approve an iPhone"></a><br><sub>Approve an iPhone</sub></td><td align="center" valign="top"><a href="html/mac/m-connected.html"><img src="mac/m-connected.png" width="220" alt="Connected · recent edits"></a><br><sub>Connected · recent edits</sub></td><td align="center" valign="top"><a href="html/mac/m-unplugged.html"><img src="mac/m-unplugged.png" width="220" alt="QC unplugged mid-session"></a><br><sub>QC unplugged mid-session</sub></td><td align="center" valign="top"><a href="html/mac/m-helper.html"><img src="mac/m-helper.png" width="220" alt="Bridge stopped"></a><br><sub>Bridge stopped</sub></td></tr>
@@ -318,7 +318,7 @@ These designs assume changes that aren't built yet:
 - **Capabilities:** scene switching, bypass writes, Save As and preset switching stay hidden until the bridge advertises them.
 - **Mac app distribution:** Get Patchbridge for Mac assumes a Mac App Store link. A direct download changes only the link and the App Store wording. The short typeable address is a placeholder.
 - **Menu bar mode:** the offline shell now keeps running when its window closes, with a menu bar popover and a keep-running setting. Dock visibility and opt-in launch-at-login now use native macOS services. Stop and Quit both end the session.
-- **Bridge state for the Mac UI:** the window and popover need the current preset, scene, unsaved flag and a short log of recent edit outcomes from the coordinator.
+- **Bridge state for the Mac UI:** the window and popover need the current preset, scene and unsaved flag from the coordinator.
 - **Cortex Control and firmware checks:** the bridge needs to detect an unavailable USB connection, and to refuse writes on untested CorOS versions.
 - **Notifications:** approval requests and a lost QC are posted as macOS notifications, which needs notification permission.
 - **Fold posture:** the Duo layouts switch on hinge posture (flat, half-folded, closed). The half-folded layout needs the app to know that the device is half open, not just its size class. Without that signal, it falls back to the unfolded layout; the app implements the half-folded view and keeps it behind that signal (Debug builds can force it with `--half-folded`). The hinge position (across the inner screen's long side) is inferred from the screen sizes and should be checked against the hardware.

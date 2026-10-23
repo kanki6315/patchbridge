@@ -36,7 +36,6 @@ struct MacBridgePresentation {
     var scene: String?
     var dirty = false
     var recovering = false
-    var recentEdits: [RecentBridgeEdit] = []
     /// Devices past approval, in the order they connected.
     var connected: [BridgeDevice] { devices.filter { $0.state != .awaitingApproval } }
 }
@@ -62,7 +61,6 @@ protocol OfflineBridgeBackend: AnyObject {
     func interruptHelper()
     func interruptDevice() throws
     func editSimulation(value: Double, stale: Bool) throws
-    func clearRecentEdits()
 }
 extension OfflineBridgeBackend {
     var isLive: Bool { false }
@@ -71,7 +69,6 @@ extension OfflineBridgeBackend {
     var presentation: MacBridgePresentation { MacBridgePresentation() }
     func interruptDevice() throws { throw BridgeFailure.protocolError }
     func editSimulation(value: Double, stale: Bool) throws { throw BridgeFailure.protocolError }
-    func clearRecentEdits() {}
     func approve(device: UUID, connection: String, trust: Bool) throws { throw BridgeFailure.protocolError }
     func deny(device: UUID, connection: String) {}
     func disconnect(device: UUID, connection: String) {}
@@ -97,7 +94,6 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
     private var shared: SharedUSBSession?
     private var devices: [Simulated] = []
     private var snapshot: [String: Any]?
-    private var catalog: [String: Any]?
     private(set) var presentation = MacBridgePresentation()
     init(makeHelper: @escaping () throws -> HelperClient = { try HelperClient(bundle: .main) }) {
         self.makeHelper = makeHelper
@@ -105,11 +101,6 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
     func start() throws {
         stop(); let helper = try makeHelper(); self.helper = helper
         let shared = SharedUSBSession(helper: helper, allowsRecovery: true)
-        shared.onMutation = { [weak self] device, request, response in
-            guard let self else { return }
-            self.presentation.recentEdits.insert(RecentBridgeEdit(request: request, response: response, snapshot: self.snapshot, catalog: self.catalog, device: device), at: 0)
-            self.presentation.recentEdits = Array(self.presentation.recentEdits.prefix(12))
-        }
         self.shared = shared
     }
     private var connected: [Simulated] { devices.filter { $0.state == .connected } }
@@ -152,7 +143,6 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
         guard reply["status"] as? String == "confirmed", let session = reply["session_id"] as? String else { throw BridgeFailure.protocolError }
         device.helperSession = session; device.state = .connected
         try refresh(device)
-        if catalog == nil { catalog = try send(device, "catalog")["result"] as? [String: Any] }
         publish()
     }
     private func edit(from device: Simulated, value: Double, revision: Int) throws {
@@ -174,7 +164,6 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
         try edit(from: other, value: 3.5, revision: other.revision)
         try refresh(other)
     }
-    func clearRecentEdits() { presentation.recentEdits.removeAll() }
     func deny(device id: UUID, connection: String) {
         guard device(id, connection, in: .awaitingApproval) != nil else { publish(); return }
         end(id)
@@ -187,9 +176,8 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
         guard let index = devices.firstIndex(where: { $0.id == id }) else { return }
         shared?.remove(devices.remove(at: index).session)
         if connected.isEmpty {
-            snapshot = nil; catalog = nil
-            let history = presentation.recentEdits
-            presentation = MacBridgePresentation(); presentation.recentEdits = history
+            snapshot = nil
+            presentation = MacBridgePresentation()
         }
         publish()
     }
@@ -219,9 +207,8 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
     }
     func stop() {
         devices.forEach { shared?.remove($0.session) }; devices.removeAll()
-        snapshot = nil; catalog = nil
-        let history = presentation.recentEdits
-        presentation = MacBridgePresentation(); presentation.recentEdits = history
+        snapshot = nil
+        presentation = MacBridgePresentation()
         helper?.stop(); shared = nil; helper = nil
     }
     func interruptHelper() { helper?.stop() }
@@ -373,10 +360,6 @@ final class MacBridgeModel: ObservableObject {
         guard phase == .connected && !busy else { return }
         perform({ try $0.editSimulation(value: 7.5, stale: rejected) }, success: .connected,
                 message: rejected ? "The simulated edit was rejected. Confirmed state was reloaded." : "Gain confirmed by the simulator.")
-    }
-    func clearRecentEdits() {
-        guard !busy else { return }
-        perform({ $0.clearRecentEdits() }, success: phase, message: detail)
     }
     func simulateUSBRemoval() {
         guard phase == .connected && !busy else { return }
