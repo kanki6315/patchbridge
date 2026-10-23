@@ -43,8 +43,8 @@ several devices (see [the multi-device plan](MULTI_DEVICE_PLAN.md)); none of tha
 evidence about real Bluetooth or USB. Run this on hardware before relying on more
 than one device.
 
-Use a disposable preset with Cortex Control closed. Before starting, clear the Mac
-app's recent edits and quit and reopen it, so the exported report covers only this pass.
+Use a disposable preset with Cortex Control closed. Before starting, quit and reopen
+the Mac app, so the exported report covers only this pass.
 
 Record:
 
@@ -57,7 +57,7 @@ Record:
 | --- | --- | --- | --- |
 | Approval queue | Open Patchbridge on the iPhone, then the iPad, before approving either | The Mac shows the iPhone's card with "1 more device waiting"; each device shows its own code. Approve the iPhone, then the iPad's card appears | Not run |
 | Both connected | Approve both; let both load the preset | Mac title reads "iPhone and iPad connected"; both show the same values | Not run |
-| Edits from each | Edit gain on the iPhone; wait 3 s; edit on the iPad | Each edit confirms; the other device shows "Changed on …" within about 2 s; recent edits name the sender | Not run |
+| Edits from each | Edit gain on the iPhone; wait 3 s; edit on the iPad | Each edit confirms; the other device shows "Changed on …" within about 2 s | Not run |
 | Simultaneous edits | Edit the same control on both within about 1 s | One confirms; the other says "Not applied. … changed it first." and reloads; both converge on the confirmed value | Not run |
 | Disconnect one | On the Mac, Disconnect the iPhone | The iPhone shows "Disconnected on your Mac"; the iPad keeps editing | Not run |
 | Trusted reconnect | Approve the iPhone with Trust; quit and reopen its app; reconnect. Then quit and reopen Patchbridge on the Mac, start the bridge, and reconnect | No code either time; the Mac lists it as Trusted · connected. Revoke Trust; the next reconnect needs a code | Not run |

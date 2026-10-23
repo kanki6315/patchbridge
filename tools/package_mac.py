@@ -164,7 +164,6 @@ def main():
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'SharedUSBSession.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'DeviceIdentity.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'MacBridgeModel.swift',
-        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'RecentBridgeEdit.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'GenericEditor.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'MacDesktopServices.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'Chunks.swift',

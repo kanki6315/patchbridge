@@ -149,9 +149,6 @@ struct BridgeWindow: View {
                     fact("State", model.phase == .recovering ? "Last known · reload required" : model.presentation.dirty ? "Unsaved" : "No unsaved changes")
                 }.background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
             }
-            if model.phase == .connected || model.phase == .recovering || !model.presentation.recentEdits.isEmpty {
-                recentEdits
-            }
             if !compact && model.phase == .stopped {
                 Toggle("Use simulation", isOn: Binding(get: { model.isSimulation }, set: model.setSimulation)).toggleStyle(.switch)
             }
@@ -183,49 +180,6 @@ struct BridgeWindow: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             bluetooth.refresh()
             if setupStep == .bluetooth && bluetooth.authorization == .allowedAlways { setupStep = .ready }
-        }
-    }
-    private var recentEdits: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("Recent edits").font(.headline)
-                Spacer()
-                if !model.presentation.recentEdits.isEmpty {
-                    Button("Clear") { model.clearRecentEdits() }.font(.caption).disabled(model.busy)
-                }
-            }
-            if model.presentation.recentEdits.isEmpty {
-                Text("No edits in this session yet.").foregroundStyle(colors.muted).font(.callout)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(model.presentation.recentEdits.prefix(compact ? 3 : 12))) { edit in
-                        HStack(alignment: .top, spacing: 10) {
-                            Image(systemName: edit.outcome == .confirmed ? "checkmark" : "exclamationmark.triangle")
-                                .foregroundStyle(edit.outcome == .confirmed ? colors.muted : colors.dark ? Color(red: 1, green: 0.77, blue: 0.41) : Color(red: 0.62, green: 0.32, blue: 0))
-                                .accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack(alignment: .firstTextBaseline) {
-                                    Text(edit.title).fontWeight(.medium)
-                                    Spacer(minLength: 8)
-                                    if let value = edit.value { Text(value).monospacedDigit() }
-                                }
-                                Text(edit.outcome == .rejected ? "Not applied · \(edit.detail)" : edit.outcome == .unknown ? "Outcome unknown · \(edit.detail)" : edit.detail).foregroundStyle(colors.muted)
-                                if !compact {
-                                    HStack {
-                                        Text(edit.device.map { "\($0) · \(edit.context)" } ?? edit.context)
-                                        Spacer()
-                                        Text(edit.date, style: .time).monospacedDigit()
-                                    }.font(.caption).foregroundStyle(colors.muted)
-                                }
-                            }
-                        }.font(.system(size: 13)).padding(12)
-                        Divider()
-                    }
-                }.background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
-                if compact && model.presentation.recentEdits.count > 3 {
-                    Text("Open Patchbridge for more edits.").font(.caption).foregroundStyle(colors.muted)
-                }
-            }
         }
     }
     /// Connected devices, then devices trusted to reconnect that aren't connected now.

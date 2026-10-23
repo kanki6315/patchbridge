@@ -59,10 +59,7 @@ final class LiveBridgeBackendTests: XCTestCase {
         _ = phone.send("catalog", token: token, session: session)
         let edit: [String: Any] = ["revision": 0, "preset_id": "1", "scene": "A", "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": 7.5]]
         XCTAssertEqual(phone.send("set_parameter", token: token, session: session, fields: edit)["status"] as? String, "confirmed")
-        XCTAssertEqual(host.presentation.recentEdits.first?.outcome, .confirmed)
-        XCTAssertEqual(host.presentation.recentEdits.first?.value, "7.5")
-        _ = phone.send("set_parameter", token: token, session: session, fields: edit)
-        XCTAssertEqual(host.presentation.recentEdits.first?.outcome, .rejected)
+        XCTAssertNotEqual(phone.send("set_parameter", token: token, session: session, fields: edit)["status"] as? String, "confirmed")
         // External device loss invalidates the helper session; the phone token survives.
         _ = try helper.request(["operation": "disconnect", "session_id": session])
         let lost = phone.send("snapshot", token: token, session: session)
@@ -76,7 +73,6 @@ final class LiveBridgeBackendTests: XCTestCase {
         XCTAssertEqual(recovered["status"] as? String, "confirmed")
         XCTAssertNotEqual(recovered["session_id"] as? String, session)
         XCTAssertEqual(host.state?.0, .connected)
-        XCTAssertEqual(host.presentation.recentEdits.count, 2) // No mutation replay.
         phone.leave()
         XCTAssertEqual(host.state?.0, .running)
         XCTAssertNil(host.presentation.preset)
@@ -97,7 +93,6 @@ final class LiveBridgeBackendTests: XCTestCase {
         _ = phone.send("set_parameter", token: token, session: session,
                        fields: ["revision": 0, "preset_id": "1", "scene": "A", "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": 7.5]])
         XCTAssertEqual(host.state?.0, .failed)
-        XCTAssertEqual(host.presentation.recentEdits.first?.outcome, .unknown)
         XCTAssertNil(phone.onMessage)
         XCTAssertTrue(host.presentation.approvalCode.isEmpty)
     }
@@ -166,11 +161,6 @@ final class LiveBridgeBackendTests: XCTestCase {
         XCTAssertEqual(host.presentation.connected.map(\.name), ["iPhone", "iPad"])
         XCTAssertEqual(host.presentation.trusted.map(\.name), ["iPhone"])
         XCTAssertEqual(host.presentation.trusted.first?.connected, true)
-        // Edits record which device sent them.
-        let edit: [String: Any] = ["revision": 0, "preset_id": "1", "scene": "A", "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": 7.5]]
-        _ = phone.send("set_parameter", from: pad, token: padToken, session: session, fields: edit)
-        XCTAssertEqual(host.presentation.recentEdits.first?.device, "iPad")
-
         // Disconnecting the iPhone on the Mac leaves the iPad editing.
         let iPhone = try XCTUnwrap(host.presentation.devices.first { $0.name == "iPhone" })
         host.disconnect(device: iPhone.id, connection: iPhone.connection)

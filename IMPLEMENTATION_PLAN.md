@@ -31,7 +31,7 @@ selected: Start bridge advertises over BLE, and USB opens only after an approved
 phone requests a connection. USB loss keeps approval only while the same phone and
 helper stay alive; Bluetooth loss, denial, Stop, Quit, or helper death clears it.
 **Use simulation** runs the bundled simulator with BLE and USB off. The shell shows
-status, approval, recent confirmed edits, recovery, and diagnostics export. See
+status, approval, connected devices, recovery, and diagnostics export. See
 [Mac bridge shell](docs/MAC_BRIDGE_SHELL.md) and [Mac packaging](docs/MAC_PACKAGING.md).
 The bridge does not require a local HTTP server or shared Wi-Fi network.
 

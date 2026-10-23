@@ -45,7 +45,7 @@ The app has a built-in simulation that needs no Quad Cortex, iPhone or Bluetooth
 1. Launch the app. On the first-run Welcome screen, click "Try the simulation". (After setup, the same switch is "Use simulation" in the main window while the bridge is stopped.)
 2. Click Start bridge. The status text confirms Bluetooth and USB are off in this mode.
 3. Click Simulate phone. An approval request appears with a six-character code; click Approve.
-4. The simulated preset, scene and save state appear. The "…" Simulation actions menu exercises edits, a second device, a rejected edit, USB interruption and helper failure; each shows in Recent edits and status.
+4. The simulated preset, scene and save state appear. The "…" Simulation actions menu exercises edits, a second device, a rejected edit, USB interruption and helper failure; each shows in the status line.
 5. Click Stop bridge to end the session. Export report… (Command-E) saves a diagnostics report to a location you choose.
 Note: in simulation the Mac does not advertise over Bluetooth, so the iPhone app cannot connect to it. The iPhone app has its own demo ("Try the demo preset") for review.
 

@@ -21,7 +21,7 @@ Settings shows it from the start; it's available while the bridge is stopped.
 3. On the iPhone, choose **Find my Mac**, select this Mac and compare the approval code.
 4. Choose **Approve** on the Mac, then **I’ve approved it** on the phone.
 5. The phone loads the QC snapshot and relevant catalog before allowing supported edits.
-   Mac status and recent edits reflect the actual phone commands and confirmed readback.
+   Mac status reflects the actual phone commands and confirmed readback.
 6. USB loss pauses editing and preserves approval only while the same phone and helper
    stay alive. The phone retries connect with capped backoff and reloads capabilities
    and state. Edits/saves are never replayed. Bluetooth loss, denial, Stop, Quit or helper
@@ -47,7 +47,6 @@ the one USB connection. A fifth is told the Mac is already connected to four dev
   is told it was disconnected on the Mac at its next request.
 - **Edits from two devices:** every device can edit. If two edit at once, the first wins
   and the other's edit is not applied; that device reloads before editing again.
-  Recent edits name the device that sent each one.
 - **Recovery:** USB loss pauses every device. Each one reconnects to the shared session
   on its own retry, including devices that were in the background meanwhile.
 
@@ -154,12 +153,6 @@ after EOF, terminate and kill; Foundation remains responsible for reaping the ch
 - **Show in Dock:** on by default; changes the activation policy immediately and persists.
   The status item is installed before applying the policy, so hiding the Dock never
   removes Open, Settings or Quit. The keep-running preference remains independent.
-- **Recent edits:** an in-memory ring of 12 command outcomes, newest first, with the
-  preset/scene and time. The popover shows three. Names come from the active catalog,
-  values from confirmed readback; normalized values without display conversion are
-  omitted. Rejections and unknown outcomes are distinct. History survives a helper
-  failure/stop so uncertain results remain visible, and is cleared explicitly or at
-  process exit. It is never persisted or included in exported diagnostics.
 
 Bridge actions → Simulate gain edit sends a real simulator command; Simulate rejected
 edit sends a deliberately stale revision. These controls exercise the same bridge
