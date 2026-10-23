@@ -2,6 +2,7 @@ import Foundation
 
 /// Own on the main queue, like EditorTransport. Screens observe onChange and render editor's
 /// confirmed state. start/reconnect requires fresh authorization; mutations are never replayed.
+/// A trusted session whose link drops on its own searches for its Mac again before failing.
 public final class EditorCoordinator {
     public enum Phase: Equatable { case disconnected, connecting, awaitingApproval, loading, recovering, ready, failed }
     /// Why a failure happened, when the screen should say more than "Connection ended".
@@ -20,7 +21,7 @@ public final class EditorCoordinator {
     private var preferredMac: String?
     public func chooseMac(_ id: String) {
         guard phase == .connecting, let name = nearbyMacs[id] else { return }
-        macName = name; macID = id; preferredMac = nil; discoveryDeadline = now() + 30
+        macName = name; macID = id; preferredMac = nil; discoveryDeadline = resume?.deadline ?? now() + 30
         (transport as? DiscoverableEditorTransport)?.selectPeripheral(id); nearbyMacs.removeAll(); onChange?()
     }
     private let diagnostics: Diagnostics
@@ -125,6 +126,13 @@ public final class EditorCoordinator {
     private var deferred: (operation: String, at: TimeInterval)?
     private struct Request { let id: String; let operation: String; let deadline: TimeInterval; var trustOffered = false }
     private var request: Request?
+    /// After an unexpected drop: when the next search starts, and when to stop and fail with `reason`.
+    private struct Resume { let deadline: TimeInterval; let reason: String; let notice: String?; var attempt = 0; var at: TimeInterval = 0 }
+    private var resume: Resume?
+    /// Searching for the Mac again after the link dropped on its own. The phase meanwhile is connecting or loading.
+    public var resuming: Bool { resume != nil }
+    /// How long a dropped session keeps searching before it asks for Reconnect.
+    static let resumeWindow: TimeInterval = 60
 
     public init(pollInterval: TimeInterval = 2, timeout: TimeInterval = 60,
                 automaticPolling: Bool = true, phoneName: String = DeviceIdentity.phoneName, diagnostics: Diagnostics = .shared,
@@ -148,7 +156,10 @@ public final class EditorCoordinator {
         if reconnecting, let lastMac { preferredMac = lastMac; macID = lastMac; macName = lastName }
         else { macID = nil; macName = nil }
         diagnostics.record(.editorStarted)
-        error = nil; outcome = nil; discoveryDeadline = now() + 30; phase = .connecting; status = "Connecting"
+        error = nil; outcome = nil; status = "Connecting"; open(until: now() + 30)
+    }
+    private func open(until deadline: TimeInterval) {
+        discoveryDeadline = deadline; phase = .connecting
         let epoch = generation
         let transport = makeTransport()
         self.transport = transport
@@ -163,7 +174,8 @@ public final class EditorCoordinator {
         }
         transport.onDisconnected = { [weak self] in
             guard let self, self.generation == epoch else { return }
-            self.fail(self.transport?.disconnectionReason ?? (self.status.hasPrefix("Bluetooth") ? self.status : "Connection ended. Reconnect to reload confirmed state."))
+            self.lost(self.transport?.disconnectionReason ?? (self.status.hasPrefix("Bluetooth") ? self.status : "Connection ended. Reconnect to reload confirmed state."),
+                      transient: self.transport?.disconnectionIsTransient == true)
         }
         transport.onStatus = { [weak self] status in
             guard let self, self.generation == epoch else { return }
@@ -172,12 +184,14 @@ public final class EditorCoordinator {
         transport.onResponse = { [weak self] response in
             guard let self, self.generation == epoch else { return }; self.receive(response)
         }
-        if automaticPolling {
-            timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in self?.tick() }
-        }
-        transport.reconnect(); onChange?()
+        startTimer(); transport.reconnect(); onChange?()
     }
-    public func disconnect() {
+    private func startTimer() {
+        guard automaticPolling, timer == nil else { return }
+        timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in self?.tick() }
+    }
+    public func disconnect() { resume = nil; teardown() }
+    private func teardown(notify: Bool = true) {
         error = nil; failure = nil; outcome = nil; deferred = nil
         diagnostics.record(.editorDisconnected)
         generation = UUID(); timer?.invalidate(); timer = nil
@@ -191,7 +205,32 @@ public final class EditorCoordinator {
         presetList = nil; presetListError = nil; presetSwitch = nil; wantsList = false; listRetryAt = 0
         queuedPreset = nil; afterSave = nil
         tunerSeq = 0; tunerSync = false; muteRequest = nil; nextTunerRead = .infinity
-        phase = .disconnected; status = "Disconnected"; old?.disconnect(); onChange?()
+        phase = .disconnected; status = "Disconnected"; old?.disconnect()
+        if notify { onChange?() }
+    }
+    /// The link ended. A trusted session that dropped on its own searches for the same Mac
+    /// again, with backoff, until the resume window closes. Nothing in flight is replayed.
+    private func lost(_ reason: String, transient: Bool) {
+        let deadline = resume?.deadline ?? now() + Self.resumeWindow
+        guard transient, now() < deadline, let lastMac = macID, trustTokens[lastMac] != nil,
+              resume != nil || [.ready, .loading, .recovering].contains(phase) else {
+            // Out of time, say why the session first dropped; something the user must fix says itself.
+            let message = transient ? resume?.reason ?? reason : reason
+            fail([message, resume?.notice].compactMap { $0 }.joined(separator: " ")); return
+        }
+        let uncertain = editor.pending != nil || request.map { Self.mutations.contains($0.operation) } == true
+        var next = resume ?? Resume(deadline: deadline, reason: reason,
+                                    notice: uncertain ? "Last edit or save outcome unknown. It will not be retried." : nil)
+        // The tuner screen stays as it was; the resumed session asks the QC for this mode again.
+        let lastName = macName, lastTuner = tunerMode
+        teardown(notify: false)
+        tunerMode = lastTuner
+        diagnostics.record(.editorResuming, code: "disconnected")
+        next.at = now() + (next.attempt == 0 ? 0 : min(8, pow(2, Double(next.attempt - 1))))
+        next.attempt += 1
+        resume = next; preferredMac = lastMac; macID = lastMac; macName = lastName
+        error = next.notice; status = "Connection lost · reconnecting"
+        if next.at <= now() { open(until: deadline) } else { phase = .connecting; startTimer(); onChange?() }
     }
     public func authorize() {
         guard phase == .awaitingApproval, !busy else { return }
@@ -210,7 +249,11 @@ public final class EditorCoordinator {
     }
     /// Also usable with a deterministic clock in offline hosts. No overlapping polls or catch-up bursts.
     public func tick() {
-        if phase == .connecting, nearbyMacs.isEmpty, now() >= discoveryDeadline { fail("No Mac replied. Open Patchbridge on your Mac and try again."); return }
+        if let resume, transport == nil { if now() >= resume.at { open(until: resume.deadline) }; return }
+        if phase == .connecting, nearbyMacs.isEmpty || resume != nil, now() >= discoveryDeadline {
+            if let resume { lost(resume.reason, transient: true) } else { fail("No Mac replied. Open Patchbridge on your Mac and try again.") }
+            return
+        }
         if let request, now() >= request.deadline { fail("Request timed out; its outcome is unknown. Reconnect before editing."); return }
         if case .confirmed? = sceneSwitch, now() >= sceneSettledAt { sceneSwitch = nil; sceneSettledAt = .infinity; onChange?() }
         guard !isInBackground else { return }
@@ -467,7 +510,7 @@ public final class EditorCoordinator {
                 }
                 // The Mac no longer trusts this phone (trust was revoked or evicted).
                 if offeredTrust, let macID { trustTokens[macID] = nil }
-                approvalCode = DeviceIdentity.approvalCode(token)
+                resume = nil; approvalCode = DeviceIdentity.approvalCode(token)
                 phase = .awaitingApproval; status = "Approve on Mac, then authorize"
                 onChange?(); return
             }
@@ -477,7 +520,7 @@ public final class EditorCoordinator {
                 let code = detail?["code"] as? String ?? response["error"] as? String ?? "unknown"
                 let message = detail?["message"] as? String ?? code
                 if pending.operation == "connect", code == "unauthorized" {
-                    phase = .awaitingApproval; error = message; onChange?(); return
+                    resume = nil; phase = .awaitingApproval; error = message; onChange?(); return
                 }
                 if code == "revoked" {
                     fail("Disconnected on your Mac. Reconnect to ask for approval again.", reason: .revoked); return
@@ -675,7 +718,7 @@ public final class EditorCoordinator {
         guard let staged, let cachedCatalog, let session, let connection else { throw EditorFailure.invalidState }
         try editor.load(snapshot: staged, catalog: cachedCatalog, session: session, connection: connection,
                         revision: revision, operations: operations)
-        self.staged = nil; ready()
+        self.staged = nil; resume = nil; ready()
         if case .loading? = presetSwitch { presetSwitch = nil; outcome = "Loaded \(staged.name)" }
         // A fresh session starts with the tuner off; ask for this phone's mode again.
         tunerSeq = 0; tunerTrack = TunerTrack()

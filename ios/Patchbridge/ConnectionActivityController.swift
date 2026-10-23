@@ -37,7 +37,7 @@ final class ConnectionActivityController {
             status = .connected; live = true; reconnecting = false; intentional = false; lostAt = nil
             UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Self.notificationID])
         case .recovering: status = live ? .qcLost : nil
-        case .connecting, .loading: status = reconnecting ? .reconnecting : (live ? last?.status : nil)
+        case .connecting, .loading: status = reconnecting || (live && coordinator.resuming) ? .reconnecting : (live ? last?.status : nil)
         case .awaitingApproval: status = reconnecting ? .approval : nil
         case .failed:
             guard live || reconnecting, !intentional else { return }

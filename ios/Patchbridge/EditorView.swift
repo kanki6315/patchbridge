@@ -360,6 +360,10 @@ struct EditorView: View {
                 } else if model.coordinator.phase == .recovering {
                     Text("Editing is paused. Reconnect the QC cable; uncertain edits will not be retried.").foregroundStyle(theme.muted)
                 } else if model.coordinator.phase == .connecting || model.coordinator.phase == .loading {
+                    if model.coordinator.resuming {
+                        Text("The Bluetooth link dropped. Editing resumes once your Mac is found again.").foregroundStyle(theme.muted)
+                        if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
+                    }
                     ForEach(model.coordinator.nearbyMacs.keys.sorted(), id: \.self) { id in
                         Button { model.coordinator.chooseMac(id) } label: {
                             Label(model.coordinator.nearbyMacs[id] ?? "Mac", systemImage: "laptopcomputer").font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(20)
@@ -473,6 +477,7 @@ struct EditorView: View {
     private var connectionTitle: String {
         switch model.coordinator.phase {
         case .awaitingApproval: return "Approve on your Mac"
+        case .connecting where model.coordinator.resuming: return "Reconnecting to \(model.coordinator.macName ?? "your Mac")"
         case .connecting: return model.coordinator.nearbyMacs.isEmpty ? "Finding your Mac" : "Choose your Mac"
         case .loading: return "Reading the QC"
         case .recovering: return "Waiting for your QC"

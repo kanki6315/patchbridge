@@ -5,7 +5,7 @@ public final class Diagnostics {
     public static let shared = Diagnostics()
     public enum Event: String, Codable {
         case helperStarted, helperStartFailed, helperStopped, requestStarted, requestConfirmed, requestRejected, requestFailed
-        case bridgeApproved, bridgeRevoked, writeBlocked, editorStarted, editorDisconnected, editorFailed
+        case bridgeApproved, bridgeRevoked, writeBlocked, editorStarted, editorDisconnected, editorFailed, editorResuming
     }
     private struct Entry: Codable {
         let sequence: Int

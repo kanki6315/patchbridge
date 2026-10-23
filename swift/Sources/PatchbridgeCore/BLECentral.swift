@@ -11,6 +11,9 @@ public protocol EditorTransport: AnyObject {
     var onStatus: ((String) -> Void)? { get set }
     var onResponse: (([String: Any]) -> Void)? { get set }
     var disconnectionReason: String? { get }
+    /// The link dropped on its own (range, interference, the Mac restarting its service), so
+    /// finding the Mac again may restore the session. False when the user has to act first.
+    var disconnectionIsTransient: Bool { get }
     func reconnect()
     func disconnect()
     func send(_ message: [String: Any]) throws
@@ -18,6 +21,7 @@ public protocol EditorTransport: AnyObject {
 
 public extension EditorTransport {
     var disconnectionReason: String? { nil }
+    var disconnectionIsTransient: Bool { false }
 }
 
 public protocol DiscoverableEditorTransport: EditorTransport {
@@ -34,6 +38,7 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     public var onStatus: ((String) -> Void)?
     public var onResponse: (([String: Any]) -> Void)?
     public private(set) var disconnectionReason: String?
+    public private(set) var disconnectionIsTransient = false
     private var manager: CBCentralManager!
     private var peripheral: CBPeripheral?
     private var command: CBCharacteristic?
@@ -75,16 +80,16 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         guard self.peripheral === peripheral else { central.cancelPeripheralConnection(peripheral); return }
         peripheral.delegate = self; peripheral.discoverServices([Self.service])
     }
-    public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) { guard self.peripheral === peripheral else { return }; fail("Your Mac didn’t connect. Keep it nearby with Patchbridge open, then reconnect.", error: error) }
-    public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) { guard self.peripheral?.identifier == peripheral.identifier else { return }; fail("Your Mac disconnected. Open Patchbridge on your Mac, then reconnect.", error: error) }
+    public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) { guard self.peripheral === peripheral else { return }; fail("Your Mac didn’t connect. Keep it nearby with Patchbridge open, then reconnect.", error: error, transient: true) }
+    public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) { guard self.peripheral?.identifier == peripheral.identifier else { return }; fail("Your Mac disconnected. Open Patchbridge on your Mac, then reconnect.", error: error, transient: true) }
     public func reconnect() {
         guard peripheral == nil, manager.state == .poweredOn else { return }
-        disconnectionReason = nil
+        disconnectionReason = nil; disconnectionIsTransient = false
         manager.scanForPeripherals(withServices: [Self.service], options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
     }
     public func disconnect() { manager.stopScan(); if let peripheral { manager.cancelPeripheralConnection(peripheral) }; clear() }
     // Publish the reason before teardown: onDisconnected may release this transport immediately.
-    private func fail(_ message: String, error: Error? = nil) {
+    private func fail(_ message: String, error: Error? = nil, transient: Bool = false) {
         // System diagnostics retain the failure stage and code, never device names or payloads.
         let logger = Logger(subsystem: "com.arjunakankipati.patchbridge", category: "Bluetooth")
         if let error = error as NSError? {
@@ -94,6 +99,7 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
             logger.error("\(message, privacy: .public)")
         }
         disconnectionReason = Self.failureMessage(message, error: error)
+        disconnectionIsTransient = transient && !Self.needsPairingReset(error)
         onStatus?(disconnectionReason!)
         disconnect()
     }
@@ -113,6 +119,12 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         }
     }
 
+    /// Pairing that has to be reset in Settings won't come back by searching again.
+    static func needsPairingReset(_ error: Error?) -> Bool {
+        guard let error = error as NSError?, error.domain == CBErrorDomain else { return false }
+        return [CBError.Code.peerRemovedPairingInformation.rawValue, CBError.Code.encryptionTimedOut.rawValue].contains(error.code)
+    }
+
     private func clear() {
         timer?.invalidate(); timer = nil; peripheral?.delegate = nil; peripheral = nil; command = nil; results = nil
         exchange.reset(); receiver.reset(); discovered.removeAll()
@@ -120,7 +132,7 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     }
     public func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
         guard self.peripheral === peripheral, invalidatedServices.contains(where: { $0.uuid == Self.service }) else { return }
-        fail("Bridge session ended. Reconnect and approve on the Mac again.")
+        fail("Bridge session ended. Reconnect and approve on the Mac again.", transient: true)
     }
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard self.peripheral === peripheral else { return }
