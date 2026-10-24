@@ -51,6 +51,7 @@ final class PhoneModel: ObservableObject {
     }()
     let liveActivity = ConnectionActivityController()
     let tuner = TunerModel()
+    private var watchBridge: WatchCompanionBridge?
     private let demoEditor = GenericEditor()
     private var demoRevision = 0
     var editor: GenericEditor { usesLocalFixture ? demoEditor : coordinator.editor }
@@ -98,6 +99,7 @@ final class PhoneModel: ObservableObject {
             #endif
             self.version += 1
         }
+        watchBridge = WatchCompanionBridge(phone: self)
         savedTrust = coordinator.trustTokens
         ConnectionActivityActions.handler = { [weak self] action in
             switch action {
