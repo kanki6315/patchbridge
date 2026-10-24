@@ -104,7 +104,95 @@ public final class SharedUSBSession {
     /// wants (open, then live, then off), so one device closing its tuner never stops another's.
     private var tunerModes = [ObjectIdentifier: String]()
     private static let tunerRank = ["off": 0, "live": 1, "open": 2]
-    var tunerMode: String { tunerModes.values.max { Self.tunerRank[$0, default: 0] < Self.tunerRank[$1, default: 0] } ?? "off" }
+    var tunerMode: String { tunerModes.values.max { Self.tunerRank[$0, default: 0] < Self.tunerRank[$1, default: 0] } ?? (keepsSession ? "live" : "off") }
+    private(set) var cachedTuner: [String: Any]?
+    private var tunerSession: String?
+    private var tunerStarted = false
+    private var tunerUnsupported = false
+    private var nextTunerSample: TimeInterval = 0
+
+    func wantsTuner(_ device: DeviceSession) -> Bool { tunerModes[ObjectIdentifier(device)] != nil }
+
+    /// One host-owned feed, even with no clients. USB already collects pitch asynchronously;
+    /// these reads sample its buffer, without asking any client to clock the stream.
+    func sampleTuner() throws -> [String: Any]? {
+        guard keepsSession, let session = helperSession, !recovering else { return nil }
+        if tunerSession != session {
+            tunerSession = session; tunerStarted = false; tunerUnsupported = false
+            nextTunerSample = 0
+        }
+        guard !tunerUnsupported, now() >= nextTunerSample else { return nil }
+        nextTunerSample = now() + 0.1
+        let operation = tunerStarted ? "tuner_read" : "tuner"
+        let payload: [String: Any] = tunerStarted ? ["after": 0] : ["mode": tunerMode]
+        let reply = try forward(["operation": operation, "session_id": session, "payload": payload]).response
+        guard reply["status"] as? String == "confirmed" else {
+            tunerUnsupported = (reply["error"] as? [String: Any])?["code"] as? String == "unsupported_operation"
+            return nil
+        }
+        tunerStarted = true
+        guard var tuner = (reply["result"] as? [String: Any])?["tuner"] as? [String: Any] else { return nil }
+        // Include enough history for the display median even if Bluetooth coalesces events.
+        if let readings = tuner["readings"] as? [[String: Any]] { tuner["readings"] = Array(readings.suffix(3)) }
+        cachedTuner = tuner
+        return tuner
+    }
+    /// Editor resources belong to the USB session, not any connected client.
+    private(set) var cachedCatalog: [String: Any]?
+    private(set) var cachedPresets: (result: [String: Any], at: TimeInterval)?
+    private var resourceOperations: Set<String>?
+    private var nextResourceAttempt: TimeInterval = 0
+    private var nextPresetRead: TimeInterval = 0
+    static let presetListInterval: TimeInterval = 5
+
+    private func clearEditorResources() {
+        cachedTuner = nil; cachedCatalog = nil; cachedPresets = nil; resourceOperations = nil
+        nextResourceAttempt = 0; nextPresetRead = 0
+    }
+
+    /// At most one resource request per tick, leaving queued edits and tuner work room.
+    func refreshEditorResources() throws {
+        guard keepsSession, let session = helperSession, !recovering, now() >= nextResourceAttempt else { return }
+        let catalogID = (cached?.state as? [String: Any])?["catalog_id"] as? String
+        let operation: String
+        if resourceOperations == nil { operation = "capabilities" }
+        else if resourceOperations?.contains("catalog") == true, let catalogID, cachedCatalog?["id"] as? String != catalogID { operation = "catalog" }
+        else if resourceOperations?.contains("list_presets") == true, now() >= nextPresetRead { operation = "list_presets" }
+        else { return }
+        nextResourceAttempt = now() + 0.1
+        let response = try forward(["operation": operation, "session_id": session]).response
+        if response["status"] as? String != "confirmed" {
+            nextResourceAttempt = now() + Self.presetListInterval
+            if (response["error"] as? [String: Any])?["code"] as? String == "unsupported_operation" {
+                resourceOperations?.remove(operation)
+            }
+        }
+    }
+
+    /// Cache hits preserve the helper's catalog subset behavior and current session context.
+    func editorResource(_ device: DeviceSession, _ message: [String: Any]) throws -> (response: [String: Any], recovering: Bool) {
+        guard keepsSession, let session = helperSession, message["session_id"] as? String == session else { return try forward(message, for: device) }
+        if let payload = message["payload"], !(payload is [String: Any]) { return try forward(message, for: device) }
+        let operation = message["operation"] as? String
+        var result: [String: Any]?
+        if operation == "catalog", let catalog = cachedCatalog,
+           catalog["id"] as? String == (cached?.state as? [String: Any])?["catalog_id"] as? String {
+            result = catalog
+            if let raw = (message["payload"] as? [String: Any])?["model_ids"] {
+                guard let ids = raw as? [String], ids.count <= 128,
+                      ids.allSatisfy({ !$0.isEmpty && $0.unicodeScalars.count <= 128 }) else { return try forward(message, for: device) }
+                let wanted = Set(ids)
+                result?["models"] = (catalog["models"] as? [String: Any])?.filter { wanted.contains($0.key) }
+            }
+        } else if operation == "list_presets", let presets = cachedPresets,
+                  now() < nextPresetRead, now() - presets.at < Self.presetListInterval {
+            result = presets.result
+        }
+        guard let result else { return try forward(message, for: device) }
+        return (["version": 1, "type": "response", "status": "confirmed", "session_id": session,
+                 "revision": revision, "result": result], false)
+    }
+
     private struct Admitted { weak var device: DeviceSession? }
     private var admitted: [Admitted] = []
     /// Diagnostics numbers devices in admission order for this run; never reused.
@@ -170,18 +258,19 @@ public final class SharedUSBSession {
         catch { failAll(); throw error }
         let code = (response["error"] as? [String: Any])?["code"] as? String
         if allowsRecovery && ["adapter_failure", "disconnected"].contains(code ?? ""), response["session_id"] as? String == nil {
-            recovering = true; helperSession = nil; cached = nil; identity = nil
+            recovering = true; helperSession = nil; clearEditorResources(); cached = nil; identity = nil
             retryAt = now() + retryDelay; retryDelay = min(retryDelay * 2, 8)
             return (response, true)
         }
         adopt(response)
         remember(response, operation: message["operation"] as? String)
+        rememberResource(response, request: message)
         return (response, false)
     }
     private func adopt(_ response: [String: Any]) {
         let session = response["session_id"] as? String
         if session != helperSession {
-            helperSession = session; lastWrite = nil; tunerModes.removeAll() // A new helper session starts with the tuner off.
+            helperSession = session; clearEditorResources(); lastWrite = nil; tunerModes.removeAll() // A new helper session starts with the tuner off.
             cached = nil; identity = nil
             if session != nil { generation += 1 }
         }
@@ -196,12 +285,38 @@ public final class SharedUSBSession {
         guard helperSession != nil, let revision = Self.number(response["revision"]) else { cached = nil; return }
         let result = response["result"] as? [String: Any]
         if response["status"] as? String == "confirmed", let state = result?["state"], !(state is NSNull) {
+            let previous = cached?.state as? [String: Any], current = state as? [String: Any]
+            if previous?["preset_id"] as? String != current?["preset_id"] as? String
+                || previous?["name"] as? String != current?["name"] as? String {
+                cachedPresets = nil; nextPresetRead = 0
+            }
+            if cachedCatalog?["id"] as? String != current?["catalog_id"] as? String { cachedCatalog = nil }
             cached = (state, revision, now())
             if operation == "connect" { identity = result?["device"] }
         } else if response["status"] as? String == "confirmed", result?["unchanged"] as? Bool == true, cached?.revision == revision {
             cached?.at = now()
         } else if CentralRouter.mutations.contains(operation ?? "") || response["status"] as? String != "confirmed" && operation == "snapshot" {
             cached = nil
+        }
+    }
+
+    private func rememberResource(_ response: [String: Any], request: [String: Any]) {
+        guard helperSession != nil else { return }
+        let operation = request["operation"] as? String
+        let confirmed = response["status"] as? String == "confirmed"
+        let result = response["result"] as? [String: Any]
+        if operation == "capabilities", confirmed, let operations = result?["operations"] as? [String] {
+            resourceOperations = Set(operations)
+        } else if operation == "catalog", confirmed,
+                  (request["payload"] as? [String: Any])?["model_ids"] == nil,
+                  let result, result["id"] as? String == (cached?.state as? [String: Any])?["catalog_id"] as? String {
+            cachedCatalog = result
+        } else if operation == "list_presets" {
+            cachedPresets = confirmed ? result.map { ($0, now()) } : nil
+            nextPresetRead = now() + Self.presetListInterval
+        }
+        if ["save", "save_as", "select_preset"].contains(operation ?? "") {
+            cachedPresets = nil; nextPresetRead = 0
         }
     }
 
@@ -274,7 +389,7 @@ public final class SharedUSBSession {
     }
     /// A departing device's tuner request ends; the others keep theirs.
     private func releaseTuner(_ id: ObjectIdentifier) {
-        guard tunerModes.removeValue(forKey: id) != nil, !joined.isEmpty, let session = helperSession else { return }
+        guard tunerModes.removeValue(forKey: id) != nil, (!joined.isEmpty || keepsSession), let session = helperSession else { return }
         _ = try? helper.request(["operation": "tuner", "session_id": session, "payload": ["mode": tunerMode]])
     }
 
@@ -290,7 +405,7 @@ public final class SharedUSBSession {
             if let helperSession { message["session_id"] = helperSession }
             response = try forward(message, for: device).response
         }
-        else if let session = helperSession { _ = try? helper.request(["operation": "disconnect", "session_id": session], device: device.index); helperSession = nil; cached = nil; identity = nil }
+        else if let session = helperSession { _ = try? helper.request(["operation": "disconnect", "session_id": session], device: device.index); helperSession = nil; clearEditorResources(); cached = nil; identity = nil }
         if helperSession == nil { recovering = false; retryDelay = 1; retryAt = 0 }
         return response
     }
@@ -298,7 +413,7 @@ public final class SharedUSBSession {
     func simulateDeviceRemoval() throws {
         guard allowsRecovery, let session = helperSession else { throw BridgeFailure.disconnected }
         _ = try helper.request(["operation": "disconnect", "session_id": session])
-        helperSession = nil; cached = nil; identity = nil; recovering = true; retryAt = now() + 2; retryDelay = 1
+        helperSession = nil; clearEditorResources(); cached = nil; identity = nil; recovering = true; retryAt = now() + 2; retryDelay = 1
     }
     /// Called from a device's deinit, so a released device never holds the helper session open.
     func forget(_ id: ObjectIdentifier) {
@@ -307,12 +422,12 @@ public final class SharedUSBSession {
         releaseTuner(id)
         guard wasJoined, joined.isEmpty, !keepsSession, let session = helperSession else { return }
         _ = try? helper.request(["operation": "disconnect", "session_id": session])
-        helperSession = nil; cached = nil; identity = nil; recovering = false; retryDelay = 1; retryAt = 0
+        helperSession = nil; clearEditorResources(); cached = nil; identity = nil; recovering = false; retryDelay = 1; retryAt = 0
     }
     /// The helper's transport failed: no approval survives. Trust belongs to the devices, not
     /// the helper, so trusted devices reconnect without a code once the bridge is back.
     private func failAll() {
-        let all = devices; joined.removeAll(); helperSession = nil; tunerModes.removeAll(); cached = nil; identity = nil
+        let all = devices; joined.removeAll(); helperSession = nil; clearEditorResources(); tunerModes.removeAll(); cached = nil; identity = nil
         if !all.isEmpty { helper.diagnostics.record(.bridgeRevoked) }
         recovering = false; retryDelay = 1; retryAt = 0
         for device in all { device.endConnection() }

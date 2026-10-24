@@ -124,6 +124,7 @@ public final class DeviceSession {
             case "connect", "recover": result = try shared.join(self, message)
             case "disconnect": result = (try shared.leave(self, forwarding: message), false)
             case "tuner": result = try shared.tuner(self, message)
+            case "catalog", "list_presets": result = try shared.editorResource(self, message)
             case "snapshot": result = try shared.snapshot(self, message)
             default: result = try shared.forward(message, for: self)
             }

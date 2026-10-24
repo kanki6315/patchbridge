@@ -78,6 +78,7 @@ final class PhoneModel: ObservableObject {
     var canReconnect: Bool { coordinator.macID != nil && !usesLocalFixture }
     init() {
         tuner.phone = self
+        coordinator.onTuner = { [weak self] in self?.tuner.refresh() }
         coordinator.trustTokens = TrustStore.load()
         coordinator.deviceID = TrustStore.deviceID()
         coordinator.onChange = { [weak self] in

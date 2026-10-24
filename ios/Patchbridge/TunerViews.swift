@@ -54,7 +54,8 @@ final class TunerModel: ObservableObject {
         }
         refresh()
     }
-    private func refresh() {
+    func refresh() {
+        guard mode != .off else { return }
         let next = demo ? demoPitch(ProcessInfo.processInfo.systemUptime - demoStarted) : coordinator?.tunerPitch()
         if next != readout.pitch { readout.pitch = next }
         guard !demo, let coordinator else { return }

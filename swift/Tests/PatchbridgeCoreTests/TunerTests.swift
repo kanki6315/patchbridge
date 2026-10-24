@@ -52,11 +52,11 @@ final class TunerTests: XCTestCase {
         t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "session_id": "s",
                        "revision": 0, "status": "confirmed", "result": result])
     }
-    private func ready(operations: [String] = ["snapshot", "catalog", "set_parameter", "save", "tuner", "tuner_read", "set_tuner_mute"]) throws -> (EditorCoordinator, ScriptedTransport) {
+    private func ready(notifications: Bool = false, operations: [String] = ["snapshot", "catalog", "set_parameter", "save", "tuner", "tuner_read", "set_tuner_mute"]) throws -> (EditorCoordinator, ScriptedTransport) {
         let f = try fixture(), t = ScriptedTransport()
         let c = EditorCoordinator(pollInterval: 2, timeout: 5, automaticPolling: false, now: { self.clock }, makeTransport: { t })
         c.start()
-        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "authorization_required": true])
+        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "authorization_required": true, "tuner_notifications": notifications])
         c.authorize(); reply(t, ["state": f["snapshot"]!])
         reply(t, ["protocol_version": 1, "operations": operations])
         reply(t, f["catalog"] as! [String: Any])
@@ -65,6 +65,37 @@ final class TunerTests: XCTestCase {
     }
     private func last(_ t: ScriptedTransport) -> (String?, [String: Any]?) {
         (t.messages.last?["operation"] as? String, t.messages.last?["payload"] as? [String: Any])
+    }
+
+    func testPushTunerDoesNotPollAndIgnoresEventsFromOtherSessions() throws {
+        let (c, t) = try ready(notifications: true)
+        c.setTuner(.live)
+        reply(t, ["tuner": ["mode": "live", "seq": 0]])
+        let count = t.messages.count
+        clock += 0.1; c.tick()
+        XCTAssertEqual(t.messages.count, count)
+        var updates = 0
+        c.onTuner = { updates += 1 }
+        func event(session: String = "s", readings: [[String: Any]]) {
+            t.onResponse?(["version": 1, "type": "event", "event": "tuner_updated",
+                "connection_id": "c", "session_id": session,
+                "tuner": ["mode": "live", "seq": 1, "readings": readings]])
+        }
+        event(session: "old", readings: [["seq": 1, "hz": 110.0]])
+        XCTAssertNil(c.tunerPitch()); XCTAssertEqual(updates, 0)
+        // Push must not consume an unrelated request's response slot.
+        c.refresh()
+        event(readings: [["seq": 1, "hz": 110.0]])
+        XCTAssertEqual(c.tunerPitch()?.note, "A")
+        reply(t, ["unchanged": true])
+        XCTAssertEqual(c.phase, .ready)
+        clock += 0.8
+        event(readings: [])
+        XCTAssertNil(c.tunerPitch(), "Empty updates establish silence")
+        XCTAssertFalse(t.messages.contains { $0["operation"] as? String == "tuner_read" })
+        c.setTuner(.off)
+        event(readings: [["seq": 1, "hz": 110.0]])
+        XCTAssertNil(c.tunerPitch())
     }
 
     func testTunerStartsReadsAndKeepsItsPlaceInTheStream() throws {

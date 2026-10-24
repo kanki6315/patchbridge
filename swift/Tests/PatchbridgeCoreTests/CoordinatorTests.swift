@@ -43,10 +43,10 @@ final class CoordinatorTests: XCTestCase {
         t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "session_id": session,
                        "revision": revision, "status": "confirmed", "result": result])
     }
-    private func connect(_ c: EditorCoordinator, _ t: OfflineTransport, fixture f: [String: Any], catalog: Bool = true, notifications: Bool = false,
+    private func connect(_ c: EditorCoordinator, _ t: OfflineTransport, fixture f: [String: Any], catalog: Bool = true, notifications: Bool = false, statePush: Bool = false,
                          operations: [String] = ["snapshot", "catalog", "set_parameter", "save"]) {
         c.start()
-        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "authorization_required": true, "revision_notifications": notifications])
+        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "authorization_required": true, "revision_notifications": notifications, "state_notifications": statePush])
         XCTAssertEqual(c.phase, .awaitingApproval)
         c.authorize(); reply(t, result: ["state": f["snapshot"]!])
         reply(t, result: ["protocol_version": 1, "operations": operations])
@@ -57,6 +57,91 @@ final class CoordinatorTests: XCTestCase {
         t.onResponse?(["version": 1, "type": "event", "event": "revision_changed", "revision": revision,
                        "session_id": session, "connection_id": connection])
     }
+    private func stateEvent(_ t: OfflineTransport, state: [String: Any], revision: Int, session: String = "s", connection: String = "c") {
+        t.onResponse?(["version": 1, "type": "event", "event": "state_updated", "revision": revision,
+                       "session_id": session, "connection_id": connection, "state": state])
+    }
+    func testStatePushUpdatesEditorWithoutSendingARefresh() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, statePush: true)
+        let count = t.messages.count
+        var state = f["snapshot"] as! [String: Any]; state["name"] = "Pushed state"
+        stateEvent(t, state: state, revision: 1, session: "old")
+        stateEvent(t, state: state, revision: 1, connection: "old")
+        XCTAssertNotEqual(c.editor.snapshot?.name, "Pushed state")
+        stateEvent(t, state: state, revision: 1)
+        XCTAssertEqual(c.editor.snapshot?.name, "Pushed state")
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(t.messages.count, count, "No snapshot request or other round trip")
+        stateEvent(t, state: f["snapshot"] as! [String: Any], revision: 0)
+        XCTAssertEqual(c.editor.snapshot?.name, "Pushed state")
+        clock = 29; c.tick(); XCTAssertEqual(t.messages.count, count)
+        clock = 30; c.tick(); XCTAssertEqual(t.messages.count, count + 1, "Slow fallback remains")
+    }
+    func testStatePushCoalescesBehindRequestsWithoutConsumingTheirResponse() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, statePush: true)
+        c.refresh()
+        let count = t.messages.count
+        var state = f["snapshot"] as! [String: Any]
+        state["name"] = "First"; stateEvent(t, state: state, revision: 1)
+        state["name"] = "Newest"; stateEvent(t, state: state, revision: 3)
+        state["name"] = "Older"; stateEvent(t, state: state, revision: 2)
+        XCTAssertNotEqual(c.editor.snapshot?.name, "Newest")
+        reply(t, result: ["unchanged": true])
+        XCTAssertEqual(c.editor.snapshot?.name, "Newest")
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(t.messages.count, count)
+    }
+    func testStatePushCannotConfirmAnInFlightEdit() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, statePush: true)
+        let block = try XCTUnwrap(c.editor.snapshot?.blocks.first { !($0.editable_parameters ?? []).isEmpty })
+        let parameter = try XCTUnwrap(block.editable_parameters?.first)
+        let value = try XCTUnwrap(c.editor.value(blockID: block.id, parameterID: parameter))
+        try c.edit(blockID: block.id, parameterID: parameter, value: value)
+        let count = t.messages.count
+        var state = f["snapshot"] as! [String: Any]; state["name"] = "Newer peer state"
+        stateEvent(t, state: state, revision: 2)
+        XCTAssertTrue(c.busy)
+        XCTAssertNotEqual(c.editor.snapshot?.name, "Newer peer state")
+        reply(t, result: ["state": f["snapshot"]!], revision: 1)
+        XCTAssertFalse(c.busy)
+        XCTAssertEqual(c.editor.snapshot?.name, "Newer peer state")
+        XCTAssertEqual(t.messages.count, count)
+    }
+    func testStatePushLoadsMissingCatalogWithoutPullingSnapshotAgain() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, statePush: true)
+        let count = t.messages.count
+        var state = f["snapshot"] as! [String: Any]; state["catalog_id"] = "new-catalog"
+        stateEvent(t, state: state, revision: 1)
+        XCTAssertEqual(t.messages.count, count + 1)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "catalog")
+        var catalog = f["catalog"] as! [String: Any]; catalog["id"] = "new-catalog"
+        reply(t, result: catalog, revision: 1)
+        XCTAssertEqual(c.phase, .ready)
+        XCTAssertEqual(c.editor.snapshot?.catalog_id, "new-catalog")
+        XCTAssertEqual(t.messages.count, count + 1)
+    }
+
+    func testStatePushRejectsAnEditHeldAgainstOlderState() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, statePush: true)
+        c.refresh()
+        let block = try XCTUnwrap(c.editor.snapshot?.blocks.first { !($0.editable_parameters ?? []).isEmpty })
+        let parameter = try XCTUnwrap(block.editable_parameters?.first)
+        let value = try XCTUnwrap(c.editor.value(blockID: block.id, parameterID: parameter))
+        try c.edit(blockID: block.id, parameterID: parameter, value: value)
+        let count = t.messages.count
+        var state = f["snapshot"] as! [String: Any]; state["name"] = "Changed elsewhere"
+        stateEvent(t, state: state, revision: 1)
+        reply(t, result: ["unchanged": true])
+        XCTAssertEqual(c.editor.snapshot?.name, "Changed elsewhere")
+        XCTAssertEqual(t.messages.count, count, "Stale held edit must never be sent")
+        XCTAssertNotNil(c.error)
+    }
+
     func testRevisionHintRefreshesImmediatelyAndIgnoresStaleContext() throws {
         let t = OfflineTransport(), c = coordinator(t), f = try fixture()
         connect(c, t, fixture: f, notifications: true)

@@ -15,7 +15,8 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     private let makeHelper: () throws -> HelperClient
     private let peripheral: BridgePeripheral
     private var helper: HelperClient?
-    private var shared: SharedUSBSession?
+    /// Read-only access for backend diagnostics; all access stays on the owner queue.
+    private(set) var shared: SharedUSBSession?
     private var devices = [UUID: DeviceSession]()
     private var states = [UUID: BridgeDevice.State]()
     /// Admission order: the approval card shows the earliest waiting device.
@@ -61,18 +62,29 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         if let queue {
             // The first read runs after Start returns, so the window shows the bridge running at once.
             let poller = DispatchSource.makeTimerSource(queue: queue)
-            poller.schedule(deadline: .now(), repeating: 0.25)
+            poller.schedule(deadline: .now(), repeating: 0.1)
             poller.setEventHandler { [weak self] in self?.tick() }
             poller.resume(); self.poller = poller
         }
     }
 
     /// The bridge's own read of the QC: opens USB when it isn't open, otherwise refreshes the
-    /// state every device is answered from. Called every quarter second; reads only when due.
+    /// state every device is answered from. Called every tenth second; reads only when due.
     func tick() {
         guard let shared else { return }
         let reply: [String: Any]?
-        do { reply = try shared.poll() } catch { helperFailed(); return }
+        do {
+            reply = try shared.poll()
+            notifyRevisions() // Publish new state before tuner or resource reads can delay it.
+            if let tuner = try shared.sampleTuner(), let session = shared.helperSession {
+                for (id, device) in devices where tunerNotificationDevices.contains(id)
+                    && shared.isJoined(device) && !shared.isOutdated(device) && shared.wantsTuner(device) {
+                    peripheral.notify(id, message: ["version": 1, "type": "event", "event": "tuner_updated",
+                        "connection_id": device.token, "session_id": session, "tuner": tuner])
+                }
+            }
+            try shared.refreshEditorResources()
+        } catch { helperFailed(); return }
         guard let reply else { return }
         if reply["status"] as? String == "confirmed" {
             if let state = (reply["result"] as? [String: Any])?["state"] as? [String: Any] { show(state) }
@@ -157,7 +169,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         presentation = MacBridgePresentation()
     }
     private func deviceLeft(_ id: UUID) {
-        notificationDevices.remove(id); announced[id] = nil
+        stateNotificationDevices.remove(id); tunerNotificationDevices.remove(id); notificationDevices.remove(id); announced[id] = nil
         revoked[id] = nil
         guard let shared, let device = devices.removeValue(forKey: id) else { return }
         let name = device.phoneName, trusted = device.trustEntryID != nil
@@ -176,14 +188,14 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     }
     /// Ends one device's session; its next request learns it was disconnected.
     private func end(_ id: UUID) {
-        notificationDevices.remove(id); announced[id] = nil
+        stateNotificationDevices.remove(id); tunerNotificationDevices.remove(id); notificationDevices.remove(id); announced[id] = nil
         guard let index = devices[id]?.index else { return }
         deviceLeft(id); revoked[id] = index
     }
     func revokeTrust(id: UUID) { shared?.revokeTrust(id: id); publish() }
     func refresh() throws {} // The bridge reads the QC on its own schedule (`tick`).
     func stop() {
-        notificationDevices.removeAll(); announced.removeAll()
+        stateNotificationDevices.removeAll(); tunerNotificationDevices.removeAll(); notificationDevices.removeAll(); announced.removeAll()
         poller?.cancel(); poller = nil
         peripheral.onMessage = nil; peripheral.onDisconnect = nil; peripheral.onStatus = nil; peripheral.stop()
         if let shared { shared.devices.forEach(shared.remove) }
@@ -193,6 +205,8 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     }
     func interruptHelper() { helper?.stop() }
 
+    private var stateNotificationDevices = Set<UUID>()
+    private var tunerNotificationDevices = Set<UUID>()
     private var notificationDevices = Set<UUID>()
     private var announced = [UUID: String]()
     private func notifyRevisions(except origin: UUID? = nil) {
@@ -202,8 +216,16 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             guard announced[id] != key else { continue }
             announced[id] = key
             guard id != origin else { continue }
-            peripheral.notify(id, message: ["version": 1, "type": "event", "event": "revision_changed",
-                "connection_id": device.token, "session_id": session, "revision": cached.revision])
+            var event: [String: Any] = ["version": 1, "type": "event",
+                "event": stateNotificationDevices.contains(id) ? "state_updated" : "revision_changed",
+                "connection_id": device.token, "session_id": session, "revision": cached.revision]
+            if stateNotificationDevices.contains(id) {
+                event["state"] = cached.state
+                if let write = shared.lastWrite, write.revision == cached.revision, write.device != ObjectIdentifier(device) {
+                    event["changed_by"] = write.name
+                }
+            }
+            peripheral.notify(id, message: event)
         }
     }
     private func receive(_ id: UUID, _ request: [String: Any]) -> PeripheralReply {
@@ -225,10 +247,16 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         guard let device = devices[id] else { return PeripheralReply(message: failure(request, code: "unauthorized")) }
         var reply = receive(request, from: device, id: id)
         if request["operation"] as? String == "hello" {
-            if request["revision_notifications"] as? Bool == true { notificationDevices.insert(id) }
+            if request["state_notifications"] as? Bool == true { stateNotificationDevices.insert(id) }
+            else { stateNotificationDevices.remove(id) }
+            reply["state_notifications"] = true
+            if request["revision_notifications"] as? Bool == true || stateNotificationDevices.contains(id) { notificationDevices.insert(id) }
             else { notificationDevices.remove(id) }
             announced[id] = nil
             reply["revision_notifications"] = true
+            if request["tuner_notifications"] as? Bool == true { tunerNotificationDevices.insert(id) }
+            else { tunerNotificationDevices.remove(id) }
+            reply["tuner_notifications"] = true
         }
         let result = reply["result"] as? [String: Any]
         let carriesState = reply["status"] as? String == "confirmed" && (result?["state"] != nil || result?["unchanged"] as? Bool == true)
