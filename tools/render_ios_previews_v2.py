@@ -2,7 +2,7 @@
 """Silent editorial preview cut: native motion, kinetic Archivo type, purposeful close-ups.
 
 Uses Pillow and the existing brand Archivo font (converted to TTF). Captures are
-made with capture_ios_previews.py. Original v1 exports remain untouched.
+made with capture_ios_previews.py.
 """
 import argparse, json, os, subprocess, math
 from pathlib import Path

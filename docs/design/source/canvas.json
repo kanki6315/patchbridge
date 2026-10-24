@@ -49,10 +49,6 @@
     {
       "id": "components",
       "name": "Components"
-    },
-    {
-      "id": "concepts",
-      "name": "Concepts"
     }
   ],
   "boards": {
@@ -367,86 +363,6 @@
       "h": 402,
       "title": "Landscape (Tweaks: theme)",
       "page": "components"
-    },
-    "Main.dc.html": {
-      "x": 0,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "A · Preset overview",
-      "page": "concepts"
-    },
-    "A-Editor.dc.html": {
-      "x": 470,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "A · Block editor",
-      "page": "concepts"
-    },
-    "B-Overview.dc.html": {
-      "x": 0,
-      "y": 1260,
-      "w": 390,
-      "h": 844,
-      "title": "B · Preset overview",
-      "page": "concepts"
-    },
-    "B-Editor.dc.html": {
-      "x": 470,
-      "y": 1260,
-      "w": 390,
-      "h": 844,
-      "title": "B · Block editor",
-      "page": "concepts"
-    },
-    "C-Overview.dc.html": {
-      "x": 0,
-      "y": 2520,
-      "w": 390,
-      "h": 844,
-      "title": "C · Preset overview",
-      "page": "concepts"
-    },
-    "C-Editor.dc.html": {
-      "x": 470,
-      "y": 2520,
-      "w": 390,
-      "h": 844,
-      "title": "C · Block editor",
-      "page": "concepts"
-    },
-    "D-Overview.dc.html": {
-      "x": 0,
-      "y": 3780,
-      "w": 390,
-      "h": 844,
-      "title": "D · Preset overview, portrait",
-      "page": "concepts"
-    },
-    "D-Editor.dc.html": {
-      "x": 470,
-      "y": 3780,
-      "w": 390,
-      "h": 844,
-      "title": "D · Block editor",
-      "page": "concepts"
-    },
-    "D-Landscape.dc.html": {
-      "x": 940,
-      "y": 3780,
-      "w": 844,
-      "h": 390,
-      "title": "D · Preset overview, landscape phone",
-      "page": "concepts"
-    },
-    "D-iPad.dc.html": {
-      "x": 1864,
-      "y": 3780,
-      "w": 1180,
-      "h": 820,
-      "title": "D · iPad and unfolded split view",
-      "page": "concepts"
     },
     "poc/c-getmac.dc.html": {
       "w": 402,
