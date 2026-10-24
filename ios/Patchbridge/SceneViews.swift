@@ -59,6 +59,7 @@ struct SceneButtons: View {
                 .shadow(color: active && style == .pads && !theme.daylight ? color.opacity(0.35) : .clear, radius: 14)
                 .sceneArrival(scene: snapshot.scene, active: active, color: color, shape: shape,
                               spread: style == .pads ? 16 : 10, daylight: theme.daylight)
+                .anchorPreference(key: SceneOriginKey.self, value: .bounds) { active && style == .pads ? $0 : nil }
                 .overlay(alignment: .topTrailing) {
                     if mark == .notApplied {
                         Text("!").font(.caption.weight(.heavy)).foregroundStyle(theme.signalInk)
@@ -173,6 +174,111 @@ private struct SceneArrival: ViewModifier {
 extension View {
     func sceneArrival(scene: String, active: Bool, color: Color, shape: RoundedRectangle, spread: CGFloat = 10, daylight: Bool) -> some View {
         modifier(SceneArrival(scene: scene, active: active, color: color, shape: shape, spread: spread, daylight: daylight))
+    }
+}
+
+/// Where the active scene pad sits, so the deck's scene change can flood out from it.
+struct SceneOriginKey: PreferenceKey {
+    static let defaultValue: Anchor<CGRect>? = nil
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) { value = value ?? nextValue() }
+}
+
+/// The Duo deck's scene change, over the whole lower half: a tinted shade floods out from the
+/// active pad and sets the pads back, so the scene's letter and name read clearly in the middle.
+/// It never takes touches, so the next tap lands while it plays.
+private struct SceneWash: ViewModifier {
+    let scene: String
+    let name: String
+    let color: Color
+    let ink: Color
+    let ground: Color
+    let daylight: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var arrivals = 0
+
+    private struct Wash {
+        var reach: CGFloat = 0
+        var fill: Double = 0
+        var dim: Double = 0
+        var front: Double = 0
+        var label: Double = 0
+        var scale: CGFloat = 0.85
+    }
+
+    func body(content: Content) -> some View {
+        content.overlayPreferenceValue(SceneOriginKey.self) { anchor in
+            GeometryReader { proxy in
+                let bounds = CGRect(origin: .zero, size: proxy.size)
+                let pad = anchor.map { proxy[$0] } ?? CGRect(x: bounds.midX, y: bounds.midY, width: 0, height: 0)
+                let origin = CGPoint(x: pad.midX, y: pad.midY)
+                // Far enough to reach the deck's farthest corner.
+                let far = [CGPoint(x: 0, y: 0), CGPoint(x: bounds.maxX, y: 0), CGPoint(x: 0, y: bounds.maxY), CGPoint(x: bounds.maxX, y: bounds.maxY)]
+                    .map { hypot($0.x - origin.x, $0.y - origin.y) }.max() ?? 0
+                let start = max(pad.width, pad.height) / 2
+                Color.clear.keyframeAnimator(initialValue: Wash(), trigger: arrivals) { view, wash in
+                    let radius = start + (far - start) * wash.reach
+                    view.overlay {
+                        ZStack {
+                            Circle().fill(ground.opacity(wash.dim)).overlay(Circle().fill(color.opacity(wash.fill)))
+                                .frame(width: radius * 2, height: radius * 2).position(origin)
+                            Circle().stroke(color, lineWidth: 6).blur(radius: 6).opacity(wash.front)
+                                .frame(width: radius * 2, height: radius * 2).position(origin)
+                            VStack(spacing: -10) {
+                                Text(scene).font(.system(size: 140, weight: .heavy, design: .rounded))
+                                if !name.isEmpty { Text(name.uppercased()).font(.system(size: 34, weight: .bold)).lineLimit(1).minimumScaleFactor(0.5) }
+                            }
+                            .foregroundStyle(ink)
+                            // A halo of the ground keeps the label legible over the pads beneath it.
+                            .shadow(color: ground.opacity(0.9), radius: 18)
+                            .shadow(color: ground.opacity(0.6), radius: 6)
+                            .padding(.horizontal, 24)
+                            .scaleEffect(wash.scale).opacity(wash.label)
+                            .position(x: bounds.midX, y: bounds.midY)
+                        }
+                    }
+                } keyframes: { _ in
+                    KeyframeTrack(\.reach) {
+                        CubicKeyframe(1, duration: 0.55)
+                    }
+                    KeyframeTrack(\.fill) {
+                        LinearKeyframe(daylight ? 0.12 : 0.18, duration: 0.05)
+                        LinearKeyframe(daylight ? 0.12 : 0.18, duration: 0.6)
+                        CubicKeyframe(0, duration: 0.45)
+                    }
+                    KeyframeTrack(\.dim) {
+                        LinearKeyframe(daylight ? 0.8 : 0.85, duration: 0.05)
+                        LinearKeyframe(daylight ? 0.8 : 0.85, duration: 0.6)
+                        CubicKeyframe(0, duration: 0.45)
+                    }
+                    KeyframeTrack(\.front) {
+                        LinearKeyframe(0.7, duration: 0.05)
+                        CubicKeyframe(0, duration: 0.5)
+                    }
+                    // The label waits for the flood to pass the middle.
+                    KeyframeTrack(\.label) {
+                        LinearKeyframe(0, duration: 0.12)
+                        LinearKeyframe(1, duration: 0.12)
+                        LinearKeyframe(1, duration: 0.6)
+                        CubicKeyframe(0, duration: 0.35)
+                    }
+                    KeyframeTrack(\.scale) {
+                        LinearKeyframe(0.85, duration: 0.12)
+                        SpringKeyframe(1, duration: 0.4, spring: .snappy)
+                    }
+                }
+                .clipped()
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
+        .onChange(of: scene) { old, new in if old != new && !reduceMotion { arrivals += 1 } }
+    }
+}
+
+extension View {
+    func sceneWash(scene: String, name: String, color: Color, ink: Color, ground: Color, daylight: Bool) -> some View {
+        modifier(SceneWash(scene: scene, name: name, color: color, ink: ink, ground: ground, daylight: daylight))
     }
 }
 
