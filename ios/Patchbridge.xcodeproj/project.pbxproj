@@ -10,6 +10,7 @@
 		0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */; };
 		029A4F9E5A319FB2B53A06CD /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
 		07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D296E6B8332175985BB77130 /* TrustStore.swift */; };
+		0B48A4D3AC946EF6DA08474E /* WatchCompanion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C393B0309A14A8AD3F9FEBC /* WatchCompanion.swift */; };
 		0BD868FE5FC0C45B458D122F /* PatchbridgeWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1410DE83A0FD5AD86A1B0E9C /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */; };
 		184795C273F446AC30468366 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */; };
@@ -18,29 +19,44 @@
 		444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EB72B83CCED483250AEC0C /* Theme.swift */; };
 		47F547240FB372E0EBA05747 /* PhoneModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1BC3AEA00A1E4BBE1D89D12 /* PhoneModel.swift */; };
 		4952635A4A21096EBD705705 /* PhoneFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2544FE9FA36EA4F67327F5B0 /* PhoneFlowTests.swift */; };
+		56752513B0EDD01167C51681 /* PatchbridgeWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 4AE829F2EC87A9ED681F5181 /* PatchbridgeWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5B14A0AA4F035C28C867EEE5 /* EditorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */; };
 		5E7352194AF5B82C8AE53C57 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */; };
 		65F0DF151692770297348421 /* Chunks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F75207A678F28257EA105F3 /* Chunks.swift */; };
 		6F75739514A0FD504BBE2F24 /* DebugBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A51CF2F8046CF029BD206D /* DebugBridge.swift */; };
+		6F7E5759AF54618395D0766D /* PatchbridgeWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE155E0D811659E96F26CD7C /* PatchbridgeWatchApp.swift */; };
 		7221B70D0FD21ED4F5DD5597 /* Tuner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C63A6F4CA999A8014567F2A6 /* Tuner.swift */; };
 		8476F1A6BB746C32FD575EE1 /* SetupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */; };
 		8AA266DF2954F87A2BB14F74 /* PatchbridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */; };
+		8AFBCDC1DEDBEC17ED28A991 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416B26C56906A52630496D39 /* WatchModel.swift */; };
 		935F95CD7F754CD972C43AAC /* ConnectionActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F9F5091A58713B6AB66672 /* ConnectionActivityWidget.swift */; };
+		94C31E13B93014B1C7E8516B /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 75B608BB78EAE366291821D5 /* README.md */; };
 		A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */; };
 		A4988E90372F49BAA73D7245 /* DuoWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */; };
 		AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E68459E6EE63B03631133E9 /* EditorView.swift */; };
 		ADBCD09A0A9B55D2F6F247C4 /* ConnectionActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031C04AFD778DDE0C3BF77D2 /* ConnectionActivityController.swift */; };
+		B1309729AAAF8FF3DF734698 /* WatchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8ADA78F952247A837EECB34 /* WatchViews.swift */; };
 		B15E205CF89DF0E5F354B8D2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 025A144248FD7B2C1307731E /* AppIcon.icon */; };
 		B25F8D8D57876C46C9D29A51 /* PresetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836D6DBEB9760BBBEC40A0F6 /* PresetViews.swift */; };
+		B2E02866397261900799D595 /* WatchCompanion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C393B0309A14A8AD3F9FEBC /* WatchCompanion.swift */; };
 		B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42253D1C8C450F010DE25BCD /* GenericEditor.swift */; };
 		B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E125DD1594C135E050EF4E8 /* BLECentral.swift */; };
 		B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59B2D058255097DC58ED315 /* EditorCoordinator.swift */; };
 		CCB8F3B7D3AB5BBCEAFF5B6E /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
+		D358360A075662AA9D2878C2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5E625A9A4E3BE9B9A3F0E2BE /* Assets.xcassets */; };
 		EA6177919C4E44F0C8375500 /* SceneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E237C5A44F146DC9CAC103E /* SceneViews.swift */; };
+		EF38FC1FB697D1DE55C7B78F /* WatchCompanionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F06B800947D004BA349EF778 /* WatchCompanionBridge.swift */; };
 		F97C260A660F2DC435857133 /* demo-preset.json in Resources */ = {isa = PBXBuildFile; fileRef = 86359669B935F031597CF377 /* demo-preset.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		10BA7F7F92F5E18E36DAC4B3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EDD58D6361D28AE773072F40 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 932A5E69BD191D4988B88D34;
+			remoteInfo = PatchbridgeWatch;
+		};
 		2C2457A7ACC0CB12399CEC24 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = EDD58D6361D28AE773072F40 /* Project object */;
@@ -58,6 +74,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		74C765FD901AF192D8F30D7C /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				56752513B0EDD01167C51681 /* PatchbridgeWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F042B04331BA2B7B9EC0809E /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -77,15 +104,20 @@
 		17F544F35843D34FA9975F15 /* PatchbridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchbridgeApp.swift; sourceTree = "<group>"; };
 		1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionActivity.swift; sourceTree = "<group>"; };
 		2544FE9FA36EA4F67327F5B0 /* PhoneFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneFlowTests.swift; sourceTree = "<group>"; };
+		2C393B0309A14A8AD3F9FEBC /* WatchCompanion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchCompanion.swift; sourceTree = "<group>"; };
 		3E125DD1594C135E050EF4E8 /* BLECentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLECentral.swift; sourceTree = "<group>"; };
 		3E68459E6EE63B03631133E9 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		416B26C56906A52630496D39 /* WatchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchModel.swift; sourceTree = "<group>"; };
 		42253D1C8C450F010DE25BCD /* GenericEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericEditor.swift; sourceTree = "<group>"; };
 		45F9F5091A58713B6AB66672 /* ConnectionActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionActivityWidget.swift; sourceTree = "<group>"; };
+		4AE829F2EC87A9ED681F5181 /* PatchbridgeWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PatchbridgeWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExchange.swift; sourceTree = "<group>"; };
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
+		5E625A9A4E3BE9B9A3F0E2BE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PadWorkspaceView.swift; sourceTree = "<group>"; };
 		6E237C5A44F146DC9CAC103E /* SceneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneViews.swift; sourceTree = "<group>"; };
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
+		75B608BB78EAE366291821D5 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		7DC0EF4F8EE20FE84DCF7B43 /* SetupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupViews.swift; sourceTree = "<group>"; };
 		81EB72B83CCED483250AEC0C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		836D6DBEB9760BBBEC40A0F6 /* PresetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetViews.swift; sourceTree = "<group>"; };
@@ -99,12 +131,16 @@
 		D296E6B8332175985BB77130 /* TrustStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustStore.swift; sourceTree = "<group>"; };
 		D2ECC8B5EAB17CA03E63594B /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
 		D6BA326B4AFA35FBB2DD6298 /* PatchbridgeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PatchbridgeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D8ADA78F952247A837EECB34 /* WatchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchViews.swift; sourceTree = "<group>"; };
 		D90451EF4EDE8F7C98C2FDA8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorModel.swift; sourceTree = "<group>"; };
 		EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoWorkspaceView.swift; sourceTree = "<group>"; };
 		EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Patchbridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F06B800947D004BA349EF778 /* WatchCompanionBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchCompanionBridge.swift; sourceTree = "<group>"; };
 		F59B2D058255097DC58ED315 /* EditorCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorCoordinator.swift; sourceTree = "<group>"; };
 		F6A51CF2F8046CF029BD206D /* DebugBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugBridge.swift; sourceTree = "<group>"; };
+		FB10927AABE1F4929484F9AF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		FE155E0D811659E96F26CD7C /* PatchbridgeWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchbridgeWatchApp.swift; sourceTree = "<group>"; };
 		FFE7BE427D998DC25CF9AD22 /* TunerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -118,11 +154,25 @@
 			path = PatchbridgeWidgets;
 			sourceTree = "<group>";
 		};
+		0BF0F632FB203F46AEB6DD0F /* PatchbridgeWatch */ = {
+			isa = PBXGroup;
+			children = (
+				5E625A9A4E3BE9B9A3F0E2BE /* Assets.xcassets */,
+				FB10927AABE1F4929484F9AF /* Info.plist */,
+				FE155E0D811659E96F26CD7C /* PatchbridgeWatchApp.swift */,
+				75B608BB78EAE366291821D5 /* README.md */,
+				416B26C56906A52630496D39 /* WatchModel.swift */,
+				D8ADA78F952247A837EECB34 /* WatchViews.swift */,
+			);
+			path = PatchbridgeWatch;
+			sourceTree = "<group>";
+		};
 		15AA50A8907B9C40FB7801A2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				EC32F4B5A4CAB6638B9DB570 /* Patchbridge.app */,
 				D6BA326B4AFA35FBB2DD6298 /* PatchbridgeUITests.xctest */,
+				4AE829F2EC87A9ED681F5181 /* PatchbridgeWatch.app */,
 				B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */,
 			);
 			name = Products;
@@ -157,6 +207,7 @@
 				81EB72B83CCED483250AEC0C /* Theme.swift */,
 				D296E6B8332175985BB77130 /* TrustStore.swift */,
 				FFE7BE427D998DC25CF9AD22 /* TunerViews.swift */,
+				F06B800947D004BA349EF778 /* WatchCompanionBridge.swift */,
 			);
 			path = Patchbridge;
 			sourceTree = "<group>";
@@ -168,6 +219,7 @@
 				519E584C2E77AE9092522B22 /* Patchbridge */,
 				D8A3E97632801B8CA74207B1 /* PatchbridgeCore */,
 				67A61EF166DAFAD9688B634C /* PatchbridgeUITests */,
+				0BF0F632FB203F46AEB6DD0F /* PatchbridgeWatch */,
 				0702C7A0406E80599BA863E1 /* PatchbridgeWidgets */,
 				F3A80CE8890C3C6DBC1A3FBB /* Shared */,
 				15AA50A8907B9C40FB7801A2 /* Products */,
@@ -194,6 +246,7 @@
 				E3CD6B34C6FB3E44F2AA65A3 /* EditorModel.swift */,
 				42253D1C8C450F010DE25BCD /* GenericEditor.swift */,
 				C63A6F4CA999A8014567F2A6 /* Tuner.swift */,
+				2C393B0309A14A8AD3F9FEBC /* WatchCompanion.swift */,
 			);
 			name = PatchbridgeCore;
 			path = ../swift/Sources/PatchbridgeCore;
@@ -227,6 +280,24 @@
 			productReference = B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		932A5E69BD191D4988B88D34 /* PatchbridgeWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0C47671F13B72A803BD26108 /* Build configuration list for PBXNativeTarget "PatchbridgeWatch" */;
+			buildPhases = (
+				9B4C053E1A70769744B120A8 /* Sources */,
+				AF0E27ACD298658990492734 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PatchbridgeWatch;
+			packageProductDependencies = (
+			);
+			productName = PatchbridgeWatch;
+			productReference = 4AE829F2EC87A9ED681F5181 /* PatchbridgeWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 		95ADE0FFBE74754A2F2DEA62 /* PatchbridgeUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 171B1716F27349FFBEEF451A /* Build configuration list for PBXNativeTarget "PatchbridgeUITests" */;
@@ -252,10 +323,12 @@
 				5C1E38DB46950966E903BCDC /* Sources */,
 				BDE22C222DD16F1212B5F8CB /* Resources */,
 				F042B04331BA2B7B9EC0809E /* Embed Foundation Extensions */,
+				74C765FD901AF192D8F30D7C /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				4A875573680B8043CAC82166 /* PBXTargetDependency */,
 				A380C2DE85A56CC7208619D8 /* PBXTargetDependency */,
 			);
 			name = Patchbridge;
@@ -275,6 +348,10 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					64E3D7A3654019E3B8EDA918 = {
+						DevelopmentTeam = TDBAHN96B3;
+						ProvisioningStyle = Automatic;
+					};
+					932A5E69BD191D4988B88D34 = {
 						DevelopmentTeam = TDBAHN96B3;
 						ProvisioningStyle = Automatic;
 					};
@@ -304,6 +381,7 @@
 			projectRoot = "";
 			targets = (
 				C9D7F003699778C10868C83F /* Patchbridge */,
+				932A5E69BD191D4988B88D34 /* PatchbridgeWatch */,
 				64E3D7A3654019E3B8EDA918 /* PatchbridgeWidgets */,
 				95ADE0FFBE74754A2F2DEA62 /* PatchbridgeUITests */,
 			);
@@ -311,6 +389,15 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AF0E27ACD298658990492734 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D358360A075662AA9D2878C2 /* Assets.xcassets in Resources */,
+				94C31E13B93014B1C7E8516B /* README.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BDE22C222DD16F1212B5F8CB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -369,6 +456,19 @@
 				07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */,
 				7221B70D0FD21ED4F5DD5597 /* Tuner.swift in Sources */,
 				2BC0C6312B4C87438B651749 /* TunerViews.swift in Sources */,
+				0B48A4D3AC946EF6DA08474E /* WatchCompanion.swift in Sources */,
+				EF38FC1FB697D1DE55C7B78F /* WatchCompanionBridge.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9B4C053E1A70769744B120A8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6F7E5759AF54618395D0766D /* PatchbridgeWatchApp.swift in Sources */,
+				B2E02866397261900799D595 /* WatchCompanion.swift in Sources */,
+				8AFBCDC1DEDBEC17ED28A991 /* WatchModel.swift in Sources */,
+				B1309729AAAF8FF3DF734698 /* WatchViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -379,6 +479,11 @@
 			isa = PBXTargetDependency;
 			target = C9D7F003699778C10868C83F /* Patchbridge */;
 			targetProxy = 2C2457A7ACC0CB12399CEC24 /* PBXContainerItemProxy */;
+		};
+		4A875573680B8043CAC82166 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 932A5E69BD191D4988B88D34 /* PatchbridgeWatch */;
+			targetProxy = 10BA7F7F92F5E18E36DAC4B3 /* PBXContainerItemProxy */;
 		};
 		A380C2DE85A56CC7208619D8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -439,13 +544,29 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
+		};
+		36BAE3CA157C665FF3C72B61 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PatchbridgeWatch/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arjunakankipati.patchbridge.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
 		};
 		5E713EF27C81F6BD89FB97ED /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -590,7 +711,6 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -633,9 +753,35 @@
 			};
 			name = Debug;
 		};
+		F89D46D4CCB4B14F604021CA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PatchbridgeWatch/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arjunakankipati.patchbridge.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0C47671F13B72A803BD26108 /* Build configuration list for PBXNativeTarget "PatchbridgeWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				36BAE3CA157C665FF3C72B61 /* Debug */,
+				F89D46D4CCB4B14F604021CA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		171B1716F27349FFBEEF451A /* Build configuration list for PBXNativeTarget "PatchbridgeUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

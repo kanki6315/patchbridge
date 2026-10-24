@@ -308,3 +308,10 @@ checks alongside. No guitar sound is implied by the simulated tuner. Pass
 Archivo variable font) and optionally `--layouts iphone duo ipad`. Its default
 font path is `build/ios-preview-design/Archivo-ExtraBold.ttf`. Review all three
 videos before submitting in App Store Connect.
+
+## Apple Watch companion
+
+The embedded `PatchbridgeWatch` target provides Now Playing, Tuner, and Quick
+Adjust on watchOS 10+. Keep the paired iPhone app active for live controls.
+See [the watch companion guide](PatchbridgeWatch/README.md) for setup, demo
+arguments, command safety, and the remaining hardware validation checklist.

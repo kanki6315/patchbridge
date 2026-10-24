@@ -21,25 +21,27 @@ final class TunerModel: ObservableObject {
     private var timer: Timer?
     private var demoStarted: TimeInterval = 0
     private var demoMuted = false
+    private var watchOpen = false
+    func setWatchOpen(_ value: Bool) { guard watchOpen != value else { return }; watchOpen = value; apply() }
 
     private var demo: Bool { phone?.usesLocalFixture == true }
     private var coordinator: EditorCoordinator? { phone?.coordinator }
     var available: Bool { demo || coordinator?.tunerAvailable == true }
     var canMute: Bool { demo || coordinator?.tunerMuteAvailable == true }
     var displayedMute: Bool { requestedMute ?? muted ?? false }
-    var mode: EditorCoordinator.TunerMode { open ? .open : live ? .live : .off }
+    var mode: EditorCoordinator.TunerMode { (open || watchOpen) ? .open : live ? .live : .off }
 
     func setOpen(_ open: Bool) { guard open != self.open else { return }; self.open = open; apply() }
     func setLive(_ live: Bool) { guard live != self.live else { return }; self.live = live; apply() }
     func setMuted(_ value: Bool) {
-        guard open, canMute else { return }
+        guard open || watchOpen, canMute else { return }
         if demo { demoMuted = value; muted = value; return }
         requestedMute = value; error = nil
         coordinator?.setTunerMuted(value)
     }
     /// The connection ended or the demo changed: everything starts closed and off.
     func reset() {
-        open = false; live = false; readout.pitch = nil; muted = nil; requestedMute = nil; error = nil; demoMuted = false
+        watchOpen = false; open = false; live = false; readout.pitch = nil; muted = nil; requestedMute = nil; error = nil; demoMuted = false
         timer?.invalidate(); timer = nil
     }
 
