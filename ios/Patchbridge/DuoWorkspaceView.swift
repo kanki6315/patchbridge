@@ -159,7 +159,10 @@ struct DuoWorkspaceView: View {
             innerView(snapshot).frame(height: max(0, hinge - gap))
             fold.frame(height: gap * 2)
                 .overlay { if tuner.live { TunerCrease(readout: tuner.readout, theme: theme).transition(.opacity) } }
+            // A scene change floods the whole deck, the half that lies on the table, out from its pad.
             deck(snapshot).frame(maxHeight: .infinity, alignment: .top)
+                .sceneWash(scene: snapshot.scene, name: model.sceneName(sceneIndex(snapshot)), color: model.sceneColor(theme, sceneIndex(snapshot)),
+                           ink: theme.ink, ground: theme.ground, daylight: theme.daylight)
         }
         // The crease's light spills over both halves; it never takes a tap.
         .overlay {
@@ -608,6 +611,7 @@ struct DuoWorkspaceView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Scene \(letters[index]) \(name)\(active ? ", active" : "")")
     }
+    private func sceneIndex(_ snapshot: PresetSnapshot) -> Int { letters.firstIndex(of: snapshot.scene) ?? 0 }
     private func sceneGrid(_ snapshot: PresetSnapshot) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
             ForEach(0..<8, id: \.self) { index in
