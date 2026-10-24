@@ -28,11 +28,12 @@ public final class HelperClient {
     }
 
     /// Development-only explicit interpreter/source paths.
-    public convenience init(python: String, source: String, capturedFixture: URL? = nil, diagnostics: Diagnostics = .shared) throws {
+    public convenience init(python: String, source: String, capturedFixture: URL? = nil, liveUSB: Bool = false, diagnostics: Diagnostics = .shared) throws {
+        guard !(liveUSB && capturedFixture != nil) else { throw BridgeFailure.protocolError }
         var env = ProcessInfo.processInfo.environment
         env["PYTHONPATH"] = source
         try self.init(executable: URL(fileURLWithPath: python),
-                      arguments: ["-m", "patchbridge.helper", "--adapter", capturedFixture == nil ? "simulated" : "captured-read-only"] + (capturedFixture.map { ["--fixture", $0.path] } ?? []), readOnly: capturedFixture != nil, diagnostics: diagnostics, environment: env)
+                      arguments: ["-m", "patchbridge.helper", "--adapter", capturedFixture == nil ? (liveUSB ? "usb" : "simulated") : "captured-read-only"] + (capturedFixture.map { ["--fixture", $0.path] } ?? []), readOnly: capturedFixture != nil, diagnostics: diagnostics, environment: env)
     }
     private init(executable: URL, arguments: [String], readOnly: Bool, diagnostics: Diagnostics, environment: [String: String]) throws {
         self.diagnostics = diagnostics

@@ -118,6 +118,10 @@ public final class EditorCoordinator {
     private var connection: String?
     private var session: String?
     private var revision = 0
+    private var stateNotifications = false
+    /// Latest complete push waits behind a request; it must never settle that request's edit.
+    private var pendingSnapshot: (state: PresetSnapshot, session: String, revision: Int, response: [String: Any])?
+    private var tunerNotifications = false
     private var revisionNotifications = false
     private var wantedRevision = 0
     static let fallbackPollInterval: TimeInterval = 30
@@ -141,8 +145,8 @@ public final class EditorCoordinator {
     /// How long a dropped session keeps searching before it asks for Reconnect.
     static let resumeWindow: TimeInterval = 60
 
-    /// Legacy bridges use this poll interval. Negotiated revision notifications trigger
-    /// immediate snapshots and retain a 30-second fallback against the shared QC cache.
+    /// Legacy bridges use this poll interval. Complete state pushes apply directly;
+    /// older revision hints fetch a snapshot. Both retain a 30-second fallback.
     public init(pollInterval: TimeInterval = 1, timeout: TimeInterval = 60,
                 automaticPolling: Bool = true, phoneName: String = DeviceIdentity.phoneName, diagnostics: Diagnostics = .shared,
                 now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
@@ -207,7 +211,8 @@ public final class EditorCoordinator {
         let old = transport; transport = nil
         old?.onReady = nil; old?.onDisconnected = nil; old?.onStatus = nil; old?.onResponse = nil
         nearbyMacs.removeAll(); approvalCode = nil; trusted = false; preferredMac = nil
-        revisionNotifications = false; wantedRevision = 0
+        stateNotifications = false; pendingSnapshot = nil
+        tunerNotifications = false; revisionNotifications = false; wantedRevision = 0
         request = nil; staged = nil; connection = nil; session = nil; revision = 0
         operations.removeAll(); nextPoll = .infinity; discoveryDeadline = .infinity; editor.disconnect()
         held = nil; tunerMode = .off; tunerMuted = nil; tunerError = nil; tunerTrack = TunerTrack()
@@ -369,10 +374,53 @@ public final class EditorCoordinator {
             revision = newRevision; ready()
         }
     }
-    /// Sends what is waiting, in order: a held edit, a queued preset switch, the preset list,
-    /// a tuner change, then the next tuner read.
+    /// Both pulled and pushed snapshots use the same stale-edit and switch reconciliation.
+    private func applySnapshot(_ state: PresetSnapshot, newSession: String, newRevision: Int, response: [String: Any]) throws {
+        if let previous = editor.snapshot, previous != state {
+            outcome = Self.deviceName(response).map { "Changed on \($0)" } ?? "Changed on the QC"
+        }
+        // Readback settles a switch whose answer was lost, but only on the preset it was sent
+        // on. A scene or preset change elsewhere retires a refusal or an unknown outcome.
+        switch presetSwitch {
+        case .unknown(let id)? where state.preset_id == id:
+            presetSwitch = nil; outcome = "Loaded \(state.name)"
+        case .notApplied?, .unknown?:
+            if state.preset_id != editor.snapshot?.preset_id { presetSwitch = nil }
+        default: break
+        }
+        switch sceneSwitch {
+        case .unknown(let scene)? where state.preset_id == sceneSwitchPreset && state.scene == scene:
+            sceneSwitch = .confirmed(scene); sceneSettledAt = now() + sceneConfirmationTime; outcome = nil
+        case .notApplied?, .unknown?:
+            if state.preset_id != sceneSwitchPreset || state.scene != editor.snapshot?.scene { sceneSwitch = nil }
+        default: break
+        }
+        guard newRevision > revision || state == editor.snapshot else { throw EditorFailure.staleContext }
+        if let waiting = held {
+            if newRevision == revision && state == editor.snapshot {
+                // Nothing moved under the waiting edit: it goes now, as made.
+                ready(); return
+            }
+            // It was made against state that is gone. Never sent, so certainly not applied.
+            held = nil
+            let text = Self.deviceName(response).map { "Not applied. \($0) changed it first." } ?? "Not applied. The QC changed first; try again."
+            if waiting.operation == "select_scene", let scene = inFlightScene { sceneSwitch = .notApplied(scene); queuedScene = nil }
+            editor.reject(id: waiting.command["id"] as? String ?? "", message: text); error = text
+        }
+        try adopt(state, session: newSession, revision: newRevision)
+    }
+    /// Applies queued state before validating held edits, then services preset and tuner work.
     private func pump() {
         guard phase == .ready, request == nil else { return }
+        if !isInBackground, let pushed = pendingSnapshot {
+            pendingSnapshot = nil
+            if pushed.session == session, pushed.revision > revision {
+                do { try applySnapshot(pushed.state, newSession: pushed.session, newRevision: pushed.revision, response: pushed.response) }
+                catch { fail("Invalid pushed state. Reconnect to reload the QC."); return }
+                onChange?()
+                guard phase == .ready, request == nil else { return }
+            }
+        }
         if let held { self.held = nil; send(held.operation, command: held.command); return }
         if let queued = queuedPreset {
             // The read that held it may have shown another preset, or new edits on this one.
@@ -388,7 +436,7 @@ public final class EditorCoordinator {
         guard tunerAvailable, !isInBackground else { return }
         if tunerSync { tunerSync = false; send("tuner", payload: ["mode": tunerMode.rawValue]); return }
         if let mute = muteRequest { muteRequest = nil; send("set_tuner_mute", payload: ["value": mute]); return }
-        if tunerMode != .off, now() >= nextTunerRead { send("tuner_read", payload: ["after": tunerSeq]) }
+        if !tunerNotifications, tunerMode != .off, now() >= nextTunerRead { send("tuner_read", payload: ["after": tunerSeq]) }
     }
     private func applyTuner(_ object: Any?, operation: String) throws {
         guard let tuner = object as? [String: Any], let mode = tuner["mode"] as? String, let seq = integer(tuner["seq"]) else { throw EditorFailure.invalidState }
@@ -404,7 +452,7 @@ public final class EditorCoordinator {
         // The helper's tuner is off although this phone wants it: a new USB session. Ask again.
         if mode == "off", tunerMode != .off { tunerSync = true }
         nextTunerRead = operation == "tuner_read" ? now() + tunerInterval : now()
-        if automaticPolling { DispatchQueue.main.asyncAfter(deadline: .now() + tunerInterval) { [weak self] in self?.tick() } }
+        if automaticPolling && !tunerNotifications { DispatchQueue.main.asyncAfter(deadline: .now() + tunerInterval) { [weak self] in self?.tick() } }
     }
     public func edit(blockID: String, parameterID: String, value: ParameterValue) throws {
         guard phase == .ready else { throw EditorFailure.disconnected }
@@ -481,7 +529,9 @@ public final class EditorCoordinator {
         if let payload { message["payload"] = payload }
         if operation == "hello" {
             message["device_name"] = phoneName
+            message["state_notifications"] = true
             message["revision_notifications"] = true
+            message["tuner_notifications"] = true
             message["compression"] = ["deflate"] // Snapshots and catalogs shrink about tenfold.
             if let deviceID { message["device_id"] = deviceID }
             if let macID, let token = trustTokens[macID] { message["trust_token"] = token }
@@ -506,6 +556,26 @@ public final class EditorCoordinator {
     }
     private func receive(_ response: [String: Any]) {
         if response["type"] as? String == "event" {
+            if response["event"] as? String == "state_updated" {
+                guard stateNotifications, integer(response["version"]) == 1, let connection, let session,
+                      response["connection_id"] as? String == connection,
+                      response["session_id"] as? String == session,
+                      let value = integer(response["revision"]), value > revision,
+                      value > (pendingSnapshot?.revision ?? -1),
+                      let state = try? decode(PresetSnapshot.self, response["state"]) else { return }
+                pendingSnapshot = (state, session, value, response)
+                pump()
+                return
+            }
+            if response["event"] as? String == "tuner_updated" {
+                guard tunerNotifications, phase == .ready, !isInBackground, tunerMode != .off,
+                      integer(response["version"]) == 1, let connection, let session,
+                      response["connection_id"] as? String == connection,
+                      response["session_id"] as? String == session else { return }
+                do { try applyTuner(response["tuner"], operation: "tuner_read"); onTuner?() }
+                catch { return } // An invalid event must not disturb an in-flight edit.
+                return
+            }
             guard revisionNotifications, response["event"] as? String == "revision_changed",
                   integer(response["version"]) == 1, let connection, let session,
                   response["connection_id"] as? String == connection,
@@ -529,6 +599,8 @@ public final class EditorCoordinator {
                 guard let token = response["connection_id"] as? String, !token.isEmpty,
                       let required = response["authorization_required"] as? Bool, required || offeredTrust else { throw EditorFailure.invalidState }
                 macName = DeviceIdentity.name(response["mac_name"] as? String, fallback: "Mac")
+                stateNotifications = response["state_notifications"] as? Bool == true
+                tunerNotifications = response["tuner_notifications"] as? Bool == true
                 revisionNotifications = response["revision_notifications"] as? Bool == true
                 connection = token
                 if !required {
@@ -661,38 +733,7 @@ public final class EditorCoordinator {
                     guard let current = editor.snapshot, newRevision == revision else { throw EditorFailure.staleContext }
                     state = current
                 } else { state = try decode(PresetSnapshot.self, result["state"]) }
-                if let previous = editor.snapshot, previous != state {
-                    outcome = Self.deviceName(response).map { "Changed on \($0)" } ?? "Changed on the QC"
-                }
-                // Readback settles a switch whose answer was lost, but only on the preset it was sent
-                // on. A scene or preset change elsewhere retires a refusal or an unknown outcome.
-                switch presetSwitch {
-                case .unknown(let id)? where state.preset_id == id:
-                    presetSwitch = nil; outcome = "Loaded \(state.name)"
-                case .notApplied?, .unknown?:
-                    if state.preset_id != editor.snapshot?.preset_id { presetSwitch = nil }
-                default: break
-                }
-                switch sceneSwitch {
-                case .unknown(let scene)? where state.preset_id == sceneSwitchPreset && state.scene == scene:
-                    sceneSwitch = .confirmed(scene); sceneSettledAt = now() + sceneConfirmationTime; outcome = nil
-                case .notApplied?, .unknown?:
-                    if state.preset_id != sceneSwitchPreset || state.scene != editor.snapshot?.scene { sceneSwitch = nil }
-                default: break
-                }
-                guard newRevision > revision || state == editor.snapshot else { throw EditorFailure.staleContext }
-                if let waiting = held {
-                    if newRevision == revision && state == editor.snapshot {
-                        // Nothing moved under the waiting edit: it goes now, as made.
-                        ready(); pump(); break
-                    }
-                    // It was made against state that is gone. Never sent, so certainly not applied.
-                    held = nil
-                    let text = Self.deviceName(response).map { "Not applied. \($0) changed it first." } ?? "Not applied. The QC changed first; try again."
-                    if waiting.operation == "select_scene", let scene = inFlightScene { sceneSwitch = .notApplied(scene); queuedScene = nil }
-                    editor.reject(id: waiting.command["id"] as? String ?? "", message: text); error = text
-                }
-                try adopt(state, session: newSession, revision: newRevision)
+                try applySnapshot(state, newSession: newSession, newRevision: newRevision, response: response)
             case "select_scene":
                 let state = try decode(PresetSnapshot.self, result["state"])
                 try editor.confirm(id: pending.id, snapshot: state, session: newSession, connection: connection!, revision: newRevision)
@@ -769,6 +810,6 @@ public final class EditorCoordinator {
     }
     private func ready(keepingPoll: Bool = false) {
         phase = .ready; status = "Confirmed state loaded"
-        if !keepingPoll { nextPoll = now() + (revisionNotifications ? Self.fallbackPollInterval : pollInterval) }
+        if !keepingPoll { nextPoll = now() + ((revisionNotifications || stateNotifications) ? Self.fallbackPollInterval : pollInterval) }
     }
 }

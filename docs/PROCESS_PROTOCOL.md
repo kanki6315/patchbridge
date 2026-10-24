@@ -94,7 +94,9 @@ Cortex Control. Not yet verified: starting straight into `live`, and that `live`
 stays unmuted when mute is on.
 
 The Mac bridge gives the QC the strongest mode any device asks for (open, then
-live, then off), so one device closing its tuner never stops another's.
+live, then off), so one device closing its tuner never stops another's. The live
+Mac bridge also holds a baseline live request while running, even with no clients;
+the final client leaving returns it to live instead of stopping acquisition.
 
 Stale contexts and sessions fail before adapter writes. Disconnection or an
 unexpected adapter failure invalidates the session; reconnect and fetch state.

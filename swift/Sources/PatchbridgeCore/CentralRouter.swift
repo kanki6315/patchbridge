@@ -33,6 +33,7 @@ final class CentralRouter {
         var outgoing: [Data] = []
         var sendingEvent = false
         var pendingEvent: [String: Any]?
+        var pendingTunerEvent: [String: Any]?
         var receiver = ChunkReceiver(limit: CentralRouter.unadmittedMessageBytes)
     }
     /// Owner queue. Returns the reply for one message from the device with that identifier.
@@ -146,7 +147,8 @@ final class CentralRouter {
     /// Coalesce unsent hints; complete messages always share the same chunk queue.
     func notify(_ id: UUID, message: [String: Any]) {
         guard entries[id]?.admitted == true, entries[id]?.releasing == false else { return }
-        entries[id]?.pendingEvent = message
+        if message["event"] as? String == "tuner_updated" { entries[id]?.pendingTunerEvent = message }
+        else { entries[id]?.pendingEvent = message }
         drain()
     }
     func drain() {
@@ -157,8 +159,9 @@ final class CentralRouter {
                 entry.outgoing.removeFirst()
             }
             entry.sendingEvent = false
-            if !entry.inFlight, !entry.releasing, let event = entry.pendingEvent {
-                entry.pendingEvent = nil
+            if !entry.inFlight, !entry.releasing, let event = entry.pendingEvent ?? entry.pendingTunerEvent {
+                if entry.pendingEvent != nil { entry.pendingEvent = nil }
+                else { entry.pendingTunerEvent = nil }
                 do {
                     entry.transfer &+= 1
                     entry.outgoing = try Chunks.split(JSONSerialization.data(withJSONObject: event), limit: min(entry.limit, 512), transfer: entry.transfer, deflate: entry.deflate)

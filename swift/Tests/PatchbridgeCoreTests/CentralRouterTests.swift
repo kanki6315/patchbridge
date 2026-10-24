@@ -62,6 +62,24 @@ final class CentralRouterTests: XCTestCase {
         radio.sync { router.unsubscribe(id); router.notify(id, message: ["revision": 3]) }
         flush(); XCTAssertEqual(replies[id]?.count, 3)
     }
+    func testTunerCoalescingPreservesPendingRevision() {
+        let id = admitted()
+        var blocked = true
+        let original = router.send
+        router.send = { central, data in blocked ? false : original?(central, data) ?? false }
+        XCTAssertEqual(write(id, "snapshot"), .success); flush()
+        radio.sync {
+            router.notify(id, message: ["type": "event", "event": "revision_changed", "revision": 2])
+            for seq in 1...10 {
+                router.notify(id, message: ["type": "event", "event": "tuner_updated", "seq": seq])
+            }
+            blocked = false; router.drain()
+        }
+        XCTAssertEqual(replies[id]?.count, 4)
+        XCTAssertEqual(replies[id]?[2]["revision"] as? Int, 2)
+        XCTAssertEqual(replies[id]?[3]["seq"] as? Int, 10)
+    }
+
     func testRequestMayArriveWhileEventChunksAreBackpressured() {
         let id = admitted()
         var blocked = true

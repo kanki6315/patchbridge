@@ -129,3 +129,67 @@ stale hints, duplicate/coalesced hints, saves in flight, fallback/foreground
 behavior, and response/event chunk ordering under backpressure. These tests use
 simulated transports and the real helper simulator; over-the-air delivery and
 phone-visible latency still need verification with rebuilt apps.
+
+### Host-owned tuner feed
+
+The live Mac bridge starts the QC tuner in `live` mode after opening USB, even
+with no clients connected. This streams pitch without opening the QC tuner or
+muting output. The Mac samples the helper buffer on its own 100 ms schedule;
+clients do not clock acquisition. Preset reads keep their separate schedule.
+The helper pipe remains request/response; this does not add unsolicited helper I/O.
+
+Clients negotiate `"tuner_notifications": true` in hello, then use `tuner` to
+request `live`, `open`, or `off`. Approved, joined clients requesting live/open
+receive `tuner_updated` events with `version`, `connection_id`, `session_id`, and
+`tuner` (mode, muted, input, seq, and up to three recent readings). Updates with
+no new sequence also establish silence. Clients reject stale connection/session
+events and stop `tuner_read` polling when push is negotiated. Legacy clients and
+bridges retain the request-based tuner path. The display retains a local timer
+for demo animation and stale-note expiry.
+
+Bluetooth coalesces tuner updates independently of revision notifications and
+sends request responses first. Closing or disconnecting the last tuner client
+returns the QC to live mode; stopping the bridge closes USB and turns tuning off.
+Unsupported adapters skip the host tuner feed for that USB session.
+
+### Host-owned editor resources
+
+After USB connects, the Mac loads capabilities, the full model catalog, and the
+My Presets directory without waiting for any client. Resource work runs one
+request per host tick, on the same serialized worker as other USB operations.
+Catalogs are retained for the current USB session and catalog ID; a new ID in a
+snapshot triggers a reload. Client `catalog` requests filter this full cache by
+`model_ids` without replacing it with the subset.
+
+The preset directory refreshes every five seconds, including while no clients
+are connected. Saves, Save As, preset switches, and observed preset ID/name
+changes invalidate it for an earlier refresh. Fresh `list_presets` requests use
+the shared cache; expired or missing data is fetched from the helper. A failed
+listing clears the cached directory, and background retries are delayed five
+seconds. Unsupported operations are skipped. USB recovery clears both caches
+and reloads them on the new session. This synchronizes the directory and model
+definitions, not the contents of every inactive preset; only the active preset
+has a continuously refreshed full snapshot.
+
+### Complete state push
+
+Clients and bridges negotiate `"state_notifications": true` in hello. For these
+clients, a changed revision sends one `state_updated` event containing `version`,
+`connection_id`, `session_id`, `revision`, and the full `state` snapshot, plus
+`changed_by` when another client made the edit. The bridge sends it as soon as
+the snapshot is available, before any tuner/resource maintenance on that tick.
+It skips an originating client whose response already contains the same state.
+
+The client applies this snapshot directly, without sending `snapshot`. During
+an in-flight request it retains only the newest pushed revision, and applies it
+after the response; a push never confirms a pending edit. Connection/session
+checks, stale revision checks, held-edit rejection, and missing-catalog loading
+are shared with the ordinary snapshot path. A new model/catalog may still need
+a metadata request; it does not need another snapshot request.
+
+Events use the existing compressed Bluetooth framing. Pending state events
+coalesce separately from tuner events. Older clients continue to receive
+`revision_changed` hints, and older bridges retain their existing behavior. A
+30-second fallback read and foreground refresh remain for resynchronization.
+The change removes the client refresh round trip; it does not alter the QC USB
+sampling interval or claim lower measured end-to-end hardware latency.

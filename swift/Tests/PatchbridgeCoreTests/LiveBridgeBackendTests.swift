@@ -129,6 +129,67 @@ final class LiveBridgeBackendTests: XCTestCase {
         time += SharedUSBSession.pollInterval; host.tick(); XCTAssertEqual(try reads(), 3)
         XCTAssertEqual(host.state?.0, .running)
     }
+    func testHostTunerRunsWithoutClientsAndPushesOnlyToSubscribers() throws {
+        let phone = TestPeripheral(), helper = try helper()
+        var time = 0.0
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper }, now: { time })
+        try host.start(); defer { host.stop() }
+        host.tick() // USB and live tuner start before any hello.
+        let hello = phone.send("hello", fields: ["tuner_notifications": true])
+        XCTAssertEqual(hello["tuner_notifications"] as? Bool, true)
+        let token = try XCTUnwrap(hello["connection_id"] as? String)
+        try host.approvePending()
+        let connected = phone.send("connect", token: token)
+        let session = try XCTUnwrap(connected["session_id"] as? String)
+        func mode() throws -> String? {
+            let reply = try helper.request(["operation": "tuner_read", "session_id": session])
+            return ((reply["result"] as? [String: Any])?["tuner"] as? [String: Any])?["mode"] as? String
+        }
+        XCTAssertEqual(try mode(), "live")
+        time += 0.2; host.tick()
+        XCTAssertTrue(phone.notifications.isEmpty, "Joining does not subscribe to pitch")
+        _ = phone.send("tuner", token: token, session: session, fields: ["payload": ["mode": "open"]])
+        time += 0.2; host.tick()
+        XCTAssertEqual(phone.notifications.last?.1["event"] as? String, "tuner_updated")
+        XCTAssertEqual(phone.notifications.last?.1["session_id"] as? String, session)
+        XCTAssertEqual(try mode(), "open")
+        phone.leave()
+        XCTAssertEqual(try mode(), "live", "The last departure closes the QC tuner screen but keeps the feed")
+        phone.notifications.removeAll()
+        time += 0.2; host.tick()
+        XCTAssertTrue(phone.notifications.isEmpty)
+        XCTAssertEqual(try mode(), "live")
+    }
+
+    func testCompleteStatePushAndLegacyRevisionHintShareTheSameRevision() throws {
+        let phone = TestPeripheral(), helper = try helper(), legacy = UUID()
+        var time = 0.0
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper }, now: { time })
+        try host.start(); defer { host.stop() }; host.tick()
+        var session = ""
+        for id in [phone.device, legacy] {
+            let hello = phone.send("hello", from: id, fields: id == legacy ? ["revision_notifications": true] : ["state_notifications": true])
+            XCTAssertEqual(hello["state_notifications"] as? Bool, true)
+            let token = try XCTUnwrap(hello["connection_id"] as? String)
+            try host.approvePending()
+            session = try XCTUnwrap(phone.send("connect", from: id, token: token)["session_id"] as? String)
+        }
+        phone.notifications.removeAll()
+        _ = try helper.request(["operation": "set_parameter", "session_id": session, "revision": 0,
+            "preset_id": "1", "scene": "A", "payload": ["block_id": "amp-1", "parameter_id": "gain", "value": 7.5]])
+        time += SharedUSBSession.pollInterval; host.tick()
+        XCTAssertEqual(phone.notifications.count, 2)
+        let pushed = try XCTUnwrap(phone.notifications.first { $0.0 == phone.device }?.1)
+        XCTAssertEqual(pushed["event"] as? String, "state_updated")
+        XCTAssertEqual(pushed["revision"] as? Int, 1)
+        XCTAssertEqual(pushed["session_id"] as? String, session)
+        XCTAssertEqual((pushed["state"] as? [String: Any])?["dirty"] as? Bool, true)
+        let hint = try XCTUnwrap(phone.notifications.first { $0.0 == legacy }?.1)
+        XCTAssertEqual(hint["event"] as? String, "revision_changed")
+        XCTAssertNil(hint["state"])
+        host.tick(); XCTAssertEqual(phone.notifications.count, 2)
+    }
+
     func testRevisionNotificationsReachOnlyOptedInJoinedPeers() throws {
         let phone = TestPeripheral(), helper = try helper()
         var time = 0.0
