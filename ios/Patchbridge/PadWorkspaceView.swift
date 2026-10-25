@@ -19,7 +19,7 @@ struct PadWorkspaceView: View {
             let portrait = geometry.size.height > geometry.size.width
             if let snapshot = model.snapshot {
                 VStack(alignment: .leading, spacing: 16) {
-                    topBar(snapshot, portrait: portrait)
+                    topBar(snapshot, portrait: portrait, size: geometry.size)
                     // Portrait has no free space in the top bar, so the band takes a row of its own.
                     if portrait && tuner.live {
                         TunerBand(readout: tuner.readout, theme: theme, wide: true) { tuner.setOpen(true) }
@@ -91,13 +91,14 @@ struct PadWorkspaceView: View {
 
     // MARK: Top bar
 
-    private func topBar(_ snapshot: PresetSnapshot, portrait: Bool) -> some View {
+    private func topBar(_ snapshot: PresetSnapshot, portrait: Bool, size: CGSize) -> some View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 PresetNameButton(model: model, snapshot: snapshot, theme: theme, chevron: 32) { browsing = true }
                     .popover(isPresented: $browsing, arrowEdge: .top) {
                         PresetBrowser(model: model, theme: theme, layout: .popover) { browsing = false }
-                            .padding(24).frame(width: 720, height: 640)
+                            // Shorter screens (the Duo unfolded) shrink it so it clears the name and the bottom edge.
+                            .padding(24).frame(width: min(720, size.width - 64), height: min(640, size.height - 120))
                             .background(theme.surface.opacity(0.97))
                             .presentationBackground(theme.surface.opacity(0.97))
                             .preferredColorScheme(theme.daylight ? .light : .dark)
