@@ -396,6 +396,8 @@ struct SceneScopeRow: View {
     let loading: Bool
     /// The value on its way to the QC for the editing scene.
     let proposed: ParameterValue?
+    /// Scenes per row: 8 in one row under a wide dial, 4 × 2 in a narrow column beside it.
+    var columns = 8
     private var control: ParameterControl? { model.editor.control(blockID: block.id, parameterID: parameter) }
     private var name: String { control?.name.capitalized ?? "Value" }
 
@@ -427,12 +429,16 @@ struct SceneScopeRow: View {
         let values = model.editor.sceneValues(blockID: block.id, parameterID: parameter)
         let unit = control?.unit ?? ""
         return VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("\(name) in each scene" + (unit.isEmpty ? "" : " · \(unit)")).fontWeight(.semibold)
-                Spacer(minLength: 8)
-                Text("Switch scene to edit another").lineLimit(1).minimumScaleFactor(0.8)
+            let title = Text("\(name) in each scene" + (unit.isEmpty ? "" : " · \(unit)")).fontWeight(.semibold)
+            let hint = Text("Switch scene to edit another").lineLimit(1).minimumScaleFactor(0.8)
+            Group {
+                if columns < 8 {
+                    VStack(alignment: .leading, spacing: 2) { title; hint }
+                } else {
+                    HStack(alignment: .firstTextBaseline) { title; Spacer(minLength: 8); hint }
+                }
             }.font(.caption).foregroundStyle(theme.muted).padding(.horizontal, 2)
-            HStack(spacing: 4) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: columns), spacing: 4) {
                 ForEach(PresetSnapshot.sceneLetters, id: \.self) { letter in
                     cell(letter, value: values[letter])
                 }
@@ -467,15 +473,16 @@ struct SceneScopeRow: View {
         .accessibilityLabel("Scene \(letter)\(sceneName.isEmpty ? "" : " \(sceneName)"), \(on && loading ? "loading" : text)\(on ? ", editing" : "")")
     }
     private func card<Trailing: View>(title: String, detail: String, @ViewBuilder trailing: () -> Trailing) -> some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.subheadline.weight(.semibold))
-                Text(detail).font(.caption).foregroundStyle(theme.muted)
-            }
-            Spacer(minLength: 8)
-            trailing()
+        let label = VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(.subheadline.weight(.semibold))
+            Text(detail).font(.caption).foregroundStyle(theme.muted)
         }
-        .padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 64)
+        // A narrow column beside the dial puts the dots or sweep under the text.
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) { label; Spacer(minLength: 8); trailing() }
+            VStack(alignment: .leading, spacing: 8) { label; trailing() }.frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10).frame(maxWidth: .infinity, minHeight: 64)
         .overlay(RoundedRectangle(cornerRadius: 15).stroke(theme.line))
     }
 }

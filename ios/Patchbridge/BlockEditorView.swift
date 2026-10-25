@@ -117,11 +117,13 @@ struct BlockEditorView: View {
             ScrollView {
                 HStack(alignment: .top, spacing: 16) {
                     VStack(spacing: 8) { parameterControl }.frame(maxWidth: .infinity)
-                    Group {
+                    VStack(spacing: 8) {
                         if typing {
                             numberPad.background(theme.surface, in: RoundedRectangle(cornerRadius: 28))
                                 .overlay(RoundedRectangle(cornerRadius: 28).stroke(theme.line))
                         } else { tiles }
+                        // Beside the dial rather than under it, so the deck's height stays the dial's.
+                        sceneScopeRow(columns: 4).padding(.top, 8)
                     }.frame(maxWidth: .infinity)
                 }.padding(.vertical, 8)
             }
@@ -164,8 +166,11 @@ struct BlockEditorView: View {
         sceneFailure.font(.subheadline.weight(.semibold)).multilineTextAlignment(.center).frame(maxWidth: .infinity)
         status.font(.subheadline.weight(.medium)).multilineTextAlignment(.center).frame(maxWidth: .infinity)
             .accessibilityElement(children: .combine)
+        if layout != .deck { sceneScopeRow(columns: 8) }
+    }
+    private func sceneScopeRow(columns: Int) -> some View {
         SceneScopeRow(model: model, block: block, parameter: parameter, theme: theme, scope: scope,
-                      editingScene: editingScene, loading: loading, proposed: pending?.proposedValue)
+                      editingScene: editingScene, loading: loading, proposed: pending?.proposedValue, columns: columns)
     }
     /// A switch the QC refused or never answered, as on the overview. The dial keeps the QC's
     /// scene; choosing the scene again retries.
