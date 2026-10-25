@@ -71,16 +71,13 @@ final class ConnectionActivityController {
         let scene = snapshot?.scene
         let index = Array("ABCDEFGH").firstIndex(of: scene?.first ?? "A") ?? 0
         let colors = snapshot?.scene_colors
-        let defaults = UserDefaults.standard
-        let daylight = defaults.bool(forKey: "matchSystem")
-            ? UIScreen.main.traitCollection.userInterfaceStyle == .light
-            : defaults.string(forKey: "appearance") == "Daylight"
+        let look = AppearancePrefs.current(systemLight: UIScreen.main.traitCollection.userInterfaceStyle == .light)
         return .init(status: status, macName: model.coordinator.macName ?? last?.macName ?? "Mac",
                      preset: snapshot?.name ?? last?.preset, scene: scene ?? last?.scene,
                      sceneName: scene == nil ? last?.sceneName : (model.sceneName(index).isEmpty ? nil : model.sceneName(index)),
                      sceneColor: colors?.indices.contains(index) == true ? colors![index] & 0xffffff : (scene == nil ? last?.sceneColor : nil),
                      unsaved: snapshot?.dirty ?? last?.unsaved ?? false, trusted: model.coordinator.trusted || (status == .reconnecting && model.hasTrust),
-                     lostAt: lostAt, daylight: daylight)
+                     lostAt: lostAt, daylight: look.daylight, theme: look.theme)
     }
 
     private func alert(_ state: ConnectionAttributes.ContentState) {
@@ -113,10 +110,10 @@ final class ConnectionActivityController {
 
     #if DEBUG
     /// `--activity <status>` shows a sample activity for design review. No session is involved.
-    func preview(_ name: String, daylight: Bool) {
+    func preview(_ name: String, theme: ThemeID, daylight: Bool) {
         guard let status = ConnectionAttributes.ContentState.Status(rawValue: name) else { return }
         let state = ConnectionAttributes.ContentState(status: status, macName: "Studio Mac", preset: "Dirty Riffage", scene: "F", sceneName: "Rhythm",
-                                                      sceneColor: 0xff7000, unsaved: true, trusted: true, lostAt: Date(), daylight: daylight)
+                                                      sceneColor: 0xff7000, unsaved: true, trusted: true, lostAt: Date(), daylight: daylight, theme: theme)
         activity = try? Activity.request(attributes: ConnectionAttributes(), content: ActivityContent(state: state, staleDate: nil))
     }
     #endif

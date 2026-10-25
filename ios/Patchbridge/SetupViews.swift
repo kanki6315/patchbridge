@@ -12,13 +12,14 @@ struct DemoFixture: Decodable {
         guard let url = Bundle.main.url(forResource: "demo-preset", withExtension: "json") else { throw EditorFailure.invalidState }
         return try JSONDecoder().decode(DemoFixture.self, from: Data(contentsOf: url))
     }
-    struct Cell { let category: BlockCategory; let bypassed: Bool }
+    /// Keeps the catalog's category name so the fill follows the current block colors.
+    struct Cell { let categoryName: String; let bypassed: Bool; var category: BlockCategory { BlockCategory(categoryName) } }
     /// The demo's 4 × 8 grid in its active scene; nil is an empty slot.
     static let grid: [[Cell?]] = {
         var cells = [[Cell?]](repeating: [Cell?](repeating: nil, count: 8), count: 4)
         guard let fixture = try? load() else { return cells }
         for block in fixture.snapshot.blocks where block.position.count == 2 && (0..<4).contains(block.position[0]) && (0..<8).contains(block.position[1]) {
-            cells[block.position[0]][block.position[1]] = Cell(category: BlockCategory(fixture.catalog.models[block.model_id]?.category ?? ""),
+            cells[block.position[0]][block.position[1]] = Cell(categoryName: fixture.catalog.models[block.model_id]?.category ?? "",
                                                                bypassed: block.scenes[fixture.snapshot.scene]?.bypass == true)
         }
         return cells
@@ -32,6 +33,8 @@ struct DemoGrid: View {
     let theme: PhoneTheme
     var cell: CGFloat = 18
     var codes = true
+    /// Thumbnail cells keep 1pt lines in high contrast; 2pt outlines would swallow them.
+    private var tiny: Bool { cell < 12 }
     var body: some View {
         VStack(spacing: 3) {
             ForEach(0..<4, id: \.self) { r in
@@ -47,8 +50,9 @@ struct DemoGrid: View {
                                 .background(block.bypassed ? theme.surface : category.color, in: RoundedRectangle(cornerRadius: cell * 0.3))
                                 .overlay(RoundedRectangle(cornerRadius: cell * 0.3)
                                     .stroke(category.color, style: StrokeStyle(lineWidth: block.bypassed ? 1 : 0, dash: [3, 2])))
+                                .blockOutline(theme, cornerRadius: cell * 0.3, filled: !block.bypassed && !tiny)
                         } else {
-                            RoundedRectangle(cornerRadius: cell * 0.3).stroke(theme.line).frame(maxWidth: .infinity).frame(height: cell)
+                            RoundedRectangle(cornerRadius: cell * 0.3).stroke(theme.line, lineWidth: tiny ? 1 : theme.hairline).frame(maxWidth: .infinity).frame(height: cell)
                         }
                     }
                 }
@@ -85,7 +89,7 @@ struct RailStep<Detail: View>: View {
     private var node: some View {
         Image(systemName: icon).font(.title3).frame(width: 46, height: 46)
             .background(theme.raised, in: Circle())
-            .overlay(Circle().stroke(done ? theme.signal : theme.line, lineWidth: done ? 1.5 : 1))
+            .overlay(Circle().stroke(done ? theme.signal : theme.line, lineWidth: done ? 1.5 : theme.hairline))
             .overlay(alignment: .bottomTrailing) {
                 if done {
                     Image(systemName: "checkmark").font(.system(size: 9, weight: .heavy)).foregroundStyle(theme.signalInk)
@@ -188,7 +192,7 @@ struct KeepAwakePrompt: View {
                 }.buttonStyle(.plain)
             }
             .padding(16).background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line, lineWidth: theme.hairline))
             .transition(.opacity)
         }
     }
@@ -231,7 +235,7 @@ struct GetMacSheet: View {
                 Text((url.host ?? "") + url.path).font(.headline).lineLimit(2).minimumScaleFactor(0.8).textSelection(.enabled)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
                 .background(theme.surface, in: RoundedRectangle(cornerRadius: 18))
-                .overlay(RoundedRectangle(cornerRadius: 18).stroke(theme.line))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(theme.line, lineWidth: theme.hairline))
         }.transition(.opacity)
     }
     private var sentView: some View {
@@ -288,7 +292,7 @@ struct GetMacSheet: View {
     }
     private func node(_ icon: String) -> some View {
         Image(systemName: icon).font(.title2).frame(width: 60, height: 60)
-            .background(theme.raised, in: Circle()).overlay(Circle().stroke(theme.line))
+            .background(theme.raised, in: Circle()).overlay(Circle().stroke(theme.line, lineWidth: theme.hairline))
     }
     private func share() { sharing = true }
 }

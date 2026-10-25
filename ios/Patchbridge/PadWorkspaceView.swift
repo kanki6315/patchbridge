@@ -142,7 +142,7 @@ struct PadWorkspaceView: View {
                 }.lineLimit(1).minimumScaleFactor(0.8)
             }
             .padding(.leading, 8).padding(.trailing, 18).padding(.vertical, 8)
-            .background(theme.surface, in: Capsule()).overlay(Capsule().stroke(theme.line))
+            .background(theme.surface, in: Capsule()).overlay(Capsule().stroke(theme.line, lineWidth: theme.hairline))
             .frame(maxWidth: 420)
             .accessibilityElement(children: .combine)
         } else if let message = model.error ?? model.notice ?? model.coordinator.outcome ?? pending.map({ $0.operation == "save" ? "Saving on the QC…" : "Sending…" }) {
@@ -154,7 +154,7 @@ struct PadWorkspaceView: View {
             }
             .foregroundStyle(failure ? theme.caution : theme.ink)
             .padding(.leading, 8).padding(.trailing, 18).padding(.vertical, 8)
-            .background(theme.surface, in: Capsule()).overlay(Capsule().stroke(theme.line))
+            .background(theme.surface, in: Capsule()).overlay(Capsule().stroke(theme.line, lineWidth: theme.hairline))
             .frame(maxWidth: 380)
             .accessibilityElement(children: .combine)
         }
@@ -229,7 +229,7 @@ struct PadWorkspaceView: View {
                                     .accessibilityLabel(model.name(block))
                                     .accessibilityAddTraits(selected == block.id ? .isSelected : [])
                             } else {
-                                RoundedRectangle(cornerRadius: 12).stroke(theme.line).frame(maxWidth: .infinity).frame(height: 70)
+                                RoundedRectangle(cornerRadius: 12).stroke(theme.line, lineWidth: theme.hairline).frame(maxWidth: .infinity).frame(height: 70)
                                     .contentShape(Rectangle()).onTapGesture { row = r }
                                     .accessibilityHidden(true)
                             }
@@ -241,7 +241,7 @@ struct PadWorkspaceView: View {
             }
         }
         .padding(8).background(theme.surface, in: RoundedRectangle(cornerRadius: 22))
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(theme.line, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 22).stroke(theme.line, lineWidth: theme.hairline))
     }
     /// Named grid cell: the category code over up to two lines of the block name.
     private func cell(_ block: PresetSnapshot.Block) -> some View {
@@ -258,6 +258,7 @@ struct PadWorkspaceView: View {
         .frame(maxWidth: .infinity, alignment: .leading).frame(height: 70)
         .background(bypass ? theme.surface : category.color, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(category.color, style: StrokeStyle(lineWidth: bypass ? 1.5 : 0, dash: [4, 3])))
+        .blockOutline(theme, cornerRadius: 12, filled: !bypass)
         .padding(selected == block.id ? 2 : 0)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(selected == block.id ? theme.signal : .clear, lineWidth: 2.5))
     }
@@ -287,6 +288,7 @@ struct PadWorkspaceView: View {
                 Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.5)
                     .foregroundStyle(category.darkInk ? Color(hex: 0x161611) : .white)
                     .frame(width: 44, height: 44).background(category.color, in: RoundedRectangle(cornerRadius: 11))
+                    .blockOutline(theme, cornerRadius: 11)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.name(block)).font(.headline).lineLimit(1)
                     Text(model.summary(block)).font(.subheadline).foregroundStyle(theme.muted).lineLimit(1)
@@ -311,7 +313,7 @@ struct PadWorkspaceView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .background(theme.surface)
         .clipShape(RoundedRectangle(cornerRadius: 30))
-        .overlay(RoundedRectangle(cornerRadius: 30).stroke(theme.line, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 30).stroke(theme.line, lineWidth: theme.hairline))
         .padding(.bottom, 12)
     }
 }
@@ -327,8 +329,8 @@ struct PadConnectionDetails: View {
     @ObservedObject var model: PhoneModel
     let theme: PhoneTheme
     let dismiss: () -> Void
-    @AppStorage("appearance") private var appearance = "Stage"
-    @AppStorage("matchSystem") private var matchSystem = false
+    @AppStorage(AppearanceKey.theme) private var themeID = ThemeID.stage
+    @AppStorage(AppearanceKey.mode) private var mode = AppearanceMode.dark
     @State private var showGetMac = false
 
     var body: some View {
@@ -352,12 +354,12 @@ struct PadConnectionDetails: View {
                         HStack {
                             Label("Appearance", systemImage: "circle.lefthalf.filled")
                             Spacer()
-                            Text(matchSystem ? "Match \(deviceName)" : appearance).foregroundStyle(theme.muted)
+                            Text("\(themeID.rawValue) · \(mode.rawValue)").foregroundStyle(theme.muted)
                             Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
                         }.padding(.horizontal, 16).frame(minHeight: 52).contentShape(Rectangle())
                     }.buttonStyle(.plain).accessibilityLabel("Appearance")
                         .background(theme.raised.opacity(0.6), in: RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line, lineWidth: theme.hairline))
                     if !model.demo {
                         DisconnectButton(theme: theme) { model.disconnect(); dismiss() }
                     }

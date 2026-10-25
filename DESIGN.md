@@ -149,7 +149,7 @@ components:
     padding: "8px"
 ---
 
-<!-- SEED: drawn from concept direction D and the "iPhone PoC" page of the "Patchbridge concept directions" canvas (2026-10-20), not from shipped code. Rendered boards and their source are in docs/design/ (iPhone in screens/, iPad in ipad/). Re-run /impeccable document once the SwiftUI screens exist to capture the real tokens and components. Unprefixed color tokens are the Stage theme; daylight-* tokens are the Daylight theme. -->
+<!-- SEED: drawn from concept direction D and the "iPhone PoC" page of the "Patchbridge concept directions" canvas (2026-10-20), not from shipped code. Rendered boards and their source are in docs/design/ (iPhone in screens/, iPad in ipad/). Re-run /impeccable document once the SwiftUI screens exist to capture the real tokens and components. Unprefixed color tokens are Stage in Dark mode; daylight-* tokens are Stage in Light mode. The other themes are in the Themes section. -->
 
 # Design System: Patchbridge
 
@@ -209,17 +209,44 @@ A near-black olive ground, one electric chartreuse signal, and a fixed set of ca
 - **Danger** (#ff9683): destructive actions only, such as Disconnect. **Scrim** (black at 45%) dims the screen behind sheets.
 
 ### Themes
-Patchbridge ships a small set of themes rather than free color pickers. A theme owns every color in the app except scene colors: ground, surfaces, glass, ink, the signal accent, caution, danger and the block category table. The PoC has two themes, with a toggle that follows the iPhone's Light and Dark setting.
-- **Stage** (default): the palette above. Dark, for dim studios and stages.
-- **Daylight**: for bright rooms. The ground is near-white **Daylight Ground** (#f7f7f5) with pure white surfaces and panels, **Daylight Ink** (#161611, 16.9:1) and **Daylight Muted** (#555650, 6.9:1), and a 1px **Daylight Hairline** (#d1d1cd). Glass is white at 66% with a soft drop shadow. Chartreuse can't carry text or outlines on white, so Daylight's signal is deep olive **Daylight Signal** (#5c6400, 6.0:1 as text, with white ink at 6.4:1). **Daylight Caution** is #9d5300 (5.3:1) and **Daylight Danger** is #ba2c25 (5.6:1). Category block fills stay the same; gauge arcs use the category's deeper shade (oklch L ≈ 0.55–0.58) instead of the L 0.74 shade Stage uses.
-- **Planned, not designed:** a "QC Match" theme that recolors rig-view blocks to match the Quad Cortex's own colors. It only swaps the category table; scene handling doesn't change.
+Patchbridge ships a small set of themes rather than free color pickers. A theme owns every color in the app except scene colors: ground, surfaces, glass, ink and the signal accent. Caution, danger and the gauge arcs follow the mode, not the theme. Appearance has four separate settings, and the player never picks "the light version" of a theme as its own item:
+- **Theme**: Stage, Ember, Midnight, Mint, Lavender or Mono. Each is a ground tinted toward its accent plus one accent, in a dark and a light version.
+- **Mode**: Dark, Light or Auto (follows the device's Light and Dark setting).
+- **High contrast**: on any theme. Always on while iOS Increase Contrast is on.
+- **Block colors**: Patchbridge or QC Match.
+
+Tokens live in `ios/Shared/ThemeTokens.swift`, shared by the app and the Live Activity.
+
+| Theme | Dark ground / accent / accent ink | Light ground / accent / accent ink |
+|---|---|---|
+| Stage (default) | #0d0e0a / #d1e14a / #161802 | #f7f7f5 / #5c6400 / #ffffff |
+| Ember | #070505 / #ff6a3d / #1a0602 | #f8f6f5 / #a8360f / #ffffff |
+| Midnight | #080a12 / #9fb4ff / #0a0f24 | #f5f6f9 / #3a4fb8 / #ffffff |
+| Mint | #06100c / #6ef2c0 / #03190f | #f4f8f6 / #00704e / #ffffff |
+| Lavender | #0d0a12 / #c9a6ff / #1a0c33 | #f7f5f9 / #6a3fb8 / #ffffff |
+| Mono | #0b0b0b / #f2f2f2 / #0b0b0b | #f6f6f6 / #111111 / #ffffff |
+
+- **Dark versions:** ink is at least 13:1 against the ground, muted at least 6.2:1, the accent at least 7.1:1, and accent ink at least 6.9:1 on the accent.
+- **Light versions:** ink is at least 16.7:1, muted at least 6.8:1, the accent at least 5.7:1 against the ground, and white ink at least 6.1:1 on the accent.
+- **Accent choice:** no accent may read as a block category or as Caution. That rules out gold, coral, pink and true blue. Mono's accent is the ink color, so in Mono selection relies entirely on fills and outlines.
+- **Stage Light** is the former Daylight palette. The ground is near-white **Daylight Ground** (#f7f7f5) with pure white surfaces and panels, **Daylight Ink** (#161611, 16.9:1), **Daylight Muted** (#555650, 6.9:1) and a 1px **Daylight Hairline** (#d1d1cd). Glass is white at 66% with a soft drop shadow. Chartreuse can't carry text or outlines on white, so the light signal is deep olive **Daylight Signal** (#5c6400, 6.0:1 as text, with white ink at 6.4:1).
+- **Light mode in every theme:** **Daylight Caution** is #9d5300 (5.3:1) and **Daylight Danger** is #ba2c25 (5.6:1). Category block fills stay the same; gauge arcs use the category's deeper shade (oklch L ≈ 0.55–0.58) instead of the L 0.74 shade the dark versions use.
+- **High contrast:**
+  - Ground and surfaces become pure black or pure white.
+  - Muted text moves close to ink: #d6d6d0 in dark, #333333 in light.
+  - Hairlines become 2pt strong gray (#9a9a94 dark, #6b6b66 light), and every filled block gets a 2pt ink outline, so blocks never blend into empty slots.
+  - Glass becomes solid.
+  - In light mode, Stage, Ember and Mint's accents deepen to at least 7:1 on white (#4a5000, #8f2e0c, #005c40).
+  - Thumbnails keep 1pt lines.
+- **QC Match** only swaps the block category table. Its colors are placeholders until they're sampled from a Quad Cortex, so only debug builds offer it.
+- **Watch:** the watch app keeps Stage colors for now.
 
 ### Named Rules
 **The Theme Owns Everything But Scenes Rule.** Every color comes from the active theme except scene colors, which always come from the QC. Never recolor a scene to fit a theme, and never let a scene color stand in for the signal accent.
 
 **The Scene Dot Rule.** Scene colors only ever fill dots and outlines, never text or large areas. Several QC colors (yellow #ffd236, green #45f862) are about 1.3:1 on Daylight Ground, so in Daylight every dot gets a 1.5px dark edge. The scene letter always sits beside the dot, because names and colors repeat ("RHYTHM" on E and F; the same blue on B and G). A blank name falls back to the letter alone, never an invented name.
 
-**The One Signal Rule.** Chartreuse is reserved for actions, selection and edit state. It never appears as decoration, as a background wash, or on inactive elements. If chartreuse covers more than about 10% of a screen, something is decorated that shouldn't be.
+**The One Signal Rule.** The theme's accent (chartreuse in Stage) is reserved for actions, selection and edit state. It never appears as decoration, as a background wash, or on inactive elements. If the accent covers more than about 10% of a screen, something is decorated that shouldn't be.
 
 **The Category Owns the Editor Rule.** In the block editor, the block's category color tints the ground (oklch chroma ≤ 0.012 at L 0.16) and casts one soft radial glow behind the gauge (at most oklch L 0.30, C 0.07). The editor is never a full-bleed category fill; the glass needs a calm field to float over. The gauge arc uses the category color raised to oklch L 0.74 so it reads on the dark ground.
 

@@ -330,7 +330,7 @@ struct TunerPanel: View {
                     Toggle(isOn: Binding(get: { tuner.displayedMute }, set: { tuner.setMuted($0) })) {
                         Label(tuner.requestedMute == nil ? "Mute output" : "Mute output · sending…", systemImage: "speaker.slash")
                     }.padding(.horizontal, 16).frame(minHeight: 56)
-                    Rectangle().fill(theme.line).frame(height: 0.5).padding(.leading, 16)
+                    Rectangle().fill(theme.line).frame(height: theme.highContrast ? 2 : 0.5).padding(.leading, 16)
                 }
                 Toggle("Live tuner", isOn: Binding(get: { tuner.live }, set: { tuner.setLive($0) }))
                     .padding(.horizontal, 16).frame(minHeight: 56)
@@ -398,7 +398,7 @@ struct TunerBand: View {
             }
             .padding(.horizontal, 14).frame(height: 52)
             .background(theme.surface, in: RoundedRectangle(cornerRadius: 18))
-            .overlay(RoundedRectangle(cornerRadius: 18).stroke(theme.line))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(theme.line, lineWidth: theme.hairline))
         }
         .buttonStyle(.plain).frame(minWidth: 170, maxWidth: wide ? .infinity : 360).layoutPriority(-1)
         .tunerAccessibility(readout.pitch).accessibilityAddTraits(.isButton).accessibilityHint("Opens the full tuner")

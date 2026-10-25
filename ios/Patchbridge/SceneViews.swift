@@ -53,7 +53,7 @@ struct SceneButtons: View {
                     case (_, .pending): shape.stroke(theme.signal, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
                     case (_, .notApplied): shape.stroke(theme.caution, lineWidth: 1.5)
                     case (true, _): shape.stroke(color, lineWidth: style == .pads ? 2 : 1.5)
-                    default: shape.stroke(live ? theme.line : .clear, lineWidth: 1)
+                    default: shape.stroke(live ? theme.line : .clear, lineWidth: theme.hairline)
                     }
                 }
                 .shadow(color: active && style == .pads && !theme.daylight ? color.opacity(0.35) : .clear, radius: 14)
@@ -363,7 +363,7 @@ struct NoticeToast: View {
                     .foregroundStyle(shown.failure ? theme.caution : theme.ink)
                     .padding(.horizontal, 12).padding(.vertical, 8)
                     // Solid, so the blocks behind it never tint the text.
-                    .background(theme.raised, in: Capsule()).overlay(Capsule().stroke(theme.line))
+                    .background(theme.raised, in: Capsule()).overlay(Capsule().stroke(theme.line, lineWidth: theme.hairline))
                     .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.96)))
@@ -521,7 +521,7 @@ struct SceneScopeRow: View {
             if on && proposed != nil { shape.stroke(theme.signal, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])) }
             else if on { shape.stroke(model.sceneColor(theme, index), lineWidth: 1.5) }
         }
-        .overlay(alignment: .bottom) { if !on { theme.line.frame(height: 1).padding(.horizontal, 6) } }
+        .overlay(alignment: .bottom) { if !on { theme.line.frame(height: theme.hairline).padding(.horizontal, 6) } }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Scene \(letter)\(sceneName.isEmpty ? "" : " \(sceneName)"), \(on && loading ? "loading" : text)\(on ? ", editing" : "")")
     }
@@ -536,7 +536,7 @@ struct SceneScopeRow: View {
             VStack(alignment: .leading, spacing: 8) { label; trailing() }.frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 14).padding(.vertical, 10).frame(maxWidth: .infinity, minHeight: 64)
-        .overlay(RoundedRectangle(cornerRadius: 15).stroke(theme.line))
+        .overlay(RoundedRectangle(cornerRadius: 15).stroke(theme.line, lineWidth: theme.hairline))
     }
 }
 

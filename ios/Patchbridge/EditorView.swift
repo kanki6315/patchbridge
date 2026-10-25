@@ -7,8 +7,11 @@ struct EditorView: View {
     init(model: PhoneModel) { self.model = model; _tuner = ObservedObject(wrappedValue: model.tuner) }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("patchbridge.phoneName") private var phoneName = ""
-    @AppStorage("appearance") private var appearance = "Stage"
-    @AppStorage("matchSystem") private var matchSystem = false
+    @AppStorage(AppearanceKey.theme) private var themeID = ThemeID.stage
+    @AppStorage(AppearanceKey.mode) private var mode = AppearanceMode.dark
+    @AppStorage(AppearanceKey.highContrast) private var highContrast = false
+    @AppStorage(AppearanceKey.blocks) private var blocks = BlockPalette.patchbridge
+    @Environment(\.colorSchemeContrast) private var systemContrast
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var systemScheme
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -28,7 +31,13 @@ struct EditorView: View {
     @State private var browsing = false
     @FocusState private var nameFocused: Bool
     enum Sheet: String, Identifiable { case connection, appearance, getMac; var id: String { rawValue } }
-    private var theme: PhoneTheme { PhoneTheme(daylight: matchSystem ? systemScheme == .light : appearance == "Daylight") }
+    /// Increase Contrast in Settings always turns high contrast on.
+    private var theme: PhoneTheme {
+        PhoneTheme(themeID, daylight: mode.daylight(systemLight: systemScheme == .light),
+                   highContrast: highContrast || systemContrast == .increased, blocks: BlockPalette.available.contains(blocks) ? blocks : .patchbridge)
+    }
+    /// Auto leaves the system appearance alone so it can follow the iPhone setting.
+    private var colorScheme: ColorScheme? { mode == .auto ? nil : (theme.daylight ? .light : .dark) }
     /// Regular width uses the iPad workspace; accessibility text sizes keep the roomier iPhone layout.
     private var pad: Bool { sizeClass == .regular && !dynamicTypeSize.isAccessibilitySize }
     private let macURL = macAppURL
@@ -78,7 +87,7 @@ struct EditorView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(theme.ground.ignoresSafeArea())
             .foregroundStyle(theme.ink).tint(theme.signal)
-            .preferredColorScheme(matchSystem ? nil : (theme.daylight ? .light : .dark))
+            .preferredColorScheme(colorScheme)
             .sheet(item: $sheet) { item in
                 NavigationStack {
                     sheetContent(item).padding(20).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -103,13 +112,19 @@ struct EditorView: View {
                 #if DEBUG
                 guard !didConfigurePreview else { return }
                 didConfigurePreview = true
-                if ProcessInfo.processInfo.arguments.contains("--stage") { appearance = "Stage"; matchSystem = false }
                 let arguments = ProcessInfo.processInfo.arguments
+                // --stage resets to the default look; --theme Midnight and --daylight then adjust it.
+                if arguments.contains("--stage") { themeID = .stage; mode = .dark; highContrast = false; blocks = .patchbridge }
+                if let flag = arguments.firstIndex(of: "--theme"), arguments.indices.contains(flag + 1),
+                   let named = ThemeID(rawValue: arguments[flag + 1]) { themeID = named }
+                if arguments.contains("--high-contrast") { highContrast = true }
+                if arguments.contains("--qc-blocks") { blocks = .qcMatch }
                 if let flag = arguments.firstIndex(of: "--activity"), arguments.indices.contains(flag + 1) {
-                    model.liveActivity.preview(arguments[flag + 1], daylight: arguments.contains("--daylight"))
+                    model.liveActivity.preview(arguments[flag + 1], theme: themeID, daylight: arguments.contains("--daylight"))
                 }
                 if arguments.contains("--offline-bridge") { model.start() }
                 if arguments.contains("--presets") { browsing = true }
+                if arguments.contains("--appearance") { sheet = .appearance }
                 if arguments.contains("--demo") || arguments.contains("--screenshots") {
                     if arguments.contains("--screenshots") { model.loadScreenshotFixture() }
                     else { model.loadDemo() }
@@ -123,7 +138,7 @@ struct EditorView: View {
                         if duo == .inner { duoSelected = id; duoEditing = true }
                         else if !pad { selectedBlock = id }
                     }
-                    if ProcessInfo.processInfo.arguments.contains("--daylight") { appearance = "Daylight" }
+                    if arguments.contains("--daylight") { mode = .light }
                     if arguments.contains("--live-tuner") { tuner.setLive(true) }
                     if arguments.contains("--tuner") { tuner.setOpen(true) }
                 }
@@ -162,7 +177,7 @@ struct EditorView: View {
                 .navigationTitle(snapshot.name).navigationBarTitleDisplayMode(.inline)
                 .toolbar(.visible, for: .navigationBar)
                 .toolbarBackground(theme.ground, for: .navigationBar)
-                .preferredColorScheme(matchSystem ? nil : (theme.daylight ? .light : .dark))
+                .preferredColorScheme(colorScheme)
             }
         }
         }
@@ -244,7 +259,7 @@ struct EditorView: View {
                             if let block = snapshot.blocks.first(where: { $0.position == [r, column] }) {
                                 swatch(block, height: 38)
                             } else {
-                                RoundedRectangle(cornerRadius: 9).stroke(theme.line).frame(maxWidth: .infinity).frame(height: 38)
+                                RoundedRectangle(cornerRadius: 9).stroke(theme.line, lineWidth: theme.hairline).frame(maxWidth: .infinity).frame(height: 38)
                             }
                         }
                     }.padding(3).background(row == r ? theme.raised : .clear, in: RoundedRectangle(cornerRadius: 12))
@@ -252,7 +267,7 @@ struct EditorView: View {
                 }.buttonStyle(.plain).accessibilityLabel("Row \(r + 1), \(snapshot.blocks.filter { $0.position[0] == r }.count) blocks")
             }
         }.padding(8).background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line, lineWidth: theme.hairline))
     }
     func swatch(_ block: PresetSnapshot.Block, height: CGFloat) -> some View {
         let category = model.category(block)
@@ -262,6 +277,7 @@ struct EditorView: View {
             .frame(maxWidth: .infinity).frame(height: height)
             .background(bypass ? theme.surface : category.color, in: RoundedRectangle(cornerRadius: 9))
             .overlay(RoundedRectangle(cornerRadius: 9).stroke(category.color, style: StrokeStyle(lineWidth: bypass ? 1.5 : 0, dash: [4, 3])))
+            .blockOutline(theme, cornerRadius: 9, filled: !bypass)
     }
     private func rowList(_ snapshot: PresetSnapshot) -> some View {
         let blocks = snapshot.blocks.filter { $0.position[0] == row }.sorted { $0.position[1] < $1.position[1] }
@@ -281,7 +297,7 @@ struct EditorView: View {
                         Image(systemName: "chevron.right").foregroundStyle(theme.muted)
                     }.padding(.vertical, 9).contentShape(Rectangle())
                 }.buttonStyle(.plain)
-                Rectangle().fill(theme.line).frame(height: 0.5)
+                Rectangle().fill(theme.line).frame(height: theme.highContrast ? 2 : 0.5)
             }
         }
     }
@@ -322,7 +338,7 @@ struct EditorView: View {
                                         .buttonStyle(.plain)
                                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(inspectedBlock == block.id ? theme.signal : .clear, lineWidth: 2))
                                         .accessibilityLabel(model.name(block))
-                                } else { RoundedRectangle(cornerRadius: 9).stroke(theme.line).frame(maxWidth: .infinity).frame(height: 44) }
+                                } else { RoundedRectangle(cornerRadius: 9).stroke(theme.line, lineWidth: theme.hairline).frame(maxWidth: .infinity).frame(height: 44) }
                             }
                         }
                     }
@@ -434,7 +450,7 @@ struct EditorView: View {
                         .font(.footnote.weight(.semibold)).foregroundStyle(theme.signal)
                 }
             }.padding(10).background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line))
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line, lineWidth: theme.hairline))
                 .contentShape(RoundedRectangle(cornerRadius: 20))
         }.buttonStyle(.plain).accessibilityLabel("Open the demo preset")
     }
@@ -536,11 +552,11 @@ struct EditorView: View {
             HStack {
                 Label("Appearance", systemImage: "circle.lefthalf.filled")
                 Spacer()
-                Text(matchSystem ? "Match \(deviceName)" : appearance).foregroundStyle(theme.muted)
+                Text("\(themeID.rawValue) · \(mode.rawValue)").foregroundStyle(theme.muted)
                 Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
             }.padding(.horizontal, 16).frame(minHeight: 52).contentShape(Rectangle())
         }.buttonStyle(.plain).background(theme.surface, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line, lineWidth: theme.hairline))
             .accessibilityLabel("Appearance")
     }
 }
@@ -595,7 +611,7 @@ struct ConnectionStatusSettings: View {
                 warning: alertsDenied ? "Notifications are off for Patchbridge in Settings." : nil)
         }
         .background(fill, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line, lineWidth: theme.hairline))
         .onChange(of: showStatus) { _, _ in model.connectionStatusPreferenceChanged() }
         .onChange(of: keepAwake) { _, _ in keepAwakeAsked = true; model.syncKeepAwake() }
         .onChange(of: alertOnDrop) { _, on in
@@ -603,7 +619,7 @@ struct ConnectionStatusSettings: View {
             ConnectionActivityController.requestAlertPermission { granted in alertsDenied = !granted }
         }
     }
-    private var divider: some View { Rectangle().fill(theme.line).frame(height: 1).padding(.leading, 16) }
+    private var divider: some View { Rectangle().fill(theme.line).frame(height: theme.hairline).padding(.leading, 16) }
     /// A warning replaces the detail line, so a setting iOS is blocking says so in place.
     private func row(_ title: String, _ detail: String, isOn: Binding<Bool>, warning: String? = nil) -> some View {
         Toggle(isOn: isOn) {
@@ -635,7 +651,7 @@ struct ReconnectToast: View {
         .frame(maxWidth: 480)
         // Solid, so the Save button or a block behind it never tints the text.
         .background(theme.raised, in: RoundedRectangle(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line, lineWidth: theme.hairline))
         .shadow(color: .black.opacity(0.3), radius: 16, y: 6)
         .accessibilityElement(children: .combine)
         .onAppear { UIAccessibility.post(notification: .announcement, argument: "Reconnecting to \(macName ?? "your Mac")") }
