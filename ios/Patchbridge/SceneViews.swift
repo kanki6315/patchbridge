@@ -328,6 +328,59 @@ struct SceneStatus: View {
     }
 }
 
+/// The last edit, save or QC change as a small pill floating over the content, so a message
+/// coming or going never moves the layout. Confirmations fade after a few seconds; failures stay
+/// until the next message. Scene switches are left to `SceneStatus`. With an `idle` hint, the
+/// hint holds the line and the pill takes its place.
+struct NoticeToast: View {
+    @ObservedObject var model: PhoneModel
+    let theme: PhoneTheme
+    var idle: String? = nil
+    /// False where the view below already says it's sending, like the block editor.
+    var sends = true
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var faded: String?
+    private var message: (text: String, icon: String, failure: Bool, ongoing: Bool)? {
+        if let text = model.error ?? model.notice ?? model.coordinator.outcome {
+            let failure = model.error != nil || text.hasPrefix("Not ") || text.hasPrefix("Couldn")
+            return (text, failure ? "exclamationmark.triangle" : "checkmark", failure, false)
+        }
+        if sends, let pending = model.editor.pending, pending.operation != "select_scene" {
+            return (pending.operation == "save" ? "Saving…" : "Sending…", "arrow.triangle.2.circlepath", false, true)
+        }
+        return nil
+    }
+    var body: some View {
+        let shown = message.flatMap { $0.text == faded ? nil : $0 }
+        Group {
+            if let idle { Text(idle).font(.footnote).foregroundStyle(theme.muted).lineLimit(1).opacity(shown == nil ? 1 : 0) }
+            else { Color.clear.frame(height: 0) }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: idle == nil ? .top : .leading) {
+            if let shown {
+                Label(shown.text, systemImage: shown.icon).font(.footnote.weight(.semibold)).lineLimit(2)
+                    .foregroundStyle(shown.failure ? theme.caution : theme.ink)
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    // Solid, so the blocks behind it never tint the text.
+                    .background(theme.raised, in: Capsule()).overlay(Capsule().stroke(theme.line))
+                    .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.96)))
+            }
+        }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: shown?.text)
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
+        .task(id: message?.text) {
+            if faded != message?.text { faded = nil }
+            guard let message, !message.failure, !message.ongoing else { return }
+            try? await Task.sleep(for: .seconds(3))
+            if !Task.isCancelled { faded = message.text }
+        }
+    }
+}
+
 extension PhoneModel {
     enum SceneMark { case none, pending, notApplied }
     /// How the strip marks one scene's cell beyond the active ring.

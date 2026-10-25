@@ -327,8 +327,9 @@ struct EditorView: View {
                     }
                 }.frame(width: 180)
             }
-            if let message = model.error ?? model.notice ?? model.coordinator.outcome { Text(message).font(.footnote).foregroundStyle(theme.caution) }
-        }.padding(.horizontal, 16).padding(.vertical, 8)
+        }
+        .overlay(alignment: .bottom) { NoticeToast(model: model, theme: theme) }
+        .padding(.horizontal, 16).padding(.vertical, 8)
     }
     private func saveBar(_ snapshot: PresetSnapshot, pushed: Bool) -> some View {
         VStack(spacing: 8) {

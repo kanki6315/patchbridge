@@ -246,8 +246,8 @@ struct DuoWorkspaceView: View {
                     BypassButton(model: model, block: block, theme: theme)
                     saveButton(snapshot, short: true)
                 }
-                notice
                 BlockEditorView(model: model, block: block, theme: theme, layout: .deck)
+                    .overlay(alignment: .top) { NoticeToast(model: model, theme: theme, sends: false) }
             } else {
                 // Like the QC's footswitches. Half-folded, they lie flat on the table.
                 HStack(spacing: 12) {
@@ -256,8 +256,7 @@ struct DuoWorkspaceView: View {
                     Spacer(minLength: 8)
                     saveButton(snapshot, short: true)
                 }
-                Text("Tap a block to edit it").font(.footnote).foregroundStyle(theme.muted)
-                notice
+                NoticeToast(model: model, theme: theme, idle: "Tap a block to edit it")
                 SceneButtons(model: model, snapshot: snapshot, theme: theme, style: .pads)
                     .frame(maxHeight: .infinity).padding(.bottom, 16)
             }
@@ -282,9 +281,9 @@ struct DuoWorkspaceView: View {
                 sceneStrip(snapshot, stacked: false)
                 saveButton(snapshot, short: true)
             }
-            notice
             HStack(spacing: 12) {
                 grid(snapshot, style: menuBlock == nil ? .named : .code, band: false, cellHeight: nil)
+                    .overlay(alignment: .top) { NoticeToast(model: model, theme: theme).padding(.top, 8) }
                 if let menuBlock {
                     menu(menuBlock, sheet: false)
                         .background(theme.surface, in: RoundedRectangle(cornerRadius: 28))
@@ -398,7 +397,6 @@ struct DuoWorkspaceView: View {
             .gesture(DragGesture().onEnded { if sheet && $0.translation.height > 60 { closeEditor() } })
             .padding(.bottom, 6)
             // The portrait menu covers the save bar, so report edit outcomes here.
-            if sheet { notice.padding(.bottom, 8) }
             ScrollView {
                 VStack(spacing: 0) {
                     if controls.isEmpty { Label("Read-only", systemImage: "lock").foregroundStyle(theme.muted).frame(maxWidth: .infinity, minHeight: 60) }
@@ -410,6 +408,7 @@ struct DuoWorkspaceView: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .fixedSize(horizontal: false, vertical: sheet)
+            .overlay(alignment: .top) { if sheet { NoticeToast(model: model, theme: theme) } }
             .padding(.bottom, 12)
             Button { openEditor(block.id) } label: {
                 HStack(spacing: 8) {
