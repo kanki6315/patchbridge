@@ -500,73 +500,101 @@ struct EditorView: View {
                 DemoExit(theme: theme, getMac: { self.sheet = .getMac },
                          connect: { self.sheet = nil; model.disconnect(); model.start() },
                          leave: { model.disconnect(); self.sheet = nil })
-                Button { self.sheet = .appearance } label: {
-                    HStack {
-                        Label("Appearance", systemImage: "circle.lefthalf.filled")
-                        Spacer()
-                        Text(matchSystem ? "Match \(deviceName)" : appearance).foregroundStyle(theme.muted)
-                        Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
-                    }.padding(.horizontal, 16).frame(minHeight: 52).contentShape(Rectangle())
-                }.buttonStyle(.plain).background(theme.surface, in: RoundedRectangle(cornerRadius: 16))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
-                    .accessibilityLabel("Appearance")
+                appearanceRow
             }
         case .connection:
-            VStack(alignment: .leading, spacing: 22) {
-                Text("Connection details").font(.title.bold())
-                Label("Connected over Bluetooth", systemImage: "checkmark.circle")
-                Text(model.coordinator.status).foregroundStyle(theme.muted)
-                Text("Available now").font(.headline)
-                Label("Read preset and parameter values", systemImage: "checkmark")
-                if model.editor.supports("set_parameter") { Label("Edit supported parameters", systemImage: "checkmark") }
-                if model.editor.supports("set_bypass") { Label("Turn blocks on or off", systemImage: "checkmark") }
-                if model.editor.supports("select_scene") { Label("Switch scenes", systemImage: "checkmark") }
-                if model.editor.supports("select_preset") && model.editor.supports("list_presets") { Label("Load presets from My Presets", systemImage: "checkmark") }
-                if model.editor.supports("save") { Label("Save the current preset", systemImage: "checkmark") }
-                if model.coordinator.trusted {
-                    LabeledContent("Trusted", value: "Until revoked on the Mac").foregroundStyle(theme.ink)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    ConnectionHeader(model: model, theme: theme)
+                    ConnectionStatusSettings(model: model, theme: theme, fill: theme.surface)
+                    appearanceRow
+                    DisconnectButton(theme: theme) { model.disconnect(); self.sheet = nil }
                 }
-                ConnectionStatusSettings(model: model, theme: theme)
-                Button { self.sheet = .appearance } label: { Label("Appearance", systemImage: "circle.lefthalf.filled").frame(minHeight: 44) }
-                Button("Refresh from Mac") { model.coordinator.refresh() }.disabled(model.busy)
-                Button("Disconnect", role: .destructive) { model.disconnect(); self.sheet = nil }.foregroundStyle(theme.danger).frame(minHeight: 44)
-            }
+            }.scrollClipDisabled()
         case .appearance:
             AppearanceSettings(theme: theme)
         }
     }
+    private var appearanceRow: some View {
+        Button { self.sheet = .appearance } label: {
+            HStack {
+                Label("Appearance", systemImage: "circle.lefthalf.filled")
+                Spacer()
+                Text(matchSystem ? "Match \(deviceName)" : appearance).foregroundStyle(theme.muted)
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
+            }.padding(.horizontal, 16).frame(minHeight: 52).contentShape(Rectangle())
+        }.buttonStyle(.plain).background(theme.surface, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
+            .accessibilityLabel("Appearance")
+    }
 }
 
-/// Lock Screen settings for the session. The Live Activity is iPhone-only; alerts work everywhere.
+/// Title and the Mac this device is talking to. Shared by the iPhone sheet and the iPad popover.
+struct ConnectionHeader: View {
+    @ObservedObject var model: PhoneModel
+    let theme: PhoneTheme
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Connection").font(.title.bold())
+            Label {
+                Text("Connected to \(model.coordinator.macName ?? "your Mac")").foregroundStyle(theme.muted)
+            } icon: {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(theme.signal)
+            }.font(.subheadline)
+        }.accessibilityElement(children: .combine)
+    }
+}
+
+struct DisconnectButton: View {
+    let theme: PhoneTheme
+    let action: () -> Void
+    var body: some View {
+        Button(role: .destructive, action: action) {
+            Text("Disconnect").font(.headline).foregroundStyle(theme.danger)
+                .frame(maxWidth: .infinity).frame(minHeight: 52).background(theme.raised, in: Capsule())
+        }.buttonStyle(.plain).padding(.top, 4)
+    }
+}
+
+/// Session settings, one grouped list. The Live Activity is iPhone-only; alerts work everywhere.
 struct ConnectionStatusSettings: View {
     @ObservedObject var model: PhoneModel
     let theme: PhoneTheme
+    let fill: Color
     @AppStorage(ConnectionActivityController.showKey) private var showStatus = false
     @AppStorage(ConnectionActivityController.alertKey) private var alertOnDrop = false
     @AppStorage(PhoneModel.keepAwakeKey) private var keepAwake = false
     @AppStorage(PhoneModel.keepAwakeAskedKey) private var keepAwakeAsked = false
     @State private var alertsDenied = false
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Lock Screen").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
-            Toggle("Keep screen on while connected", isOn: $keepAwake).frame(minHeight: 44)
-            Text("Your \(deviceName) won’t auto-lock during a session, so it doesn’t drop the connection while it waits for the QC. Uses more battery.")
-                .font(.footnote).foregroundStyle(theme.muted)
+        VStack(spacing: 0) {
+            row("Keep screen awake", "Stops auto-lock from dropping the connection. Uses more battery.", isOn: $keepAwake)
             if ConnectionActivityController.supported {
-                Toggle("Show connection status", isOn: $showStatus).frame(minHeight: 44)
-                if showStatus && !ConnectionActivityController.systemEnabled {
-                    Text("Live Activities are off for Patchbridge in Settings.").font(.footnote).foregroundStyle(theme.caution)
-                }
+                divider
+                row("Show connection status", "Live Activity on the Lock Screen", isOn: $showStatus,
+                    warning: showStatus && !ConnectionActivityController.systemEnabled ? "Live Activities are off for Patchbridge in Settings." : nil)
             }
-            Toggle("Alert if the connection drops", isOn: $alertOnDrop).frame(minHeight: 44)
-            Text(alertsDenied ? "Notifications are off for Patchbridge in Settings." : "Only for drops you didn’t start. The status doesn’t keep Bluetooth connected.")
-                .font(.footnote).foregroundStyle(alertsDenied ? theme.caution : theme.muted)
+            divider
+            row("Alert if the connection drops", "Notification, unless you disconnected", isOn: $alertOnDrop,
+                warning: alertsDenied ? "Notifications are off for Patchbridge in Settings." : nil)
         }
+        .background(fill, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
         .onChange(of: showStatus) { _, _ in model.connectionStatusPreferenceChanged() }
         .onChange(of: keepAwake) { _, _ in keepAwakeAsked = true; model.syncKeepAwake() }
         .onChange(of: alertOnDrop) { _, on in
             guard on else { alertsDenied = false; return }
             ConnectionActivityController.requestAlertPermission { granted in alertsDenied = !granted }
         }
+    }
+    private var divider: some View { Rectangle().fill(theme.line).frame(height: 1).padding(.leading, 16) }
+    /// A warning replaces the detail line, so a setting iOS is blocking says so in place.
+    private func row(_ title: String, _ detail: String, isOn: Binding<Bool>, warning: String? = nil) -> some View {
+        Toggle(isOn: isOn) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(warning ?? detail).font(.footnote).foregroundStyle(warning == nil ? theme.muted : theme.caution)
+            }
+        }.padding(.horizontal, 16).padding(.vertical, 10).frame(minHeight: 60)
     }
 }

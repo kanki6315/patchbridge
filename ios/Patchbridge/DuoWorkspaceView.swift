@@ -565,7 +565,7 @@ struct DuoWorkspaceView: View {
             .font(.subheadline.weight(.semibold)).padding(.horizontal, compact ? 0 : 16).frame(minWidth: 44, minHeight: 44)
         }
         .buttonStyle(.plain).phoneGlass(theme, radius: 22)
-        .accessibilityLabel(title).accessibilityHint("Connection details")
+        .accessibilityLabel(title).accessibilityHint("Connection")
     }
     private func saveTitle(_ snapshot: PresetSnapshot) -> String {
         if model.demo { return "Save demo preset" }

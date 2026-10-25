@@ -26,7 +26,7 @@ A recording of this flow is here: [VIDEO LINK]
 PERMISSIONS AND BACKGROUND MODES
 - Bluetooth (NSBluetoothAlwaysUsageDescription): needed to find and talk to the user's Mac. It is requested only when the user taps "Find my Mac", not in demo mode.
 - bluetooth-central background mode: keeps an in-progress request to the Mac alive while the user briefly switches apps, so an edit or save already sent can report its result. The app does not scan or connect in the background on its own.
-- Live Activity: optional, off by default (Connection details › Lock Screen › Show connection status). It shows whether the Mac connection is live and offers one button (Disconnect, Reconnect or Open).
+- Live Activity: optional, off by default (Connection › Show connection status). It shows whether the Mac connection is live and offers one button (Disconnect, Reconnect or Open).
 - Notifications: requested only if the user turns on "Alert if the connection drops", which is off by default.
 
 OTHER NOTES

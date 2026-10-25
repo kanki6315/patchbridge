@@ -168,7 +168,7 @@ struct PadWorkspaceView: View {
             }.font(.headline.weight(.medium)).padding(.horizontal, 18).frame(minHeight: 48)
         }
         .buttonStyle(.plain).phoneGlass(theme, radius: 24)
-        .accessibilityLabel(title).accessibilityHint("Connection details")
+        .accessibilityLabel(title).accessibilityHint("Connection")
         .popover(isPresented: $details, arrowEdge: .top) {
             PadConnectionDetails(model: model, theme: theme) { details = false }
         }
@@ -321,7 +321,7 @@ private struct SmallDotLabel: LabelStyle {
     }
 }
 
-/// Connection details popover, hanging from the status pill. Appearance pushes inside it.
+/// Connection popover, hanging from the status pill. Appearance pushes inside it.
 struct PadConnectionDetails: View {
     @ObservedObject var model: PhoneModel
     let theme: PhoneTheme
@@ -333,50 +333,32 @@ struct PadConnectionDetails: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(model.demo ? "Demo preset" : "Connection").font(.title.bold()).padding(.bottom, 4)
+                VStack(alignment: .leading, spacing: 20) {
                     if model.demo {
+                        Text("Demo preset").font(.title.bold())
                         DemoExit(theme: theme, getMac: { showGetMac = true },
                                  connect: { model.disconnect(); dismiss(); model.start() },
                                  leave: { model.disconnect(); dismiss() })
                     } else {
-                        section("Bridge") {
-                            row("Mac", model.coordinator.macName ?? "Connected")
-                            row("Link", "Bluetooth", ok: true)
-                            row("Status", model.coordinator.status)
-                            if model.coordinator.trusted { row("Trusted", "Until revoked on the Mac") }
-                        }
-                        section("Available right now") {
-                            row("Edit parameters", model.editor.supports("set_parameter") ? "Supported ones" : "Not yet", ok: model.editor.supports("set_parameter"))
-                            row("Save to this slot", model.editor.supports("save") ? "Yes" : "Not yet", ok: model.editor.supports("save"))
-                            row("Turn blocks on or off", model.editor.supports("set_bypass") ? "Yes" : "Not yet", ok: model.editor.supports("set_bypass"))
-                            row("Switch scenes", model.editor.supports("select_scene") ? "Yes" : "Not yet", ok: model.editor.supports("select_scene"))
-                            let presets = model.editor.supports("select_preset") && model.editor.supports("list_presets")
-                            row("Load presets", presets ? "My Presets" : "Not yet", ok: presets)
-                            row("Save As", "Not yet")
-                        }
-                        ConnectionStatusSettings(model: model, theme: theme).padding(.horizontal, 4)
+                        ConnectionHeader(model: model, theme: theme)
+                        ConnectionStatusSettings(model: model, theme: theme, fill: theme.raised.opacity(0.6))
                     }
-                    section("App") {
-                        NavigationLink {
-                            AppearanceSettings(theme: theme).padding(20)
-                                .background(theme.surface.opacity(0.95)).foregroundStyle(theme.ink)
-                                .navigationBarTitleDisplayMode(.inline)
-                        } label: {
-                            HStack {
-                                Text("Appearance")
-                                Spacer()
-                                Text(matchSystem ? "Match \(deviceName)" : appearance)
-                                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
-                            }.padding(.horizontal, 16).frame(minHeight: 50).contentShape(Rectangle())
-                        }.buttonStyle(.plain).accessibilityLabel("Appearance")
-                    }
+                    NavigationLink {
+                        AppearanceSettings(theme: theme).padding(20)
+                            .background(theme.surface.opacity(0.95)).foregroundStyle(theme.ink)
+                            .navigationBarTitleDisplayMode(.inline)
+                    } label: {
+                        HStack {
+                            Label("Appearance", systemImage: "circle.lefthalf.filled")
+                            Spacer()
+                            Text(matchSystem ? "Match \(deviceName)" : appearance).foregroundStyle(theme.muted)
+                            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(theme.muted)
+                        }.padding(.horizontal, 16).frame(minHeight: 52).contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityLabel("Appearance")
+                        .background(theme.raised.opacity(0.6), in: RoundedRectangle(cornerRadius: 16))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
                     if !model.demo {
-                        Button("Refresh from Mac") { model.coordinator.refresh() }.disabled(model.busy).frame(minHeight: 44)
-                        Button(role: .destructive) { model.disconnect(); dismiss() } label: {
-                            Text("Disconnect").font(.headline).foregroundStyle(theme.danger)
-                                .frame(maxWidth: .infinity).frame(minHeight: 52).background(theme.raised, in: Capsule())
-                        }.buttonStyle(.plain).padding(.top, 8)
+                        DisconnectButton(theme: theme) { model.disconnect(); dismiss() }
                     }
                 }.padding(20)
             }
@@ -388,28 +370,10 @@ struct PadConnectionDetails: View {
                     .navigationBarTitleDisplayMode(.inline)
             }
         }
-        .frame(width: 400, height: 620)
+        .frame(width: 400, height: 440)
         .foregroundStyle(theme.ink).tint(theme.signal)
         .presentationBackground(theme.surface.opacity(0.95))
         .preferredColorScheme(theme.daylight ? .light : .dark)
-    }
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(theme.muted).padding(.top, 8)
-            VStack(spacing: 0) { content() }
-                .background(theme.raised.opacity(0.6), in: RoundedRectangle(cornerRadius: 16))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
-        }
-    }
-    private func row(_ title: String, _ value: String, ok: Bool = false) -> some View {
-        HStack(spacing: 8) {
-            Text(title)
-            Spacer(minLength: 12)
-            if ok { Image(systemName: "checkmark").foregroundStyle(theme.signal) }
-            Text(value).foregroundStyle(ok ? theme.ink : theme.muted).lineLimit(2).multilineTextAlignment(.trailing)
-        }
-        .padding(.horizontal, 16).frame(minHeight: 50)
-        .accessibilityElement(children: .combine)
     }
 }
 
