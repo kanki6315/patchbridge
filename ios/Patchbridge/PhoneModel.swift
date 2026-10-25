@@ -302,7 +302,11 @@ final class PhoneModel: ObservableObject {
         return labels[index]
     }
     func editable(_ block: PresetSnapshot.Block) -> Bool {
-        editor.bypassReadOnlyReason(blockID: block.id) == nil || parameters(block).contains { editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }
+        editor.bypassReadOnlyReason(blockID: block.id) == nil || hasAdjustableParameter(block)
+    }
+    /// At least one value can change, not just the on/off switch.
+    func hasAdjustableParameter(_ block: PresetSnapshot.Block) -> Bool {
+        parameters(block).contains { editor.readOnlyReason(blockID: block.id, parameterID: $0) == nil }
     }
     func summary(_ block: PresetSnapshot.Block) -> String {
         if block.scenes[snapshot?.scene ?? ""]?.bypass == true { return "Bypassed" }

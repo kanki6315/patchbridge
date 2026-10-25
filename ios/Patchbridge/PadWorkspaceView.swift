@@ -83,7 +83,9 @@ struct PadWorkspaceView: View {
     private func selectDefault(_ snapshot: PresetSnapshot) {
         if let selected, let block = snapshot.blocks.first(where: { $0.id == selected }) { row = block.position[0]; return }
         let ordered = snapshot.blocks.sorted { ($0.position[0], $0.position[1]) < ($1.position[0], $1.position[1]) }
-        let block = ordered.first { $0.position[0] == row && model.editable($0) } ?? ordered.first { model.editable($0) } ?? ordered.first
+        // Open on a block with a value to adjust; one that only switches on and off is a last resort.
+        let block = ordered.first { $0.position[0] == row && model.hasAdjustableParameter($0) } ?? ordered.first { model.hasAdjustableParameter($0) }
+            ?? ordered.first { model.editable($0) } ?? ordered.first
         selected = block?.id
         if let block { row = block.position[0] }
     }
