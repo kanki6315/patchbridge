@@ -220,7 +220,7 @@ struct DuoWorkspaceView: View {
         ZStack {
             LinearGradient(colors: [Color.black.opacity(theme.daylight ? 0.08 : 0.35), .clear], startPoint: .center, endPoint: .top)
                 .opacity(halfFolded ? 1 : 0)
-            Rectangle().fill(theme.line).frame(height: 1).padding(.horizontal, 24)
+            Rectangle().fill(theme.line).frame(height: theme.hairline).padding(.horizontal, 24)
         }
         .animation(foldMotion, value: halfFolded)
         .allowsHitTesting(false).accessibilityHidden(true)
@@ -287,7 +287,7 @@ struct DuoWorkspaceView: View {
                 if let menuBlock {
                     menu(menuBlock, sheet: false)
                         .background(theme.surface, in: RoundedRectangle(cornerRadius: 28))
-                        .overlay(RoundedRectangle(cornerRadius: 28).stroke(theme.line))
+                        .overlay(RoundedRectangle(cornerRadius: 28).stroke(theme.line, lineWidth: theme.hairline))
                         .frame(width: 280)
                         .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
@@ -326,7 +326,7 @@ struct DuoWorkspaceView: View {
                 menu(menuBlock, sheet: true)
                     .padding(.bottom, insets.bottom)
                     .background(theme.surface.opacity(0.97), in: UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28))
-                    .overlay(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28).stroke(theme.line))
+                    .overlay(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28).stroke(theme.line, lineWidth: theme.hairline))
                     .shadow(color: .black.opacity(0.3), radius: 24, y: -4)
                     .ignoresSafeArea(edges: .bottom)
                     .transition(.move(edge: .bottom))
@@ -402,7 +402,7 @@ struct DuoWorkspaceView: View {
                     if controls.isEmpty { Label("Read-only", systemImage: "lock").foregroundStyle(theme.muted).frame(maxWidth: .infinity, minHeight: 60) }
                     ForEach(controls, id: \.self) { id in
                         menuRow(block, id)
-                        Rectangle().fill(theme.line).frame(height: 0.5)
+                        Rectangle().fill(theme.line).frame(height: theme.highContrast ? 2 : 0.5)
                     }
                 }
             }
@@ -503,7 +503,7 @@ struct DuoWorkspaceView: View {
                                 .accessibilityLabel(model.name(block))
                                 .accessibilityAddTraits(editing && selected == block.id ? .isSelected : [])
                         } else {
-                            RoundedRectangle(cornerRadius: 12).stroke(theme.line)
+                            RoundedRectangle(cornerRadius: 12).stroke(theme.line, lineWidth: theme.hairline)
                                 .frame(maxWidth: .infinity, minHeight: cellHeight, maxHeight: cellHeight ?? .infinity)
                                 .contentShape(Rectangle()).onTapGesture { row = r; closeEditor() }
                                 .accessibilityHidden(true)
@@ -516,7 +516,7 @@ struct DuoWorkspaceView: View {
             }
         }
         .padding(6).background(theme.surface, in: RoundedRectangle(cornerRadius: 22))
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(theme.line, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 22).stroke(theme.line, lineWidth: theme.hairline))
     }
     /// A grid cell: the code over up to two lines of the block name, or the code alone.
     private func cell(_ block: PresetSnapshot.Block, style: CellStyle, height: CGFloat?) -> some View {
@@ -540,6 +540,7 @@ struct DuoWorkspaceView: View {
         .foregroundStyle(bypass ? category.color : (category.darkInk ? Color(hex: 0x161611) : .white))
         .background(bypass ? theme.surface : category.color, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(category.color, style: StrokeStyle(lineWidth: bypass ? 1.5 : 0, dash: [4, 3])))
+        .blockOutline(theme, cornerRadius: 12, filled: !bypass)
         .padding(chosen ? 2 : 0)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(chosen ? theme.signal : .clear, lineWidth: 2.5))
     }
@@ -548,6 +549,7 @@ struct DuoWorkspaceView: View {
         return Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.5)
             .foregroundStyle(category.darkInk ? Color(hex: 0x161611) : .white)
             .frame(width: size, height: size).background(category.color, in: RoundedRectangle(cornerRadius: size * 0.27))
+            .blockOutline(theme, cornerRadius: size * 0.27)
     }
     private var unsaved: some View {
         HStack(spacing: 5) { Circle().frame(width: 7, height: 7); Text("Unsaved") }
@@ -615,7 +617,7 @@ struct DuoWorkspaceView: View {
     private func sceneGrid(_ snapshot: PresetSnapshot) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
             ForEach(0..<8, id: \.self) { index in
-                sceneCell(snapshot, index).overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.line))
+                sceneCell(snapshot, index).overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.line, lineWidth: theme.hairline))
             }
         }
     }

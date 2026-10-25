@@ -11,14 +11,14 @@ struct PatchbridgeWidgets: WidgetBundle {
 struct ConnectionActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: ConnectionAttributes.self) { context in
-            let palette = ActivityPalette(daylight: context.state.daylight)
+            let palette = ActivityPalette(theme: context.state.theme, daylight: context.state.daylight)
             LockScreenActivity(state: context.state, palette: palette)
                 .activityBackgroundTint(palette.background)
                 .activitySystemActionForegroundColor(palette.ink)
                 .widgetURL(ActivityLinks.app)
         } dynamicIsland: { context in
-            // The island is always black, so it always uses Stage colors.
-            let palette = ActivityPalette(daylight: false)
+            // The island is always black, so it always uses the theme's dark version.
+            let palette = ActivityPalette(theme: context.state.theme, daylight: false)
             let look = ActivityLook(context.state, palette)
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -70,17 +70,19 @@ private extension Color {
     }
 }
 
-/// The app's Stage and Daylight colors, as drawn in docs/design/live.
+/// The app's theme colors, as drawn in docs/design/live.
 struct ActivityPalette {
     let daylight: Bool
-    var background: Color { daylight ? Color(rgb: 0xfafaf8, opacity: 0.9) : Color(rgb: 0x0d0e0a, opacity: 0.88) }
-    var tile: Color { Color(rgb: daylight ? 0xe9e9e5 : 0x2a2a25) }
-    var ink: Color { Color(rgb: daylight ? 0x161611 : 0xf2f2ee) }
-    var muted: Color { Color(rgb: daylight ? 0x555650 : 0xb1b2ab) }
-    var fill: Color { daylight ? Color(rgb: 0x161611, opacity: 0.07) : Color.white.opacity(0.12) }
-    var hairlineStrong: Color { daylight ? Color(rgb: 0x161611, opacity: 0.34) : Color.white.opacity(0.32) }
-    var signal: Color { Color(rgb: daylight ? 0x5c6400 : 0xd1e14a) }
-    var signalInk: Color { daylight ? .white : Color(rgb: 0x161802) }
+    private let tokens: ThemeID.Tokens
+    init(theme: ThemeID, daylight: Bool) { self.daylight = daylight; tokens = theme.tokens(daylight: daylight) }
+    var background: Color { Color(rgb: tokens.ground, opacity: daylight ? 0.9 : 0.88) }
+    var tile: Color { Color(rgb: tokens.raised) }
+    var ink: Color { Color(rgb: tokens.ink) }
+    var muted: Color { Color(rgb: tokens.muted) }
+    var fill: Color { daylight ? Color(rgb: tokens.ink, opacity: 0.07) : Color.white.opacity(0.12) }
+    var hairlineStrong: Color { daylight ? Color(rgb: tokens.ink, opacity: 0.34) : Color.white.opacity(0.32) }
+    var signal: Color { Color(rgb: tokens.signal) }
+    var signalInk: Color { Color(rgb: tokens.signalInk) }
     var caution: Color { Color(rgb: daylight ? 0x9d5300 : 0xffc469) }
     var danger: Color { Color(rgb: daylight ? 0xba2c25 : 0xff9683) }
     func scene(_ state: ConnectionAttributes.ContentState) -> Color { state.sceneColor.map { Color(rgb: $0) } ?? muted }

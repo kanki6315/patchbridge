@@ -3,18 +3,89 @@ import SwiftUI
 extension Color {
     init(hex: UInt32) { self.init(.sRGB, red: Double((hex >> 16) & 255) / 255, green: Double((hex >> 8) & 255) / 255, blue: Double(hex & 255) / 255, opacity: 1) }
 }
+/// The active theme in its resolved mode. Caution and danger follow the mode, not the theme.
 struct PhoneTheme {
+    let id: ThemeID
     let daylight: Bool
-    var ground: Color { Color(hex: daylight ? 0xf7f7f5 : 0x0d0e0a) }
-    var surface: Color { Color(hex: daylight ? 0xffffff : 0x161612) }
-    var raised: Color { Color(hex: daylight ? 0xe9e9e5 : 0x24241f) }
-    var ink: Color { Color(hex: daylight ? 0x161611 : 0xf2f2ee) }
-    var muted: Color { Color(hex: daylight ? 0x555650 : 0xb1b2ab) }
-    var line: Color { Color(hex: daylight ? 0xd1d1cd : 0x2e2e29) }
-    var signal: Color { Color(hex: daylight ? 0x5c6400 : 0xd1e14a) }
-    var signalInk: Color { Color(hex: daylight ? 0xffffff : 0x161802) }
+    var highContrast = false
+    /// Carried so views redraw when the block table changes; `BlockCategory` reads the same setting.
+    var blocks = BlockPalette.active
+    init(_ id: ThemeID = .stage, daylight: Bool, highContrast: Bool = false, blocks: BlockPalette = .active) {
+        self.id = id; self.daylight = daylight; self.highContrast = highContrast; self.blocks = blocks
+    }
+    private var tokens: ThemeID.Tokens { id.tokens(daylight: daylight, highContrast: highContrast) }
+    var ground: Color { Color(hex: tokens.ground) }
+    var surface: Color { Color(hex: tokens.surface) }
+    var raised: Color { Color(hex: tokens.raised) }
+    var ink: Color { Color(hex: tokens.ink) }
+    var muted: Color { Color(hex: tokens.muted) }
+    var line: Color { Color(hex: tokens.line) }
+    var signal: Color { Color(hex: tokens.signal) }
+    var signalInk: Color { Color(hex: tokens.signalInk) }
     var caution: Color { Color(hex: daylight ? 0x9d5300 : 0xffc469) }
     var danger: Color { Color(hex: daylight ? 0xba2c25 : 0xff9683) }
+    /// Hairlines are 2pt in high contrast.
+    var hairline: CGFloat { highContrast ? 2 : 1 }
+}
+
+enum AppearanceKey {
+    static let theme = "theme", mode = "appearanceMode", blocks = "blockColors", highContrast = "highContrast"
+}
+enum AppearanceMode: String, CaseIterable {
+    case dark = "Dark", light = "Light", auto = "Auto"
+    func daylight(systemLight: Bool) -> Bool { self == .auto ? systemLight : self == .light }
+}
+enum AppearancePrefs {
+    /// Moves the old single Stage/Daylight choice to Stage in the matching mode, once.
+    static func migrate(_ defaults: UserDefaults = .standard) {
+        guard defaults.object(forKey: "appearance") != nil || defaults.object(forKey: "matchSystem") != nil else { return }
+        if defaults.string(forKey: AppearanceKey.mode) == nil {
+            let mode: AppearanceMode = defaults.bool(forKey: "matchSystem") ? .auto
+                : (defaults.string(forKey: "appearance") == "Daylight" ? .light : .dark)
+            defaults.set(mode.rawValue, forKey: AppearanceKey.mode)
+        }
+        defaults.removeObject(forKey: "appearance")
+        defaults.removeObject(forKey: "matchSystem")
+    }
+    /// The saved theme and resolved mode, for code outside the view tree (the Live Activity).
+    static func current(systemLight: Bool, _ defaults: UserDefaults = .standard) -> (theme: ThemeID, daylight: Bool) {
+        let theme = ThemeID(rawValue: defaults.string(forKey: AppearanceKey.theme) ?? "") ?? .stage
+        let mode = AppearanceMode(rawValue: defaults.string(forKey: AppearanceKey.mode) ?? "") ?? .dark
+        return (theme, mode.daylight(systemLight: systemLight))
+    }
+}
+
+/// Which colors fill the blocks. QC Match only swaps this table; scene colors never change.
+enum BlockPalette: String, CaseIterable {
+    case patchbridge = "Patchbridge", qcMatch = "QC Match"
+    /// QC Match's colors are placeholders until they're sampled from a Quad Cortex, so only
+    /// debug builds offer it.
+    static var available: [BlockPalette] {
+        #if DEBUG
+        allCases
+        #else
+        [.patchbridge]
+        #endif
+    }
+    static var active: BlockPalette {
+        let saved = BlockPalette(rawValue: UserDefaults.standard.string(forKey: AppearanceKey.blocks) ?? "") ?? .patchbridge
+        return available.contains(saved) ? saved : .patchbridge
+    }
+    /// Fill and whether it takes dark ink, for a category code.
+    func fill(_ code: String) -> (UInt32, Bool) {
+        switch self {
+        case .patchbridge:
+            let table: [String: (UInt32, Bool)] = ["CMP": (0x49af7e, true), "CAP": (0xe5848c, true), "DRV": (0xf59926, true), "CAB": (0x81614f, false),
+                                                   "AMP": (0xd02c2a, false), "MOD": (0xb249ac, false), "DLY": (0x46a6ef, true), "REV": (0x79d4e4, true),
+                                                   "WAH": (0x007c84, false), "PIT": (0x735cc7, false)]
+            return table[code] ?? (0x86877f, true)
+        case .qcMatch:
+            let table: [String: (UInt32, Bool)] = ["CMP": (0x3f9b4f, true), "CAP": (0xe07f86, true), "DRV": (0xe8c22a, true), "CAB": (0x8a6a3c, false),
+                                                   "AMP": (0xc8341f, false), "MOD": (0x9b4fd0, false), "DLY": (0x2f6fd0, false), "REV": (0x5ab7c9, true),
+                                                   "WAH": (0x1f7a70, false), "PIT": (0x6b5bd6, false)]
+            return table[code] ?? (0x86877f, true)
+        }
+    }
 }
 struct BlockCategory {
     let code: String
@@ -26,21 +97,21 @@ struct BlockCategory {
             : ["CMP": 0x62c797, "CAP": 0xec9ca3, "DRV": 0xffb65c, "AMP": 0xf27870, "CAB": 0xc49c82, "MOD": 0xd88ad2, "DLY": 0x72baf1, "REV": 0x88dfec, "WAH": 0x55c3c7, "PIT": 0xad9ce9, "UTL": 0xb1b2ab]
         return Color(hex: shades[code] ?? 0x86877f)
     }
-    init(_ name: String) {
+    init(_ name: String, palette: BlockPalette = .active) {
         let n = name.lowercased()
-        let spec: (String, UInt32, Bool)
-        if n.contains("compress") || n.contains("dynamics") { spec = ("CMP", 0x49af7e, true) }
-        else if n.contains("capture") { spec = ("CAP", 0xe5848c, true) }
-        else if n.contains("overdrive") || n.contains("distortion") { spec = ("DRV", 0xf59926, true) }
-        else if n.contains("cab") { spec = ("CAB", 0x81614f, false) }
-        else if n.contains("amp") { spec = ("AMP", 0xd02c2a, false) }
-        else if n.contains("modulation") || n.contains("chorus") { spec = ("MOD", 0xb249ac, false) }
-        else if n.contains("delay") { spec = ("DLY", 0x46a6ef, true) }
-        else if n.contains("reverb") { spec = ("REV", 0x79d4e4, true) }
-        else if n.contains("wah") || n.contains("filter") { spec = ("WAH", 0x007c84, false) }
-        else if n.contains("pitch") { spec = ("PIT", 0x735cc7, false) }
-        else { spec = ("UTL", 0x86877f, true) }
-        code = spec.0; color = Color(hex: spec.1); darkInk = spec.2
+        if n.contains("compress") || n.contains("dynamics") { code = "CMP" }
+        else if n.contains("capture") { code = "CAP" }
+        else if n.contains("overdrive") || n.contains("distortion") { code = "DRV" }
+        else if n.contains("cab") { code = "CAB" }
+        else if n.contains("amp") { code = "AMP" }
+        else if n.contains("modulation") || n.contains("chorus") { code = "MOD" }
+        else if n.contains("delay") { code = "DLY" }
+        else if n.contains("reverb") { code = "REV" }
+        else if n.contains("wah") || n.contains("filter") { code = "WAH" }
+        else if n.contains("pitch") { code = "PIT" }
+        else { code = "UTL" }
+        let fill = palette.fill(code)
+        color = Color(hex: fill.0); darkInk = fill.1
     }
 }
 struct GlassSurface: ViewModifier {
@@ -48,12 +119,23 @@ struct GlassSurface: ViewModifier {
     var radius: CGFloat = 24
     @Environment(\.accessibilityReduceTransparency) private var solid
     func body(content: Content) -> some View {
-        if solid { content.background(theme.raised, in: RoundedRectangle(cornerRadius: radius)) }
+        // High contrast never lets content show through.
+        if theme.highContrast {
+            content.background(theme.raised, in: RoundedRectangle(cornerRadius: radius))
+                .overlay(RoundedRectangle(cornerRadius: radius).strokeBorder(theme.line, lineWidth: theme.hairline))
+        }
+        else if solid { content.background(theme.raised, in: RoundedRectangle(cornerRadius: radius)) }
         else if #available(iOS 26, *) { content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: radius)) }
         else { content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: radius)) }
     }
 }
 extension View {
+    /// High contrast outlines every filled block so its edge never depends on its hue.
+    @ViewBuilder func blockOutline(_ theme: PhoneTheme, cornerRadius: CGFloat, filled: Bool = true) -> some View {
+        if theme.highContrast && filled {
+            overlay(RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(theme.ink, lineWidth: 2))
+        } else { self }
+    }
     /// Bottom buttons float over scrolling content with no bar behind them. A note beside one
     /// carries its own glass so it stays readable over whatever scrolls under it.
     func floatingNote(_ theme: PhoneTheme) -> some View { padding(.horizontal, 12).padding(.vertical, 8).phoneGlass(theme, radius: 16) }
@@ -155,78 +237,157 @@ struct Wordmark: View {
 var deviceName: String { UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone" }
 
 struct AppearanceSettings: View {
-    /// The active theme, which already reflects "Match iPhone appearance".
+    /// The active theme, already resolved for mode and contrast.
     let theme: PhoneTheme
-    @AppStorage("appearance") private var appearance = "Stage"
-    @AppStorage("matchSystem") private var matchSystem = false
+    @AppStorage(AppearanceKey.theme) private var themeID = ThemeID.stage
+    @AppStorage(AppearanceKey.mode) private var mode = AppearanceMode.dark
+    @AppStorage(AppearanceKey.highContrast) private var highContrast = false
+    @AppStorage(AppearanceKey.blocks) private var blocks = BlockPalette.patchbridge
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorSchemeContrast) private var systemContrast
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Appearance").font(.largeTitle.bold())
-                let cards = ForEach(["Stage", "Daylight"], id: \.self) { card($0) }
-                if dynamicTypeSize.isAccessibilitySize { VStack(spacing: 12) { cards } } else { HStack(alignment: .top, spacing: 12) { cards } }
-                Toggle("Match \(deviceName) appearance", isOn: $matchSystem)
-                    .padding(.horizontal, 16).frame(minHeight: 56)
-                    .background(theme.surface, in: RoundedRectangle(cornerRadius: 16))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.line))
-                Text("Block colors").font(.headline).padding(.top, 4)
-                LazyVGrid(columns: dynamicTypeSize.isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 10) {
-                    ForEach(["Dynamics", "Overdrive", "Amp", "Cab", "Modulation", "Delay", "Reverb", "Wah", "Capture", "Pitch", "Utility"], id: \.self) { name in
-                        let category = BlockCategory(name)
-                        HStack(spacing: 10) {
-                            Text(category.code).font(.caption2.bold()).frame(width: 44, height: 28)
-                                .foregroundStyle(category.darkInk ? Color(hex: 0x161611) : .white)
-                                .background(category.color, in: RoundedRectangle(cornerRadius: 8))
-                                .accessibilityHidden(true)
-                            Text(name).font(.subheadline)
-                        }.frame(maxWidth: .infinity, alignment: .leading)
-                    }
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Appearance").font(.largeTitle.bold()).padding(.bottom, 8)
+                Text("Theme").font(.headline)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10, alignment: .top), count: themeColumns), spacing: 10) {
+                    ForEach(ThemeID.allCases, id: \.self) { card($0) }
                 }
-                Text("Scene colors always come from your QC.").font(.footnote).foregroundStyle(theme.muted)
+                Text("Mode").font(.headline).padding(.top, 12)
+                modePicker
+                Text(modeNote).font(.footnote).foregroundStyle(theme.muted)
+                contrastRow.padding(.top, 12)
+                Text("Block colors").font(.headline).padding(.top, 12)
+                if BlockPalette.available.count > 1 {
+                    Picker("Block colors", selection: choose($blocks)) {
+                        ForEach(BlockPalette.available, id: \.self) { Text($0.rawValue).tag($0) }
+                    }.pickerStyle(.segmented)
+                }
+                legend
+                Text(theme.blocks == .qcMatch ? "QC Match colors are placeholders until they're sampled from a Quad Cortex. Scene colors always come from your QC."
+                     : "Scene colors always come from your QC.")
+                    .font(.footnote).foregroundStyle(theme.muted)
             }
         }.scrollClipDisabled()
+        .sensoryFeedback(.selection, trigger: themeID)
+        .sensoryFeedback(.selection, trigger: mode)
     }
-    private func card(_ name: String) -> some View {
-        let preview = PhoneTheme(daylight: name == "Daylight")
-        let active = preview.daylight == theme.daylight
-        return Button { appearance = name; matchSystem = false } label: {
-            VStack(alignment: .leading, spacing: 10) {
+
+    private var themeColumns: Int {
+        if dynamicTypeSize.isAccessibilitySize { return 1 }
+        return dynamicTypeSize >= .xxLarge ? 2 : 3
+    }
+    /// Re-theming crossfades, or switches at once under Reduce Motion.
+    private func choose<Value>(_ binding: Binding<Value>) -> Binding<Value> {
+        binding.animation(reduceMotion ? nil : .easeOut(duration: 0.25))
+    }
+
+    private func card(_ id: ThemeID) -> some View {
+        let preview = PhoneTheme(id, daylight: theme.daylight, highContrast: theme.highContrast, blocks: theme.blocks)
+        let active = id == themeID
+        return Button { choose($themeID).wrappedValue = id } label: {
+            VStack(alignment: .leading, spacing: 8) {
                 miniature(preview)
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(name).font(.headline)
-                        Text(active && matchSystem ? "Following \(deviceName)" : (preview.daylight ? "Bright rooms" : "Dim rooms, stages"))
-                            .font(.caption).foregroundStyle(theme.muted)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: active ? "checkmark.circle.fill" : "circle").font(.title3)
-                        .foregroundStyle(active ? theme.signal : theme.line)
-                }.padding(.horizontal, 4)
-            }.padding(8).frame(maxWidth: .infinity)
-                .background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(active ? theme.signal : theme.line, lineWidth: active ? 2 : 1))
-                .contentShape(RoundedRectangle(cornerRadius: 20))
-        }.buttonStyle(.plain).accessibilityIdentifier("theme-\(name)")
-            .accessibilityValue(appearance == name && !matchSystem ? "Selected" : (active ? "Following \(deviceName)" : "Not selected"))
+                HStack(spacing: 4) {
+                    Text(id.rawValue).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                    Spacer(minLength: 0)
+                    if active { Image(systemName: "checkmark.circle.fill").foregroundStyle(theme.signal) }
+                }.padding(.horizontal, 4).frame(minHeight: 22)
+            }.padding(6).frame(maxWidth: .infinity)
+                .background(theme.surface, in: RoundedRectangle(cornerRadius: 18))
+                .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(active ? theme.signal : theme.line, lineWidth: active ? 2 : theme.hairline))
+                .contentShape(RoundedRectangle(cornerRadius: 18))
+        }.buttonStyle(.plain).accessibilityIdentifier("theme-\(id.rawValue)")
+            .accessibilityLabel("\(id.rawValue) theme")
+            .accessibilityValue(active ? "Selected" : "Not selected")
+            .accessibilityAddTraits(active ? .isSelected : [])
     }
-    /// The overview in that theme, drawn with the demo preset.
+
+    /// The overview in that theme and the current mode, drawn with the demo preset.
     private func miniature(_ preview: PhoneTheme) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Capsule().fill(preview.raised).frame(width: 38, height: 9)
-            Text(DemoFixture.name).font(.system(size: 13, weight: .bold)).foregroundStyle(preview.ink).lineLimit(1)
-            HStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(DemoFixture.name).font(.system(size: 11, weight: .bold)).foregroundStyle(preview.ink).lineLimit(1)
+            HStack(spacing: 3) {
                 ForEach(DemoFixture.sceneColors.indices, id: \.self) { index in
-                    Circle().fill(DemoFixture.sceneColors[index]).frame(width: 6, height: 6)
-                        .overlay(Circle().stroke(preview.daylight ? preview.ink : .clear, lineWidth: 0.75))
+                    Circle().fill(DemoFixture.sceneColors[index]).frame(width: 5, height: 5)
+                        .overlay(Circle().stroke(preview.daylight ? preview.ink : .clear, lineWidth: 0.5))
                 }
             }
-            DemoGrid(theme: preview, cell: 10, codes: false).padding(4).background(preview.surface, in: RoundedRectangle(cornerRadius: 7))
-            Capsule().fill(preview.signal).frame(height: 14)
+            DemoGrid(theme: preview, cell: 8, codes: false).padding(3).background(preview.surface, in: RoundedRectangle(cornerRadius: 6))
+            Capsule().fill(preview.signal).frame(height: 13)
                 .overlay(Text("Save").font(.system(size: 8, weight: .bold)).foregroundStyle(preview.signalInk))
-        }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
-            .background(preview.ground, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(preview.line))
+        }.padding(8).frame(maxWidth: .infinity, alignment: .leading)
+            .background(preview.ground, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(preview.line, lineWidth: preview.hairline))
             .accessibilityHidden(true)
+    }
+
+    @ViewBuilder private var modePicker: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            // Segments can't fit accessibility text sizes, so each mode gets its own row.
+            VStack(spacing: 0) {
+                ForEach(AppearanceMode.allCases, id: \.self) { option in
+                    Button { choose($mode).wrappedValue = option } label: {
+                        HStack {
+                            Text(option.rawValue)
+                            Spacer()
+                            if option == mode { Image(systemName: "checkmark").foregroundStyle(theme.signal) }
+                        }.padding(.horizontal, 16).frame(minHeight: 56).contentShape(Rectangle())
+                    }.buttonStyle(.plain)
+                        .accessibilityAddTraits(option == mode ? .isSelected : [])
+                    if option != AppearanceMode.allCases.last { Rectangle().fill(theme.line).frame(height: theme.hairline).padding(.leading, 16) }
+                }
+            }
+            .background(theme.surface, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(theme.line, lineWidth: theme.hairline))
+        } else {
+            Picker("Mode", selection: choose($mode)) {
+                ForEach(AppearanceMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }.pickerStyle(.segmented)
+        }
+    }
+    private var modeNote: String {
+        switch mode {
+        case .dark: "For dim studios and stages."
+        case .light: "For bright rooms. \(themeID.rawValue) keeps its accent."
+        case .auto: "Follows your \(deviceName)'s Light and Dark setting."
+        }
+    }
+
+    /// Increase Contrast in Settings always wins, so the row reports it rather than offering a switch that can't turn off.
+    @ViewBuilder private var contrastRow: some View {
+        let label = VStack(alignment: .leading, spacing: 2) {
+            Text("High contrast")
+            Text(systemContrast == .increased ? "On while Increase Contrast is on in Settings" : "Always on when Increase Contrast is on")
+                .font(.footnote).foregroundStyle(theme.muted)
+        }
+        Group {
+            if systemContrast == .increased {
+                HStack { label; Spacer(); Text("On").foregroundStyle(theme.muted) }
+                    .accessibilityElement(children: .combine)
+            } else {
+                Toggle(isOn: choose($highContrast)) { label }
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10).frame(minHeight: 56)
+        .background(theme.surface, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(theme.line, lineWidth: theme.hairline))
+    }
+
+    private var legend: some View {
+        LazyVGrid(columns: dynamicTypeSize.isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 10) {
+            ForEach(["Dynamics", "Overdrive", "Amp", "Cab", "Modulation", "Delay", "Reverb", "Wah", "Capture", "Pitch", "Utility"], id: \.self) { name in
+                let category = BlockCategory(name, palette: theme.blocks)
+                HStack(spacing: 10) {
+                    Text(category.code).font(.caption2.bold()).frame(width: 44, height: 28)
+                        .foregroundStyle(category.darkInk ? Color(hex: 0x161611) : .white)
+                        .background(category.color, in: RoundedRectangle(cornerRadius: 8))
+                        .blockOutline(theme, cornerRadius: 8)
+                        .accessibilityHidden(true)
+                    Text(name).font(.subheadline)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }.padding(.top, 4)
     }
 }

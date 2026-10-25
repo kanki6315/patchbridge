@@ -70,7 +70,7 @@ quits and reopens. Only **Revoke Trust** in the Mac window ends it; the next Rec
 shows Approval needed. Revoking keeps the current connection.
 
 Debug builds take `--activity connected|qcLost|lost|reconnecting|approval|ended` (plus
-`--daylight`) to show a sample activity without a Mac.
+`--daylight` and `--theme <name>`) to show a sample activity without a Mac.
 
 ## Bluetooth disconnects before approval
 
@@ -105,8 +105,10 @@ required encryption to work around a pairing failure.
   advertises `set_bypass`. The readback decides what it shows. A block whose bypass
   isn't assigned to scenes shares one flag, so other scenes follow. The USB write
   uses qc-mcp's `set_block_bypass`; see [USB results](../docs/USB_RESULTS_2026-10-21.md).
-- Connection details includes Stage/Daylight appearance and Match iPhone
-  appearance. Scene colors remain the QC's reported ARGB values.
+- Connection details includes Appearance: a theme (Stage, Ember, Midnight, Mint,
+  Lavender, Mono), a mode (Dark, Light, Auto), High contrast (forced on by iOS
+  Increase Contrast) and, in debug builds, QC Match block colors. The Live Activity
+  follows the theme and mode. Scene colors remain the QC's reported ARGB values.
 
 On iPad at regular width (`PadWorkspaceView.swift`), the grid, the selected
 row's list and a persistent editor panel share one screen: tapping a block in
@@ -174,8 +176,9 @@ the inner screen or the block menu in both orientations on the outer screen.
 iPadOS windowed mode can open the app at compact width; use full-screen apps to
 see the iPad layout. Its result bundle retains screenshots. Run it through
 Xcode's Test action or `xcodebuild test` with an available iPhone destination.
-Debug builds accept `--demo`, `--editor`, `--stage`, `--daylight` and
-`--half-folded` launch arguments for reproducible visual inspection; these do not enable live writes.
+Debug builds accept `--demo`, `--editor`, `--stage` (resets appearance to Stage, Dark),
+`--theme <name>`, `--daylight`, `--high-contrast`, `--qc-blocks`, `--appearance` (opens
+the Appearance screen) and `--half-folded` launch arguments for reproducible visual inspection; these do not enable live writes.
 
 For marketing captures, Debug builds also accept `--screenshots` instead of
 `--demo`. This loads the same Dirty Riffage fixture used by the website boards,

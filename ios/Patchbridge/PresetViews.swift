@@ -93,7 +93,7 @@ struct PresetBrowser: View {
                 if model.coordinator.presetList != nil && !model.coordinator.listingPresets && model.presetSwitch == nil {
                     Button { model.coordinator.listPresets() } label: {
                         Label("Refresh", systemImage: "arrow.clockwise").font(.headline).lineLimit(1).fixedSize().padding(.horizontal, 14).frame(minHeight: 44)
-                    }.buttonStyle(.plain).background(theme.surface, in: Capsule()).overlay(Capsule().stroke(theme.line))
+                    }.buttonStyle(.plain).background(theme.surface, in: Capsule()).overlay(Capsule().stroke(theme.line, lineWidth: theme.hairline))
                 }
                 if layout != .popover {
                     Button("Done", action: close).font(.headline).lineLimit(1).fixedSize().padding(.horizontal, 16).frame(minHeight: 44)
@@ -145,7 +145,7 @@ struct PresetBrowser: View {
     private var otherSources: some View {
         VStack(spacing: 0) {
             ForEach(Self.laterSources, id: \.self) { name in
-                Rectangle().fill(theme.line).frame(height: 0.5)
+                Rectangle().fill(theme.line).frame(height: theme.highContrast ? 2 : 0.5)
                 HStack { Text(name).font(.headline); Spacer(); Text("Not yet").font(.subheadline) }
                     .foregroundStyle(theme.muted).padding(.horizontal, 8).frame(minHeight: 52)
                     .accessibilityElement(children: .combine).accessibilityLabel("\(name), not available yet")
@@ -189,14 +189,14 @@ struct PresetBrowser: View {
             }
             .background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
             .clipShape(RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line, lineWidth: theme.hairline))
             .onAppear { if let id = model.snapshot?.preset_id { reader.scrollTo(id, anchor: .center) } }
             .onChange(of: model.coordinator.presetList?.entries.count) { _, _ in
                 if let id = model.snapshot?.preset_id { reader.scrollTo(id, anchor: .center) }
             }
         }
     }
-    private var divider: some View { Rectangle().fill(theme.line).frame(height: 0.5) }
+    private var divider: some View { Rectangle().fill(theme.line).frame(height: theme.highContrast ? 2 : 0.5) }
     private func number(_ text: String) -> some View {
         Text(text).font(.headline.monospacedDigit()).frame(minWidth: 34, alignment: .trailing)
     }
@@ -307,14 +307,14 @@ struct UnsavedEditsSheet: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         ForEach(Array(edits.enumerated()), id: \.offset) { index, edit in
-                            if index > 0 { Rectangle().fill(theme.line).frame(height: 0.5) }
+                            if index > 0 { Rectangle().fill(theme.line).frame(height: theme.highContrast ? 2 : 0.5) }
                             row(edit)
                         }
                     }
                 }
                 .frame(maxHeight: 260).fixedSize(horizontal: false, vertical: true)
                 .background(theme.surface, in: RoundedRectangle(cornerRadius: 18))
-                .overlay(RoundedRectangle(cornerRadius: 18).stroke(theme.line))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(theme.line, lineWidth: theme.hairline))
             }
             VStack(spacing: 10) {
                 if model.editor.supports("save") {
@@ -340,6 +340,7 @@ struct UnsavedEditsSheet: View {
             Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.5)
                 .foregroundStyle(category.darkInk ? Color(hex: 0x161611) : .white)
                 .frame(width: 40, height: 40).background(category.color, in: RoundedRectangle(cornerRadius: 11))
+                .blockOutline(theme, cornerRadius: 11)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 8) {
                     Text(block.map(model.name) ?? "Block").font(.headline).lineLimit(1)
@@ -375,7 +376,7 @@ struct PresetReloadingView: View {
                         HStack(spacing: 4) { ForEach(0..<8, id: \.self) { _ in RoundedRectangle(cornerRadius: 9).fill(theme.raised).frame(height: 38) } }.padding(3)
                     }
                 }.padding(8).background(theme.surface, in: RoundedRectangle(cornerRadius: 20))
-                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line))
+                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line, lineWidth: theme.hairline))
                 ForEach(0..<4, id: \.self) { index in
                     HStack(spacing: 12) {
                         RoundedRectangle(cornerRadius: 10).fill(theme.raised).frame(width: 42, height: 42)

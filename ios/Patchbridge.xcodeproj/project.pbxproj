@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */; };
 		029A4F9E5A319FB2B53A06CD /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
+		065AE3317FBFEBE5967A0BFE /* ThemeTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C233273A8151087B0CFFC8 /* ThemeTokens.swift */; };
 		07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D296E6B8332175985BB77130 /* TrustStore.swift */; };
 		0B48A4D3AC946EF6DA08474E /* WatchCompanion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C393B0309A14A8AD3F9FEBC /* WatchCompanion.swift */; };
 		0BD868FE5FC0C45B458D122F /* PatchbridgeWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B47DAF10924AA9BE8A3361DA /* PatchbridgeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -33,6 +34,7 @@
 		94C31E13B93014B1C7E8516B /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 75B608BB78EAE366291821D5 /* README.md */; };
 		A49001D989F42EF4F482BF63 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9EC413FCC1C70BD3545DFC58 /* PrivacyInfo.xcprivacy */; };
 		A4988E90372F49BAA73D7245 /* DuoWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA50EA8A23277EA7098D7F7D /* DuoWorkspaceView.swift */; };
+		A9520AA30B657B706DD8AF08 /* ThemeTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C233273A8151087B0CFFC8 /* ThemeTokens.swift */; };
 		AA5C219FCA23232D21C9091B /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E68459E6EE63B03631133E9 /* EditorView.swift */; };
 		ADBCD09A0A9B55D2F6F247C4 /* ConnectionActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031C04AFD778DDE0C3BF77D2 /* ConnectionActivityController.swift */; };
 		B1309729AAAF8FF3DF734698 /* WatchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8ADA78F952247A837EECB34 /* WatchViews.swift */; };
@@ -114,6 +116,7 @@
 		4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExchange.swift; sourceTree = "<group>"; };
 		4F75207A678F28257EA105F3 /* Chunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chunks.swift; sourceTree = "<group>"; };
 		5E625A9A4E3BE9B9A3F0E2BE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		62C233273A8151087B0CFFC8 /* ThemeTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeTokens.swift; sourceTree = "<group>"; };
 		67D7E788BDC2BC57EF51C4C9 /* PadWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PadWorkspaceView.swift; sourceTree = "<group>"; };
 		6E237C5A44F146DC9CAC103E /* SceneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneViews.swift; sourceTree = "<group>"; };
 		6E2DEDC8EAAA3DDA67D02459 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
@@ -256,6 +259,7 @@
 			isa = PBXGroup;
 			children = (
 				1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */,
+				62C233273A8151087B0CFFC8 /* ThemeTokens.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -425,6 +429,7 @@
 			files = (
 				CCB8F3B7D3AB5BBCEAFF5B6E /* ConnectionActivity.swift in Sources */,
 				935F95CD7F754CD972C43AAC /* ConnectionActivityWidget.swift in Sources */,
+				A9520AA30B657B706DD8AF08 /* ThemeTokens.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -453,6 +458,7 @@
 				EA6177919C4E44F0C8375500 /* SceneViews.swift in Sources */,
 				8476F1A6BB746C32FD575EE1 /* SetupViews.swift in Sources */,
 				444BF2BBFF3F98DC09749A99 /* Theme.swift in Sources */,
+				065AE3317FBFEBE5967A0BFE /* ThemeTokens.swift in Sources */,
 				07A75A73D97EC4F55DDA0EA2 /* TrustStore.swift in Sources */,
 				7221B70D0FD21ED4F5DD5597 /* Tuner.swift in Sources */,
 				2BC0C6312B4C87438B651749 /* TunerViews.swift in Sources */,

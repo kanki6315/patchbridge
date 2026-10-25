@@ -120,7 +120,7 @@ struct BlockEditorView: View {
                     VStack(spacing: 8) {
                         if typing {
                             numberPad.background(theme.surface, in: RoundedRectangle(cornerRadius: 28))
-                                .overlay(RoundedRectangle(cornerRadius: 28).stroke(theme.line))
+                                .overlay(RoundedRectangle(cornerRadius: 28).stroke(theme.line, lineWidth: theme.hairline))
                         } else { tiles }
                         // Beside the dial rather than under it, so the deck's height stays the dial's.
                         sceneScopeRow(columns: 4).padding(.top, 8)
@@ -137,6 +137,7 @@ struct BlockEditorView: View {
                             .foregroundStyle(off ? category.color : (category.darkInk ? Color.black : .white)).frame(width: 44, height: 44)
                             .background(off ? theme.surface : category.color, in: RoundedRectangle(cornerRadius: 12))
                             .overlay(RoundedRectangle(cornerRadius: 12).stroke(category.color, style: StrokeStyle(lineWidth: off ? 1.5 : 0, dash: [4, 3])))
+                            .blockOutline(theme, cornerRadius: 12, filled: !off)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(model.name(block)).font(.title.bold())
                             Text(subtitle).font(.subheadline).foregroundStyle(theme.muted)
@@ -378,7 +379,7 @@ struct BlockEditorView: View {
                     }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(10)
                         .background(parameter == id ? category.color.opacity(0.22) : (locked ? theme.raised.opacity(0.35) : .clear), in: RoundedRectangle(cornerRadius: 18))
                         .parameterMaterial(theme, enabled: !locked)
-                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(parameter == id ? category.color : theme.line, lineWidth: parameter == id ? 1.5 : 1))
+                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(parameter == id ? category.color : theme.line, lineWidth: parameter == id ? 1.5 : theme.hairline))
                 }.buttonStyle(.plain).disabled(model.editor.pending != nil)
                 .accessibilityLabel(tileAccessibility(id, scope: tileScope))
             }

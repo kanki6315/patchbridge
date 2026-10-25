@@ -16,8 +16,9 @@ struct ConnectionAttributes: ActivityAttributes {
         var unsaved = false
         var trusted = false
         var lostAt: Date?
-        /// The app's Stage/Daylight choice. The Dynamic Island always uses Stage.
+        /// The app's resolved mode. The Dynamic Island is always black, so it always uses the dark version.
         var daylight = false
+        var theme = ThemeID.stage
     }
 }
 
