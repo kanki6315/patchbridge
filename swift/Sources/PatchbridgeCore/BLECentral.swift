@@ -47,6 +47,12 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     private var receiver = ChunkReceiver()
     private var transfer: UInt32 = 0
     private var timer: Timer?
+    /// Encryption timeouts usually mean the Mac still holds the link that just dropped, so the
+    /// same pairing is tried again after a pause before anyone is told to reset it.
+    private var encryptionRetries = 0
+    private var retryingLink = false
+    private var linkReady = false
+    static let encryptionRetryLimit = 3
     private static let service = CBUUID(string: "79A90001-6E15-4C9F-AC53-147F7E639B01")
     public override init() {
         super.init()
@@ -78,10 +84,11 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     }
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         guard self.peripheral === peripheral else { central.cancelPeripheralConnection(peripheral); return }
+        retryingLink = false
         peripheral.delegate = self; peripheral.discoverServices([Self.service])
     }
     public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) { guard self.peripheral === peripheral else { return }; fail("Your Mac didn’t connect. Keep it nearby with Patchbridge open, then reconnect.", error: error, transient: true) }
-    public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) { guard self.peripheral?.identifier == peripheral.identifier else { return }; fail("Your Mac disconnected. Open Patchbridge on your Mac, then reconnect.", error: error, transient: true) }
+    public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) { guard self.peripheral?.identifier == peripheral.identifier, !retryingLink else { return }; fail("Your Mac disconnected. Open Patchbridge on your Mac, then reconnect.", error: error, transient: true) }
     public func reconnect() {
         guard peripheral == nil, manager.state == .poweredOn else { return }
         disconnectionReason = nil; disconnectionIsTransient = false
@@ -98,16 +105,37 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
         } else {
             logger.error("\(message, privacy: .public)")
         }
-        disconnectionReason = Self.failureMessage(message, error: error)
-        disconnectionIsTransient = transient && !Self.needsPairingReset(error)
+        // Before the link is ready nothing is in flight, so the same Mac can be tried again quietly.
+        let encryption = Self.isEncryptionTimeout(error)
+        if encryption, !linkReady, let peripheral, encryptionRetries < Self.encryptionRetryLimit {
+            encryptionRetries += 1
+            retryLink(peripheral, after: TimeInterval(encryptionRetries))
+            return
+        }
+        let exhausted = encryption && !linkReady
+        disconnectionReason = Self.failureMessage(message, error: error, retriesExhausted: exhausted)
+        disconnectionIsTransient = transient && !exhausted && !Self.needsPairingReset(error)
         onStatus?(disconnectionReason!)
         disconnect()
     }
-    static func failureMessage(_ message: String, error: Error?) -> String {
+    private func retryLink(_ peripheral: CBPeripheral, after delay: TimeInterval) {
+        timer?.invalidate(); timer = nil; command = nil; results = nil
+        exchange.reset(); receiver.reset()
+        retryingLink = true; manager.cancelPeripheralConnection(peripheral)
+        onStatus?("Securing the Bluetooth link…")
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self, self.peripheral === peripheral, self.manager.state == .poweredOn else { return }
+            self.retryingLink = false; self.manager.connect(peripheral)
+        }
+    }
+    /// `retriesExhausted` marks an encryption timeout that kept happening on fresh links.
+    static func failureMessage(_ message: String, error: Error?, retriesExhausted: Bool = false) -> String {
         guard let error = error as NSError?, error.domain == CBErrorDomain else { return message }
         switch error.code {
         case CBError.Code.peerRemovedPairingInformation.rawValue:
             return "Bluetooth pairing needs to be set up again. In Bluetooth Settings, forget the old pairing if listed, then reconnect."
+        case CBError.Code.encryptionTimedOut.rawValue where !retriesExhausted:
+            return "Bluetooth couldn’t secure the link to your Mac. Keep it nearby with Patchbridge open, then reconnect."
         case CBError.Code.encryptionTimedOut.rawValue:
             return "Bluetooth pairing needs to be reset. Open Bluetooth Settings on your phone and Mac, forget the pairing wherever listed, then reconnect."
         case CBError.Code.connectionTimeout.rawValue, CBError.Code.connectionFailed.rawValue:
@@ -122,11 +150,16 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     /// Pairing that has to be reset in Settings won't come back by searching again.
     static func needsPairingReset(_ error: Error?) -> Bool {
         guard let error = error as NSError?, error.domain == CBErrorDomain else { return false }
-        return [CBError.Code.peerRemovedPairingInformation.rawValue, CBError.Code.encryptionTimedOut.rawValue].contains(error.code)
+        return error.code == CBError.Code.peerRemovedPairingInformation.rawValue
+    }
+    static func isEncryptionTimeout(_ error: Error?) -> Bool {
+        guard let error = error as NSError?, error.domain == CBErrorDomain else { return false }
+        return error.code == CBError.Code.encryptionTimedOut.rawValue
     }
 
     private func clear() {
         timer?.invalidate(); timer = nil; peripheral?.delegate = nil; peripheral = nil; command = nil; results = nil
+        retryingLink = false; linkReady = false; encryptionRetries = 0
         exchange.reset(); receiver.reset(); discovered.removeAll()
         onDisconnected?()
     }
@@ -151,6 +184,7 @@ public final class BLECentral: NSObject, CBCentralManagerDelegate, CBPeripheralD
     public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         guard self.peripheral === peripheral, characteristic === results else { return }
         guard error == nil, characteristic.isNotifying else { fail("Your Mac couldn’t respond. Restart Patchbridge on your Mac, then reconnect.", error: error); return }
+        linkReady = true; encryptionRetries = 0
         onStatus?("Connected; send hello, then approve on the Mac")
         onReady?()
     }
