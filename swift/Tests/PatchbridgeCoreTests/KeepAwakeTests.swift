@@ -63,6 +63,7 @@ final class KeepAwakeTests: XCTestCase {
         XCTAssertFalse(BLECentral.needsPairingReset(NSError(domain: CBErrorDomain, code: CBError.Code.connectionTimeout.rawValue)))
         XCTAssertFalse(BLECentral.needsPairingReset(NSError(domain: CBErrorDomain, code: CBError.Code.peripheralDisconnected.rawValue)))
         XCTAssertTrue(BLECentral.needsPairingReset(NSError(domain: CBErrorDomain, code: CBError.Code.peerRemovedPairingInformation.rawValue)))
-        XCTAssertTrue(BLECentral.needsPairingReset(NSError(domain: CBErrorDomain, code: CBError.Code.encryptionTimedOut.rawValue)))
+        XCTAssertFalse(BLECentral.needsPairingReset(NSError(domain: CBErrorDomain, code: CBError.Code.encryptionTimedOut.rawValue)))
+        XCTAssertTrue(BLECentral.isEncryptionTimeout(NSError(domain: CBErrorDomain, code: CBError.Code.encryptionTimedOut.rawValue)))
     }
 }
