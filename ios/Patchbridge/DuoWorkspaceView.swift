@@ -587,7 +587,8 @@ struct DuoWorkspaceView: View {
     @ViewBuilder private var notice: some View {
         if let message = model.error ?? model.notice ?? model.coordinator.outcome {
             Label(message, systemImage: "info.circle").font(.footnote).foregroundStyle(theme.caution).lineLimit(2)
-        } else if let pending = model.editor.pending {
+        } else if let pending = model.editor.pending, pending.operation != "select_scene" {
+            // Scene switches already say "Switching to …" in the Scenes header.
             Label(pending.operation == "save" ? "Saving…" : "Sending…", systemImage: "arrow.triangle.2.circlepath").font(.footnote)
         }
     }

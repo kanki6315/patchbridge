@@ -333,7 +333,7 @@ struct EditorView: View {
     private func saveBar(_ snapshot: PresetSnapshot, pushed: Bool) -> some View {
         VStack(spacing: 8) {
             if let error = model.error ?? model.notice ?? model.coordinator.outcome { Label(error, systemImage: "info.circle").font(.footnote).foregroundStyle(theme.caution).floatingNote(theme) }
-            if model.editor.pending != nil { Label(model.editor.pending?.operation == "save" ? "Saving…" : "Sending…", systemImage: "arrow.triangle.2.circlepath").font(.footnote).floatingNote(theme) }
+            if let pending = model.editor.pending, pending.operation != "select_scene" { Label(model.editor.pending?.operation == "save" ? "Saving…" : "Sending…", systemImage: "arrow.triangle.2.circlepath").font(.footnote).floatingNote(theme) }
             if model.editor.supports("save") {
                 HStack {
                     if selectedBlock != nil { Label(snapshot.dirty ? "Unsaved" : "Saved", systemImage: snapshot.dirty ? "circle.fill" : "checkmark").font(.subheadline).foregroundStyle(snapshot.dirty ? theme.signal : theme.muted).floatingNote(theme); Spacer() }
