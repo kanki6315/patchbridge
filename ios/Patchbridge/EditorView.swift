@@ -38,7 +38,7 @@ struct EditorView: View {
         let duoWindow = duoScreen(outer)
         // The live tuner line sits above the navigation stack, so it stays put on every screen,
         // the block editor included. Turning it on or off slides the screen in one motion.
-        let showLine = model.ready && model.snapshot != nil && tuner.live && !pad && duoWindow == nil
+        let showLine = model.showsPreset && model.snapshot != nil && tuner.live && !pad && duoWindow == nil
         VStack(spacing: 0) {
         if showLine {
             TunerLine(readout: tuner.readout, theme: theme) { tuner.setOpen(true) }
@@ -52,13 +52,13 @@ struct EditorView: View {
                 if let staged = model.coordinator.loadingPreset, !model.usesLocalFixture {
                     // A preset the QC just loaded, while its blocks' metadata arrives.
                     PresetReloadingView(snapshot: staged, model: model, theme: theme)
-                } else if model.ready, model.snapshot != nil, let duo {
+                } else if model.showsPreset, model.snapshot != nil, let duo {
                     DuoWorkspaceView(model: model, tuner: tuner, theme: theme, screen: duo, size: geometry.size, insets: geometry.safeAreaInsets,
                                      row: $duoRow, selected: $duoSelected, editing: $duoEditing,
                                      showConnection: { sheet = .connection }, openEditor: { selectedBlock = $0 })
-                } else if model.ready, model.snapshot != nil, pad {
+                } else if model.showsPreset, model.snapshot != nil, pad {
                     PadWorkspaceView(model: model, tuner: tuner, theme: theme)
-                } else if model.ready, let snapshot = model.snapshot {
+                } else if model.showsPreset, let snapshot = model.snapshot {
                     if landscape {
                         landscapeOverview(snapshot)
                     } else {
@@ -93,8 +93,8 @@ struct EditorView: View {
                     .presentationDetents([.large]).presentationDragIndicator(.visible)
                     .tint(theme.signal).preferredColorScheme(theme.daylight ? .light : .dark)
             }
-            .onChange(of: model.ready) { _, ready in
-                if !ready { selectedBlock = nil; duoRow = 0; duoSelected = nil; duoEditing = false }
+            .onChange(of: model.showsPreset) { _, shown in
+                if !shown { selectedBlock = nil; duoRow = 0; duoSelected = nil; duoEditing = false }
             }
             .onChange(of: pad) { _, pad in if pad, duo == nil { selectedBlock = nil } }
             // Folding or unfolding pops a pushed editor; the Duo deck or block menu keeps the block open.
@@ -166,9 +166,19 @@ struct EditorView: View {
             }
         }
         }
+        // A short drop keeps the preset on screen, read-only, until it's back.
+        .disabled(model.reconnecting)
+        }
+        .overlay(alignment: .bottom) {
+            if model.reconnecting {
+                ReconnectToast(macName: model.coordinator.macName, notice: model.error, theme: theme)
+                    .padding(.horizontal, 16).padding(.bottom, 12)
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .background(theme.ground.ignoresSafeArea())
         .animation(reduceMotion ? nil : .timingCurve(0.22, 1, 0.36, 1, duration: 0.25), value: showLine)
+        .animation(reduceMotion ? nil : .timingCurve(0.22, 1, 0.36, 1, duration: 0.25), value: model.reconnecting)
         // iPhone and the Duo's folded screens show the full tuner as a sheet; iPad and the Duo's
         // inner screen use a popover from their tuner button instead.
         .sheet(isPresented: Binding(get: { tuner.open && !pad && duoWindow != .inner }, set: { if !$0 { tuner.setOpen(false) } })) {
@@ -199,7 +209,7 @@ struct EditorView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Button { sheet = .connection } label: {
-                    Label(model.demo ? "Demo preset" : (model.coordinator.macName ?? "Mac connected"), systemImage: model.demo ? "play.circle" : "checkmark")
+                    Label(model.demo ? "Demo preset" : (model.coordinator.macName ?? "Mac connected"), systemImage: model.statusGlyph)
                         .font(.subheadline.weight(.semibold)).padding(.horizontal, 16).frame(minHeight: 44)
                 }.phoneGlass(theme)
                 Spacer()
@@ -278,7 +288,7 @@ struct EditorView: View {
     private func landscapeOverview(_ snapshot: PresetSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 14) {
-                Button { sheet = .connection } label: { Label(model.demo ? "Demo" : "Mac", systemImage: "checkmark").padding(12) }.phoneGlass(theme)
+                Button { sheet = .connection } label: { Label(model.demo ? "Demo" : "Mac", systemImage: model.reconnecting ? "arrow.triangle.2.circlepath" : "checkmark").padding(12) }.phoneGlass(theme)
                 PresetNameButton(model: model, snapshot: snapshot, theme: theme, font: .headline, chevron: 22) { browsing = true }
                 if snapshot.dirty { Circle().fill(theme.signal).frame(width: 8, height: 8).accessibilityLabel("Unsaved") }
                 Spacer()
@@ -569,5 +579,32 @@ struct ConnectionStatusSettings: View {
             guard on else { alertsDenied = false; return }
             ConnectionActivityController.requestAlertPermission { granted in alertsDenied = !granted }
         }
+    }
+}
+
+/// Bottom toast while a short drop reconnects on its own; the preset behind it stays read-only.
+struct ReconnectToast: View {
+    let macName: String?
+    let notice: String?
+    let theme: PhoneTheme
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            ProgressView().tint(theme.ink).padding(.top, 2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Reconnecting to \(macName ?? "your Mac")…").font(.subheadline.weight(.semibold))
+                Text(notice ?? "Bluetooth dropped for a moment. Editing resumes when it’s back.")
+                    .font(.footnote).foregroundStyle(notice == nil ? theme.muted : theme.caution)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .frame(maxWidth: 480)
+        // Solid, so the Save button or a block behind it never tints the text.
+        .background(theme.raised, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.line))
+        .shadow(color: .black.opacity(0.3), radius: 16, y: 6)
+        .accessibilityElement(children: .combine)
+        .onAppear { UIAccessibility.post(notification: .announcement, argument: "Reconnecting to \(macName ?? "your Mac")") }
     }
 }

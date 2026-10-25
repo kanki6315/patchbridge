@@ -558,7 +558,7 @@ struct DuoWorkspaceView: View {
         let title = model.demo ? "Demo preset" : (model.coordinator.macName ?? "Mac connected")
         return Button(action: showConnection) {
             HStack(spacing: 8) {
-                Image(systemName: model.demo ? "play.circle" : "checkmark").foregroundStyle(theme.signal)
+                Image(systemName: model.statusGlyph).foregroundStyle(theme.signal)
                 if !compact { Text(title).lineLimit(1) }
             }
             .font(.subheadline.weight(.semibold)).padding(.horizontal, compact ? 0 : 16).frame(minWidth: 44, minHeight: 44)

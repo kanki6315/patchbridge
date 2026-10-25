@@ -716,6 +716,34 @@ extension CoordinatorTests {
         t.onDiscovered?("mac", "Studio Mac")
         XCTAssertEqual(c.phase, .ready); XCTAssertFalse(c.resuming); XCTAssertNil(c.approvalCode)
     }
+    func testShortDropKeepsThePresetOnScreenReadOnly() throws {
+        let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
+        let shown = try XCTUnwrap(c.editor.snapshot)
+        bridge.revoke(); t.disconnectionIsTransient = true; t.onDisconnected?()
+        XCTAssertTrue(c.resuming); XCTAssertNil(c.editor.snapshot)
+        XCTAssertEqual(c.resumeEditor?.snapshot, shown, "The last confirmed preset stays on screen")
+        XCTAssertNil(c.resumeEditor?.pending)
+        let block = try XCTUnwrap(shown.blocks.first)
+        XCTAssertThrowsError(try c.setBypass(blockID: block.id, bypassed: true), "Nothing is sent while reconnecting")
+
+        // Another drop during the search keeps it; found again, the fresh state replaces it.
+        t.onDisconnected?(); XCTAssertNotNil(c.resumeEditor)
+        clock += 1; c.tick()
+        t.disconnectionIsTransient = false; t.onDiscovered?("mac", "Studio Mac")
+        XCTAssertEqual(c.phase, .ready); XCTAssertNil(c.resumeEditor); XCTAssertNotNil(c.editor.snapshot)
+
+        // A search that runs past the grace period falls back to the connection screen.
+        bridge.revoke(); t.disconnectionIsTransient = true; t.onDisconnected?()
+        XCTAssertNotNil(c.resumeEditor)
+        clock += EditorCoordinator.resumeGrace; c.tick()
+        XCTAssertTrue(c.resuming); XCTAssertNil(c.resumeEditor)
+    }
+    func testDisconnectDropsTheHeldPreset() throws {
+        let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
+        bridge.revoke(); t.disconnectionIsTransient = true; t.onDisconnected?()
+        XCTAssertNotNil(c.resumeEditor)
+        c.disconnect(); XCTAssertNil(c.resumeEditor)
+    }
     func testResumeKeepsTheTunerAndAsksForItAgain() throws {
         let (c, t, bridge, helper) = try trustedSession(); defer { helper.stop() }
         guard c.tunerAvailable else { throw XCTSkip("The simulated bridge offers no tuner") }

@@ -54,9 +54,21 @@ final class PhoneModel: ObservableObject {
     private var watchBridge: WatchCompanionBridge?
     private let demoEditor = GenericEditor()
     private var demoRevision = 0
-    var editor: GenericEditor { usesLocalFixture ? demoEditor : coordinator.editor }
+    var editor: GenericEditor { usesLocalFixture ? demoEditor : coordinator.resumeEditor ?? coordinator.editor }
     var snapshot: PresetSnapshot? { editor.snapshot }
     var ready: Bool { usesLocalFixture || coordinator.phase == .ready }
+    /// The link dropped on its own moments ago: the last preset stays on screen, read-only, while it reconnects.
+    var reconnecting: Bool {
+        #if DEBUG
+        // --reconnecting previews the toast over the screenshot fixture.
+        if screenshotFixture, ProcessInfo.processInfo.arguments.contains("--reconnecting") { return true }
+        #endif
+        return !usesLocalFixture && coordinator.resumeEditor != nil
+    }
+    /// The status pill's glyph: demo, reconnecting, or connected.
+    var statusGlyph: String { demo ? "play.circle" : reconnecting ? "arrow.triangle.2.circlepath" : "checkmark" }
+    /// The preset screens show, live or held while reconnecting.
+    var showsPreset: Bool { ready || reconnecting }
     var busy: Bool { !usesLocalFixture && coordinator.busy }
     var error: String? { (usesLocalFixture ? nil : coordinator.error) ?? editor.lastError }
 

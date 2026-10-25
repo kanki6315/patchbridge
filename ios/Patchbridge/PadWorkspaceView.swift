@@ -162,7 +162,7 @@ struct PadWorkspaceView: View {
         let title = model.demo ? "Demo preset" : (model.coordinator.macName ?? "Mac connected")
         return Button { details = true } label: {
             HStack(spacing: 8) {
-                Image(systemName: model.demo ? "play.circle" : "checkmark").foregroundStyle(theme.signal)
+                Image(systemName: model.statusGlyph).foregroundStyle(theme.signal)
                 Text(title).lineLimit(1)
                 Image(systemName: "chevron.down").font(.caption.weight(.semibold)).foregroundStyle(theme.muted)
             }.font(.headline.weight(.medium)).padding(.horizontal, 18).frame(minHeight: 48)
