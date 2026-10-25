@@ -20,6 +20,8 @@ class ReleaseTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         shutil.copy(ROOT / 'release_ios', self.root)
+        (self.root / ".flightdeck").mkdir()
+        shutil.copy(ROOT / ".flightdeck/release.sh", self.root / ".flightdeck/release.sh")
         (self.root / 'tools').mkdir()
         shutil.copy(ROOT / 'tools/test_destination.py', self.root / 'tools')
         (self.root / 'ios').mkdir()
@@ -156,3 +158,23 @@ if name == 'xcodebuild' and args[0] == '-showdestinations':
         self.assertIn('No available iPhone simulator', result.stderr)
         self.assertFalse(any(c[0] == 'swift' or c[:2] == ['xcodebuild', 'archive']
                              for c in self.calls()))
+
+    def test_managed_release_uses_lease_and_emits_progress(self):
+        progress = self.root / 'flightdeck-events.jsonl'
+        self.env.update(FLIGHTDECK_RUN_ID='test', FLIGHTDECK_EVENTS_FILE=str(progress),
+                        TEST_DESTINATION=f'platform=iOS Simulator,id={self.phone_id}')
+        result = self.run_release('--no-upload')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        test = next(c for c in self.calls() if c[:2] == ['xcodebuild', 'test'])
+        self.assertEqual(test[test.index('-parallel-testing-enabled') + 1], 'NO')
+        self.assertFalse(any(c[0] == 'xcrun' for c in self.calls()))
+        events = [json.loads(line) for line in progress.read_text().splitlines()]
+        self.assertTrue(any(e['stage'] == 'iPhone UI tests (simulator)' for e in events))
+        self.assertEqual(events[-1]['build'], '42')
+        self.assertEqual(events[-1]['archive'], str((self.root / f'build/release/{VERSION}-42/Patchbridge.xcarchive').resolve()))
+
+    def test_unmanaged_tests_preserve_xcode_parallel_default(self):
+        result = self.run_release('--no-upload')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        test = next(c for c in self.calls() if c[:2] == ['xcodebuild', 'test'])
+        self.assertNotIn('-parallel-testing-enabled', test)

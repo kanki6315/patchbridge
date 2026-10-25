@@ -55,7 +55,10 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-log() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
+# FLIGHTDECK_PROTOCOL=1
+source "$here/.flightdeck/release.sh"
+
+log() { flightdeck_event "$*"; printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 die() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 
 # --- Preflight -------------------------------------------------------------
@@ -148,6 +151,7 @@ if [ "$run_tests" = 1 ]; then
     PYTHONPATH="$here/src${PYTHONPATH:+:$PYTHONPATH}" python3 -m unittest discover -s tests 2>&1 | tee "$out/python-test.log"
     log "iPhone UI tests (simulator)"
     xcodebuild test \
+        ${flightdeck_test_args[@]+"${flightdeck_test_args[@]}"} \
         -project ios/Patchbridge.xcodeproj -scheme Patchbridge \
         -destination "$test_destination" \
         -derivedDataPath build/tests \
