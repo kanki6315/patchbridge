@@ -138,12 +138,17 @@ public final class EditorCoordinator {
     private struct Request { let id: String; let operation: String; let deadline: TimeInterval; var trustOffered = false }
     private var request: Request?
     /// After an unexpected drop: when the next search starts, and when to stop and fail with `reason`.
-    private struct Resume { let deadline: TimeInterval; let reason: String; let notice: String?; var attempt = 0; var at: TimeInterval = 0 }
-    private var resume: Resume?
+    private struct Resume { let since: TimeInterval; let deadline: TimeInterval; let reason: String; let notice: String?; var attempt = 0; var at: TimeInterval = 0 }
+    private var resume: Resume? { didSet { if resume == nil { resumeEditor = nil } } }
+    /// The last confirmed preset, kept on screen read-only for a short while after the link dropped
+    /// on its own. Nothing is sent through it: every edit still requires the ready phase.
+    public private(set) var resumeEditor: GenericEditor?
     /// Searching for the Mac again after the link dropped on its own. The phase meanwhile is connecting or loading.
     public var resuming: Bool { resume != nil }
     /// How long a dropped session keeps searching before it asks for Reconnect.
     static let resumeWindow: TimeInterval = 60
+    /// How long the last preset stays on screen while reconnecting, before the connection screen.
+    static let resumeGrace: TimeInterval = 10
 
     /// Legacy bridges use this poll interval. Complete state pushes apply directly;
     /// older revision hints fetch a snapshot. Both retain a 30-second fallback.
@@ -234,7 +239,8 @@ public final class EditorCoordinator {
             fail([message, resume?.notice].compactMap { $0 }.joined(separator: " ")); return
         }
         let uncertain = editor.pending != nil || request.map { Self.mutations.contains($0.operation) } == true
-        var next = resume ?? Resume(deadline: deadline, reason: reason,
+        let shown = resume == nil ? frozenEditor() : resumeEditor
+        var next = resume ?? Resume(since: now(), deadline: deadline, reason: reason,
                                     notice: uncertain ? "Last edit or save outcome unknown. It will not be retried." : nil)
         // The tuner screen stays as it was; the resumed session asks the QC for this mode again.
         let lastName = macName, lastTuner = tunerMode
@@ -243,9 +249,16 @@ public final class EditorCoordinator {
         diagnostics.record(.editorResuming, code: "disconnected")
         next.at = now() + (next.attempt == 0 ? 0 : min(8, pow(2, Double(next.attempt - 1))))
         next.attempt += 1
-        resume = next; preferredMac = lastMac; macID = lastMac; macName = lastName
+        resume = next; resumeEditor = shown; preferredMac = lastMac; macID = lastMac; macName = lastName
         error = next.notice; status = "Connection lost · reconnecting"
         if next.at <= now() { open(until: deadline) } else { phase = .connecting; startTimer(); onChange?() }
+    }
+    /// A copy of the confirmed preset for display while reconnecting; its pending edit is dropped.
+    private func frozenEditor() -> GenericEditor? {
+        guard let snapshot = editor.snapshot, let catalog = editor.catalog, let session, let connection else { return nil }
+        let frozen = GenericEditor()
+        try? frozen.load(snapshot: snapshot, catalog: catalog, session: session, connection: connection, revision: revision, operations: operations)
+        return frozen.snapshot == nil ? nil : frozen
     }
     public func authorize() {
         guard phase == .awaitingApproval, !busy else { return }
@@ -265,6 +278,7 @@ public final class EditorCoordinator {
     }
     /// Also usable with a deterministic clock in offline hosts. No overlapping polls or catch-up bursts.
     public func tick() {
+        if let resume, resumeEditor != nil, now() >= resume.since + Self.resumeGrace { resumeEditor = nil; onChange?() }
         if let resume, transport == nil { if now() >= resume.at { open(until: resume.deadline) }; return }
         if phase == .connecting, nearbyMacs.isEmpty || resume != nil, now() >= discoveryDeadline {
             if let resume { lost(resume.reason, transient: true) } else { fail("No Mac replied. Open Patchbridge on your Mac and try again.") }
