@@ -265,11 +265,9 @@ final class PhoneModel: ObservableObject {
         try editor.confirm(id: pending.id, snapshot: updated, session: "demo", connection: "demo", revision: demoRevision)
     }
     func name(_ block: PresetSnapshot.Block) -> String { editor.blockName(blockID: block.id) ?? "Unknown block" }
-    /// The category, plus the model name when the block goes by a capture name: "Neural Capture · Eltron 30".
+    /// The category: "Neural Capture". Captures all share one model, so its name adds nothing.
     func kind(_ block: PresetSnapshot.Block) -> String {
-        let kind = editor.catalog?.models[block.model_id]?.category ?? "Block"
-        guard editor.captureName(blockID: block.id) != nil, let model = editor.modelName(blockID: block.id) else { return kind }
-        return "\(kind) · \(model)"
+        editor.catalog?.models[block.model_id]?.category ?? "Block"
     }
     func category(_ block: PresetSnapshot.Block) -> BlockCategory { BlockCategory(editor.catalog?.models[block.model_id]?.category ?? "") }
     func parameters(_ block: PresetSnapshot.Block) -> [String] { editor.visibleParameters(blockID: block.id) }
