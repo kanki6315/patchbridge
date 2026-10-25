@@ -78,6 +78,19 @@ final class CoordinatorTests: XCTestCase {
         clock = 29; c.tick(); XCTAssertEqual(t.messages.count, count)
         clock = 30; c.tick(); XCTAssertEqual(t.messages.count, count + 1, "Slow fallback remains")
     }
+    func testQCLossEventPollsAtOnceAndPausesEditing() throws {
+        let t = OfflineTransport(), c = coordinator(t), f = try fixture()
+        connect(c, t, fixture: f, statePush: true)
+        let count = t.messages.count
+        t.onResponse?(["version": 1, "type": "event", "event": "device_unavailable", "connection_id": "old", "retry_after": 1])
+        XCTAssertEqual(t.messages.count, count, "Another connection's event is ignored")
+        t.onResponse?(["version": 1, "type": "event", "event": "device_unavailable", "connection_id": "c", "retry_after": 1])
+        XCTAssertEqual(t.messages.count, count + 1)
+        XCTAssertEqual(t.messages.last?["operation"] as? String, "snapshot", "No 30 s wait for the fallback poll")
+        t.onResponse?(["version": 1, "id": t.messages.last!["id"]!, "connection_id": "c", "status": "error", "retry_after": 1,
+                       "error": ["code": "device_unavailable", "message": "QC unavailable."]])
+        XCTAssertEqual(c.phase, .recovering)
+    }
     func testStatePushCoalescesBehindRequestsWithoutConsumingTheirResponse() throws {
         let t = OfflineTransport(), c = coordinator(t), f = try fixture()
         connect(c, t, fixture: f, statePush: true)

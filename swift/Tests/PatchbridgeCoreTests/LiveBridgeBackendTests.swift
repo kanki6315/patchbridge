@@ -227,6 +227,35 @@ final class LiveBridgeBackendTests: XCTestCase {
         XCTAssertTrue(phone.notifications.suffix(2).allSatisfy { $0.1["revision"] as? Int == 2 })
         phone.leave(peer); host.tick(); XCTAssertEqual(phone.notifications.count, 3)
     }
+    func testQCLossFromTheBridgesOwnReadIsPushedToJoinedDevicesOnce() throws {
+        let phone = TestPeripheral(), helper = try helper(), pad = UUID(), quiet = UUID()
+        var time = 0.0
+        let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper }, now: { time })
+        try host.start(); defer { host.stop() }
+        host.tick()
+        var session = "", tokens = [UUID: String]()
+        for id in [phone.device, pad, quiet] {
+            let hello = phone.send("hello", from: id, fields: id == quiet ? [:] : ["state_notifications": true])
+            let token = try XCTUnwrap(hello["connection_id"] as? String); tokens[id] = token
+            try host.approvePending()
+            session = try XCTUnwrap(phone.send("connect", from: id, token: token)["session_id"] as? String)
+        }
+        phone.notifications.removeAll()
+        // The QC goes away between requests: no device asks, the bridge's own read finds out.
+        _ = try helper.request(["operation": "disconnect", "session_id": session])
+        time += SharedUSBSession.pollInterval; host.tick()
+        XCTAssertEqual(host.state?.0, .recovering)
+        XCTAssertEqual(Set(phone.notifications.map(\.0)), Set([phone.device, pad]))
+        for (id, event) in phone.notifications {
+            XCTAssertEqual(event["event"] as? String, "device_unavailable")
+            XCTAssertEqual(event["connection_id"] as? String, tokens[id])
+        }
+        time += 0.1; host.tick(); XCTAssertEqual(phone.notifications.count, 2, "Announced once per outage")
+        // Recovery resumes ordinary state pushes.
+        time += 2
+        XCTAssertEqual(phone.send("recover", token: tokens[phone.device])["status"] as? String, "confirmed")
+        XCTAssertEqual(host.state?.0, .connected)
+    }
     func testHelperFailurePreservesUnknownOutcomeAndRequiresNewApproval() throws {
         let helper = try helper(), phone = TestPeripheral()
         let host = LiveBridgeBackend(peripheral: phone, makeHelper: { helper })
