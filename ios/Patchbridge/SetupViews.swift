@@ -160,7 +160,7 @@ struct SecondaryButton: View {
 }
 
 /// Asked once, on the first screen: a phone that auto-locks mid-session can lose its Bluetooth
-/// link while it waits for the QC. The same choice lives in Connection details afterwards.
+/// link while it waits for the QC. The same choice lives in Connection afterwards.
 struct KeepAwakePrompt: View {
     let theme: PhoneTheme
     @AppStorage(PhoneModel.keepAwakeKey) private var keepAwake = false
@@ -172,7 +172,7 @@ struct KeepAwakePrompt: View {
                     Image(systemName: "sun.max").font(.title3).foregroundStyle(theme.signal).frame(width: 28).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Keep the screen on while connected?").font(.headline)
-                        Text("If your \(deviceName) locks while it waits for the QC, the connection can drop. Uses more battery. You can change this later in Connection details.")
+                        Text("If your \(deviceName) locks while it waits for the QC, the connection can drop. Uses more battery. You can change this later in Connection.")
                             .font(.footnote).foregroundStyle(theme.muted).fixedSize(horizontal: false, vertical: true)
                     }
                 }
