@@ -442,6 +442,14 @@ class SettleTests(TestCase):
                     self.clock.now += 1
         self.assertGreaterEqual(self.clock.now, usb.UNSETTLED_LIMIT)
 
+    def test_removed_qc_fails_at_once_instead_of_looking_busy(self):
+        def read():
+            raise RuntimeError('the device was removed')
+        self.adapter._snapshot_once = read
+        with self.assertRaisesRegex(RuntimeError, 'removed'):
+            self.adapter.snapshot()
+        self.assertEqual(self.clock.now, 0)
+
     def test_unanswered_reads_and_moving_context_are_unsettled(self):
         position = NS(folder_key='/media/p4/Presets/My Presets', position=16, is_factory=False)
         self.adapter.qc.read_state.side_effect = lambda name: None

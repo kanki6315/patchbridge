@@ -210,7 +210,20 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     private var notificationDevices = Set<UUID>()
     private var announced = [UUID: String]()
     private func notifyRevisions(except origin: UUID? = nil) {
-        guard let shared, let session = shared.helperSession, let cached = shared.cached else { return }
+        guard let shared else { return }
+        if shared.recovering {
+            // The QC is gone. Tell each joined device once, so it pauses now instead of at its
+            // next fallback poll; its own request then takes the usual recovery path.
+            let key = "unavailable:\(shared.generation)"
+            for (id, device) in devices where notificationDevices.contains(id) && shared.isJoined(device) && announced[id] != key {
+                announced[id] = key
+                guard id != origin else { continue }
+                peripheral.notify(id, message: ["version": 1, "type": "event", "event": "device_unavailable",
+                    "connection_id": device.token, "retry_after": shared.retryAfter])
+            }
+            return
+        }
+        guard let session = shared.helperSession, let cached = shared.cached else { return }
         let key = "\(session):\(cached.revision)"
         for (id, device) in devices where notificationDevices.contains(id) && shared.isJoined(device) && !shared.isOutdated(device) {
             guard announced[id] != key else { continue }

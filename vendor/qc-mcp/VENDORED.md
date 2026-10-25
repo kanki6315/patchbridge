@@ -53,6 +53,10 @@ git (see `.gitignore`):
 - `list_directory(folder_key=...)` reads one preset folder and requires an echoed
   request ID, matching folder/type, and all 256 slots before returning. The adapter
   uses this for My Presets instead of streaming IR/capture/factory directories.
+- `iohid.IOHIDTransport` registers an IOKit removal callback. Once the cable is
+  pulled, `set_report()` and `read_reports()` raise at once (a waiting read is
+  woken), so the adapter fails the session instead of treating unanswered reads
+  as a QC that is mid scene change for 20 s.
 
 When updating, copy the same files from the new commit, reapply the local
 changes unless upstream fixed them, and update the commit here, in

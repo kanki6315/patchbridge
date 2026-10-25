@@ -590,6 +590,13 @@ public final class EditorCoordinator {
                 catch { return } // An invalid event must not disturb an in-flight edit.
                 return
             }
+            if response["event"] as? String == "device_unavailable" {
+                // The bridge lost the QC. Poll now: the reply pauses editing through the usual path.
+                guard integer(response["version"]) == 1, phase == .ready, let connection,
+                      response["connection_id"] as? String == connection else { return }
+                nextPoll = now(); refresh()
+                return
+            }
             guard revisionNotifications, response["event"] as? String == "revision_changed",
                   integer(response["version"]) == 1, let connection, let session,
                   response["connection_id"] as? String == connection,

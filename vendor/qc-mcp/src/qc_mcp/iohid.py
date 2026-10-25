@@ -60,6 +60,7 @@ IOKit.IOHIDDeviceSetReport.argtypes = [VoidP, ctypes.c_int, CFIndex,
 IOKit.IOHIDDeviceScheduleWithRunLoop.argtypes = [VoidP, VoidP, VoidP]
 IOKit.IOHIDDeviceRegisterInputReportCallback.argtypes = [
     VoidP, ctypes.c_char_p, CFIndex, VoidP, VoidP]
+IOKit.IOHIDDeviceRegisterRemovalCallback.argtypes = [VoidP, VoidP, VoidP]
 
 kIOHIDReportTypeOutput = 1
 kIOHIDOptionsTypeNone = 0
@@ -68,6 +69,7 @@ kIOHIDOptionsTypeSeizeDevice = 1
 INPUT_CB = ctypes.CFUNCTYPE(None, VoidP, ctypes.c_int, VoidP, ctypes.c_int,
                             ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint8),
                             CFIndex)
+REMOVAL_CB = ctypes.CFUNCTYPE(None, VoidP, ctypes.c_int, VoidP)
 
 
 def _cfstr(s):
@@ -112,6 +114,10 @@ class IOHIDTransport:
         self.dev = None
         self._in_buf = (ctypes.c_uint8 * (report_size + 1))()
         self._cb_ref = None
+        self._removal_ref = None
+        #: Set by IOKit when the cable is pulled. Every later write or read raises,
+        #: so a missing QC fails at once instead of looking like a slow reply.
+        self.removed = False
         self._rx_lock = threading.Lock()
         self._rx_ready = threading.Condition(self._rx_lock)
         self._rx = []   # list of (report_id, data) captured by the reader thread
@@ -164,6 +170,12 @@ class IOHIDTransport:
                 self._rx_ready.notify()
         self._cb_ref = INPUT_CB(_cb)
 
+        def _removed(context, result, sender):
+            with self._rx_ready:
+                self.removed = True
+                self._rx_ready.notify_all()
+        self._removal_ref = REMOVAL_CB(_removed)
+
         # Dedicated reader thread runs a CFRunLoop so input reports are never
         # dropped during large device streams.
         def _reader():
@@ -173,6 +185,7 @@ class IOHIDTransport:
             IOKit.IOHIDDeviceRegisterInputReportCallback(
                 self.dev, ctypes.cast(self._in_buf, ctypes.c_char_p),
                 self.report_size + 1, self._cb_ref, None)
+            IOKit.IOHIDDeviceRegisterRemovalCallback(self.dev, self._removal_ref, None)
             IOKit.IOHIDDeviceScheduleWithRunLoop(
                 self.dev, self._runloop, kCFRunLoopDefaultMode)
             self._ready.set()
@@ -194,6 +207,8 @@ class IOHIDTransport:
         """
         if self.dev is None:
             raise RuntimeError("write on a closed device")
+        if self.removed:
+            raise RuntimeError("the device was removed")
         buf = bytes(data)
         if include_id:
             buf = bytes([report_id]) + buf
@@ -206,7 +221,9 @@ class IOHIDTransport:
         The callback wakes the reader so each request doesn't pay a fixed sleep."""
         with self._rx_ready:
             if timeout:
-                self._rx_ready.wait_for(lambda: bool(self._rx), timeout=timeout)
+                self._rx_ready.wait_for(lambda: bool(self._rx) or self.removed, timeout=timeout)
+            if self.removed:
+                raise RuntimeError("the device was removed")
             out = self._rx[:]
             self._rx.clear()
         return out
