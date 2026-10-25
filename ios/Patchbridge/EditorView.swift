@@ -356,39 +356,44 @@ struct EditorView: View {
             } else { Label("Read-only connection", systemImage: "lock").font(.footnote).foregroundStyle(theme.muted).floatingNote(theme) }
         }.padding(.horizontal, 16).padding(.vertical, 12)
     }
+    /// On pad the column centres in the window when it fits, and scrolls from the top when it doesn't.
     private var connection: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 26) {
-                Group {
-                    if model.coordinator.phase == .disconnected { Wordmark(theme: theme) }
-                    else { Text(connectionTitle).font(.largeTitle.bold()).tracking(-0.4).accessibilityAddTraits(.isHeader) }
-                }.padding(.top, pad ? 72 : 24).frame(maxWidth: .infinity, alignment: pad ? .center : .leading)
-                if model.coordinator.phase == .disconnected && model.error == nil { demoPreview; KeepAwakePrompt(theme: theme) }
-                connectionRail
-                if model.coordinator.phase == .awaitingApproval {
-                    if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
-                    if let code = model.coordinator.approvalCode { Text(code.prefix(3) + " · " + code.suffix(3)).font(.largeTitle.bold().monospacedDigit()).frame(maxWidth: .infinity).padding(24).phoneGlass(theme) }
-                } else if model.coordinator.phase == .recovering {
-                    Text("Editing is paused. Reconnect the QC cable; uncertain edits will not be retried.").foregroundStyle(theme.muted)
-                } else if model.coordinator.phase == .connecting || model.coordinator.phase == .loading {
-                    if model.coordinator.resuming {
-                        Text("The Bluetooth link dropped. Editing resumes once your Mac is found again.").foregroundStyle(theme.muted)
+        GeometryReader { viewport in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 26) {
+                    Group {
+                        if model.coordinator.phase == .disconnected { Wordmark(theme: theme) }
+                        else { Text(connectionTitle).font(.largeTitle.bold()).tracking(-0.4).accessibilityAddTraits(.isHeader) }
+                    }.padding(.top, 24).frame(maxWidth: .infinity, alignment: pad ? .center : .leading)
+                    if model.coordinator.phase == .disconnected && model.error == nil { demoPreview; KeepAwakePrompt(theme: theme) }
+                    connectionRail
+                    if model.coordinator.phase == .awaitingApproval {
                         if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
+                        if let code = model.coordinator.approvalCode { Text(code.prefix(3) + " · " + code.suffix(3)).font(.largeTitle.bold().monospacedDigit()).frame(maxWidth: .infinity).padding(24).phoneGlass(theme) }
+                    } else if model.coordinator.phase == .recovering {
+                        Text("Editing is paused. Reconnect the QC cable; uncertain edits will not be retried.").foregroundStyle(theme.muted)
+                    } else if model.coordinator.phase == .connecting || model.coordinator.phase == .loading {
+                        if model.coordinator.resuming {
+                            Text("The Bluetooth link dropped. Editing resumes once your Mac is found again.").foregroundStyle(theme.muted)
+                            if let error = model.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(theme.caution) }
+                        }
+                        ForEach(model.coordinator.nearbyMacs.keys.sorted(), id: \.self) { id in
+                            Button { model.coordinator.chooseMac(id) } label: {
+                                Label(model.coordinator.nearbyMacs[id] ?? "Mac", systemImage: "laptopcomputer").font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(20)
+                            }.phoneGlass(theme)
+                        }
+                    } else if let error = model.error {
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(theme.caution)
                     }
-                    ForEach(model.coordinator.nearbyMacs.keys.sorted(), id: \.self) { id in
-                        Button { model.coordinator.chooseMac(id) } label: {
-                            Label(model.coordinator.nearbyMacs[id] ?? "Mac", systemImage: "laptopcomputer").font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(20)
-                        }.phoneGlass(theme)
-                    }
-                } else if let error = model.error {
-                    Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(theme.caution)
-                }
-                if let notice = model.notice { Text(notice).foregroundStyle(theme.caution) }
-                if pad { connectActions.padding(.top, 8) }
-            }.padding(20)
-                .frame(maxWidth: pad ? 520 : .infinity).frame(maxWidth: .infinity)
-        }.safeAreaInset(edge: .bottom) {
-            if !pad { connectActions.padding(20) }
+                    if let notice = model.notice { Text(notice).foregroundStyle(theme.caution) }
+                    if pad { connectActions.padding(.top, 8) }
+                }.padding(20)
+                    .frame(maxWidth: pad ? 520 : .infinity).frame(maxWidth: .infinity)
+                    .frame(minHeight: pad ? viewport.size.height : nil, alignment: .center)
+            }.scrollBounceBehavior(.basedOnSize)
+            .safeAreaInset(edge: .bottom) {
+                if !pad { connectActions.padding(20) }
+            }
         }
     }
     /// Every setup phase keeps its actions in the same place: full-width capsules pinned to the bottom.
