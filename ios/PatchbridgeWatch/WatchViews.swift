@@ -14,6 +14,19 @@ private enum WristTheme {
     }
 }
 
+/// Shorter than the system bordered button so each page fits a 40mm screen.
+private struct WristPillStyle: ButtonStyle {
+    var fill = WristTheme.raised
+    var ink = WristTheme.ink
+    @Environment(\.isEnabled) private var isEnabled
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.font(.footnote.weight(.semibold)).foregroundStyle(ink)
+            .frame(maxWidth: .infinity).padding(.vertical, 8).padding(.horizontal, 10)
+            .background(fill.opacity(configuration.isPressed ? 0.7 : 1), in: Capsule())
+            .opacity(isEnabled ? 1 : 0.4)
+    }
+}
+
 struct WatchRootView: View {
     @ObservedObject var model: WatchModel
     var body: some View {
@@ -47,8 +60,8 @@ private struct NowPlayingScreen: View {
     @ObservedObject var model: WatchModel
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(model.state.presetName).font(.title2.bold()).fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(model.state.presetName).font(.headline).lineLimit(2).minimumScaleFactor(0.8)
                 Label(model.state.demo ? "Demo · local only" : model.ready ? "Connected" : "Not connected", systemImage: model.ready ? "checkmark.circle.fill" : "link.badge.plus")
                     .font(.caption2).foregroundStyle(WristTheme.muted)
                 WatchConnectionNotice(model: model)
@@ -65,14 +78,15 @@ private struct NowPlayingScreen: View {
                 } label: {
                     HStack { Text(model.state.scene.isEmpty ? "Scenes" : "Scene \(model.state.scene)").bold(); Spacer(); Image(systemName: "chevron.right") }
                 }
-                .buttonStyle(.borderedProminent).tint(WristTheme.signal).foregroundStyle(WristTheme.ground)
+                .buttonStyle(WristPillStyle(fill: WristTheme.signal, ink: WristTheme.ground))
                 .disabled(!model.canAct || !model.state.canSwitchScenes)
                 NavigationLink { WristPresetsScreen(model: model) } label: { Label("Presets", systemImage: "list.bullet") }
+                    .buttonStyle(WristPillStyle())
                     .disabled(!model.ready || !model.state.canBrowsePresets)
                 if model.sending || model.state.busy { Label("Waiting for QC…", systemImage: "clock").font(.caption2) }
                 if model.state.dirty { Label("Unsaved", systemImage: "circle.fill").font(.caption2).foregroundStyle(WristTheme.signal) }
             }.padding(.horizontal, 2)
-        }.navigationTitle("Patchbridge")
+        }
     }
 }
 
@@ -104,36 +118,34 @@ private struct WristTunerScreen: View {
     private var cents: Double? { model.ready ? model.state.cents : nil }
     var body: some View {
         ScrollView {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 WatchConnectionNotice(model: model)
                 if model.ready && !model.state.tunerAvailable { Text("Tuner unavailable on this bridge.").font(.footnote) }
                 HStack(alignment: .firstTextBaseline, spacing: 1) {
-                    Text(model.ready ? model.state.note ?? "–" : "–").font(.system(size: 64, weight: .bold))
-                    Text(model.ready ? model.state.octave.map(String.init) ?? "" : "").font(.title2.bold())
+                    Text(model.ready ? model.state.note ?? "–" : "–").font(.system(size: 40, weight: .bold))
+                    Text(model.ready ? model.state.octave.map(String.init) ?? "" : "").font(.title3.bold())
                 }.minimumScaleFactor(0.7).lineLimit(1)
                     .accessibilityElement(children: .combine).accessibilityLabel("Note \(model.ready ? model.state.note ?? "No signal" : "Unavailable") \(model.ready ? model.state.octave.map(String.init) ?? "" : "")")
-                Text(cents.map { String(format: "%+.0f cents", $0) } ?? "No signal").font(.headline.monospacedDigit()).foregroundStyle(WristTheme.muted)
+                Text(cents.map { String(format: model.state.demo ? "%+.0f cents · demo" : "%+.0f cents", $0) } ?? "No signal").font(.subheadline.monospacedDigit()).foregroundStyle(WristTheme.muted)
                 HStack(spacing: 5) {
                     Text("♭")
                     GeometryReader { geometry in
                         ZStack {
-                            HStack { ForEach(0..<11) { i in Rectangle().fill(i == 5 ? WristTheme.signal : WristTheme.muted.opacity(0.5)).frame(width: 1, height: i == 5 ? 27 : 14); if i < 10 { Spacer(minLength: 0) } } }
+                            HStack { ForEach(0..<11) { i in Rectangle().fill(i == 5 ? WristTheme.signal : WristTheme.muted.opacity(0.5)).frame(width: 1, height: i == 5 ? 20 : 10); if i < 10 { Spacer(minLength: 0) } } }
                             if let cents {
-                                Circle().fill(WristTheme.signal).frame(width: 8, height: 8)
+                                Circle().fill(WristTheme.signal).frame(width: 7, height: 7)
                                     .position(x: 4 + (geometry.size.width - 8) * (min(50, max(-50, cents)) + 50) / 100, y: geometry.size.height / 2)
                             }
                         }.frame(height: geometry.size.height)
-                    }.frame(height: 30)
+                    }.frame(height: 22)
                     Text("♯")
                 }.accessibilityHidden(true)
                 Button { model.command("mute", flag: !(model.state.muted ?? false)) } label: {
                     Label(model.state.mutePending ? "Confirming…" : model.state.muted == true ? "Output muted" : "Mute output", systemImage: model.state.muted == true ? "speaker.slash.fill" : "speaker.wave.2")
-                        .font(.footnote)
-                }.disabled(!model.canAct || !model.state.canMute || model.state.mutePending)
+                }.buttonStyle(WristPillStyle(fill: WristTheme.signal.opacity(0.25))).disabled(!model.canAct || !model.state.canMute || model.state.mutePending)
                     .accessibilityHint(model.state.muted == true ? "Unmutes the Quad Cortex" : "Mutes the Quad Cortex")
-                if model.state.demo { Text("Demo pitch").font(.caption2).foregroundStyle(WristTheme.muted) }
             }
-        }.navigationTitle("Tuner")
+        }
     }
 }
 
@@ -145,7 +157,7 @@ private struct QuickAdjustScreen: View {
     @FocusState private var crownFocused: Bool
     var body: some View {
         ScrollView {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 WatchConnectionNotice(model: model)
                 if let p = model.parameter {
                     NavigationLink {
@@ -154,8 +166,12 @@ private struct QuickAdjustScreen: View {
                                 VStack(alignment: .leading) { Text(parameter.name); Text(parameter.blockName).font(.caption2).foregroundStyle(WristTheme.muted) }
                             }
                         }.navigationTitle("Quick controls")
-                    } label: { Text(p.blockName).font(.caption).foregroundStyle(WristTheme.category(p.category)) }.buttonStyle(.plain)
-                    Text(p.name).font(.headline)
+                    } label: {
+                        VStack(spacing: 0) {
+                            Text(p.blockName).font(.caption2).foregroundStyle(WristTheme.category(p.category))
+                            Text(p.name).font(.footnote.bold()).foregroundStyle(WristTheme.ink)
+                        }.lineLimit(1)
+                    }.buttonStyle(.plain)
                     gauge(p)
                     if editing {
                         HStack {
@@ -163,17 +179,15 @@ private struct QuickAdjustScreen: View {
                             Button("Apply") {
                                 guard token == model.state.context else { editing = false; model.error = "The preset changed. Adjust again."; return }
                                 if model.command("parameter", target: p.id, value: draft) { editing = false }
-                            }.tint(WristTheme.signal).disabled(!model.canAct)
-                        }.font(.footnote)
+                            }.buttonStyle(WristPillStyle(fill: WristTheme.signal, ink: WristTheme.ground)).disabled(!model.canAct)
+                        }.buttonStyle(WristPillStyle())
                         Text("Turn Crown · tap Apply").font(.caption2).foregroundStyle(WristTheme.muted)
                     } else {
-                        Button("Adjust") { draft = p.value; token = model.state.context; editing = true; crownFocused = true }.disabled(!model.canAct)
-                        Text(model.sending || model.state.busy ? "Waiting for QC…" : model.state.demo ? "Demo value" : model.ready ? "QC value" : "Last known value")
-                            .font(.caption2).foregroundStyle(WristTheme.muted)
+                        Button("Adjust") { draft = p.value; token = model.state.context; editing = true; crownFocused = true }.buttonStyle(WristPillStyle(fill: WristTheme.signal.opacity(0.25))).disabled(!model.canAct)
                     }
                 } else { Text("Editable numeric controls appear here when a preset is connected.").font(.footnote).foregroundStyle(WristTheme.muted) }
             }
-        }.navigationTitle("Adjust")
+        }
             .onChange(of: model.selectedParameter) { _, _ in editing = false }
             .onChange(of: model.page) { _, _ in editing = false }
             .onChange(of: model.ready) { _, ready in if !ready { editing = false } }
@@ -182,14 +196,15 @@ private struct QuickAdjustScreen: View {
         let shown = editing ? draft : p.value
         let fraction = min(1, max(0, (shown - p.minimum) / (p.maximum - p.minimum)))
         return ZStack {
-            Circle().trim(from: 0.125, to: 0.875).stroke(WristTheme.raised, style: StrokeStyle(lineWidth: 9, lineCap: .round)).rotationEffect(.degrees(90))
-            Circle().trim(from: 0.125, to: 0.125 + 0.75 * fraction).stroke(WristTheme.category(p.category), style: StrokeStyle(lineWidth: 9, lineCap: .round)).rotationEffect(.degrees(90))
+            Circle().trim(from: 0.125, to: 0.875).stroke(WristTheme.raised, style: StrokeStyle(lineWidth: 7, lineCap: .round)).rotationEffect(.degrees(90))
+            Circle().trim(from: 0.125, to: 0.125 + 0.75 * fraction).stroke(WristTheme.category(p.category), style: StrokeStyle(lineWidth: 7, lineCap: .round)).rotationEffect(.degrees(90))
             VStack(spacing: 0) {
-                Text(editing ? String(format: p.step >= 1 ? "%.0f" : "%.1f", shown) : p.formatted).font(.system(size: 32, weight: .bold)).monospacedDigit().minimumScaleFactor(0.5).lineLimit(1)
-                Text(p.unit).font(.footnote).foregroundStyle(WristTheme.muted)
-                if editing { Text("Draft").font(.caption2).foregroundStyle(WristTheme.signal) }
-            }.padding(.horizontal, 14)
-        }.frame(width: 136, height: 126)
+                Text(editing ? String(format: p.step >= 1 ? "%.0f" : "%.1f", shown) : p.formatted).font(.system(size: 24, weight: .bold)).monospacedDigit().minimumScaleFactor(0.5).lineLimit(1)
+                Text(p.unit).font(.caption2).foregroundStyle(WristTheme.muted)
+                Text(editing ? "Draft" : model.sending || model.state.busy ? "Waiting…" : model.state.demo ? "Demo" : model.ready ? "QC value" : "Last known")
+                    .font(.caption2).foregroundStyle(editing ? WristTheme.signal : WristTheme.muted).lineLimit(1).minimumScaleFactor(0.7)
+            }.padding(.horizontal, 10)
+        }.frame(width: 92, height: 84)
             .focusable(editing).focused($crownFocused)
             .digitalCrownRotation($draft, from: p.minimum, through: p.maximum, by: p.step, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
             .accessibilityElement(children: .ignore)
