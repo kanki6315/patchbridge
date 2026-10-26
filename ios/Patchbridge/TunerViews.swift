@@ -354,7 +354,14 @@ struct TunerSheet: View {
                 Spacer()
                 Button("Done") { tuner.setOpen(false) }.font(.headline).padding(.horizontal, 16).frame(minHeight: 44).background(theme.raised, in: Capsule())
             }
-            TunerPanel(tuner: tuner, theme: theme)
+            GeometryReader { geometry in
+                ScrollView {
+                    TunerPanel(tuner: tuner, theme: theme)
+                        .frame(minHeight: geometry.size.height)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .accessibilityIdentifier("tuner-panel-scroll")
+            }
         }
         .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
