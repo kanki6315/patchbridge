@@ -70,6 +70,28 @@ final class PhoneFlowTests: XCTestCase {
         XCTAssertTrue(toggle.waitForExistence(timeout: 5))
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
     }
+    func testLandscapeTunerControlsAreReachable() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else { throw XCTSkip("Phone tuner sheet only") }
+        let app = XCUIApplication()
+        app.launchArguments = ["--demo", "--stage"]
+        app.launch()
+        XCTAssertTrue(app.buttons["tuner-button"].waitForExistence(timeout: 10))
+        if duoScreen(app) == "inner" { throw XCTSkip("Inner screen uses a popover") }
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+        app.buttons["tuner-button"].tap()
+        let scroll = app.scrollViews["tuner-panel-scroll"]
+        XCTAssertTrue(scroll.waitForExistence(timeout: 5))
+        scroll.swipeUp()
+        let live = app.switches["Live tuner"]
+        XCTAssertTrue(live.isHittable)
+        flip(live)
+        XCTAssertEqual(live.value as? String, "1")
+        capture("Landscape tuner controls")
+        XCTAssertTrue(app.buttons["Done"].isHittable)
+        app.buttons["Done"].tap()
+        XCTAssertEqual(app.buttons["tuner-button"].value as? String, "Live tuner on")
+    }
     func testLiveTunerStaysOnEveryScreen() throws {
         guard UIDevice.current.userInterfaceIdiom == .phone else { throw XCTSkip("iPhone tuner line only") }
         let app = XCUIApplication()
