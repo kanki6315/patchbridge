@@ -369,16 +369,30 @@ struct TunerPopover: View {
     @ObservedObject var tuner: TunerModel
     let theme: PhoneTheme
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Tuner").font(.title2.bold())
-            TunerPanel(tuner: tuner, theme: theme, compact: true)
+        ViewThatFits(in: .vertical) {
+            content
+            // The inner screen can constrain the popover to the space above the fold.
+            // Keep every control reachable when the full panel cannot fit there.
+            ScrollView(.vertical) {
+                content
+            }
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .padding(18).frame(width: 380)
+        .frame(width: 380)
         .foregroundStyle(theme.ink).tint(theme.signal)
         .presentationCompactAdaptation(.popover)
         // Like the other popovers: nearly opaque, so the readout never reads over the grid.
         .presentationBackground(theme.surface.opacity(0.95))
         .preferredColorScheme(theme.daylight ? .light : .dark)
+    }
+
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Tuner").font(.title2.bold())
+            TunerPanel(tuner: tuner, theme: theme, compact: true)
+        }
+        .padding(18)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
