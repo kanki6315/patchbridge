@@ -50,12 +50,10 @@ if [ -n "${TEST_PARALLEL_ENABLED:-}" ]; then
 fi
 
 log() { flightdeck_event "$*"; printf '\n==> %s\n' "$*"; }
+log "Host tests"
+/bin/bash "$root/.flightdeck/test-fast.sh"
 log "Generate project"
 xcodegen generate --spec ios/project.yml --quiet
-log "Swift core tests"
-swift test --package-path swift --scratch-path "$out/SwiftBuild"
-log "Python bridge tests"
-PYTHONPATH="$root/src${PYTHONPATH:+:$PYTHONPATH}" python3 -m unittest discover -s tests
 log "iPhone tests"
 xcodebuild test -project ios/Patchbridge.xcodeproj -scheme 'Patchbridge' \
     -destination "$TEST_DESTINATION" -derivedDataPath "$out/DerivedData" \
