@@ -48,20 +48,26 @@ struct PresetBrowser: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            header
-            if layout == .sheet {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        sectionTitle
-                        list
-                        otherSources
-                    }.padding(.bottom, 24)
-                }.scrollIndicators(.hidden)
-            } else {
-                HStack(alignment: .top, spacing: 20) {
-                    sourceColumn.frame(width: layout == .deck ? 200 : 180)
-                    ScrollView { list }.scrollIndicators(.hidden)
+        GeometryReader { geometry in
+            // Popovers can be narrower than their requested size after a fold or rotation.
+            // Use the actual presentation width, not the workspace's width.
+            let stacked = layout == .sheet || geometry.size.width < 560
+            VStack(alignment: .leading, spacing: 14) {
+                header(compact: stacked)
+                if stacked {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            sectionTitle
+                            list
+                            otherSources
+                        }.padding(.bottom, 24)
+                    }.scrollIndicators(.hidden)
+                } else {
+                    HStack(alignment: .top, spacing: 20) {
+                        ScrollView { sourceColumn }.scrollIndicators(.hidden)
+                            .frame(width: layout == .deck ? 200 : 180)
+                        ScrollView { list }.scrollIndicators(.hidden)
+                    }
                 }
             }
         }
@@ -82,17 +88,18 @@ struct PresetBrowser: View {
 
     // MARK: Header
 
-    private var header: some View {
+    private func header(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Text("Presets").font(layout == .sheet ? .largeTitle.bold() : .title.bold()).lineLimit(1).fixedSize()
                 Spacer(minLength: 8)
-                if layout != .sheet, let list = model.coordinator.presetList, !model.coordinator.listingPresets {
-                    Text("Listed at \(list.listedAt.formatted(date: .omitted, time: .shortened))").font(.subheadline).foregroundStyle(theme.muted)
-                }
                 if model.coordinator.presetList != nil && !model.coordinator.listingPresets && model.presetSwitch == nil {
                     Button { model.coordinator.listPresets() } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise").font(.headline).lineLimit(1).fixedSize().padding(.horizontal, 14).frame(minHeight: 44)
+                        Group {
+                            if compact { Image(systemName: "arrow.clockwise") }
+                            else { Label("Refresh", systemImage: "arrow.clockwise") }
+                        }.font(.headline).lineLimit(1).fixedSize().padding(.horizontal, 14).frame(minWidth: 44, minHeight: 44)
+                            .accessibilityLabel("Refresh")
                     }.buttonStyle(.plain).background(theme.surface, in: Capsule()).overlay(Capsule().stroke(theme.line, lineWidth: theme.hairline))
                 }
                 if layout != .popover {
@@ -122,7 +129,7 @@ struct PresetBrowser: View {
                 Label(error, systemImage: "exclamationmark.triangle").font(.subheadline).foregroundStyle(theme.caution)
                 Button("Try again") { coordinator.listPresets() }.font(.subheadline.weight(.semibold)).foregroundStyle(theme.signal)
             }
-        } else if layout == .sheet, let list = coordinator.presetList {
+        } else if let list = coordinator.presetList {
             Text("Listed at \(list.listedAt.formatted(date: .omitted, time: .shortened))").font(.subheadline).foregroundStyle(theme.muted)
         }
     }
