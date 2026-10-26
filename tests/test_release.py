@@ -55,7 +55,10 @@ if name == 'xcodebuild' and args[0] == '-showdestinations':
             'class Placeholder(unittest.TestCase):\n'
             '    def test_placeholder(self): pass\n'
         )
-        self.env = {k: v for k, v in os.environ.items() if not k.startswith(('ASC_', 'RELEASE_', 'DEVELOPMENT_TEAM', 'TEST_DESTINATION'))}
+        # Stub releases own their environment, even when the suite runs inside a
+        # real FlightDeck job. Managed cases opt in explicitly below.
+        self.env = {k: v for k, v in os.environ.items() if not k.startswith(
+            ('ASC_', 'RELEASE_', 'DEVELOPMENT_TEAM', 'TEST_', 'FLIGHTDECK_'))}
         self.env.update(PATH=str(self.bin) + os.pathsep + os.environ['PATH'], DEVELOPER_DIR=str(self.root), EVENTS=str(self.events))
         self.phone_id = '61DF595A-B275-4365-A863-DBBBAB8D5169'
         self.env['SIMULATORS'] = json.dumps({
