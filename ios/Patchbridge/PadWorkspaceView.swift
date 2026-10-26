@@ -99,8 +99,11 @@ struct PadWorkspaceView: View {
                 PresetNameButton(model: model, snapshot: snapshot, theme: theme, chevron: 32) { browsing = true }
                     .popover(isPresented: $browsing, arrowEdge: .top) {
                         PresetBrowser(model: model, theme: theme, layout: .popover) { browsing = false }
-                            // Shorter screens (the Duo unfolded) shrink it so it clears the name and the bottom edge.
-                            .padding(24).frame(width: min(720, size.width - 64), height: min(640, size.height - 120))
+                            // Request a comfortable size, but accept the smaller presentation
+                            // iOS offers in a half-folded window or after rotation.
+                            .padding(24)
+                            .frame(idealWidth: min(720, max(0, size.width - 64)), maxWidth: 720,
+                                   idealHeight: min(640, max(0, size.height - 120)), maxHeight: 640)
                             .background(theme.surface.opacity(0.97))
                             .presentationBackground(theme.surface.opacity(0.97))
                             .preferredColorScheme(theme.daylight ? .light : .dark)
