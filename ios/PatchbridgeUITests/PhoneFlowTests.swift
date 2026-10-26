@@ -1,6 +1,28 @@
 import XCTest
 
 final class PhoneFlowTests: XCTestCase {
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        XCUIDevice.shared.orientation = .portrait
+    }
+
+    override func tearDownWithError() throws {
+        // XCTest interaction failures can bypass a test body's Swift defer.
+        XCUIDevice.shared.orientation = .portrait
+    }
+
+    private func rotate(_ orientation: UIDeviceOrientation, app: XCUIApplication) {
+        XCUIDevice.shared.orientation = orientation
+        let landscape = orientation.isLandscape
+        let settled = NSPredicate { _, _ in
+            let frame = app.windows.firstMatch.frame
+            return frame.width > 0 && (landscape ? frame.width > frame.height : frame.height > frame.width)
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: settled, object: nil)], timeout: 5), .completed)
+        // The window changes size before SwiftUI finishes moving its controls.
+        Thread.sleep(forTimeInterval: 1)
+    }
+
     private func capture(_ name: String) {
         Thread.sleep(forTimeInterval: 1) // Let sheet/theme/rotation transitions finish before capturing.
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -60,8 +82,10 @@ final class PhoneFlowTests: XCTestCase {
         app.buttons["Done"].tap()
         XCTAssertTrue(app.buttons["Demo preset"].waitForExistence(timeout: 5))
         capture("Midnight light overview")
-        XCUIDevice.shared.orientation = .landscapeLeft
-        XCTAssertTrue(app.buttons["Edit block"].waitForExistence(timeout: 5))
+        rotate(.landscapeLeft, app: app)
+        XCTAssertTrue(app.buttons["Edit block"].waitForExistence(timeout: 5)
+                      || app.buttons["Increase THRESHOLD"].exists,
+                      "Landscape shows either the compact inspector or the regular-width workspace")
         capture("iPhone landscape")
         XCUIDevice.shared.orientation = .portrait
     }
@@ -77,8 +101,10 @@ final class PhoneFlowTests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["tuner-button"].waitForExistence(timeout: 10))
         if duoScreen(app) == "inner" { throw XCTSkip("Inner screen uses a popover") }
-        XCUIDevice.shared.orientation = .landscapeLeft
-        defer { XCUIDevice.shared.orientation = .portrait }
+        rotate(.landscapeLeft, app: app)
+        if app.buttons["Increase THRESHOLD"].exists {
+            throw XCTSkip("Regular-width landscape uses the tuner popover, not the phone sheet")
+        }
         app.buttons["tuner-button"].tap()
         let scroll = app.scrollViews["tuner-panel-scroll"]
         XCTAssertTrue(scroll.waitForExistence(timeout: 5))
