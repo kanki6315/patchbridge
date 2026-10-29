@@ -32,6 +32,7 @@ struct PadWorkspaceView: View {
                         }
                         HStack(alignment: .top, spacing: 16) {
                             ScrollView { rowList(snapshot, columns: 1) }
+                                .overlay(alignment: .bottom) { floating.padding(.bottom, 16) }
                             panel(snapshot).frame(width: (geometry.size.width - 56) / 2)
                         }
                     } else {
@@ -43,6 +44,7 @@ struct PadWorkspaceView: View {
                                     rowList(snapshot, columns: 2)
                                 }
                             }
+                            .overlay(alignment: .bottom) { floating.padding(.bottom, 16) }
                             panel(snapshot).frame(width: min(400, geometry.size.width * 0.34))
                         }
                     }
@@ -94,7 +96,11 @@ struct PadWorkspaceView: View {
     // MARK: Top bar
 
     private func topBar(_ snapshot: PresetSnapshot, portrait: Bool, size: CGSize) -> some View {
-        HStack(alignment: .center, spacing: 16) {
+        let band = tuner.live && !portrait
+        // Below these widths the full pill and Save label crowd out the preset name, so they
+        // shorten: the Mac's name stays in the connection popover, the slot in the save confirmation.
+        let compact = size.width < (band ? 1240 : 1000)
+        return HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 PresetNameButton(model: model, snapshot: snapshot, theme: theme, chevron: 32) { browsing = true }
                     .popover(isPresented: $browsing, arrowEdge: .top) {
@@ -111,11 +117,11 @@ struct PadWorkspaceView: View {
                 HStack(spacing: 10) {
                     Text(model.location(snapshot)).foregroundStyle(theme.muted)
                     if snapshot.dirty { Label("Unsaved", systemImage: "circle.fill").labelStyle(SmallDotLabel()).foregroundStyle(theme.signal) }
-                }.font(.subheadline.weight(.medium))
-            }.layoutPriority(1)
+                }.font(.subheadline.weight(.medium)).lineLimit(1)
+            }.frame(minWidth: 160, alignment: .leading).layoutPriority(1)
             Spacer(minLength: 8)
-            // Landscape: the live tuner takes the free space and notices move just below the bar.
-            if tuner.live && !portrait { TunerBand(readout: tuner.readout, theme: theme) { tuner.setOpen(true) } } else { toast }
+            // Landscape: the live tuner takes the free space. Notices float over the blocks instead.
+            if band { TunerBand(readout: tuner.readout, theme: theme) { tuner.setOpen(true) } }
             Spacer(minLength: 8)
             if tuner.available {
                 TunerButton(tuner: tuner, theme: theme, size: 48) { tuner.setOpen(true) }
@@ -124,13 +130,13 @@ struct PadWorkspaceView: View {
                     }
             }
             // The pill and Save keep their size; the band gives way.
-            statusPill.fixedSize()
-            saveButton(snapshot).fixedSize()
+            statusPill(compact: compact).fixedSize()
+            saveButton(snapshot, short: compact).fixedSize()
         }
-        .overlay(alignment: .bottom) { if tuner.live && !portrait { toast.offset(y: 60).allowsHitTesting(false) } }
         .zIndex(1)
     }
-    /// Notices sit in the top bar's free space, between the preset name and the status pill.
+    /// Notices float over the bottom of the block column, so a message coming or going never
+    /// moves the top bar, and the scene strip stays visible while a switch is confirmed.
     @ViewBuilder private var toast: some View {
         let pending = model.editor.pending
         if model.error == nil, model.notice == nil, let scene = model.sceneToast {
@@ -164,14 +170,19 @@ struct PadWorkspaceView: View {
             .accessibilityElement(children: .combine)
         }
     }
-    private var statusPill: some View {
+    private var floating: some View {
+        toast.shadow(color: .black.opacity(0.3), radius: 12, y: 4).allowsHitTesting(false)
+    }
+    private func statusPill(compact: Bool) -> some View {
         let title = model.demo ? "Demo preset" : (model.coordinator.macName ?? "Mac connected")
         return Button { details = true } label: {
             HStack(spacing: 8) {
                 Image(systemName: model.statusGlyph).foregroundStyle(theme.signal)
-                Text(title).lineLimit(1)
-                Image(systemName: "chevron.down").font(.caption.weight(.semibold)).foregroundStyle(theme.muted)
-            }.font(.headline.weight(.medium)).padding(.horizontal, 18).frame(minHeight: 48)
+                if !compact {
+                    Text(title).lineLimit(1)
+                    Image(systemName: "chevron.down").font(.caption.weight(.semibold)).foregroundStyle(theme.muted)
+                }
+            }.font(.headline.weight(.medium)).padding(.horizontal, compact ? 0 : 18).frame(minWidth: 48, minHeight: 48)
         }
         .buttonStyle(.plain).phoneGlass(theme, radius: 24)
         .accessibilityLabel(title).accessibilityHint("Connection")
@@ -180,11 +191,11 @@ struct PadWorkspaceView: View {
         }
     }
     private func slotName(_ snapshot: PresetSnapshot) -> String? { model.slotName(snapshot) }
-    @ViewBuilder private func saveButton(_ snapshot: PresetSnapshot) -> some View {
+    @ViewBuilder private func saveButton(_ snapshot: PresetSnapshot, short: Bool) -> some View {
         if model.editor.supports("save") {
             let disabled = model.busy || !snapshot.dirty
             Button { saveContext = model.snapshot; confirmSave = true } label: {
-                Text(model.demo ? "Save demo preset" : slotName(snapshot).map { "Save to \($0)" } ?? "Save on the QC")
+                Text(short ? "Save" : model.demo ? "Save demo preset" : slotName(snapshot).map { "Save to \($0)" } ?? "Save on the QC")
                     .font(.headline).lineLimit(1).padding(.horizontal, 26).frame(minHeight: 48)
                     .foregroundStyle(theme.signalInk).background(theme.signal, in: Capsule())
             }
