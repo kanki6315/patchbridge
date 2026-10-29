@@ -130,20 +130,22 @@ struct BlockEditorView: View {
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    HStack(spacing: 12) {
-                        // Bypassed blocks match the grid: dashed outline and struck-through code.
-                        let off = model.editor.bypassed(blockID: block.id) == true
-                        Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.4).strikethrough(off)
-                            .foregroundStyle(off ? category.color : (category.darkInk ? Color.black : .white)).frame(width: 44, height: 44)
-                            .background(off ? theme.surface : category.color, in: RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(category.color, style: StrokeStyle(lineWidth: off ? 1.5 : 0, dash: [4, 3])))
-                            .blockOutline(theme, cornerRadius: 12, filled: !off)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(model.name(block)).font(.title.bold())
-                            Text(subtitle).font(.subheadline).foregroundStyle(theme.muted)
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 12) {
+                            // Bypassed blocks match the grid: dashed outline and struck-through code.
+                            let off = model.editor.bypassed(blockID: block.id) == true
+                            Text(category.code).font(.caption.bold()).lineLimit(1).minimumScaleFactor(0.4).strikethrough(off)
+                                .foregroundStyle(off ? category.color : (category.darkInk ? Color.black : .white)).frame(width: 44, height: 44)
+                                .background(off ? theme.surface : category.color, in: RoundedRectangle(cornerRadius: 12))
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(category.color, style: StrokeStyle(lineWidth: off ? 1.5 : 0, dash: [4, 3])))
+                                .blockOutline(theme, cornerRadius: 12, filled: !off)
+                            // A narrow panel shrinks the name before it breaks words across lines.
+                            Text(model.name(block)).font(.title.bold()).lineLimit(2).minimumScaleFactor(0.7)
+                            Spacer(minLength: 8)
+                            BypassButton(model: model, block: block, theme: theme)
                         }
-                        Spacer(minLength: 8)
-                        BypassButton(model: model, block: block, theme: theme)
+                        // Under the name rather than beside it, so the bypass button doesn't narrow it.
+                        Text(subtitle).font(.subheadline).foregroundStyle(theme.muted).lineLimit(2).padding(.leading, 56)
                     }
                     parameterControl
                     tiles
