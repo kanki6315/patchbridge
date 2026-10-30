@@ -248,9 +248,10 @@ final class CoordinatorTests: XCTestCase {
             if code == .encryptionTimedOut {
                 XCTAssertFalse(message.contains("forget"), "A single encryption timeout retries before suggesting a reset")
                 let exhausted = BLECentral.failureMessage(fallback, error: error, retriesExhausted: true)
-                XCTAssertTrue(exhausted.contains("pairing needs to be reset"))
+                XCTAssertFalse(exhausted.contains("pairing needs to be reset"))
+                XCTAssertTrue(exhausted.contains("Restart Patchbridge"))
                 XCTAssertTrue(exhausted.contains("phone and Mac"))
-                XCTAssertTrue(exhausted.contains("forget the pairing"))
+                XCTAssertTrue(exhausted.contains("If this keeps happening"))
             }
             if code == .peerRemovedPairingInformation { XCTAssertTrue(message.contains("forget the old pairing")) }
         }

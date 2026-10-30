@@ -44,6 +44,7 @@
 		B557E20125DDE88FC2BAB2B6 /* GenericEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42253D1C8C450F010DE25BCD /* GenericEditor.swift */; };
 		B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E125DD1594C135E050EF4E8 /* BLECentral.swift */; };
 		B9DA1A85B7AA10F43910CF64 /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59B2D058255097DC58ED315 /* EditorCoordinator.swift */; };
+		C250748C46CEF3AA2DE4A518 /* BluetoothLinkRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436E5939957E69156E6724CF /* BluetoothLinkRetry.swift */; };
 		CCB8F3B7D3AB5BBCEAFF5B6E /* ConnectionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA0D4AB30B817B95E59576D /* ConnectionActivity.swift */; };
 		D358360A075662AA9D2878C2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5E625A9A4E3BE9B9A3F0E2BE /* Assets.xcassets */; };
 		EA6177919C4E44F0C8375500 /* SceneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E237C5A44F146DC9CAC103E /* SceneViews.swift */; };
@@ -111,6 +112,7 @@
 		3E68459E6EE63B03631133E9 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		416B26C56906A52630496D39 /* WatchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchModel.swift; sourceTree = "<group>"; };
 		42253D1C8C450F010DE25BCD /* GenericEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericEditor.swift; sourceTree = "<group>"; };
+		436E5939957E69156E6724CF /* BluetoothLinkRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothLinkRetry.swift; sourceTree = "<group>"; };
 		45F9F5091A58713B6AB66672 /* ConnectionActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionActivityWidget.swift; sourceTree = "<group>"; };
 		4AE829F2EC87A9ED681F5181 /* PatchbridgeWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PatchbridgeWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExchange.swift; sourceTree = "<group>"; };
@@ -241,6 +243,7 @@
 			isa = PBXGroup;
 			children = (
 				3E125DD1594C135E050EF4E8 /* BLECentral.swift */,
+				436E5939957E69156E6724CF /* BluetoothLinkRetry.swift */,
 				4F75207A678F28257EA105F3 /* Chunks.swift */,
 				4EFD7BCB746C93C1F48F79B8 /* CommandExchange.swift */,
 				C31310AE1B20C8312397D7D2 /* DeviceIdentity.swift */,
@@ -439,6 +442,7 @@
 			files = (
 				B5A0E99BB074BA6233ADF04B /* BLECentral.swift in Sources */,
 				184795C273F446AC30468366 /* BlockEditorView.swift in Sources */,
+				C250748C46CEF3AA2DE4A518 /* BluetoothLinkRetry.swift in Sources */,
 				65F0DF151692770297348421 /* Chunks.swift in Sources */,
 				0128CD48A71175930D8605BC /* CommandExchange.swift in Sources */,
 				029A4F9E5A319FB2B53A06CD /* ConnectionActivity.swift in Sources */,
