@@ -37,8 +37,7 @@ const shots = [
       <h1 id="hero-title">Your tone in your hands</h1>
       <div class="hero-side">
         <p class="lede">
-          Patchbridge puts your Quad Cortex in your hand: the whole signal chain, scene controls,
-          and edits to almost all parameters. Dial it in standing up, sitting down or where your phone is.
+          Patchbridge brings your Quad Cortex to iOS. Dial in your sound standing up, sitting down or where your phone is.
         </p>
         <div class="get">
           <StoreButtons />
@@ -62,10 +61,7 @@ const shots = [
         <Gauge />
       </div>
       <div class="truth-copy">
-        <h2 id="truth-title">Dashed means a WIP edit</h2>
-        <p class="sub">
-          A value only goes solid once the QC confirms your change.
-        </p>
+        <h2 id="truth-title">Track your changes</h2>
         <ol class="log" aria-label="Edit log">
           {log.map((l) => (
             <li data-step={l.step} data-mark={l.mark}>
@@ -78,7 +74,7 @@ const shots = [
         </ol>
         <p class="unsaved-note">
           <span class="dot" aria-hidden="true"></span>
-          Play around with live edits. Only Save when you're happy.
+          Play around with live edits and save when you're happy.
         </p>
       </div>
     </div>
@@ -89,20 +85,18 @@ const shots = [
     <div class="setup-copy">
       <h2 id="setup-title">Your Mac is the&nbsp;cable.</h2>
       <p class="sub">
-        The QC talks over USB, so the bridge app runs on your Mac to talk to your QC
-        and share it over Bluetooth. Connect up to four iPhones and iPads at once, all
-        able to view and edit together live.
+        The QC talks over USB, so the Mac bridge talks to your QC and shares it over Bluetooth.
+        Connect up to four iPhones and iPads at once, all able to view and edit together live.
       </p>
 
       <ol class="steps">
-        <li><b>Install the free Mac bridge.</b> <span>It talks to your QC.</span></li>
+        <li><b>Install the free Mac bridge.</b></li>
         <li><b>Plug in your QC.</b> <span>Close Cortex Control first to avoid issues.</span></li>
-        <li><b>Approve each device on the Mac.</b> <span>Check its six-character code once.</span></li>
+        <li><b>Manage devices on the Mac.</b></li>
       </ol>
     </div>
     <figure class="setup-shot">
       <Image src={macDevices} alt="Mac bridge: an iPhone and an iPad connected to one Quad Cortex, each listed with Disconnect, and recent edits naming the device that sent them, one not applied." widths={[480, 960, 1400]} sizes="(max-width: 56rem) min(92vw, 30rem), 30rem" loading="lazy" decoding="async" />
-      <figcaption>The bridge. Use it connect your devices, then forget it.</figcaption>
     </figure>
   </section>
 
