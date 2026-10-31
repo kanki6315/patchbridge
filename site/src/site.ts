@@ -3,7 +3,7 @@
 export const site = {
   name: 'Patchbridge',
   email: 'patchbridge@arjunakankipati.com',
-  appStoreUrl: '',
+  appStoreUrl: 'https://apps.apple.com/us/app/patchbridge/id6824958430',
   macAppUrl: '',
   githubUrl: 'https://github.com/kanki6315/patchbridge',
   // Shown at the top of the privacy policy.

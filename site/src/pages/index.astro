@@ -34,11 +34,11 @@ const shots = [
   <!-- Hero: the line, then the rig as the picture. -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="wrap hero-top">
-      <h1 id="hero-title">Leave the Quad Cortex on the&nbsp;floor.</h1>
+      <h1 id="hero-title">Your tone in your hands</h1>
       <div class="hero-side">
         <p class="lede">
-          Patchbridge puts the preset in your hand: the whole chain, scenes A to H,
-          every value the QC is holding. Change it standing up, guitar still&nbsp;on.
+          Patchbridge puts your Quad Cortex in your hand: the whole signal chain, scene controls,
+          and edits to almost all parameters. Dial it in standing up, sitting down or where your phone is.
         </p>
         <div class="get">
           <StoreButtons />
@@ -62,10 +62,9 @@ const shots = [
         <Gauge />
       </div>
       <div class="truth-copy">
-        <h2 id="truth-title">Dashed means it hasn’t landed&nbsp;yet.</h2>
+        <h2 id="truth-title">Dashed means a WIP edit</h2>
         <p class="sub">
-          A value only goes solid once the QC confirms it. If the QC turns an edit down,
-          you get the reason, not a number that quietly snaps&nbsp;back.
+          A value only goes solid once the QC confirms your change.
         </p>
         <ol class="log" aria-label="Edit log">
           {log.map((l) => (
@@ -79,7 +78,7 @@ const shots = [
         </ol>
         <p class="unsaved-note">
           <span class="dot" aria-hidden="true"></span>
-          Live edits stay live. Nothing is written to the preset until you tap&nbsp;Save.
+          Play around with live edits. Only Save when you're happy.
         </p>
       </div>
     </div>
@@ -88,28 +87,28 @@ const shots = [
   <!-- Setup: a real sequence, so it's numbered. -->
   <section class="setup wrap" aria-labelledby="setup-title">
     <div class="setup-copy">
-      <h2 id="setup-title">Your Mac holds the&nbsp;cable.</h2>
+      <h2 id="setup-title">Your Mac is the&nbsp;cable.</h2>
       <p class="sub">
-        The QC talks over USB, so a small bridge app on your Mac keeps the connection
-        and shares it over Bluetooth. Up to four iPhones and iPads can join at once,
-        each seeing the same preset and editing it&nbsp;live.
+        The QC talks over USB, so the bridge app runs on your Mac to talk to your QC
+        and share it over Bluetooth. Connect up to four iPhones and iPads at once, all
+        able to view and edit together live.
       </p>
 
       <ol class="steps">
-        <li><b>Install the free Mac bridge.</b> <span>It owns the USB connection.</span></li>
-        <li><b>Plug in your QC.</b> <span>Close Cortex Control first.</span></li>
-        <li><b>Approve each iPhone or iPad on the Mac.</b> <span>Match its six-character code once.</span></li>
+        <li><b>Install the free Mac bridge.</b> <span>It talks to your QC.</span></li>
+        <li><b>Plug in your QC.</b> <span>Close Cortex Control first to avoid issues.</span></li>
+        <li><b>Approve each device on the Mac.</b> <span>Check its six-character code once.</span></li>
       </ol>
     </div>
     <figure class="setup-shot">
-      <Image src={macDevices} alt="Mac bridge window: an iPhone and an iPad connected to one Quad Cortex, each listed with Disconnect, and recent edits naming the device that sent them, one not applied." widths={[480, 960, 1400]} sizes="(max-width: 56rem) min(92vw, 30rem), 30rem" loading="lazy" decoding="async" />
-      <figcaption>The bridge window. Glance at it, then forget it.</figcaption>
+      <Image src={macDevices} alt="Mac bridge: an iPhone and an iPad connected to one Quad Cortex, each listed with Disconnect, and recent edits naming the device that sent them, one not applied." widths={[480, 960, 1400]} sizes="(max-width: 56rem) min(92vw, 30rem), 30rem" loading="lazy" decoding="async" />
+      <figcaption>The bridge. Use it connect your devices, then forget it.</figcaption>
     </figure>
   </section>
 
   <!-- Screens -->
   <section class="screens" aria-labelledby="screens-title">
-    <h2 class="wrap" id="screens-title">Same preset, whatever you’re holding.</h2>
+    <h2 class="wrap" id="screens-title">Your tone, whatever you’re holding.</h2>
     <div class="rail" role="region" aria-label="App screens" tabindex="0">
       {shots.map((s) => (
         <figure class:list={['shot', `shot-${s.kind}`]}>
@@ -122,7 +121,7 @@ const shots = [
 
   <!-- Close: the listing, not a billboard. -->
   <section class="close wrap" aria-labelledby="close-title">
-    <h2 id="close-title">Dial it in from where you&nbsp;stand.</h2>
+    <h2 id="close-title">Dial in tone from where you are.</h2>
     <div class="listing">
       <Image class="icon" src={appIcon} alt="" width={168} height={168} loading="lazy" />
       <div class="listing-text">
