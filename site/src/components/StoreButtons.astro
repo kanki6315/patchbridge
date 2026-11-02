@@ -1,22 +1,22 @@
 ---
 import { site } from '../site';
+import appStoreBadge from '../assets/badges/app-store.svg?url';
+import macAppStoreBadge from '../assets/badges/mac-app-store.svg?url';
 
 interface Props { class?: string }
 const { class: className } = Astro.props;
 ---
 <div class:list={['store', className]}>
   {site.appStoreUrl ? (
-    <a class="btn btn-primary" href={site.appStoreUrl}>
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
-      Download for iPhone
+    <a class="badge" href={site.appStoreUrl}>
+      <img src={appStoreBadge} alt="Download Patchbridge on the App Store" width={162} height={54} />
     </a>
   ) : (
     <span class="btn btn-soon">iPhone app coming soon</span>
   )}
   {site.macAppUrl ? (
-    <a class="btn btn-glass" href={site.macAppUrl}>
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg>
-      Get the Mac bridge
+    <a class="badge" href={site.macAppUrl}>
+      <img src={macAppStoreBadge} alt="Download the Patchbridge Mac bridge on the Mac App Store" width={210.6} height={54} />
     </a>
   ) : (
     <span class="btn btn-soon">Mac bridge coming soon</span>
@@ -27,6 +27,9 @@ const { class: className } = Astro.props;
   .store {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.75rem;
   }
+  .badge { display: inline-flex; border-radius: 0.5rem; }
+  .badge img { display: block; height: 54px; width: auto; }
 </style>
