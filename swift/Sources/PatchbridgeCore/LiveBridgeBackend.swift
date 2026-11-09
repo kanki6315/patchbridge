@@ -18,6 +18,10 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
     /// Read-only access for backend diagnostics; all access stays on the owner queue.
     private(set) var shared: SharedUSBSession?
     private var devices = [UUID: DeviceSession]()
+    /// The Mac's own editors (`LocalEditorTransport`). They're devices like any other, except that
+    /// being on this Mac approves them, and the window's device list and status leave them out.
+    private var local = Set<UUID>()
+    var onLocalEvent: ((UUID, [String: Any]) -> Void)?
     private var states = [UUID: BridgeDevice.State]()
     /// Admission order: the approval card shows the earliest waiting device.
     private var order = [UUID]()
@@ -79,7 +83,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             if let tuner = try shared.sampleTuner(), let session = shared.helperSession {
                 for (id, device) in devices where tunerNotificationDevices.contains(id)
                     && shared.isJoined(device) && !shared.isOutdated(device) && shared.wantsTuner(device) {
-                    peripheral.notify(id, message: ["version": 1, "type": "event", "event": "tuner_updated",
+                    notify(id, ["version": 1, "type": "event", "event": "tuner_updated",
                         "connection_id": device.token, "session_id": session, "tuner": tuner])
                 }
             }
@@ -109,16 +113,18 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         onChange?()
     }
 
-    private func ids(_ state: BridgeDevice.State) -> [UUID] { order.filter { states[$0] == state } }
+    /// Devices the window shows: everything but the Mac's own editors.
+    private var shown: [UUID] { order.filter { !local.contains($0) } }
+    private func ids(_ state: BridgeDevice.State) -> [UUID] { shown.filter { states[$0] == state } }
     /// Derives the bridge's phase from every device: a waiting approval comes first, then
     /// USB recovery, then any connected device. An event's own wording is kept when its
     /// phase is still the bridge's phase; otherwise the phase's usual wording is shown.
     private func publish(_ event: MacBridgeModel.Phase? = nil, _ detail: String? = nil) {
         guard let shared else { return }
-        presentation.devices = order.compactMap { id in
+        presentation.devices = shown.compactMap { id in
             devices[id].map { BridgeDevice(id: id, connection: $0.token, name: $0.phoneName, state: states[id] ?? .awaitingApproval, trustID: $0.trustEntryID) }
         }
-        let active = order.filter { states[$0] != .awaitingApproval }
+        let active = shown.filter { states[$0] != .awaitingApproval }
         keepAwake.hold(!active.isEmpty)
         presentation.trusted = shared.trust.list.map { entry in
             TrustedDevice(id: entry.id, name: entry.name, connected: active.contains { devices[$0]?.trustEntryID == entry.id })
@@ -175,6 +181,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         let name = device.phoneName, trusted = device.trustEntryID != nil
         states[id] = nil; order.removeAll { $0 == id }
         shared.remove(device)
+        if local.remove(id) != nil { publish(); return }
         publish(.running, trusted ? "\(name) disconnected. It can reconnect without a code until you revoke trust."
                 : "\(name) disconnected. Open Patchbridge on it to connect with fresh approval.")
     }
@@ -199,7 +206,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
         poller?.cancel(); poller = nil
         peripheral.onMessage = nil; peripheral.onDisconnect = nil; peripheral.onStatus = nil; peripheral.stop()
         if let shared { shared.devices.forEach(shared.remove) }
-        devices.removeAll(); states.removeAll(); order.removeAll(); revoked.removeAll()
+        devices.removeAll(); states.removeAll(); order.removeAll(); revoked.removeAll(); local.removeAll()
         shared = nil; helper?.stop(); helper = nil; resetQCState(); keepAwake.stop()
         state = (.stopped, "Bridge stopped. Connections ended; trusted devices reconnect without a code.")
     }
@@ -218,7 +225,7 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
             for (id, device) in devices where notificationDevices.contains(id) && shared.isJoined(device) && announced[id] != key {
                 announced[id] = key
                 guard id != origin else { continue }
-                peripheral.notify(id, message: ["version": 1, "type": "event", "event": "device_unavailable",
+                notify(id, ["version": 1, "type": "event", "event": "device_unavailable",
                     "connection_id": device.token, "retry_after": shared.retryAfter])
             }
             return
@@ -238,8 +245,31 @@ final class LiveBridgeBackend: OfflineBridgeBackend {
                     event["changed_by"] = write.name
                 }
             }
-            peripheral.notify(id, message: event)
+            notify(id, event)
         }
+    }
+    private func notify(_ id: UUID, _ message: [String: Any]) {
+        if local.contains(id) { onLocalEvent?(id, message) } else { peripheral.notify(id, message: message) }
+    }
+    func localRequest(_ id: UUID, _ message: [String: Any]) -> [String: Any]? {
+        guard shared != nil else { return nil }
+        let hello = message["operation"] as? String == "hello"
+        if hello { local.insert(id) }
+        guard local.contains(id) else {
+            return CentralRouter.errorReply(message, code: "disconnected", text: "Connect to the QC before sending requests.")
+        }
+        let reply = receive(id, message).message
+        if hello, let device = devices[id], states[id] == .awaitingApproval {
+            device.approve(); states[id] = .approving
+        }
+        // A helper failure stops the bridge while it answers; the editor learns it from the stop.
+        return shared == nil ? nil : reply
+    }
+    func localLeft(_ id: UUID) {
+        guard local.contains(id) else { return }
+        stateNotificationDevices.remove(id); tunerNotificationDevices.remove(id); notificationDevices.remove(id); announced[id] = nil
+        deviceLeft(id)
+        local.remove(id)
     }
     private func receive(_ id: UUID, _ request: [String: Any]) -> PeripheralReply {
         guard let shared else { return PeripheralReply(message: failure(request, code: "disconnected")) }

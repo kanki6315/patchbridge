@@ -13,7 +13,7 @@ private struct BridgePalette {
 }
 
 /// The Patch Cable "pb" mark from docs/design/brand/patch-cable.svg, drawn in the current foreground style.
-private struct PatchCableMark: View {
+private struct BridgeCableMark: View {
     private static let cable = "M5 182V123C5 90 24 74 57 74H108C133 74 147 88 147 113V132C147 139 152 139 159 141L168 144Q174 146 174 138V70H203V77H249C278 77 294 92 294 119V139C294 167 278 183 250 183H204C186 183 174 177 161 165L155 160Q149 155 142 158C134 175 120 183 100 183H54C35 183 35 155 54 155H100C112 155 119 148 119 137V116C119 108 114 104 105 104H57C42 104 35 111 35 124V182ZM203 105V149Q203 155 210 155H249C259 155 265 149 265 139V120C265 110 260 105 249 105Z"
     private static let jacks = "M10 211H29V227H10Z M13 231H26L30 237Q30 241 25 245Q20 249 15 245L9 240Q7 236 13 231Z M179 21H198V41H179Z M181 1H194L199 7Q200 11 196 14V17H180V14Q175 11 178 7Z"
 
@@ -92,6 +92,8 @@ struct BridgeWindow: View {
     let exportReport: () -> Void
     var compact = false
     var menuActions: [(String, () -> Void)] = []
+    /// Opens the Mac's own editor window.
+    var openEditor: (() -> Void)?
     @AppStorage("bridge.appearance") private var appearance = "Match Mac"
     @AppStorage("bridge.setupComplete") private var setupComplete = false
     @State private var setupStep = SetupStep.welcome
@@ -107,7 +109,7 @@ struct BridgeWindow: View {
             ScrollView {
             VStack(alignment: .leading, spacing: 22) {
             HStack(spacing: 8) {
-                PatchCableMark().foregroundStyle(colors.signal).frame(width: 26, height: 22).accessibilityHidden(true)
+                BridgeCableMark().foregroundStyle(colors.signal).frame(width: 26, height: 22).accessibilityHidden(true)
                 Text("Patchbridge").font(.headline)
                 Spacer()
                 if model.isSimulation {
@@ -148,6 +150,11 @@ struct BridgeWindow: View {
                     Divider()
                     fact("State", model.phase == .recovering ? "Last known · reload required" : model.presentation.dirty ? "Unsaved" : "No unsaved changes")
                 }.background(colors.surface, in: RoundedRectangle(cornerRadius: 16))
+            }
+            if let openEditor, model.acceptsLocalEditor {
+                Button(action: openEditor) {
+                    Label("Edit on this Mac", systemImage: "slider.horizontal.3").frame(maxWidth: .infinity)
+                }.controlSize(.large).accessibilityHint("Opens the preset editor in its own window.")
             }
             if !compact && model.phase == .stopped {
                 Toggle("Use simulation", isOn: Binding(get: { model.isSimulation }, set: model.setSimulation)).toggleStyle(.switch)
@@ -441,11 +448,13 @@ struct BridgeSettings: View {
     }
 }
 
-final class Host: NSObject, NSApplicationDelegate {
+final class Host: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let model = MacBridgeModel()
     private var desktop: MacDesktopServices!
     private var window: NSWindow?
     private var settings: NSWindow?
+    private var editorWindow: NSWindow?
+    private lazy var editor = PhoneModel(coordinator: EditorCoordinator(makeTransport: { [model] in model.makeLocalEditorTransport() }))
     private var statusItem: NSStatusItem?
     private let popover = NSPopover()
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -461,14 +470,15 @@ final class Host: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         let appItem = NSMenuItem(); menu.addItem(appItem)
         let appMenu = NSMenu(); appItem.submenu = appMenu
-        for (title, action, key) in [("Open Patchbridge", #selector(showWindow), "0"), ("Settings…", #selector(showSettings), ","), ("Export Troubleshooting Report…", #selector(exportReport), "e")] {
+        for (title, action, key) in [("Open Patchbridge", #selector(showWindow), "0"), ("Open Editor", #selector(showEditor), "1"), ("Settings…", #selector(showSettings), ","), ("Export Troubleshooting Report…", #selector(exportReport), "e")] {
             let item = NSMenuItem(title: title, action: action, keyEquivalent: key); item.target = self; appMenu.addItem(item)
         }
         appMenu.addItem(NSMenuItem(title: "Quit Patchbridge", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         NSApp.mainMenu = menu
         window.title = "Patchbridge"
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: BridgeWindow(model: model, exportReport: { [weak self] in self?.exportReport() }))
+        window.contentView = NSHostingView(rootView: BridgeWindow(model: model, exportReport: { [weak self] in self?.exportReport() },
+                                                                  openEditor: { [weak self] in self?.showEditor() }))
         window.contentMinSize = NSSize(width: 480, height: 700)
         self.window = window
         let status = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -479,7 +489,8 @@ final class Host: NSObject, NSApplicationDelegate {
             model: model, exportReport: { [weak self] in self?.exportReport() }, compact: true,
             menuActions: [("Open Patchbridge", { [weak self] in self?.showWindow() }),
                           ("Settings…", { [weak self] in self?.showSettings() }),
-                          ("Quit", { NSApp.terminate(nil) })]
+                          ("Quit", { NSApp.terminate(nil) })],
+            openEditor: { [weak self] in self?.showEditor() }
         ).frame(width: 360, height: 560))
         model.onChange = { [weak self] in guard let self else { return }; self.updateStatus(); self.desktop.stateChanged(self.model) }; updateStatus()
         NSApp.setActivationPolicy(desktop.showInDock ? .regular : .accessory)
@@ -489,7 +500,7 @@ final class Host: NSObject, NSApplicationDelegate {
         let description = "Patchbridge: \(model.title)"
         let attention = [.failed, .recovering].contains(model.phase) ? "exclamationmark.triangle" : model.phase == .awaitingApproval ? "person.crop.circle.badge.questionmark" : nil
         statusItem?.button?.image = attention.flatMap { NSImage(systemSymbolName: $0, accessibilityDescription: description) }
-            ?? PatchCableMark.menuBarImage(alpha: model.phase == .connected ? 1 : 0.5, description: description)
+            ?? BridgeCableMark.menuBarImage(alpha: model.phase == .connected ? 1 : 0.5, description: description)
         statusItem?.button?.toolTip = model.title
     }
     @objc private func togglePopover() {
@@ -498,6 +509,22 @@ final class Host: NSObject, NSApplicationDelegate {
         else { popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY) }
     }
     @objc private func showWindow() { popover.performClose(nil); window?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true) }
+    @objc private func showEditor() {
+        popover.performClose(nil)
+        if editorWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1180, height: 780),
+                                  styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
+            window.title = "Patchbridge Editor"; window.isReleasedWhenClosed = false
+            window.titlebarAppearsTransparent = true
+            window.setFrameAutosaveName("PatchbridgeEditor")
+            window.contentView = NSHostingView(rootView: MacEditorView(bridge: model, model: editor, showBridge: { [weak self] in self?.showWindow() }))
+            window.delegate = self
+            window.center(); editorWindow = window
+        } else if editor.coordinator.phase == .disconnected && model.acceptsLocalEditor {
+            editor.start()
+        }
+        editorWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+    }
     @objc private func showSettings() {
         popover.performClose(nil)
         desktop.refresh()
@@ -526,6 +553,11 @@ final class Host: NSObject, NSApplicationDelegate {
             }
         }
     }
+    /// Closing the editor leaves the bridge, so it doesn't hold a device slot or poll the QC unseen.
+    func windowWillClose(_ notification: Notification) {
+        guard notification.object as? NSWindow === editorWindow else { return }
+        editor.disconnect()
+    }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showWindow(); return true }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { !UserDefaults.standard.bool(forKey: "bridge.keepRunning") }
     func applicationDidBecomeActive(_ notification: Notification) { desktop?.refresh() }
@@ -550,6 +582,10 @@ func verify(_ helper: HelperClient) throws {
 if let recordingFixture = Bundle.main.url(forResource: "recording-fixture", withExtension: "json") {
     do { try MacScreenshotPreview.render(fixture: recordingFixture.path, output: NSTemporaryDirectory() + "patchbridge-recording-fixture", replay: true); exit(0) }
     catch { fputs("Recording fixture failed: \(error)\n", stderr); exit(1) }
+}
+if CommandLine.arguments.count == 3 && CommandLine.arguments[1] == "--render-editor" {
+    do { try MacScreenshotPreview.renderEditor(output: CommandLine.arguments[2]); exit(0) }
+    catch { fputs("Editor rendering failed: \(error)\n", stderr); exit(1) }
 }
 if CommandLine.arguments.count == 4 && ["--render-screenshots", "--replay-screenshots"].contains(CommandLine.arguments[1]) {
     do { try MacScreenshotPreview.render(fixture: CommandLine.arguments[2], output: CommandLine.arguments[3], replay: CommandLine.arguments[1] == "--replay-screenshots"); exit(0) }

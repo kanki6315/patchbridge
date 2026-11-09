@@ -382,7 +382,9 @@ struct PadConnectionDetails: View {
                 }.padding(20)
             }
             .background(theme.surface.opacity(0.95))
+            #if os(iOS)
             .toolbar(.hidden, for: .navigationBar)
+            #endif
             .navigationDestination(isPresented: $showGetMac) {
                 GetMacSheet(theme: theme, url: macAppURL) { model.disconnect(); dismiss(); model.start() }.padding(20)
                     .background(theme.surface.opacity(0.95)).foregroundStyle(theme.ink)

@@ -14,9 +14,11 @@ final class PhoneModel: ObservableObject {
         guard screenshotFixture, !previewStarted,
               ProcessInfo.processInfo.arguments.contains("--preview-story") else { return }
         previewStarted = true
+        #if os(iOS)
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
             scene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
         }
+        #endif
         // Three seconds of launch handles, then 28 seconds of usable footage.
         let cues: [(Double, Int)] = [(7, 1), (11, 2), (12, 3), (13, 4), (14, 5),
                                     (17, 6), (19, 7), (23, 8), (25, 9), (28, 10)]
@@ -40,18 +42,21 @@ final class PhoneModel: ObservableObject {
         #endif
     }
     @Published var notice: String?
-    let coordinator: EditorCoordinator = {
-        #if DEBUG
+    let coordinator: EditorCoordinator
+    private static func defaultCoordinator() -> EditorCoordinator {
+        #if DEBUG && os(iOS)
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--offline-bridge") {
             return EditorCoordinator(makeTransport: { DebugBridge(dirty: arguments.contains("--dirty")) })
         }
         #endif
         return EditorCoordinator()
-    }()
+    }
+    #if os(iOS)
     let liveActivity = ConnectionActivityController()
-    let tuner = TunerModel()
     private var watchBridge: WatchCompanionBridge?
+    #endif
+    let tuner = TunerModel()
     private let demoEditor = GenericEditor()
     private var demoRevision = 0
     var editor: GenericEditor { usesLocalFixture ? demoEditor : coordinator.resumeEditor ?? coordinator.editor }
@@ -89,36 +94,52 @@ final class PhoneModel: ObservableObject {
     var hasTrust: Bool { coordinator.macID.flatMap { coordinator.trustTokens[$0] } != nil }
     /// Reconnect finds the last Mac directly instead of listing nearby ones.
     var canReconnect: Bool { coordinator.macID != nil && !usesLocalFixture }
-    init() {
+    /// Approves its own connection as soon as the bridge asks: the Mac's editor, whose bridge
+    /// runs in the same app, has no other screen to approve it on.
+    private let approvesItself: Bool
+    /// `coordinator` replaces the Bluetooth connection, as the Mac's in-process editor does.
+    init(coordinator: EditorCoordinator? = nil) {
+        self.coordinator = coordinator ?? Self.defaultCoordinator()
+        approvesItself = coordinator != nil
         tuner.phone = self
-        coordinator.onTuner = { [weak self] in self?.tuner.refresh() }
-        coordinator.trustTokens = TrustStore.load()
-        coordinator.deviceID = TrustStore.deviceID()
-        coordinator.onChange = { [weak self] in
+        self.coordinator.onTuner = { [weak self] in self?.tuner.refresh() }
+        #if os(iOS)
+        if !approvesItself {
+            self.coordinator.trustTokens = TrustStore.load()
+            self.coordinator.deviceID = TrustStore.deviceID()
+        }
+        #endif
+        self.coordinator.onChange = { [weak self] in
             guard let self else { return }
             // A connection that ended takes the tuner with it; recovery keeps it.
             if !self.usesLocalFixture, [.disconnected, .failed].contains(self.coordinator.phase), self.tuner.open || self.tuner.live { self.tuner.reset() }
-            if self.coordinator.trustTokens != self.savedTrust { self.savedTrust = self.coordinator.trustTokens; TrustStore.save(self.savedTrust) }
+            #if os(iOS)
+            if !self.approvesItself, self.coordinator.trustTokens != self.savedTrust { self.savedTrust = self.coordinator.trustTokens; TrustStore.save(self.savedTrust) }
             self.liveActivity.sync(self)
+            #endif
             self.syncKeepAwake()
             self.sceneSwitchChanged()
             self.presetSwitchChanged()
+            var approve = self.approvesItself
             #if DEBUG
             // The in-process bridge has no Mac to approve on.
-            if self.coordinator.phase == .awaitingApproval, ProcessInfo.processInfo.arguments.contains("--offline-bridge") {
+            approve = approve || ProcessInfo.processInfo.arguments.contains("--offline-bridge")
+            #endif
+            if self.coordinator.phase == .awaitingApproval, approve {
                 DispatchQueue.main.async { self.coordinator.authorize() }
             }
-            #endif
             self.version += 1
         }
-        watchBridge = WatchCompanionBridge(phone: self)
-        savedTrust = coordinator.trustTokens
+        #if os(iOS)
+        if !approvesItself { watchBridge = WatchCompanionBridge(phone: self) }
+        savedTrust = self.coordinator.trustTokens
         ConnectionActivityActions.handler = { [weak self] action in
             switch action {
             case .disconnect: self?.disconnect()
             case .reconnect: self?.reconnect()
             }
         }
+        #endif
     }
     private var savedTrust = [String: String]()
     private func clearScreenshotFixture() {
@@ -130,9 +151,18 @@ final class PhoneModel: ObservableObject {
     func reconnect() {
         guard canReconnect else { start(); return }
         coordinator.setPhoneName(UserDefaults.standard.string(forKey: "patchbridge.phoneName") ?? "")
-        notice = nil; liveActivity.willReconnect(); coordinator.start(reconnecting: true)
+        notice = nil
+        #if os(iOS)
+        liveActivity.willReconnect()
+        #endif
+        coordinator.start(reconnecting: true)
     }
-    func disconnect() { clearScreenshotFixture(); tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoEditor.disconnect(); demoSceneSwitch = nil; demo = false; notice = nil; version += 1 }
+    func disconnect() {
+        clearScreenshotFixture(); tuner.reset()
+        #if os(iOS)
+        liveActivity.willDisconnect()
+        #endif
+        coordinator.disconnect(); demoEditor.disconnect(); demoSceneSwitch = nil; demo = false; notice = nil; version += 1 }
     /// A selection tick on tap; a success tap once the QC confirms.
     func selectScene(_ scene: String) {
         guard canSwitchScenes, sceneSwitch != .pending(scene) else { return }
@@ -198,10 +228,16 @@ final class PhoneModel: ObservableObject {
         let wanted = UserDefaults.standard.bool(forKey: Self.keepAwakeKey)
         let session: Bool = !usesLocalFixture && ![.disconnected, .failed].contains(coordinator.phase)
         let keepOn = wanted && session
+        #if os(iOS)
         if UIApplication.shared.isIdleTimerDisabled != keepOn { UIApplication.shared.isIdleTimerDisabled = keepOn }
+        #else
+        _ = keepOn // The Mac bridge holds its own power assertion while devices are connected.
+        #endif
     }
+    #if os(iOS)
     /// Settings changed: start, update or end the activity to match.
     func connectionStatusPreferenceChanged() { liveActivity.sync(self) }
+    #endif
     func background() { coordinator.setBackgrounded(true) }
     func foreground() { coordinator.setBackgrounded(false) }
     #if DEBUG
@@ -217,9 +253,17 @@ final class PhoneModel: ObservableObject {
         clearScreenshotFixture()
         do {
             let fixture = try DemoFixture.load()
-            tuner.reset(); liveActivity.willDisconnect(); coordinator.disconnect(); demoRevision = 0; demoSceneSwitch = nil
+            tuner.reset()
+            #if os(iOS)
+            liveActivity.willDisconnect()
+            #endif
+            coordinator.disconnect(); demoRevision = 0; demoSceneSwitch = nil
             try demoEditor.load(snapshot: fixture.snapshot, catalog: fixture.catalog, session: "demo", connection: "demo", revision: 0, operations: ["set_parameter", "set_bypass", "select_scene", "save"])
-            demo = true; notice = nil; liveActivity.sync(self); version += 1
+            demo = true; notice = nil
+            #if os(iOS)
+            liveActivity.sync(self)
+            #endif
+            version += 1
         } catch { notice = "The demo preset could not be loaded." }
     }
     func edit(_ block: String, _ parameter: String, _ value: ParameterValue) {

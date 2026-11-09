@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Opens the Mac app's App Store page.
 let macAppURL = URL(string: "https://patchbridge.arjunakankipati.com/appstorelink")!
@@ -211,7 +213,9 @@ struct GetMacSheet: View {
     var body: some View {
         Group { if sent { sentView } else { sendView } }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: sent)
+            #if os(iOS)
             .background(ShareSheetPresenter(isPresented: $sharing, url: url) { completed in if completed { sent = true } }.frame(width: 1, height: 1))
+            #endif
     }
     private var sendView: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -297,6 +301,7 @@ struct GetMacSheet: View {
     private func share() { sharing = true }
 }
 
+#if os(iOS)
 /// UIKit's share sheet, because ShareLink doesn't say whether the link went anywhere.
 /// It presents from its own host controller, so it works inside SwiftUI sheets and popovers.
 struct ShareSheetPresenter: UIViewControllerRepresentable {
@@ -316,6 +321,7 @@ struct ShareSheetPresenter: UIViewControllerRepresentable {
         DispatchQueue.main.async { host.present(controller, animated: true) }
     }
 }
+#endif
 
 /// What the demo is missing, and the way out of it toward a real QC.
 struct DemoExit: View {
