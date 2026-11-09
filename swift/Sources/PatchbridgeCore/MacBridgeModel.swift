@@ -61,6 +61,13 @@ protocol OfflineBridgeBackend: AnyObject {
     func interruptHelper()
     func interruptDevice() throws
     func editSimulation(value: Double, stale: Bool) throws
+    /// A request from the Mac's own editor (`LocalEditorTransport`), on the worker queue. It joins
+    /// like any device and is approved by being on this Mac. Nil while the bridge isn't running.
+    func localRequest(_ id: UUID, _ message: [String: Any]) -> [String: Any]?
+    /// The Mac's own editor left, or the bridge ended it.
+    func localLeft(_ id: UUID)
+    /// Events for the Mac's own editor, delivered on the worker queue.
+    var onLocalEvent: ((UUID, [String: Any]) -> Void)? { get set }
 }
 extension OfflineBridgeBackend {
     var isLive: Bool { false }
@@ -75,6 +82,21 @@ extension OfflineBridgeBackend {
     func revokeTrust(id: UUID) {}
     func requestSecondDevice() throws { throw BridgeFailure.protocolError }
     func editFromOtherDevice() throws { throw BridgeFailure.protocolError }
+    func localRequest(_ id: UUID, _ message: [String: Any]) -> [String: Any]? { nil }
+    func localLeft(_ id: UUID) {}
+    var onLocalEvent: ((UUID, [String: Any]) -> Void)? { get { nil } set {} }
+}
+extension BridgeFailure {
+    /// The reply code for a request the device session refused; nil when the helper itself failed.
+    var refusalCode: String? {
+        switch self {
+        case .unauthorized: return "unauthorized"
+        case .staleSession: return "stale_session"
+        case .readOnly: return "read_only"
+        case .protocolError: return "invalid_request"
+        default: return nil
+        }
+    }
 }
 
 /// Only constructs a bundled simulator. No radio or USB transport is available here.
@@ -93,6 +115,9 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
     private var helper: HelperClient?
     private var shared: SharedUSBSession?
     private var devices: [Simulated] = []
+    /// The Mac's own editor. It edits the simulated QC through the same helper as the simulated
+    /// phones, but isn't one of them: the window's simulation steps never act for it.
+    private var local = [UUID: DeviceSession]()
     private var snapshot: [String: Any]?
     private(set) var presentation = MacBridgePresentation()
     init(makeHelper: @escaping () throws -> HelperClient = { try HelperClient(bundle: .main) }) {
@@ -205,7 +230,31 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
         presentation.dirty = dirty
         presentation.recovering = false
     }
+    func localRequest(_ id: UUID, _ message: [String: Any]) -> [String: Any]? {
+        guard let shared else { return nil }
+        let hello = message["operation"] as? String == "hello"
+        if hello, local[id] == nil {
+            guard let session = shared.admit() else { return shared.bridgeFullReply(message) }
+            local[id] = session
+        }
+        guard let session = local[id] else {
+            return CentralRouter.errorReply(message, code: "disconnected", text: "Connect to the QC before sending requests.")
+        }
+        do {
+            let reply = try session.handle(message)
+            if hello { session.approve() }
+            return reply
+        } catch {
+            guard let code = (error as? BridgeFailure)?.refusalCode else { return nil }
+            return CentralRouter.errorReply(message, code: code, text: "Reconnect to reload the device state.")
+        }
+    }
+    func localLeft(_ id: UUID) {
+        guard let session = local.removeValue(forKey: id) else { return }
+        shared?.remove(session)
+    }
     func stop() {
+        local.values.forEach { shared?.remove($0) }; local.removeAll()
         devices.forEach { shared?.remove($0.session) }; devices.removeAll()
         snapshot = nil
         presentation = MacBridgePresentation()
@@ -214,11 +263,26 @@ final class BundledOfflineBackend: OfflineBridgeBackend {
     func interruptHelper() { helper?.stop() }
 }
 
+/// Hands bridge events to the Mac's own editors from the worker queue; they hop to main themselves.
+private final class LocalEditorDirectory {
+    private weak var model: MacBridgeModel?
+    init(model: MacBridgeModel) { self.model = model }
+    func deliver(_ id: UUID, _ event: [String: Any]) {
+        DispatchQueue.main.async { [weak self] in self?.model?.deliverLocal(id, event) }
+    }
+}
+
 /// Main-queue UI owner; helper/session work is serialized off the UI thread.
 final class MacBridgeModel: ObservableObject {
     enum Phase: Equatable { case stopped, starting, running, awaitingApproval, approving, connected, recovering, stopping, failed }
-    @Published private(set) var phase: Phase = .stopped
+    @Published private(set) var phase: Phase = .stopped {
+        didSet { if [.stopped, .stopping, .failed].contains(phase) { endLocalEditors() } }
+    }
     @Published private(set) var presentation = MacBridgePresentation()
+    /// The bridge can serve the Mac's own editor: it's running, and not stopping or failed.
+    var acceptsLocalEditor: Bool { ![.stopped, .starting, .stopping, .failed].contains(phase) }
+    private var localEditors = [UUID: WeakLocalEditor]()
+    private struct WeakLocalEditor { weak var transport: LocalEditorTransport? }
     private var recoveryTimer: Timer?
     @Published private(set) var busy = false
     @Published private(set) var detail = "Start the bridge to try a simulated phone connection."
@@ -290,6 +354,8 @@ final class MacBridgeModel: ObservableObject {
         guard phase == .stopped || phase == .failed else { return }
         generation = UUID(); phase = .starting; detail = isSimulation ? "Launching the bundled simulation helper." : "Starting the USB helper and Bluetooth service."
         let epoch = generation
+        let editors = LocalEditorDirectory(model: self)
+        backend.onLocalEvent = { id, event in editors.deliver(id, event) }
         backend.onChange = { [weak self] in
             guard let self else { return }
             let presentation = self.backend.presentation
@@ -368,6 +434,21 @@ final class MacBridgeModel: ObservableObject {
     func simulateFailure() {
         guard phase == .connected && !busy else { return }
         perform({ $0.interruptHelper(); try $0.refresh() }, success: .connected, message: "Connection checked.")
+    }
+    /// A connection for the Mac's own editor. It reaches the bridge only while it runs.
+    func makeLocalEditorTransport() -> LocalEditorTransport {
+        let transport = LocalEditorTransport(queue: queue, request: { [weak self] id, message in
+            self?.backend.localRequest(id, message)
+        }, left: { [weak self] id in self?.backend.localLeft(id) })
+        localEditors = localEditors.filter { $0.value.transport != nil }
+        localEditors[transport.id] = WeakLocalEditor(transport: transport)
+        return transport
+    }
+    fileprivate func deliverLocal(_ id: UUID, _ event: [String: Any]) { localEditors[id]?.transport?.deliver(event) }
+    private func endLocalEditors() {
+        let reason = phase == .failed ? "The bridge needs attention. Restart it to edit again."
+            : "The bridge stopped. Start it to edit again."
+        for editor in localEditors.values { editor.transport?.end(reason) }
     }
     func shutdown() { recoveryTimer?.invalidate(); recoveryTimer = nil; generation = UUID(); queue.sync { backend.stop() } }
 }

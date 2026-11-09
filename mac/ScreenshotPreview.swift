@@ -94,6 +94,36 @@ enum MacScreenshotPreview {
         }
     }
     private static func pump(_ duration: TimeInterval) { RunLoop.current.run(until: Date(timeIntervalSinceNow: duration)) }
+
+    /// The Mac editor window against the bundled simulation: before the bridge starts, and
+    /// once the preset has loaded. Real helper I/O, no Bluetooth or USB.
+    static func renderEditor(output: String) throws {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.prohibited)
+        let directory = URL(fileURLWithPath: output)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let bridge = MacBridgeModel(backend: BundledOfflineBackend())
+        let editor = PhoneModel(coordinator: EditorCoordinator(makeTransport: { bridge.makeLocalEditorTransport() }))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1180, height: 780),
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
+        window.title = "Patchbridge Editor"; window.titlebarAppearsTransparent = true
+        window.contentView = NSHostingView(rootView: MacEditorView(bridge: bridge, model: editor, showBridge: {}))
+        func capture(_ name: String) throws {
+            pump(0.8)
+            let view = window.contentView!.superview!
+            view.layoutSubtreeIfNeeded()
+            let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds)!
+            view.cacheDisplay(in: view.bounds, to: rep)
+            try rep.representation(using: .png, properties: [:])!.write(to: directory.appendingPathComponent("\(name).png"))
+            print("Rendered \(name) · bridge \(bridge.phase) · editor \(editor.coordinator.phase)")
+        }
+        try capture("editor-1-bridge-stopped")
+        bridge.start()
+        let deadline = Date().addingTimeInterval(20)
+        while editor.coordinator.phase != .ready && Date() < deadline { pump(0.1) }
+        try capture("editor-2-ready")
+        bridge.shutdown()
+    }
 }
 /// Real native window, driven by an offline sequence. No UI is painted into a movie.
 private final class FixtureClipPlayer: NSObject {

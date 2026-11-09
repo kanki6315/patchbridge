@@ -234,7 +234,11 @@ struct Wordmark: View {
 }
 
 /// The device's own name for UI copy: iPad layouts say "iPad" where iPhone ones say "iPhone".
+#if os(iOS)
 var deviceName: String { UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone" }
+#else
+var deviceName: String { "Mac" }
+#endif
 
 struct AppearanceSettings: View {
     /// The active theme, already resolved for mode and contrast.

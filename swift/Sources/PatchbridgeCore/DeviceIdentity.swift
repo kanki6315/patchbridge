@@ -18,6 +18,8 @@ public enum DeviceIdentity {
     public static var localName: String {
         #if os(iOS)
         return name(UIDevice.current.name, fallback: UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone")
+        #elseif os(macOS)
+        return macName
         #else
         return "iPhone"
         #endif

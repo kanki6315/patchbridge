@@ -179,7 +179,22 @@ def main():
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'CentralRouter.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'LiveBridgeBackend.swift',
         ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'KeepAwake.swift',
+        # The Mac's own editor: the iPad workspace views, joined to the bridge in-process.
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'LocalEditorTransport.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'EditorCoordinator.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'BLECentral.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'BluetoothLinkRetry.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'CommandExchange.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'EditorModel.swift',
+        ROOT / 'swift' / 'Sources' / 'PatchbridgeCore' / 'Tuner.swift',
+        *[ROOT / 'ios' / 'Patchbridge' / name for name in (
+            'PlatformCompat.swift', 'Theme.swift', 'PhoneModel.swift', 'PadWorkspaceView.swift', 'BlockEditorView.swift',
+            'PresetViews.swift', 'SceneViews.swift', 'TunerViews.swift', 'SetupViews.swift')],
+        ROOT / 'ios' / 'Shared' / 'ThemeTokens.swift',
+        ROOT / 'mac' / 'EditorWindow.swift',
         ROOT / 'mac' / 'main.swift', '-o', executables / 'Patchbridge')
+    # Theme previews draw the demo preset.
+    shutil.copy2(ROOT / 'tests' / 'fixtures' / 'demo-preset.json', resources / 'demo-preset.json')
     plist = {'CFBundleExecutable': 'Patchbridge', 'CFBundleIdentifier': 'com.arjunakankipati.patchbridge',
              'CFBundleName': 'Patchbridge', 'CFBundlePackageType': 'APPL',
              'CFBundleVersion': '1', 'CFBundleShortVersionString': '0.4.0',

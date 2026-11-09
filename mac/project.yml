@@ -15,7 +15,21 @@ targets:
     sources:
       - main.swift
       - ScreenshotPreview.swift
+      - EditorWindow.swift
       - ../swift/Sources/PatchbridgeCore
+      # The editor window is the iPad workspace, built from the iOS app's own views.
+      - ../ios/Patchbridge/PlatformCompat.swift
+      - ../ios/Patchbridge/Theme.swift
+      - ../ios/Shared/ThemeTokens.swift
+      - ../ios/Patchbridge/PhoneModel.swift
+      - ../ios/Patchbridge/PadWorkspaceView.swift
+      - ../ios/Patchbridge/BlockEditorView.swift
+      - ../ios/Patchbridge/PresetViews.swift
+      - ../ios/Patchbridge/SceneViews.swift
+      - ../ios/Patchbridge/TunerViews.swift
+      - ../ios/Patchbridge/SetupViews.swift
+      - path: ../tests/fixtures/demo-preset.json
+        buildPhase: resources
       - path: ../ios/Patchbridge/AppIcon.icon
         buildPhase: resources
       - path: ../ios/Patchbridge/PrivacyInfo.xcprivacy

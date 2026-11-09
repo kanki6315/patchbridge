@@ -105,13 +105,18 @@ struct BlockEditorView: View {
         .onChange(of: model.snapshot) { _, _ in draft = nil; fine = false }
         .toolbar {
             if scenePill, model.canSwitchScenes, let snapshot = model.snapshot {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: Self.trailing) {
                     ScenePill(model: model, snapshot: snapshot, theme: theme, blockID: block.id, parameterID: parameter)
                 }
             }
         }
         .sheet(isPresented: Binding(get: { typing && !regular && !inlinePad }, set: { typing = $0 })) { numberPad.presentationDetents([.height(dynamicTypeSize.isAccessibilitySize ? 550 : 355)]).presentationDragIndicator(.visible) }
     }
+    #if os(iOS)
+    private static let trailing = ToolbarItemPlacement.topBarTrailing
+    #else
+    private static let trailing = ToolbarItemPlacement.primaryAction
+    #endif
     @ViewBuilder private var content: some View {
         if layout == .deck {
             ScrollView {

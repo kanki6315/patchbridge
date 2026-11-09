@@ -50,6 +50,22 @@ the one USB connection. A fifth is told the Mac is already connected to four dev
 - **Recovery:** USB loss pauses every device. Each one reconnects to the shared session
   on its own retry, including devices that were in the background meanwhile.
 
+## Editing on this Mac
+
+**Edit on this Mac** in the bridge window or menu-bar popover, or **Open Editor** (⌘1), opens
+the editor window. It is the iPad workspace built from the iOS app's own views
+(`ios/Patchbridge/PadWorkspaceView.swift` and friends, with `PlatformCompat.swift` for the few
+iOS-only calls), so it works with a trackpad, mouse or touch-screen Mac.
+
+- The editor joins this Mac's own bridge in-process through `LocalEditorTransport`, as a device
+  like any iPhone: edits are confirmed by QC readback and never replayed, and if two devices
+  edit at once the first wins. Phones see its edits as changed on this Mac's name.
+- Being on this Mac is its approval: no code, no trust entry, and the device list leaves it out.
+  It does take one of the four device slots while the window is open.
+- It needs the bridge running (live or simulation). Stopping or a failed bridge ends the session;
+  closing the window leaves it.
+- Debug builds render the window offline: `Patchbridge --render-editor <folder>`.
+
 ## Offline walkthrough
 
 Enable **Use simulation** while stopped. This mode never opens USB or Bluetooth.
