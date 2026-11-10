@@ -282,8 +282,17 @@ final class PhoneFlowTests: XCTestCase {
             (confirm.exists ? confirm : app.sheets.buttons["Save demo preset"]).tap()
             XCTAssertTrue(app.staticTexts["Saved in demo only"].waitForExistence(timeout: 5))
             optoComp.tap()
-            XCTAssertTrue(app.staticTexts["Saved in demo only"].isHittable,
-                          "Edit outcomes must remain visible above the portrait menu")
+            // The menu's own toast lets touches through, so it is never hittable; it sits over the
+            // menu's first control, while the grid's copy stays behind the menu further down.
+            // Both fade after three seconds.
+            let threshold = app.buttons["Increase THRESHOLD"]
+            XCTAssertTrue(threshold.waitForExistence(timeout: 5))
+            let onMenu = NSPredicate { _, _ in
+                let notices = app.staticTexts.matching(identifier: "Saved in demo only").allElementsBoundByIndex
+                return notices.contains { $0.frame.midY < threshold.frame.maxY && app.windows.firstMatch.frame.contains($0.frame) }
+            }
+            XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: onMenu, object: nil)], timeout: 2), .completed,
+                           "Edit outcomes must remain visible above the portrait menu")
             capture("Duo portrait menu notice")
             XCUIDevice.shared.orientation = .landscapeLeft
             // The menu stays open as a side panel beside the grid.
